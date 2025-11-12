@@ -46,18 +46,24 @@ export async function GET() {
     });
 
     // Combine the data
-    const categoryProductsWithData = categoryProducts.map(cp => {
-      const subcategory = subcategoryMap[cp.subcategoryId.toString()];
-      const filteredProducts = (cp.products || [])
-        .map(productId => productMap[productId.toString()])
-        .filter(product => product !== undefined);
+    const categoryProductsWithData = await Promise.all(
+      categoryProducts.map(async (cp) => {
+        const subcategory = subcategoryMap[cp.subcategoryId.toString()];
+        const filteredProducts = await Product.find({
+          _id: { $in: cp.products },
+          $or: [
+            { model_number: { $exists: false } },
+            { model_number: { $exists: true, $ne: "" } }
+          ]
+        }).lean();
+        return {
+          ...cp,
+          subcategoryId: subcategory,
+          products: filteredProducts,
+        };
+      })
+    );
 
-      return {
-        ...cp,
-        subcategoryId: subcategory, // Replace ObjectId with populated data
-        products: filteredProducts
-      };
-    });
 
     // Filter out category products with no valid products
     const filteredCategoryProducts = categoryProductsWithData.filter(

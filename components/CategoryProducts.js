@@ -300,21 +300,15 @@ const CategoryProducts = () => {
                                              {brandMap[product.brand] || ""}
                                            </Link>
                                          </h4>
- 
-                                         <Link href={`/product/${product.slug}`} onClick={() => handleProductClick(product)} className="block mb-1">
-                                           <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[32px] sm:min-h-[40px]">
-                                             {product.name}
-                                           </h3>
-                                         </Link>
- 
-                                         {/* Price */}
-                                         {product.model_number && (
-                                          <div className="bg-gray-100 rounded-md inline-block mb-2">
-                                            <span className="text-sm font-semibold text-gray-700 tracking-wide">
-                                              Model: <span className="text-[#0069c6]">({product.model_number})</span>
-                                            </span>
-                                          </div>
-                                        )} 
+                                          <Link
+                                            href={`/product/${product.slug}`}
+                                            onClick={() => handleProductClick(product)}
+                                            className="block mb-1"
+                                          >
+                                            <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
+                                              {product.name} ({product.model_number ? product.model_number : "N/A"})
+                                            </h3>
+                                          </Link>
                                          <div className="flex items-center gap-2 mb-2 sm:mb-3">
                                            <span className="text-sm sm:text-base font-semibold text-red-600">
                                              ₹ {(product.special_price > 0 && product.special_price < product.price
