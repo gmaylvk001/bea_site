@@ -863,31 +863,37 @@ const MAX = priceRange[1] || 100000;
                 
                     <div className="p-2 md:p-4 flex flex-col h-full">
                       <h4 className="text-xs text-gray-500 mb-2 uppercase">
-                      <Link
-                                              href={`/brand/${brandMap[product.brand] ? brandMap[product.brand].toLowerCase().replace(/\s+/g, "-") : ""}`}
-                                              className="hover:text-blue-600"
-                                            >
-                                              {brandMap[product.brand] || ""}
-                                            </Link>
-                                            </h4>
+                        <Link
+                          href={`/brand/${brandMap[product.brand] ? brandMap[product.brand].toLowerCase().replace(/\s+/g, "-") : ""}`}
+                          className="hover:text-blue-600"
+                        >
+                          {brandMap[product.brand] || ""}
+                        </Link>
+                      </h4>
+
                       <Link
                         href={`/product/${product.slug}`}
-                        className="block mb-2"
                         onClick={() => handleProductClick(product)}
+                        className="block mb-1"
                       >
-                        <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">
-                          {product.name}
+                        <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
+                          {(() => {
+                            const model = product.model_number ? `(${product.model_number.trim()})` : "";
+                            const name = product.name ? product.name.trim() : "";
+                            const maxLen = 40;
+
+                            if (model) {
+                              const remaining = maxLen - model.length - 1; // 1 for space before model
+                              const truncatedName =
+                                name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
+                              return `${truncatedName} `;
+                            } else {
+                              return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
+                            }
+                          })()}
                         </h3>
                       </Link>
-                      
                           <div className="mb-3">
-                           {product.model_number && ( 
-                              <div className="bg-gray-100 rounded-md inline-block mb-2">
-                                <span className="text-sm font-semibold text-gray-700 tracking-wide">
-                                  Model: <span className="text-[#0069c6]">({product.model_number})</span>
-                                </span>
-                              </div>
-                            )}
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-base font-semibold text-red-600">
                                 ₹ {(
