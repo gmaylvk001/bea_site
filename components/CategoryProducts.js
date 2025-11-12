@@ -300,15 +300,30 @@ const CategoryProducts = () => {
                                              {brandMap[product.brand] || ""}
                                            </Link>
                                          </h4>
-                                          <Link
-                                            href={`/product/${product.slug}`}
-                                            onClick={() => handleProductClick(product)}
-                                            className="block mb-1"
-                                          >
-                                            <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
-                                              {product.name} ({product.model_number ? product.model_number : "N/A"})
-                                            </h3>
-                                          </Link>
+                                        <Link
+                                          href={`/product/${product.slug}`}
+                                          onClick={() => handleProductClick(product)}
+                                          className="block mb-1"
+                                        >
+                                          <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
+                                            {(() => {
+                                              const model = product.model_number ? `(${product.model_number.trim()})` : "";
+                                              const name = product.name ? product.name.trim() : "";
+                                              const maxLen = 40;
+
+                                              if (model) {
+                                                const remaining = maxLen - model.length - 1; // 1 for space before model
+                                                const truncatedName =
+                                                  name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
+                                                return `${truncatedName} `;
+                                              } else {
+                                                return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
+                                              }
+                                            })()}
+                                          </h3>
+                                        </Link>
+
+
                                          <div className="flex items-center gap-2 mb-2 sm:mb-3">
                                            <span className="text-sm sm:text-base font-semibold text-red-600">
                                              ₹ {(product.special_price > 0 && product.special_price < product.price
