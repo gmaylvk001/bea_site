@@ -531,34 +531,7 @@ const fetchInitialData = async () => {
 
     <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
 
-        {/* TEMPORARY DEBUG SECTION - REMOVE LATER */}
-  <div className="bg-yellow-100 border border-yellow-400 p-4 rounded mb-4">
-    <h3 className="font-bold text-yellow-800">Debug Info:</h3>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-      <div>
-        <p><strong>Filters from API:</strong> {categoryData.filters?.length || 0}</p>
-        <p><strong>Filter Groups:</strong> {Object.keys(filterGroups).length}</p>
-      </div>
-      <div>
-        <p><strong>Brands:</strong> {categoryData.brands?.length || 0}</p>
-        <p><strong>Products:</strong> {products.length}</p>
-      </div>
-      <div>
-        <p><strong>Category:</strong> {categoryData.main_category?.category_name}</p>
-        <p><strong>Loading:</strong> {loading ? 'Yes' : 'No'}</p>
-      </div>
-    </div>
-    <details className="mt-2">
-      <summary className="cursor-pointer font-medium">Raw Data</summary>
-      <pre className="text-xs mt-2 bg-white p-2 rounded overflow-auto max-h-40">
-        {JSON.stringify({
-          filters: categoryData.filters,
-          filterGroups: filterGroups,
-          brands: categoryData.brands
-        }, null, 2)}
-      </pre>
-    </details>
-  </div>
+      
 
      {categoryData.banners && categoryData.banners.length > 0 && (
 
