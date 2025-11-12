@@ -1,0 +1,171 @@
+import dbConnect from "@/lib/db";
+import Category from "@/models/ecom_category_info";
+import CategoryFilter from "@/models/ecom_categoryfilters_infos"; // Import the new model
+import { NextResponse } from "next/server";
+import md5 from "md5";
+import { writeFile, unlink } from "fs/promises";
+import path from "path";
+
+function convertSlug(slug) {
+  let result = slug.replace(/ /g, "-"); // replace spaces with hyphens
+  result = result.replace(/[^A-Za-z0-9\-]/g, ""); // remove special chars
+  result = result.replace(/-+/g, "-"); // collapse multiple hyphens
+  result = result.toLowerCase();
+  return result;
+}
+
+export async function PUT(req) {
+  try {
+    await dbConnect();
+
+    // Parse formData
+    const formData = await req.formData();
+    const _id = formData.get("_id");
+    const category_name = formData.get("category_name");
+    const parentid = formData.get("parentid") || "none";
+    const status = formData.get("status") || "Active";
+    const file = formData.get("image");
+    const existingImage = formData.get("existingImage");
+    const selectedFilters = formData.get("selectedFilters"); // Get selected filters
+
+    if (!_id || !category_name) {
+      return NextResponse.json({ error: "Category ID and name are required" }, { status: 400 });
+    }
+
+    // Find the existing category
+    const existingCategory = await Category.findById(_id);
+    if (!existingCategory) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
+
+    // Check if new category name already exists (excluding current category)
+    let category_slug = convertSlug(category_name);
+    const md5_cat_name = md5(category_slug);
+
+    const duplicateCategory = await Category.findOne({
+      category_slug,
+      _id: { $ne: _id } // Exclude current category from check
+    });
+
+    if (duplicateCategory) {
+      return NextResponse.json({ error: "Category name already exists" }, { status: 400 });
+    }
+
+    // Handle image upload/update
+    let image_url = existingImage;
+
+    if (file) {
+      // Delete old image if it exists
+      if (existingImage) {
+        try {
+          const oldImagePath = path.join(
+            process.cwd(),
+            "public",
+            existingImage.replace("http://localhost:3000", "")
+          );
+          await unlink(oldImagePath);
+        } catch (err) {
+          console.error("Error deleting old image:", err);
+        }
+      }
+
+      // Save new image
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const uploadDir = path.join(process.cwd(), "public/uploads/categories");
+      const fileName = `category_${Date.now()}${path.extname(file.name)}`;
+      await writeFile(path.join(uploadDir, fileName), buffer);
+      image_url = `/uploads/categories/${fileName}`;
+    }
+
+    // Handle navImage upload/update BEFORE updating category
+    const existingNavImage = formData.get("existingNavImage");
+    let nav_image_url = existingNavImage;
+    const navFile = formData.get("navImage");
+    if (navFile) {
+      console.log('navFile:', navFile);
+      if (nav_image_url) {
+        try {
+          const oldNavImagePath = path.join(
+            process.cwd(),
+            "public",
+            nav_image_url.replace("http://localhost:3000", "")
+          );
+          await unlink(oldNavImagePath);
+        } catch (err) {
+          console.error("Error deleting old navImage:", err);
+        }
+      }
+      const buffer = Buffer.from(await navFile.arrayBuffer());
+      const uploadDir = path.join(process.cwd(), "public/uploads/categories");
+      const fileName = `category_nav_${Date.now()}${path.extname(navFile.name)}`;
+      await writeFile(path.join(uploadDir, fileName), buffer);
+      nav_image_url = `http://localhost:3000/uploads/categories/${fileName}`;
+      console.log('nav_image_url:', nav_image_url);
+    }
+
+    // UPDATE FILTERS LOGIC - Same as product filters
+    let filterIds = [];
+    if (selectedFilters) {
+      try {
+        filterIds = JSON.parse(selectedFilters);
+        
+        // Remove existing filters for this category
+        await CategoryFilter.deleteMany({ category_id: _id });
+        
+        // Add new filters if any are selected
+        if (filterIds.length > 0) {
+          const filterPromises = filterIds.map(filterId => 
+            CategoryFilter.create({
+              filter_id: filterId,
+              category_id: _id
+            })
+          );
+          await Promise.all(filterPromises);
+          console.log(`Updated ${filterIds.length} filters for category ${_id}`);
+        }
+      } catch (error) {
+        console.error("Error updating filters:", error);
+        // Don't fail the entire update if filters fail, just log it
+      }
+    } else {
+      // If no filters are provided, remove all existing filters
+      await CategoryFilter.deleteMany({ category_id: _id });
+      console.log(`Removed all filters for category ${_id}`);
+    }
+
+    // Update category with navImage
+    const updatedCategory = await Category.findByIdAndUpdate(
+      _id,
+      {
+        category_name,
+        category_slug,
+        md5_cat_name,
+        parentid,
+        status,
+        image: image_url,
+        navImage: nav_image_url,
+        updatedAt: new Date(),
+      },
+      { new: true }
+    );
+
+    if (!updatedCategory) {
+      return NextResponse.json({ error: "Failed to update category" }, { status: 400 });
+    }
+
+    return NextResponse.json(
+      {
+        message: "Category updated successfully",
+        category: updatedCategory
+      },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error("Error updating category:", error);
+    return NextResponse.json(
+      { error: "Failed to update category", details: error.message },
+      { status: 500 }
+    );
+  }
+}

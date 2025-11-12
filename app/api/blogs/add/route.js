@@ -1,0 +1,71 @@
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/db";
+import Blog from "@/models/ecom_blog_info";
+import fs from "fs";
+import path from "path";
+import { writeFile } from "fs/promises";
+
+export async function POST(req) {
+  try {
+    // Connect to database
+    await dbConnect();
+
+    // Check content type
+    const contentType = req.headers.get("content-type");
+
+    if (contentType.includes("application/json")) {
+      // Handle JSON data (if no file upload)
+      const { name, description, category, status } = await req.json();
+      const newBlog = new Blog({
+        blog_name: name,
+        blog_slug: name.toLowerCase().replace(/\s+/g, "-"),
+        description,
+        category,
+        status,
+      });
+      await newBlog.save();
+      return NextResponse.json({ success: true, message: "Blog added successfully" }, { status: 201 });
+    } else if (contentType.includes("multipart/form-data")) {
+      // Handle FormData (for file uploads)
+      const formData = await req.formData();
+
+      const name = formData.get("name");
+      const description = formData.get("description");
+      const category = formData.get("category");
+      const status = formData.get("status");
+      const image = formData.get("image");
+
+      let imageUrl = "";
+
+      // Handle image upload
+      if (image && image.name) {
+        const bytes = await image.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const ext = path.extname(image.name);
+        const fileName = `blog_${Date.now()}${ext}`;
+        const filePath = path.join(process.cwd(), "public/uploads/blogs", fileName);
+
+        await writeFile(filePath, buffer);
+        imageUrl = `/uploads/blogs/${fileName}`;
+      }
+
+      // Save to MongoDB
+      const newBlog = new Blog({
+        blog_name: name,
+        blog_slug: name.toLowerCase().replace(/\s+/g, "-"),
+        description,
+        category,
+        status,
+        image: imageUrl,
+      });
+
+      await newBlog.save();
+      return NextResponse.json({ success: true, message: "Blog added successfully" }, { status: 201 });
+    }
+
+    return NextResponse.json({ success: false, error: "Invalid Content-Type" }, { status: 400 });
+  } catch (error) {
+    console.error("Error:", error);
+    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
+  }
+}
