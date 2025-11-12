@@ -300,6 +300,7 @@ const CategoryProducts = () => {
                                              {brandMap[product.brand] || ""}
                                            </Link>
                                          </h4>
+                                         
                                         <Link
                                           href={`/product/${product.slug}`}
                                           onClick={() => handleProductClick(product)}

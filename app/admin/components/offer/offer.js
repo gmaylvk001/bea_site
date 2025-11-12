@@ -423,6 +423,9 @@ useEffect(() => {
 
     try {
       const safeFestStatus = (offerData.fest_offer_status2 || offerData.fest_offer_status || "").toLowerCase();
+      const fromDate = new Date(offerData.from_date);
+      const toDate = new Date(offerData.to_date);
+      toDate.setUTCHours(23, 59, 59, 999);
       const formattedData = {
         ...offerData,
         id: editingOfferId,
@@ -435,8 +438,8 @@ useEffect(() => {
         status: safeFestStatus,
         fest_offer_status2: safeFestStatus,
         fest_offer_status: safeFestStatus,
-        from_date: new Date(offerData.from_date),
-        to_date: new Date(offerData.to_date),
+        from_date: fromDate,
+        to_date: toDate,
         selected_users: selectedUsers.includes("all")
           ? users.map(user => user._id)
           : selectedUsers.filter(id => id !== "all"),
@@ -558,10 +561,13 @@ useEffect(() => {
     }
 
     try {
+      const fromDate = new Date(offerData.from_date);
+      const toDate = new Date(offerData.to_date);
+      toDate.setUTCHours(23, 59, 59, 999);
       const formattedData = {
         ...offerData,
-        from_date: new Date(offerData.from_date),
-        to_date: new Date(offerData.to_date),
+       from_date: fromDate,
+        to_date: toDate,
         selected_users: selectedUsers.includes("all") 
           ? users.map(user => user._id) 
           : selectedUsers.filter(id => id !== "all"),

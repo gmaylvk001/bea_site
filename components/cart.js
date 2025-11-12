@@ -215,23 +215,46 @@ export default function CartComponent() {
   // NEW: helper to robustly check coupon validity using optional from/to dates
   const isCouponValid = (coupon) => {
     try {
-      const now = new Date();
+      // Accept multiple possible field names
       const fromRaw = coupon?.from_date ?? coupon?.fromDate ?? coupon?.valid_from ?? null;
       const toRaw = coupon?.to_date ?? coupon?.toDate ?? coupon?.valid_to ?? null;
 
-      if (!fromRaw && !toRaw) return true; // no date constraints => valid
+      // If neither date is provided, coupon is valid by date constraints
+      if (!fromRaw && !toRaw) return true;
 
-      const from = fromRaw ? new Date(fromRaw) : null;
-      const to = toRaw ? new Date(toRaw) : null;
+      // Helper to parse various inputs into a valid Date or null
+      const parseDate = (raw) => {
+        if (raw === null || raw === undefined || raw === "") return null;
+        const d = new Date(raw);
+        return isNaN(d.getTime()) ? null : d;
+      };
 
-      // invalid dates => treat as expired/inapplicable
-      if (from && isNaN(from)) return false;
-      if (to && isNaN(to)) return false;
+      const from = parseDate(fromRaw);
+      const to = parseDate(toRaw);
 
-      const afterFrom = from ? now >= from : true;
-      const beforeTo = to ? now <= to : true;
+      // If both parsed dates are invalid, treat as no date constraints
+      if (!from && !to) return true;
 
-      return afterFrom && beforeTo;
+      // Compute UTC start-of-day (00:00 UTC) for robust date-only comparisons
+      const utcStartOfDay = (d) =>
+        Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+
+      const now = new Date();
+      const todayUTC = utcStartOfDay(now);
+
+      if (from) {
+        const fromUTC = utcStartOfDay(from);
+        // today must be same or after from date
+        if (todayUTC < fromUTC) return false;
+      }
+
+      if (to) {
+        const toUTC = utcStartOfDay(to);
+        // today must be same or before to date
+        if (todayUTC > toUTC) return false;
+      }
+
+      return true;
     } catch {
       return false;
     }
@@ -744,12 +767,12 @@ export default function CartComponent() {
       if (!resp.ok) throw new Error("INVALID");
 
       // Must have a valid normalized coupon from API
-      if (!data.success || data.validOffer !== true || !data.coupon) {
+      // if (!data.success || data.validOffer !== true || !data.coupon) {
        
-        setCouponError("The coupon code entered is not valid.");
-        setCouponSuccess("");
-        return;
-      }
+      //   setCouponError("The coupon code entered is not valid.");
+      //   setCouponSuccess("");
+      //   return;
+      // }
 
       const normalized = normalizeOfferToCoupon(data.coupon);
           
@@ -813,6 +836,7 @@ export default function CartComponent() {
     localStorage.removeItem("appliedCoupon");
     setCouponSuccess(""); // clear inline success
     setSuccessMessage("Coupon removed successfully");
+    setCouponCode("");
     setShowSuccessModal(true);
   };
 

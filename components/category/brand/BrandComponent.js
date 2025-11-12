@@ -1302,25 +1302,31 @@ console.log("Fetched products:", products);
       
                           {/* Title with fixed height */}
                           <Link
-                            href={`/product/${product.slug}`}
-                            className="block mb-1"
-                            onClick={() => handleProductClick(product)}
-                          >
-                           <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb]  line-clamp-2 min-h-[3rem] sm:min-h-[2.5rem] leading-tight">
-                            {/* {product.name} */}
-                            {window.innerWidth < 540 && product.name.length > 140 ? product.name.slice(0, 100) + "..." : product.name}
+                          href={`/product/${product.slug}`}
+                          onClick={() => handleProductClick(product)}
+                          className="block mb-1"
+                        >
+                          <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
+                            {(() => {
+                              const model = product.model_number ? `(${product.model_number.trim()})` : "";
+                              const name = product.name ? product.name.trim() : "";
+                              const maxLen = 40;
+
+                              if (model) {
+                                const remaining = maxLen - model.length - 1; // 1 for space before model
+                                const truncatedName =
+                                  name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
+                                return `${truncatedName} `;
+                              } else {
+                                return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
+                              }
+                            })()}
                           </h3>
-                          </Link>
+                        </Link>
+
        
                           {/* Price Row (same level always) */}
                           <div className="mb-3">
-                           {product.model_number && ( 
-                              <div className="bg-gray-100 rounded-md inline-block mb-2">
-                                <span className="text-sm font-semibold text-gray-700 tracking-wide">
-                                  Model: <span className="text-[#0069c6]">({product.model_number})</span>
-                                </span>
-                              </div>
-                            )}
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-base font-semibold text-red-600">
                                 ₹ {(
