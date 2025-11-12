@@ -12,6 +12,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
 
 export default function CategoryPage() {
+  
   const [categoryData, setCategoryData] = useState({
     category: null,
     brands: [],
@@ -1270,16 +1271,41 @@ export default function CategoryPage() {
                             </h4>
         
                               {/* Title with fixed height */}
-                              <Link
+                              {/* <Link
                                 href={`/product/${product.slug}`}
                                 className="block mb-2"
                                 onClick={() => handleProductClick(product)}
                               >
                                 <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb]  line-clamp-2 min-h-[3rem] sm:min-h-[2.5rem] leading-tight">
-                          {/* {product.name} */}
+                      
                           {window.innerWidth < 540 && product.name.length > 140 ? product.name.slice(0, 100) + "..." : product.name}
                         </h3>
+                              </Link> */}
+
+                                                                       
+                              <Link
+                                href={`/product/${product.slug}`}
+                                onClick={() => handleProductClick(product)}
+                                className="block mb-1"
+                              >
+                                <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
+                                  {(() => {
+                                    const model = product.model_number ? `(${product.model_number.trim()})` : "";
+                                    const name = product.name ? product.name.trim() : "";
+                                    const maxLen = 40;
+
+                                    if (model) {
+                                      const remaining = maxLen - model.length - 1; // 1 for space before model
+                                      const truncatedName =
+                                        name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
+                                      return `${truncatedName} `;
+                                    } else {
+                                      return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
+                                    }
+                                  })()}
+                                </h3>
                               </Link>
+
          
                               {/* Price Row (same level always) */}
                                <div className="flex items-center gap-2 mb-3">
