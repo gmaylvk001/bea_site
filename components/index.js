@@ -1190,106 +1190,103 @@ export default function HomeComponent() {
                   </motion.section>
               );
           case 'topbanner':
-            return(
-                  <motion.section id="topbanner"
-                                          ref={refs.banner}
-                                          initial="hidden"
-                                          animate="visible"
-                                          variants={containerVariants}
-                                          className="overflow-hidden pt-0 m-0 "
-                                        >
-              <div className="relative">
-                {isBannerLoading ? (
-                  <div className="p-6 flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+  return (
+    <motion.section 
+      id="topbanner"
+      ref={refs.banner}
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="overflow-hidden pt-0 m-0"
+    >
+      <div className="relative">
+        {isBannerLoading ? (
+          <div className="p-6 flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+          </div>
+        ) : bannerData.banner.items.length > 0 ? (
+          bannerData.banner.items.length > 1 ? (
+            <Slider {...settings} className="relative">
+              {bannerData.banner.items.map((banner) => (
+                <motion.div
+                  key={banner.id}
+                  className="relative w-full aspect-[2000/667] max-h-auto"
+                  variants={itemVariants}
+                >
+                  <div className="absolute inset-0 overflow-hidden">
+                    <Image
+                      src={banner.bgImageUrl}
+                      alt="Banner"
+                      fill
+                      quality={100}
+                      className="object-fill w-full h-full"
+                      style={{ objectPosition: "center 30%" }}
+                      priority
+                    />
                   </div>
-                ) : bannerData.banner.items.length > 0 ? (
-                  bannerData.banner.items.length > 1 ? (
-                    <Slider {...settings} className="relative">
-                      {bannerData.banner.items.map((banner) => (
-                        <motion.div
-                          key={banner.id}
-                          className="relative w-full aspect-[2000/667] max-h-auto"
-                          variants={itemVariants}
-                        >
-                          <div className="absolute inset-0 overflow-hidden">
-                            <Image
-                              src={banner.bgImageUrl}
-                              alt="Banner"
-                              fill
-                              quality={100}
-                              className="object-fill w-full h-full"
-                              style={{ objectPosition: "center 30%" }}
-                              priority
-                            />
-                          </div>
-                              {/* Clickable accessible banner */}
-                        <div
-                          className="absolute inset-0 overflow-hidden cursor-pointer hover:scale-105 transition-transform"
-                          role="link"
-                          tabIndex={0}
-                          aria-label={banner?.alt || banner?.redirectUrl || "Banner"}
-                          onClick={() => {
-                            const href = banner?.redirectUrl;
-                            if (!href) return;
-                            if (href.startsWith("/")) {
-                              router.push(href);
-                            } else {
-                              window.location.href = href;
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            const href = banner?.redirectUrl;
-                            if (!href) return;
-                            if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
-                              e.preventDefault();
-                              if (href.startsWith("/")) {
-                                router.push(href);
-                              } else {
-                                window.location.href = href;
-                              }
-                            }
-                          }}
-                        >
-                          <Image
-                            src={banner.bgImageUrl}
-                            alt={banner?.alt || "Banner"}
-                            fill
-                            quality={100}
-                            className="object-fill w-full h-full"
-                            style={{ objectPosition: "center 30%" }}
-                            priority
-                          />
-                        </div>
-                            </motion.div>
-                          ))}
-                    </Slider>
-                  ) : (
-                    <motion.div
-                      className="p-4 md:p-6 relative aspect-[2000/667] max-h-auto"
-                      variants={itemVariants}
-                    >
-                      <div className="absolute inset-0 flex justify-center items-center bg-white">
-                        <Image
-                          src={bannerData.banner.items[0].bgImageUrl}
-                          alt="Banner"
-                          fill
-                          className=" object-fill w-full h-full"
-                          priority
-                        />
-                      </div>
-                    </motion.div>
-                  )
-                ) : (
-                  <div>
-                    </div>
-                  // <div className="p-6 text-center">
-                  //   <p className="text-lg">No active banners available</p>
-                  // </div>
-                )}
+                  {/* Clickable accessible banner - REMOVED HOVER EFFECT */}
+                  <div
+                    className="absolute inset-0 overflow-hidden cursor-pointer"
+                    role="link"
+                    tabIndex={0}
+                    aria-label={banner?.alt || banner?.redirectUrl || "Banner"}
+                    onClick={() => {
+                      const href = banner?.redirectUrl;
+                      if (!href) return;
+                      if (href.startsWith("/")) {
+                        router.push(href);
+                      } else {
+                        window.location.href = href;
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      const href = banner?.redirectUrl;
+                      if (!href) return;
+                      if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+                        e.preventDefault();
+                        if (href.startsWith("/")) {
+                          router.push(href);
+                        } else {
+                          window.location.href = href;
+                        }
+                      }
+                    }}
+                  >
+                    <Image
+                      src={banner.bgImageUrl}
+                      alt={banner?.alt || "Banner"}
+                      fill
+                      quality={100}
+                      className="object-fill w-full h-full"
+                      style={{ objectPosition: "center 30%" }}
+                      priority
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </Slider>
+          ) : (
+            <motion.div
+              className="p-4 md:p-6 relative aspect-[2000/667] max-h-auto"
+              variants={itemVariants}
+            >
+              <div className="absolute inset-0 flex justify-center items-center bg-white">
+                <Image
+                  src={bannerData.banner.items[0].bgImageUrl}
+                  alt="Banner"
+                  fill
+                  className="object-fill w-full h-full"
+                  priority
+                />
               </div>
-            </motion.section>
+            </motion.div>
           )
+        ) : (
+          <div></div>
+        )}
+      </div>
+    </motion.section>
+  )
           case 'singlebanner':
             return (
               <motion.section
