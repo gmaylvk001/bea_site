@@ -165,7 +165,7 @@ export default function HomeComponent() {
             try {
                 const response = await fetch('/api/topbanner');
                 const data = await response.json();
-
+                // console.log("Banner data:", data);
                 if (data.success && data.banners?.length > 0) {
                     const bannerItems = data.banners
                         .filter(banner => banner.status === "Active") // ✅ only Active
@@ -173,7 +173,8 @@ export default function HomeComponent() {
                             id: banner._id,
                             buttonLink: banner.redirect_url || "/shop",
                             bgImageUrl: banner.banner_image,
-                            bannerImageUrl: banner.banner_image
+                            bannerImageUrl: banner.banner_image,
+                            redirectUrl: banner.redirect_url
                         }));
 
                     setBannerData({
@@ -1205,15 +1206,15 @@ export default function HomeComponent() {
                 ) : bannerData.banner.items.length > 0 ? (
                   bannerData.banner.items.length > 1 ? (
                     <Slider {...settings} className="relative">
-                      {bannerData.banner.items.map((item) => (
+                      {bannerData.banner.items.map((banner) => (
                         <motion.div
-                          key={item.id}
+                          key={banner.id}
                           className="relative w-full aspect-[2000/667] max-h-auto"
                           variants={itemVariants}
                         >
                           <div className="absolute inset-0 overflow-hidden">
                             <Image
-                              src={item.bgImageUrl}
+                              src={banner.bgImageUrl}
                               alt="Banner"
                               fill
                               quality={100}
@@ -1222,8 +1223,46 @@ export default function HomeComponent() {
                               priority
                             />
                           </div>
-                        </motion.div>
-                      ))}
+                              {/* Clickable accessible banner */}
+                        <div
+                          className="absolute inset-0 overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                          role="link"
+                          tabIndex={0}
+                          aria-label={banner?.alt || banner?.redirectUrl || "Banner"}
+                          onClick={() => {
+                            const href = banner?.redirectUrl;
+                            if (!href) return;
+                            if (href.startsWith("/")) {
+                              router.push(href);
+                            } else {
+                              window.location.href = href;
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            const href = banner?.redirectUrl;
+                            if (!href) return;
+                            if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+                              e.preventDefault();
+                              if (href.startsWith("/")) {
+                                router.push(href);
+                              } else {
+                                window.location.href = href;
+                              }
+                            }
+                          }}
+                        >
+                          <Image
+                            src={banner.bgImageUrl}
+                            alt={banner?.alt || "Banner"}
+                            fill
+                            quality={100}
+                            className="object-fill w-full h-full"
+                            style={{ objectPosition: "center 30%" }}
+                            priority
+                          />
+                        </div>
+                            </motion.div>
+                          ))}
                     </Slider>
                   ) : (
                     <motion.div
