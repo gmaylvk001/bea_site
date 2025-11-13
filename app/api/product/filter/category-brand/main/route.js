@@ -106,20 +106,42 @@ export async function GET(req) {
       ]
     };
 
-    // FINAL QUERY: match brand AND (category OR sub_category in categoryIdsArray) AND status, with price clause
-    query = {
-      status: "Active",
-      brand: find_brand._id.toString(),
+   // This part is already correct in your filter API
+// In /api/product/filter/category-brand/main/
+query = {
+  status: "Active",
+  brand: find_brand._id.toString(),
+  $and: [
+    {
+      $or: [
+        { category: { $in: categoryIdsArray } },
+        { sub_category: { $in: categoryIdsArray } }
+      ]
+    },
+    priceClause,
+    {
       $and: [
         {
           $or: [
-            { category: { $in: categoryIdsArray } },
-            { sub_category: { $in: categoryIdsArray } }
+            { 
+              $and: [
+                { quantity: { $gt: 0 } },
+                { stock_status: "In Stock" }
+              ]
+            },
+            {
+              $and: [
+                { quantity: { $exists: false } },
+                { stock_status: "In Stock" }
+              ]
+            }
           ]
-        },
-        priceClause
+        }
       ]
-    };
+    }
+  ]
+};
+
 
     let productsQuery = Product.find(query).populate('brand', 'brand_name brand_slug');
 
