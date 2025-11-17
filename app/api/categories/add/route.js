@@ -24,6 +24,7 @@ export async function POST(req) {
     let parentid_new = formData.get("parentid_new") || "none";
     const status = formData.get("status") || "Active";
     const show_on_home = formData.get("show_on_home") || "No";
+    const content = formData.get("content") || ""; // ✅ Add content field
     const file = formData.get("image");
     const selectedFilters = formData.get("selectedFilters"); // Get selected filters
 
@@ -144,7 +145,7 @@ export async function POST(req) {
       }
     }
 
-    // Create category
+    // ✅ Create category with content field
     const newCategory = new Category({
       category_name,
       category_slug,
@@ -153,6 +154,7 @@ export async function POST(req) {
       parentid_new,
       status,
       show_on_home,
+      content, // ✅ Add content field here
       image: image_url,
       navImage: nav_image_url,
       createdAt: new Date(),
