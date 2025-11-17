@@ -40,6 +40,7 @@ const [updateImageError, setUpdateImageError] = useState("");
     image: null,
     navImage: null,
     selectedFilters: [],
+    content: "", // Add this line
   });
   const [categoryToUpdate, setCategoryToUpdate] = useState({
     _id: "",
@@ -52,6 +53,8 @@ const [updateImageError, setUpdateImageError] = useState("");
     existingNavImage: null,
     selectedFilters: [],
     existingFilters: [],
+    content: "", // Add this line
+    existingContent: "", // Add this line
   });
 const [errorMessage, setErrorMessage] = useState("");
   const [dateFilter, setDateFilter] = useState({
@@ -180,6 +183,8 @@ const handleEditClick = async (category) => {
       existingNavImage: category.navImage || null,
       selectedFilters: [], // Initialize as empty
       existingFilters: [],
+      content: category.content || "", // Add this line
+      existingContent: category.content || "", // Add this line
     });
     
     setIsUpdateModalOpen(true);
@@ -314,6 +319,8 @@ if (!file) {
       newCategory.selectedFilters.map(filter => filter.value)
     ));
 
+    formData.append("content", newCategory.content);
+
   // Only append image if provided
 if (newCategory.image) {
   formData.append("image", newCategory.image);
@@ -341,6 +348,7 @@ if (newCategory.image) {
         status: "Active",
         image: null,
         navImage: null,
+        content: "",
       });
       setImagePreview(null);
 
@@ -452,6 +460,8 @@ const handleUpdateCategory = async (e) => {
     formData.append("selectedFilters", JSON.stringify(
       categoryToUpdate.selectedFilters.map(filter => filter.value)
     ));
+
+    formData.append("content", categoryToUpdate.content);
 
   // Check if a new image is being uploaded
   if (categoryToUpdate.image instanceof File) {
@@ -973,6 +983,7 @@ const handleUpdateNavImageChange = async (e) => {
         status: "Active",
         image: null,
         navImage: null,
+        content: "",
       })}
               }
               className="text-gray-400 hover:text-gray-700 focus:outline-none"
@@ -1107,7 +1118,22 @@ const handleUpdateNavImageChange = async (e) => {
       }),
     }}
   />
-</div>
+              </div>
+              {/* Content Field - Add Category */}
+              <div>
+                <label htmlFor="content" className="block mb-1 text-sm font-semibold text-gray-700">
+                  Content
+                </label>
+                <textarea
+                  name="content"
+                  id="content"
+                  value={newCategory.content}
+                  onChange={(e) => setNewCategory({ ...newCategory, content: e.target.value })}
+                  rows="4"
+                  className="w-full rounded-md border border-gray-300 p-2 focus:ring-2 focus:ring-red-400"
+                  placeholder="Enter category description or content..."
+                />
+              </div>
               
 
               <div>
@@ -1320,6 +1346,22 @@ const handleUpdateNavImageChange = async (e) => {
                               }}
                             />
                           </div>
+
+                          {/* Content Field - Update Category */}
+            <div>
+              <label htmlFor="update_content" className="block mb-1 text-sm font-semibold text-gray-700">
+                Content
+              </label>
+              <textarea
+                name="content"
+                id="update_content"
+                value={categoryToUpdate.content}
+                onChange={(e) => setCategoryToUpdate({ ...categoryToUpdate, content: e.target.value })}
+                rows="4"
+                className="w-full rounded-md border border-gray-300 p-2 focus:ring-2 focus:ring-red-400"
+                placeholder="Enter category description or content..."
+              />
+            </div>
 
           {/* Status */}
           <div>

@@ -20,6 +20,7 @@ const CategorySchema = new mongoose.Schema({
   navImage: { type: String }, // nav image
   position: { type: Number, default: 0, min: 0 },
   banners: [BannerSchema], // ✅ Array of banners per category
+  content: { type: String }, // ✅ Add this line for text box content
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

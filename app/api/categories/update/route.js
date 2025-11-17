@@ -24,6 +24,7 @@ export async function PUT(req) {
     const category_name = formData.get("category_name");
     const parentid = formData.get("parentid") || "none";
     const status = formData.get("status") || "Active";
+    const content = formData.get("content") || ""; // ✅ Add content field
     const file = formData.get("image");
     const existingImage = formData.get("existingImage");
     const selectedFilters = formData.get("selectedFilters"); // Get selected filters
@@ -133,7 +134,7 @@ export async function PUT(req) {
       console.log(`Removed all filters for category ${_id}`);
     }
 
-    // Update category with navImage
+    // ✅ Update category with content and other fields
     const updatedCategory = await Category.findByIdAndUpdate(
       _id,
       {
@@ -142,6 +143,7 @@ export async function PUT(req) {
         md5_cat_name,
         parentid,
         status,
+        content, // ✅ Add content field here
         image: image_url,
         navImage: nav_image_url,
         updatedAt: new Date(),
