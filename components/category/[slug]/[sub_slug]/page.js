@@ -779,8 +779,8 @@ const scroll = (direction) => {
               {subcategory.category_name}
             </h3>
             <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2">
-              {subcategory.description
-                ? subcategory.description
+              {subcategory.content
+                ? subcategory.content
                 : "Explore our latest collection"}
             </p>
             <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
