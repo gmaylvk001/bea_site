@@ -613,7 +613,7 @@ export default function CategoryPage() {
             w-[240px] h-full
           ">
             
-            <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-300 to-white">
+            <div className="relative h-48 overflow-hidden bg-gradient-to-b from-gray-600 to-gray-800">
               <Image 
                 src={cat.image || '/images/default-category.jpg'} 
                 alt={cat.category_name} 
@@ -695,7 +695,7 @@ export default function CategoryPage() {
                         src={
                           brandImage.startsWith("http") 
                             ? brandImage 
-                            : `/uploads/brands/${brandImage}`
+                            : `/uploads/Brands/${brandImage}`
                         }
                         alt={brand.brand_name || "Brand"}
                         fill
