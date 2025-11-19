@@ -813,9 +813,10 @@ const grandTotal = subtotal - totalDiscount;
           JSON.stringify([name,addressData.email,addressData.phonenumber,deliveryAddress, adminItemsTableHtml])
         );
 
-        const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","siva96852@gmail.com"];
+        const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in"];
 
         //const emailadmin = ["sorambeevi@gmail.com"];
+        //const emailadmin = ["gmaylvk001@gmail.com"]; "siva96852@gmail.com"
         emailadmin.forEach(async (adminEmail) => {
           adminemailFormData.set("email", adminEmail);
         let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -828,6 +829,18 @@ const grandTotal = subtotal - totalDiscount;
 
         let adminData = await adminresponse.json();
         });
+        
+        
+        // send_order_detail_to_sap
+        const Send_SAP_Res = await fetch('/api/send-order-detail-to-sap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_number: orderData.order.order_number,
+        }),
+      });
+  
+        //console.log("SAP_STATUS", Send_SAP_Res.status); 
 
 
         toast.success("Order placed successfully!");
