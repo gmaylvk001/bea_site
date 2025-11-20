@@ -161,7 +161,9 @@ const handleProductClick = (product) => {
       setLoading(true);
       
       const query = new URLSearchParams();
-      query.set('categoryId', categoryId);
+     // query.set('categoryId', categoryId);
+
+      query.set('sub_category_new',  categoryData.category.md5_cat_name);
       
       if (selectedFilters.brands.length > 0) {
         query.set('brands', selectedFilters.brands.join(','));
@@ -179,6 +181,8 @@ const handleProductClick = (product) => {
             const { products, pagination: paginationData } = await res.json();
 
       setProducts(products);
+     // console.log('products: ',products);
+
       
       // Update pagination state
       setPagination({
@@ -541,7 +545,13 @@ const STEP = 100;
   //     </div>
   //   );
   // }
- 
+   
+   
+ if(values[0] < MIN || values[1] > MAX){
+     values[0] = MIN;
+     values[1] = MAX;
+   }
+   
   return(
     <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
            {categoryData.banners && categoryData.banners.length > 0 && (

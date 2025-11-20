@@ -80,18 +80,17 @@ export default function CategoryPage() {
     }
   }, [slug]);
   
+
   // In your fetchInitialData function, update the filter grouping:
-const fetchInitialData = async () => {
-  try {
-    setLoading(true);
-    console.log('🔍 Fetching category data for slug:', slug);
-    
-    const categoryRes = await fetch(`/api/categories/${slug}`);
-    const categoryData = await categoryRes.json();
-    
-    console.log('📦 Raw API Response:', categoryData);
-    console.log('🎯 Filters from API:', categoryData.filters);
-    console.log('📊 Number of filters:', categoryData.filters?.length || 0);
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true);
+     // console.log('🔍 Fetching category data for slug:', slug);
+      
+      const categoryRes = await fetch(`/api/categories/${slug}`);
+      const categoryData = await categoryRes.json();
+      
+      //console.log('📦 Raw API Response:', categoryData);
 
     setCategoryData({
       ...categoryData,
@@ -213,7 +212,8 @@ const fetchInitialData = async () => {
         ? selectedFilters.categories
         : categoryData.allCategoryIds;
 
-      query.set('categoryIds', categoryIds.join(','));
+     // query.set('categoryIds', categoryIds.join(','));
+      query.set('sub_category_new',  categoryData.main_category.md5_cat_name);
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
@@ -229,6 +229,8 @@ const fetchInitialData = async () => {
 
       const res = await fetch(`/api/product/filter/main?${query}`);
       const { products, pagination: paginationData } = await res.json();
+
+     // cosnole.log('Raw filter Response:', products);
 
       setProducts(products);
       

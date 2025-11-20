@@ -7,9 +7,10 @@ export async function GET(req) {
     await dbConnect();
     
     const { searchParams } = new URL(req.url);
-    console.log('🔍 API Request Params:', Object.fromEntries(searchParams.entries()));
+   // console.log('🔍 API Request Params:', Object.fromEntries(searchParams.entries()));
     
-    const categoryIds = searchParams.get('categoryIds')?.split(',') || [];
+    //const categoryIds = searchParams.get('categoryIds')?.split(',') || [];
+    const sub_category_new = searchParams.get('sub_category_new');
     const brandIds = searchParams.get('brands')?.split(',') || [];
     const minPrice = parseFloat(searchParams.get('minPrice')) || 0;
     const maxPrice = parseFloat(searchParams.get('maxPrice')) || 1000000;
@@ -18,16 +19,21 @@ export async function GET(req) {
     const limit = parseInt(searchParams.get('limit')) || 12;
     const sort = searchParams.get('sort') || 'featured';
 
-    console.log('🎯 Category IDs:', categoryIds);
-    console.log('💰 Price Range:', minPrice, '-', maxPrice);
+    //console.log('🎯 Category IDs:', categoryIds);
+    //console.log('💰 Price Range:', minPrice, '-', maxPrice);
 
     // Build base query
     let query = { 
       status: "Active",
+      sub_category_new: { 
+        $regex: sub_category_new,
+        $options: "i"
+      },
       quantity: { $gt: 0 } 
     };
 
     // Category filter - try different possible category fields
+    /*
     if (categoryIds.length > 0) {
       query.$or = [
         { sub_category: { $in: categoryIds } },
@@ -35,6 +41,7 @@ export async function GET(req) {
         { main_category: { $in: categoryIds } }
       ];
     }
+      */
 
     // Brand filter
     if (brandIds.length > 0) {
@@ -63,9 +70,10 @@ export async function GET(req) {
       }
     ];
 
-    console.log('📝 Final Query:', JSON.stringify(query, null, 2));
+    //console.log('📝 Final Query:', JSON.stringify(query, null, 2));
 
     // First, let's check what products exist with just basic query
+    /*
     const testProducts = await Product.find({ 
       status: "Active",
       quantity: { $gt: 0 }
@@ -80,6 +88,7 @@ export async function GET(req) {
       price: p.price,
       special_price: p.special_price
     })));
+    */
 
     let productsQuery = Product.find(query).populate('brand', 'brand_name brand_slug');
 
@@ -105,10 +114,10 @@ export async function GET(req) {
 
     // Apply additional filters if any
     if (filterIds.length > 0) {
-      console.log('🔧 Applying additional filters:', filterIds);
+      //console.log('🔧 Applying additional filters:', filterIds);
       
       const productIds = await productsQuery.distinct('_id');
-      console.log('📦 Products before filter application:', productIds.length);
+     // console.log('📦 Products before filter application:', productIds.length);
       
       if (productIds.length > 0) {
         const productFilters = await ProductFilter.find({
@@ -170,7 +179,7 @@ export async function GET(req) {
     // Get total count for pagination
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
-
+/*
     console.log('📊 Final Results:', {
       productsFound: products.length,
       totalProducts,
@@ -186,7 +195,7 @@ export async function GET(req) {
         category: products[0].category
       });
     }
-
+*/
     return Response.json({
       products,
       pagination: {

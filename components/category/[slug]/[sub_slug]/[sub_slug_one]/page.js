@@ -100,12 +100,13 @@ export default function CategoryPage() {
       // Fetch category data (brands, filters, etc.)
       const categoryRes = await fetch(`/api/categories/${sub_slug}/${sub_slug}/${sub_slug_one}`);
       const categoryData = await categoryRes.json();
-      console.log(categoryData);
-      console.log(categoryData.category);
+      
+      //console.log('categoryData.category: ',categoryData.category);
       setCategoryData(categoryData);
       
       // Set initial price range based on products in category
       if (categoryData.products?.length > 0) {
+        
         const prices = categoryData.products.map(p => p.special_price);
         let minPrice = Math.min(...prices);
         let maxPrice = Math.max(...prices);
@@ -141,8 +142,10 @@ export default function CategoryPage() {
         }
       });
       setFilterGroups(groups);
+      
       if (categoryData.products?.length > 0) {
-        await fetchFilteredProducts(categoryData.category._id, 1, true);
+        
+        await fetchFilteredProducts(categoryData, 1, true);
       }else{
         // Redirect to 404 if no products found
         router.push('/noproduct');
@@ -169,27 +172,31 @@ export default function CategoryPage() {
   // }, [hasMore, products.length]);
 
   // const fetchFilteredProducts = async (categoryId) => {
-      const fetchFilteredProducts = useCallback(async (categoryId, pageNum = 1, initialLoad = false) => {
+      const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
     try {
-      setLoading(true);
-      
+      if (!initialLoad) setLoading(true);
       const query = new URLSearchParams();
-      query.set('categoryId', categoryId);
-      
+   
+
+     // query.set('categoryIds', categoryIds.join(','));
+      query.set('sub_category_new',  categoryData.category.md5_cat_name);
+      query.set('page', pageNum);
+      query.set('limit', itemsPerPage);
+
       if (selectedFilters.brands.length > 0) {
         query.set('brands', selectedFilters.brands.join(','));
       }
-      
       query.set('minPrice', selectedFilters.price.min);
       query.set('maxPrice', selectedFilters.price.max);
       
       if (selectedFilters.filters.length > 0) {
         query.set('filters', selectedFilters.filters.join(','));
       }
-      query.set('page', pageNum);
-      query.set('limit', itemsPerPage);
-      const res =await fetch(`/api/product/filter?${query}`);
-            const { products, pagination: paginationData } = await res.json();
+
+      const res = await fetch(`/api/product/filter/main?${query}`);
+      const { products, pagination: paginationData } = await res.json();
+
+      //console.log('Raw filter Response:', products);
 
       setProducts(products);
       
@@ -207,10 +214,11 @@ export default function CategoryPage() {
       } else {
         setNofound(false);
       }
+      
     } catch (error) {
-      toast.error('Error fetching filtered products:', error);
+     // toast.error('Error fetching filtered products:', error);
       // Redirect to 404 on error
-      router.push('/noproduct');
+    //  router.push('/noproduct');
     } finally {
       setLoading(false);
     }
@@ -517,6 +525,11 @@ export default function CategoryPage() {
   //   );
   // }
   // console.log(categoryData.banners);
+
+  if(values[0] < MIN || values[1] > MAX){
+     values[0] = MIN;
+     values[1] = MAX;
+   }
  
   return(
     <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
