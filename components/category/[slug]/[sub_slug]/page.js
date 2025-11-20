@@ -16,7 +16,7 @@ export default function CategoryPage() {
     brands: [],
     filters: []
   });
-  console.log(categoryData);
+  //console.log(categoryData);
   const [showEndMessage, setShowEndMessage] = useState(false);
   const [products, setProducts] = useState([]);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -91,7 +91,7 @@ const scroll = (direction) => {
       //setLoading(true);
       const categoryRes = await fetch(`/api/categories/${sub_slug}`);
       const categoryData = await categoryRes.json();
-      
+      //console.log('categoryData: ',categoryData);
       setCategoryData({
         ...categoryData,
         categoryTree: categoryData.category,
@@ -166,7 +166,8 @@ const scroll = (direction) => {
         ? selectedFilters.categories
         : categoryData.allCategoryIds;
 
-      query.set('categoryIds', categoryIds.join(','));
+      //query.set('categoryIds', categoryIds.join(','));
+      query.set('sub_category_new',  categoryData.main_category.md5_cat_name);
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
@@ -182,7 +183,7 @@ const scroll = (direction) => {
 
       const res = await fetch(`/api/product/filter/main?${query}`);
       const { products, pagination: paginationData } = await res.json();
-
+      //console.log('products: ',products);
       setProducts(products);
       
       // Update pagination state
@@ -586,6 +587,9 @@ const scroll = (direction) => {
   //   );
   // }
 
+
+//console.log('categoryData: ',categoryData);
+   
   return (
     <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
       {categoryData.main_category.banners && categoryData.main_category.banners.length > 0 && (
@@ -799,13 +803,6 @@ const scroll = (direction) => {
 </div>
 
 
-
-
- 
-
-
-
-      
        <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 lg:gap-8">
   <div className="lg:col-span-1 space-y-6">
     <h1 className="text-3xl font-bold mb-3 text-gray-600 pl-1">{categoryData.main_category.category_name}</h1>

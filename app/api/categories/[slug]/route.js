@@ -42,9 +42,18 @@ export async function GET(request, { params }) {
     const allCategoryIds = getAllCategoryIds(categoryTree);
 
     // Fetch products in category/subcategories
+    /*
     const products = await Product.find({
       sub_category: { $in: allCategoryIds },
       status: "Active"
+    });
+    */
+    const products = await Product.find({
+      status: "Active",
+      sub_category_new: { 
+        $regex: main_category.md5_cat_name,
+        $options: "i"
+      }, quantity: { $gt: 0 }
     });
 
     if (!products || products.length === 0) {

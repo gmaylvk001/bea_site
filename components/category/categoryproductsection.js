@@ -232,20 +232,23 @@ const CategoryProductsSection = ({
   const fetchCategoryProducts = async (categoryId, limit = 8) => {
     try {
       setLoading(true);
+      /*
       console.log('🔄 Fetching products for category:', {
         name: mainCategory.category_name,
         id: categoryId,
-        slug: mainCategory.category_slug
+        slug: mainCategory.category_slug,
+        md5_cat_name: mainCategory.md5_cat_name
       });
-      
+      */
       const query = new URLSearchParams();
-      query.set('categoryIds', categoryId);
+      //query.set('categoryIds', categoryId);
+      query.set('sub_category_new',  mainCategory.md5_cat_name);
       query.set('page', '1');
       query.set('limit', limit.toString());
       query.set('sort', 'featured');
 
       const apiUrl = `/api/product/filter/main?${query}`;
-      console.log('🌐 API URL:', apiUrl);
+     // console.log('🌐 API URL:', apiUrl);
 
       const res = await fetch(apiUrl);
       

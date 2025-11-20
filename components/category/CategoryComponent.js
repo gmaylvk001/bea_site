@@ -78,12 +78,12 @@ export default function CategoryPage() {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching category data for slug:', slug);
+     // console.log('🔍 Fetching category data for slug:', slug);
       
       const categoryRes = await fetch(`/api/categories/${slug}`);
       const categoryData = await categoryRes.json();
       
-      console.log('📦 Raw API Response:', categoryData);
+      //console.log('📦 Raw API Response:', categoryData);
 
       setCategoryData({
         ...categoryData,
@@ -178,8 +178,8 @@ export default function CategoryPage() {
       setBrandMap(map);
       
       // Debug: log brands to check data
-      console.log('📦 Brand data loaded:', data);
-      console.log('🗺️ Brand map:', map);
+      //console.log('📦 Brand data loaded:', data);
+     // console.log('🗺️ Brand map:', map);
     }
   } catch (error) {
     console.error('Error fetching brands:', error.message);
@@ -198,7 +198,8 @@ export default function CategoryPage() {
         ? selectedFilters.categories
         : categoryData.allCategoryIds;
 
-      query.set('categoryIds', categoryIds.join(','));
+     // query.set('categoryIds', categoryIds.join(','));
+      query.set('sub_category_new',  categoryData.main_category.md5_cat_name);
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
@@ -214,6 +215,8 @@ export default function CategoryPage() {
 
       const res = await fetch(`/api/product/filter/main?${query}`);
       const { products, pagination: paginationData } = await res.json();
+
+     // cosnole.log('Raw filter Response:', products);
 
       setProducts(products);
       
