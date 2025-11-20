@@ -20,8 +20,8 @@ export async function POST(req) {
 
     const formData = await req.formData();
     const category_name = formData.get("category_name");
-    let parentid = formData.get("parentid") || formData.get("parentid_new") || "none";
-    let parentid_new = formData.get("parentid_new") || "none";
+    let parentid = formData.get("parentid") || "none";
+    let parentid_new = "none";
     const status = formData.get("status") || "Active";
     const show_on_home = formData.get("show_on_home") || "No";
     const content = formData.get("content") || ""; // ✅ Add content field
@@ -34,9 +34,12 @@ export async function POST(req) {
 
     let category_slug = convertSlug(category_name);
     let md5_cat_name = md5(category_slug);
+    
+    
+    /*
 
     if (parentid === "none") {
-      const getParentCategory = await Category.findOne({ category_name: parentid_new });
+      const getParentCategory = await Category.findOne({ category_name: parentid });
       parentid = getParentCategory ? getParentCategory._id : "none";
     } else {
       if (parentid.includes(">")) {
@@ -67,6 +70,11 @@ export async function POST(req) {
         parentid = getParentCategory ? getParentCategory._id : md5_cat_name;
       }
     }
+    
+    */
+    
+    
+    /*
 
     if (parentid_new === "none") {
       const getParentCategory = await Category.findOne({ category_name: parentid_new });
@@ -99,12 +107,17 @@ export async function POST(req) {
         parentid_new = getParentCategory ? getParentCategory.md5_cat_name : md5_cat_name;
       }
     }
+    
+    */
+    
+    
+    
 
     // Check if category already exists
     let existingCategory = await Category.findOne({
       category_slug: category_slug,
       parentid: parentid,
-      parentid_new: parentid_new
+      //parentid_new: parentid_new
     });
 
     if (existingCategory) {

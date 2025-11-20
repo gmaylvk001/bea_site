@@ -51,6 +51,8 @@ export async function GET() {
         const subcategory = subcategoryMap[cp.subcategoryId.toString()];
         const filteredProducts = await Product.find({
           _id: { $in: cp.products },
+          quantity: { $gt: 0 },
+          special_price: { $gt: 2 },
           $or: [
             { model_number: { $exists: false } },
             { model_number: { $exists: true, $ne: "" } }
@@ -62,7 +64,7 @@ export async function GET() {
           products: filteredProducts,
         };
       })
-    );
+    );  
 
 
     // Filter out category products with no valid products
