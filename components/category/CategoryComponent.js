@@ -230,7 +230,7 @@ export default function CategoryPage() {
       const res = await fetch(`/api/product/filter/main?${query}`);
       const { products, pagination: paginationData } = await res.json();
 
-     // cosnole.log('Raw filter Response:', products);
+     // console.log('Raw filter Response:', products);
 
       setProducts(products);
       
