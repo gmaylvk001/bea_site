@@ -2,12 +2,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { EffectFade } from "swiper/modules";
-import 'swiper/css';
-import 'swiper/css/navigation';
-import CategoryProductsSection from '@/components/category/categoryproductsection'
-import { Navigation, Autoplay } from 'swiper/modules';
 import { useParams, useRouter } from "next/navigation";
 import { FaSortAmountDown, FaSlidersH } from 'react-icons/fa';
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "react-feather";
@@ -40,9 +34,29 @@ export default function CategoryPage() {
   const [sortOption, setSortOption] = useState('');
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [isBrandsExpanded, setIsBrandsExpanded] = useState(true);
-  const [expandedFilters, setExpandedFilters] = useState({});
+  const [expandedFilters, setExpandedFilters] = useState(() => {
+  // Initialize all filter groups as expanded
+  const initialExpanded = {};
+  if (categoryData.filters) {
+    categoryData.filters.forEach(filter => {
+      const groupId = filter.filter_group_name;
+      if (groupId) {
+        initialExpanded[groupId] = true;
+      }
+    });
+  }
+  return initialExpanded;
+}); 
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
   const [wishlist, setWishlist] = useState([]); 
+  const toggleFilters = () => setIsFiltersExpanded(!isFiltersExpanded);
+  const toggleCategories = () => {
+    setIsCategoriesExpanded(!isCategoriesExpanded);
+  };
+  const toggleBrands = () => setIsBrandsExpanded(!isBrandsExpanded);
+  const toggleFilterGroup = (id) => {
+    setExpandedFilters(prev => ({ ...prev, [id]: !prev[id] }));
+  };
   const [nofound, setNofound] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [currentCategoryBannerIndex, setCurrentCategoryBannerIndex] = useState(0);
@@ -57,16 +71,7 @@ export default function CategoryPage() {
   });
   const itemsPerPage = 12;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  const router = useRouter();
-
-  const toggleFilters = () => setIsFiltersExpanded(!isFiltersExpanded);
-  const toggleCategories = () => {
-    setIsCategoriesExpanded(!isCategoriesExpanded);
-  };
-  const toggleBrands = () => setIsBrandsExpanded(!isBrandsExpanded);
-  const toggleFilterGroup = (id) => {
-    setExpandedFilters(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  const router = useRouter(); // Added router
 
   // Fetch initial data
   useEffect(() => {
@@ -75,116 +80,126 @@ export default function CategoryPage() {
     }
   }, [slug]);
   
-  const fetchInitialData = async () => {
-    try {
-      setLoading(true);
-      console.log('🔍 Fetching category data for slug:', slug);
-      
-      const categoryRes = await fetch(`/api/categories/${slug}`);
-      const categoryData = await categoryRes.json();
-      
-      console.log('📦 Raw API Response:', categoryData);
+  // In your fetchInitialData function, update the filter grouping:
+const fetchInitialData = async () => {
+  try {
+    setLoading(true);
+    console.log('🔍 Fetching category data for slug:', slug);
+    
+    const categoryRes = await fetch(`/api/categories/${slug}`);
+    const categoryData = await categoryRes.json();
+    
+    console.log('📦 Raw API Response:', categoryData);
+    console.log('🎯 Filters from API:', categoryData.filters);
+    console.log('📊 Number of filters:', categoryData.filters?.length || 0);
 
-      setCategoryData({
-        ...categoryData,
-        categoryTree: categoryData.category,
-        allCategoryIds: categoryData.allCategoryIds,
-        banners: categoryData.main_category?.banners || []
-      });
+    setCategoryData({
+      ...categoryData,
+      categoryTree: categoryData.category,
+      allCategoryIds: categoryData.allCategoryIds,
+      banners: categoryData.main_category?.banners || []
+    });
 
-      // Price range logic
-      if (categoryData.products?.length > 0) {
-        const prices = categoryData.products.map(p => p.special_price || p.price);
-        let minPrice = Math.min(...prices);
-        let maxPrice = Math.max(...prices);
+    // Price range logic
+    if (categoryData.products?.length > 0) {
+      const prices = categoryData.products.map(p => p.special_price || p.price);
+      let minPrice = Math.min(...prices);
+      let maxPrice = Math.max(...prices);
 
-        // ✅ Fix: If only one product, add a small buffer
-        if (minPrice === maxPrice) {
-          minPrice = Math.max(1, minPrice - 100);
-          maxPrice = maxPrice + 100;
-        }
-
-        setPriceRange([minPrice, maxPrice]);
-        setSelectedFilters(prev => ({
-          ...prev,
-          price: { min: minPrice, max: maxPrice }
-        }));
+      if (minPrice === maxPrice) {
+        minPrice = Math.max(1, minPrice - 100);
+        maxPrice = maxPrice + 100;
       }
 
-      // Filter groups logic
+      setPriceRange([minPrice, maxPrice]);
+      setSelectedFilters(prev => ({
+        ...prev,
+        price: { min: minPrice, max: maxPrice }
+      }));
+    }
+
+    // IMPROVED FILTER GROUPING LOGIC
+    if (categoryData.filters && categoryData.filters.length > 0) {
+      console.log('🔄 Processing filters...');
+      
       const groups = {};
-      if (categoryData.filters) {
-        categoryData.filters.forEach(filter => {
-          const groupId = filter.filter_group_name;
-          if (groupId) {
-            if (!groups[groupId]) {
-              groups[groupId] = {
-                _id: groupId,
-                name: filter.filter_group_name,
-                slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
-                filters: []
-              };
-            }
-            groups[groupId].filters.push(filter);
+      
+      categoryData.filters.forEach((filter, index) => {
+        console.log(`📋 Filter ${index + 1}:`, filter);
+        
+        // Use filter_group_id as the primary key, fallback to filter_group_name
+        const groupId = filter.filter_group_id || filter.filter_group_name;
+        
+        if (groupId) {
+          if (!groups[groupId]) {
+            groups[groupId] = {
+              _id: groupId,
+              name: filter.filter_group_name || 'Unnamed Group',
+              slug: (filter.filter_group_name || 'unnamed').toLowerCase().replace(/\s+/g, '-'),
+              filters: []
+            };
+            console.log(`✅ Created new group: ${filter.filter_group_name}`);
           }
-        });
-      }
+          
+          // Add filter to group
+          groups[groupId].filters.push({
+            _id: filter._id,
+            filter_name: filter.filter_name,
+            count: filter.count || 0
+          });
+          console.log(`✅ Added filter "${filter.filter_name}" to group "${filter.filter_group_name}"`);
+        } else {
+          console.log('❌ Filter missing group ID:', filter);
+        }
+      });
+      
+      console.log('🏷️ Final filter groups:', groups);
       setFilterGroups(groups);
 
-      // Initialize expanded state for filter groups
+      // Initialize expanded state
       const initialExpanded = {};
       Object.keys(groups).forEach(groupId => {
         initialExpanded[groupId] = true;
       });
       setExpandedFilters(initialExpanded);
-
-      if (categoryData.products?.length > 0) {
-        await fetchFilteredProducts(categoryData, 1, true);
-      } else {
-        // Redirect to 404 if no products found
-        router.push('/noproduct');
-      }
-    } catch (error) {
-      toast.error("Error fetching initial data");
-      // Redirect to 404 on error as well
-      router.push('/noproduct');
-    } finally {
-      setInitialLoadComplete(true);
-      setLoading(false);
-    }
-  };
-
-  const [brandMap, setBrandMap] = useState({});
- 
- const fetchBrand = async () => {
-  try {
-    const response = await fetch("/api/brand");
-    const result = await response.json();
-    if (result.error) {
-      console.error(result.error);
-    } else {
-      const data = result.data || result.brands || result;
-
-      // Store as map for quick access
-      const map = {};
-      data.forEach((b) => {
-        map[b._id] = {
-          brand_name: b.brand_name,
-          logo: b.logo,
-          image: b.image,
-          slug: b.slug
-        };
-      });
-      setBrandMap(map);
       
-      // Debug: log brands to check data
-      console.log('📦 Brand data loaded:', data);
-      console.log('🗺️ Brand map:', map);
+    } else {
+      console.log('❌ No filters found in category data');
+      setFilterGroups({});
     }
+
+    await fetchFilteredProducts(categoryData, 1, true);
+    
   } catch (error) {
-    console.error('Error fetching brands:', error.message);
+    console.error('💥 Error in fetchInitialData:', error);
+    toast.error("Error fetching initial data");
+    router.push('/noproduct');
+  } finally {
+    setInitialLoadComplete(true);
   }
 };
+  const [brandMap, setBrandMap] = useState([]);
+ 
+  const fetchBrand = async () => {
+    try {
+      const response = await fetch("/api/brand");
+      const result = await response.json();
+      if (result.error) {
+        console.error(result.error);
+      } else {
+        const data = result.data;
+  
+        // Store as map for quick access
+        const map = {};
+        data.forEach((b) => {
+          map[b._id] = b.brand_name;
+        });
+        setBrandMap(map);
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
  
   useEffect(() => {
     fetchBrand();
@@ -360,7 +375,20 @@ export default function CategoryPage() {
               <Link
                 href={`/category/${slug}/${category.category_slug}`}
                 className="p-2 hover:bg-gray-100 rounded inline-flex items-center"
-              >
+              >      {/*
+                {category.image && (
+                  <div className="w-6 h-6 mr-2 relative">
+                    
+                    <Image
+                      src={category.image.startsWith('http') ? category.image : `${category.image}`}
+                      alt={category.category_name}
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </div>
+                )}
+                  */}
                 {category.category_name}
               </Link>
             </div>
@@ -499,234 +527,955 @@ export default function CategoryPage() {
   }
 
   return (
-   <main className="bg-white min-h-screen">
-  {/* ===== Hero Banner Section ===== */}
-  {categoryData.banners && categoryData.banners.length > 0 && (
-  <section className="relative px-4 md:px-6 pt-4 pb-8">
-    <Swiper
-      modules={[Navigation, Autoplay, EffectFade]}
-      effect="fade"
-      spaceBetween={0}
-      speed={1200}
-      slidesPerView={1}
-      autoplay={{
-        delay: 6000,
-        disableOnInteraction: false,
-      }}
-      navigation={{
-        nextEl: ".banner-swiper-button-next",
-        prevEl: ".banner-swiper-button-prev",
-      }}
-      className="rounded-3xl overflow-hidden shadow-xl"
-    >
-      {categoryData.banners.map((banner, index) => (
-        <SwiperSlide key={banner._id || index}>
-          {banner.redirect_url ? (
-            // ✅ CLICKABLE IMAGE
-            <Link href={banner.redirect_url} className="block w-full">
-              <div className="w-full overflow-hidden cursor-pointer">
-                <div className="relative aspect-[1248/390] w-full">
-                  <Image
-                    src={
-                      banner.banner_image.startsWith("http")
-                        ? banner.banner_image
-                        : `${banner.banner_image}`
-                    }
-                    alt={banner.banner_name}
-                    fill
-                    className="object-cover rounded-3xl"
-                    unoptimized
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1248px"
-                    priority={index === 0}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent rounded-3xl"></div>
+
+
+    <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
+
+      
+
+     {categoryData.banners && categoryData.banners.length > 0 && (
+
+        // <div className="relative w-full mb-8 rounded-lg overflow-hidden shadow-md">
+        //   <div
+        //     className="relative h-48 md:h-64 lg:h-80 cursor-pointer"
+        //     onClick={() => {
+        //       const redirectUrl = categoryData.banners[currentCategoryBannerIndex].redirect_url;
+        //       if (redirectUrl) window.location.href = redirectUrl;
+        //     }}
+        //   >
+        //     <Image
+        //       src={
+        //         categoryData.banners[currentCategoryBannerIndex].banner_image.startsWith("http")
+        //           ? categoryData.banners[currentCategoryBannerIndex].banner_image
+        //           : `${categoryData.banners[currentCategoryBannerIndex].banner_image}`
+        //       }
+        //       alt={categoryData.banners[currentCategoryBannerIndex].banner_name}
+        //       fill
+        //       className="object-cover"
+        //       unoptimized
+        //     />
+
+        //     {/* Navigation Arrows */}
+        //     {categoryData.banners.length > 1 && (
+        //       <>
+        //         {/* <button
+        //           onClick={(e) => {
+        //             e.stopPropagation();
+        //             setCurrentCategoryBannerIndex(
+        //               (prev) =>
+        //                 prev === 0 ? categoryData.banners.length - 1 : prev - 1
+        //             );
+        //           }}
+        //           className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+        //         >
+        //           <ChevronLeft size={24} />
+        //         </button>
+        //         <button
+        //           onClick={(e) => {
+        //             e.stopPropagation();
+        //             setCurrentCategoryBannerIndex(
+        //               (prev) =>
+        //                 prev === categoryData.banners.length - 1 ? 0 : prev + 1
+        //             );
+        //           }}
+        //           className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+        //         >
+        //           <ChevronRight size={24} />
+        //         </button> */}
+        //       </>
+        //     )}
+
+        //     {/* Radio Button Indicators */}
+        //     {categoryData.banners.length > 1 && (
+        //       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        //         {categoryData.banners.map((_, index) => (
+        //           <label
+        //             key={index}
+        //             className="flex items-center cursor-pointer"
+        //             onClick={(e) => {
+        //               e.stopPropagation();
+        //               setCurrentCategoryBannerIndex(index);
+        //             }}
+        //           >
+        //             <input
+        //               type="radio"
+        //               name="category-banner-indicator"
+        //               checked={index === currentCategoryBannerIndex}
+        //               onChange={() => setCurrentCategoryBannerIndex(index)}
+        //               className="sr-only"
+        //             />
+        //             <span
+        //               className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+        //                 index === currentCategoryBannerIndex
+        //                   ? "bg-white border-white"
+        //                   : "bg-transparent border-white/70"
+        //               }`}
+        //             >
+        //               {index === currentCategoryBannerIndex && (
+        //                 <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+        //               )}
+        //             </span>
+        //           </label>
+        //         ))}
+        //       </div>
+        //     )}
+        //   </div>
+
+        //   {/* Banner Title */}
+        //   {/* {categoryData.banners[currentCategoryBannerIndex].banner_name && (
+        //     <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-4">
+        //       <h2 className="text-xl font-semibold">
+        //         {categoryData.banners[currentCategoryBannerIndex].banner_name}
+        //       </h2>
+        //       {categoryData.banners[currentCategoryBannerIndex].redirect_url && (
+        //         <p className="text-sm mt-1 opacity-80">Click to explore</p>
+        //       )}
+        //     </div>
+        //   )} */}
+        // </div>
+
+
+
+        <div className="relative w-full mb-8 rounded-lg overflow-hidden shadow-md">
+  <div
+    className="relative w-full aspect-[16/6] sm:aspect-[16/7] lg:aspect-[16/5] cursor-pointer"
+    onClick={() => {
+      const redirectUrl =
+        categoryData.banners[currentCategoryBannerIndex].redirect_url;
+      if (redirectUrl) window.location.href = redirectUrl;
+    }}
+  >
+    <Image
+      src={
+        categoryData.banners[currentCategoryBannerIndex].banner_image.startsWith("http")
+          ? categoryData.banners[currentCategoryBannerIndex].banner_image
+          : `${categoryData.banners[currentCategoryBannerIndex].banner_image}`
+      }
+      alt={categoryData.banners[currentCategoryBannerIndex].banner_name}
+      fill
+      className="object-cover w-full h-full"
+      unoptimized
+    />
+
+    {/* Radio Button Indicators */}
+    {categoryData.banners.length > 1 && (
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+        {categoryData.banners.map((_, index) => (
+          <label
+            key={index}
+            className="flex items-center cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentCategoryBannerIndex(index);
+            }}
+          >
+            <input
+              type="radio"
+              name="category-banner-indicator"
+              checked={index === currentCategoryBannerIndex}
+              onChange={() => setCurrentCategoryBannerIndex(index)}
+              className="sr-only"
+            />
+            <span
+              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                index === currentCategoryBannerIndex
+                  ? "bg-white border-white"
+                  : "bg-transparent border-white/70"
+              }`}
+            >
+              {index === currentCategoryBannerIndex && (
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+              )}
+            </span>
+          </label>
+        ))}
+      </div>
+    )}
+  </div>
+        </div>
+      )}
+      
+
+
+     <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 lg:gap-8">
+  <div className="lg:col-span-1 space-y-6">
+    <h1 className="text-3xl font-bold mb-3 text-gray-600 pl-1">{categoryData.main_category.category_name}</h1>
+  </div>
+  <div className="lg:col-span-3">
+    {/* Mobile: Products count at top */}
+    <div className="sm:hidden mb-4">
+      <p className="text-sm text-gray-600">{pagination.totalProducts} products found</p>
+    </div>
+    
+    {/* Desktop: Products count and sort together */}
+    <div className="hidden sm:flex justify-between items-center mb-3">
+      <p className="text-sm text-gray-600">{pagination.totalProducts} products found</p>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-gray-600">Sort by:</span>
+        <select
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
+          className="px-4 py-2 border rounded-md text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Featured</option>
+          <option value="price-low-high">Price: Low to High</option>
+          <option value="price-high-low">Price: High to Low</option>
+          <option value="name-a-z">Name: A-Z</option>
+          <option value="name-z-a">Name: Z-A</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+    {/* Mobile Sort + Filter Buttons */}
+     
+    <div className="flex border-b border-gray-300 bg-gray-100 sticky top-0 z-30 lg:hidden mb-3">
+      <button
+        className="flex items-center justify-center gap-2 py-4 flex-1 text-sm font-medium text-gray-800 border-r border-gray-300 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+        onClick={() => setIsSortPanelOpen(true)}
+      >
+        <FaSortAmountDown className="text-gray-500 text-xs" />
+        SORT
+      </button>
+      
+      <button
+        className="flex items-center justify-center gap-2 py-4 flex-1 text-sm font-medium text-gray-800 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+        onClick={() => setIsFilterPanelOpen(true)}
+      >
+        <FaSlidersH className="text-gray-500 text-xs" />
+        FILTER
+      </button>
+    </div>
+          {/* Mobile Sort Modal */}
+          {isSortPanelOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50 lg:hidden">
+              <div className="bg-white w-full rounded-t-2xl p-5">
+                <div className="flex justify-between items-center border-b pb-3 mb-4">
+                  <h2 className="text-lg font-semibold">Sort By</h2>
+                  <button onClick={() => setIsSortPanelOpen(false)}>✕</button>
                 </div>
-              </div>
-            </Link>
-          ) : (
-            // Non-clickable banner
-            <div className="w-full overflow-hidden">
-              <div className="relative aspect-[1248/390] w-full">
-                <Image
-                  src={
-                    banner.banner_image.startsWith("http")
-                      ? banner.banner_image
-                      : `${banner.banner_image}`
-                  }
-                  alt={banner.banner_name}
-                  fill
-                  className="object-cover rounded-3xl"
-                  unoptimized
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1248px"
-                  priority={index === 0}
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent rounded-3xl"></div>
+
+                <div className="space-y-4">
+                  {/* <label className="block text-gray-600 text-sm font-medium mb-2">Sort by</label> */}
+                <ul className="divide-y divide-gray-200 text-sm">
+            <li
+              className={`py-3 cursor-pointer ${sortOption === '' ? 'text-blue-600 font-semibold' : 'text-gray-700'}`}
+              onClick={() => {
+                setSortOption('');
+                setIsSortPanelOpen(false);
+              }}
+            >
+              Featured
+            </li>
+            <li
+              className={`py-3 cursor-pointer ${sortOption === 'price-low-high' ? 'text-blue-600 font-semibold' : 'text-gray-700'}`}
+              onClick={() => {
+                setSortOption('price-low-high');
+                setIsSortPanelOpen(false);
+              }}
+            >
+              Price: Low to High
+            </li>
+            <li
+              className={`py-3 cursor-pointer ${sortOption === 'price-high-low' ? 'text-blue-600 font-semibold' : 'text-gray-700'}`}
+              onClick={() => {
+                setSortOption('price-high-low');
+                setIsSortPanelOpen(false);
+              }}
+            >
+              Price: High to Low
+            </li>
+            <li
+              className={`py-3 cursor-pointer ${sortOption === 'name-a-z' ? 'text-blue-600 font-semibold' : 'text-gray-700'}`}
+              onClick={() => {
+                setSortOption('name-a-z');
+                setIsSortPanelOpen(false);
+              }}
+            >
+              Name: A-Z
+            </li>
+            <li
+              className={`py-3 cursor-pointer ${sortOption === 'name-z-a' ? 'text-blue-600 font-semibold' : 'text-gray-700'}`}
+              onClick={() => {
+                setSortOption('name-z-a');
+                setIsSortPanelOpen(false);
+              }}
+            >
+              Name: Z-A
+            </li>
+          </ul>
+
+                </div>
               </div>
             </div>
           )}
-        </SwiperSlide>
-      ))}
-
-      {/* Left Button */}
-      <div className="banner-swiper-button-prev absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-lg cursor-pointer transition-all duration-300">
-        <ChevronLeft className="text-gray-800" size={24} />
-      </div>
-
-      {/* Right Button */}
-      <div className="banner-swiper-button-next absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-lg cursor-pointer transition-all duration-300">
-        <ChevronRight className="text-gray-800" size={24} />
-      </div>
-    </Swiper>
-  </section>
-)}
 
 
-  {/* ===== Main Categories Section ===== */}
- <section className="px-4 md:px-6 py-8 bg-gray-100">
-  <div className="max-w-7xl mx-auto">
-    <div className="mb-10">
-      <h2 className="text-3xl font-bold text-gray-800 mb-3 text-left">
-        {categoryData.main_category?.category_name ||
-         categoryData.categoryTree?.category_name ||
-         "Categories"}
-      </h2>
-    </div>
-
-    <div
-      className="
-        grid 
-        grid-cols-[repeat(auto-fit,minmax(220px,1fr))]
-        gap-2
-        justify-items-center
-      "
-    >
-      {categoryData.category.map((cat) => (
-        <Link 
-          href={`/category/${slug}/${cat.category_slug}`} 
-          key={cat._id}
-          className="group"
-        >
-          <div className="
-            bg-white rounded-2xl shadow-md hover:shadow-xl 
-            transition-all duration-300 overflow-hidden 
-            border border-gray-200 hover:border-gray-300
-            w-[240px] h-full
-          ">
-            
-            <div className="relative h-48 overflow-hidden bg-gradient-to-b from-gray-600 to-gray-800">
-              <Image 
-                src={cat.image || '/images/default-category.jpg'} 
-                alt={cat.category_name} 
-                fill 
-                className="object-contain p-4 transition-transform duration-500 group-hover:scale-110"
-                unoptimized
-              />
-            </div>
-
-            <div className="p-4">
-              <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 
-                             transition-colors line-clamp-2 text-center">
-                {cat.category_name}
-              </h3>
-            </div>
-
-          </div>
-        </Link>
-      ))}
-    </div>
-  </div>
-</section>
-
-
-
-  {/* ===== Individual Category Sections with Products ===== */}
-{categoryData.category && categoryData.category.map((mainCategory, index) => (
-  <CategoryProductsSection 
-    key={mainCategory._id} 
-    mainCategory={mainCategory} 
-    index={index}
-    slug={slug}
-    brandMap={brandMap} // Add these props
-    apiUrl={apiUrl}
-    handleProductClick={handleProductClick}
-  />
-))}
-  {/* ===== Brands Section ===== */}
- {categoryData.brands && categoryData.brands.length > 0 && (
-  <section className="px-4 md:px-6 py-12 bg-gradient-to-r from-blue-50 to-indigo-50">
-    <div className="max-w-7xl mx-auto">
-      <div className="text-center mb-10">
-        <h2 className="text-left text-2xl md:text-3xl font-bold text-gray-800 mb-3">Shop by Brand</h2>
-        
-      </div>
-      
-      <Swiper
-        modules={[Autoplay]}
-        spaceBetween={20}
-        slidesPerView={2}
-        autoplay={{ 
-          delay: 3000, 
-          disableOnInteraction: false 
-        }}
-        breakpoints={{
-          480: { slidesPerView: 3 },
-          640: { slidesPerView: 4 },
-          768: { slidesPerView: 5 },
-          1024: { slidesPerView: 6 },
-          1280: { slidesPerView: 8 }
-        }}
-        className="pb-2"
-      >
-        {categoryData.brands.map(brand => {
-          // Get full brand data from brandMap using brand ID
-          const fullBrandData = brandMap[brand._id] || brand;
-          const brandImage = fullBrandData.logo || fullBrandData.image;
           
-          return (
-            <SwiperSlide key={brand._id}>
-              <Link 
-                href={`/brand/${brand.brand_name?.toLowerCase().replace(/\s+/g, "-") || brand._id}`}
-                className="block"
-              >
-                <div className="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 group">
-                  <div className="relative w-full h-12">
-                    {brandImage ? (
-                      <Image
-                        src={
-                          brandImage.startsWith("http") 
-                            ? brandImage 
-                            : `/uploads/Brands/${brandImage}`
-                        }
-                        alt={brand.brand_name || "Brand"}
-                        fill
-                        className="object-contain transition-transform duration-300 group-hover:scale-110"
-                        unoptimized
-                      />
-                    ) : (
-                      <span className="text-lg font-semibold text-gray-700 text-center">
-                        {brand.brand_name || "Brand"}
+          <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+            {/* Filters Sidebar */}
+            <div className="hidden lg:block w-full md:w-[250px] shrink-0">
+              {/* Active Filters */}
+              {(selectedFilters.brands.length > 0 || 
+              selectedFilters.categories.length > 0 ||
+               selectedFilters.filters.length > 0 ||
+               selectedFilters.price.min !== priceRange[0] || 
+               selectedFilters.price.max !== priceRange[1]) && (
+                <div className="bg-white p-4 rounded shadow">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold">Active Filters</h3>
+                    <button 
+                      onClick={clearAllFilters}
+                      className="text-blue-600 text-sm hover:underline"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFilters.categories.map(categoryId => {
+                      const category = categoryData.category?.find(c => c._id === categoryId);
+                      return category ? (
+                        <span 
+                          key={categoryId}
+                          className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center"
+                        >
+                          {category.category_name}
+                          <button 
+                            onClick={() => handleFilterChange('categories', categoryId)}
+                            className="ml-1 text-gray-500 hover:text-gray-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ) : null;
+                    })}
+                    {selectedFilters.brands.map(brandId => {
+                      const brand = categoryData.brands.find(b => b._id === brandId);
+                      return brand ? (
+                        <span 
+                          key={brandId}
+                          className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center"
+                        >
+                          {brand.brand_name}
+                          <button 
+                            onClick={() => handleFilterChange('brands', brandId)}
+                            className="ml-1 text-gray-500 hover:text-gray-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ) : null;
+                    })}
+                    
+                    {selectedFilters.filters.map(filterId => {
+                      const filter = Object.values(filterGroups)
+                        .flatMap(g => g.filters)
+                        .find(f => f._id === filterId);
+                      return filter ? (
+                        <span 
+                          key={filterId}
+                          className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center"
+                        >
+                          {filter.filter_name}
+                          <button 
+                            onClick={() => handleFilterChange('filters', filterId)}
+                            className="ml-1 text-gray-500 hover:text-gray-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ) : null;
+                    })}
+                    
+                    {(selectedFilters.price.min !== priceRange[0] || 
+                     selectedFilters.price.max !== priceRange[1]) && (
+                      <span className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center">
+                        ₹{selectedFilters.price.min} - ₹{selectedFilters.price.max}
+                        <button 
+                          onClick={() => setSelectedFilters(prev => ({
+                            ...prev,
+                            price: { min: priceRange[0], max: priceRange[1] }
+                          }))}
+                          className="ml-1 text-gray-500 hover:text-gray-700"
+                        >
+                          ×
+                        </button>
                       </span>
                     )}
                   </div>
                 </div>
+              )}
+
+           
+
+
+              {/* Categories Tree */}
+              {/*
+              <div className="bg-white p-4 rounded-lg shadow-sm border mb-3 text-sm text-gray-600">
+                <h3 className="text-base font-semibold mb-3 text-gray-700">Categories</h3>
+                {categoryData.categoryTree?.length > 0 ? (
+                  <CategoryTree categories={categoryData.categoryTree} selectedFilters={selectedFilters.categories}
+                  onFilterChange={handleFilterChange} />
+                ) : (
+                  <p className="text-gray-500 text-sm">No subcategories</p>
+                )}
+              </div>
+              */}
+              {/* Price Filter */}
+                        <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+                    <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
+              
+                    <ReactRange
+                      values={values}
+                      step={STEP}
+                      min={MIN}
+                      max={MAX}
+                      onChange={(newValues) => setValues(newValues)} // move thumbs
+                      onFinalChange={(newValues) => handlePriceChange(newValues)} // apply on release
+                      renderTrack={({ props, children }) => (
+                        <div
+                          {...props}
+                          className="w-full h-2 rounded-lg bg-gray-200 relative"
+                        >
+                          {/* active green bar */}
+                          <div
+                            className="absolute h-2 bg-gray-500 rounded-lg"
+                            style={{
+                              left: `${((values[0] - MIN) / (MAX - MIN)) * 100}%`,
+                              width: `${((values[1] - values[0]) / (MAX - MIN)) * 100}%`,
+                            }}
+                          />
+                          {children}
+                        </div>
+                      )}
+                      renderThumb={({ props, index }) => {
+                        const { key, ...rest } = props; // remove key from spread
+
+                        return (
+                          <div
+                            key={key} // assign key directly
+                            {...rest} // spread remaining props
+                            className={`w-4 h-4 rounded-full border-2 border-black shadow cursor-pointer relative
+                              ${index === 0 ? "bg-blue-500 z-10" : "bg-green-500 z-20"}`}
+                          >
+                            {/*
+                            <span className="absolute -top-6 text-xs bg-gray-700 text-white px-2 py-1 rounded">
+                              {index === 0 ? "Min" : "Max"}
+                            </span>
+                            */}
+                          </div>
+                        );
+                      }}
+                    />
+              
+                    <div className="flex justify-between text-sm text-gray-600 mt-6">
+                      <span>₹{values[0].toLocaleString()}</span>
+                      <span>₹{values[1].toLocaleString()}</span>
+                    </div>
+                  </div>
+
+              {/* Brand Filter */}
+              <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+                <div className="flex items-center justify-between pb-2">
+                  <h3 className="text-base font-semibold text-gray-700">Brands</h3>
+                  <button onClick={toggleBrands} className="text-gray-500 hover:text-gray-700">
+                    {isBrandsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                  </button>
+                </div>
+                {isBrandsExpanded && (
+                  <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+                    {categoryData.brands.map(brand => (
+                      <li key={brand._id} className="flex items-center">
+                        <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
+                        <input
+                        type="checkbox"
+                        checked={selectedFilters.brands.includes(brand._id)}
+                        onChange={() => handleFilterChange("brands", brand._id)}
+                        className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      />
+                          {/*
+                          {brand.image && (
+                            <div className="w-6 h-6 mr-2 relative">
+                              <Image
+                                src={brand.image.startsWith('http') ? brand.image : `/uploads/Brands/${brand.image}`}
+                                alt={brand.brand_name}
+                                fill
+                                className="object-contain"
+                                unoptimized
+                              />
+                            </div>
+                          )}
+                            */}
+                          <span className="text-sm text-gray-600">{brand.brand_name} ({brand.count})</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Dynamic Filters */}
+              {isFiltersExpanded && Object.values(filterGroups).length > 0 &&  (
+                <div className="bg-white p-4 rounded-lg shadow-sm border mb-3 border-gray-100">
+                  <div className="pb-2 mb-2">
+                    <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
+                  </div>
+                  <div className="space-y-4">
+                    {Object.values(filterGroups).map(group => (
+                      <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                        <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
+                          <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
+                          <ChevronDown 
+                            size={18}
+                            className={`text-gray-400 transition-transform duration-200 ${
+                              expandedFilters[group._id] ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </button>
+
+                        {expandedFilters[group._id] && (
+                          <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+                            {group.filters.map(filter => (
+  <li key={filter._id} className="flex items-center">
+    <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
+      <input
+        type="checkbox"
+        checked={selectedFilters.filters.includes(filter._id)}
+        onChange={(e) => handleFilterChange('filters', filter._id, e.target.checked)}
+        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+      />
+      <span className="text-sm text-gray-600">{filter.filter_name}</span>
+      {filter.count > 0 && (
+        <span className="text-xs text-gray-400 ml-auto">
+          ({filter.count})
+        </span>
+      )}
+    </label>
+  </li>
+))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+        {isFilterPanelOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+            <div className="fixed left-0 top-0 w-4/5 h-full bg-white shadow-lg flex flex-col">
+              
+              {/* Header (fixed) */}
+              <div className="flex justify-between items-center p-4 border-b flex-shrink-0 bg-white">
+                <h2 className="text-lg font-semibold">Filters</h2>
+                <button 
+                  onClick={() => setIsFilterPanelOpen(false)}
+                  className="text-gray-500 hover:text-gray-700 text-lg"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* Active Filters */}
+                {(selectedFilters.brands.length > 0 || 
+                      selectedFilters.categories.length > 0 ||
+                      selectedFilters.filters.length > 0 ||
+                      selectedFilters.price.min !== priceRange[0] || 
+                      selectedFilters.price.max !== priceRange[1]) && (
+                        <div className="bg-white p-4 rounded shadow border">
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-semibold">Active Filters</h3>
+                            <button 
+                              onClick={clearAllFilters}
+                              className="text-blue-600 text-sm hover:underline"
+                            >
+                              Clear all
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedFilters.categories.map(categoryId => {
+                              const category = categoryData.category?.find(c => c._id === categoryId);
+                              return category ? (
+                                <span 
+                                  key={categoryId}
+                                  className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center"
+                                >
+                                  {category.category_name}
+                                  <button 
+                                    onClick={() => handleFilterChange('categories', categoryId)}
+                                    className="ml-1 text-gray-500 hover:text-gray-700"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ) : null;
+                            })}
+                            {selectedFilters.brands.map(brandId => {
+                              const brand = categoryData.brands.find(b => b._id === brandId);
+                              return brand ? (
+                                <span 
+                                  key={brandId}
+                                  className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center"
+                                >
+                                  {brand.brand_name}
+                                  <button 
+                                    onClick={() => handleFilterChange('brands', brandId)}
+                                    className="ml-1 text-gray-500 hover:text-gray-700"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ) : null;
+                            })}
+                            
+                            {selectedFilters.filters.map(filterId => {
+                              const filter = Object.values(filterGroups)
+                                .flatMap(g => g.filters)
+                                .find(f => f._id === filterId);
+                              return filter ? (
+                                <span 
+                                  key={filterId}
+                                  className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center"
+                                >
+                                  {filter.filter_name}
+                                  <button 
+                                    onClick={() => handleFilterChange('filters', filterId)}
+                                    className="ml-1 text-gray-500 hover:text-gray-700"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ) : null;
+                            })}
+                            
+                            {(selectedFilters.price.min !== priceRange[0] || 
+                            selectedFilters.price.max !== priceRange[1]) && (
+                              <span className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center">
+                                ₹{selectedFilters.price.min} - ₹{selectedFilters.price.max}
+                                <button 
+                                  onClick={() => setSelectedFilters(prev => ({
+                                    ...prev,
+                                    price: { min: priceRange[0], max: priceRange[1] }
+                                  }))}
+                                  className="ml-1 text-gray-500 hover:text-gray-700"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                {/* Price Filter */}
+                <div className="bg-white p-4 rounded-lg shadow-sm border">
+                  <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
+            
+                  <ReactRange
+                    values={values}
+                    step={STEP}
+                    min={MIN}
+                    max={MAX}
+                    onChange={(newValues) => setValues(newValues)}
+                    onFinalChange={(newValues) => handlePriceChange(newValues)}
+                    renderTrack={({ props, children }) => (
+                      <div
+                        {...props}
+                        className="w-full h-2 rounded-lg bg-gray-200 relative"
+                      >
+                        <div
+                          className="absolute h-2 bg-gray-500 rounded-lg"
+                          style={{
+                            left: `${((values[0] - MIN) / (MAX - MIN)) * 100}%`,
+                            width: `${((values[1] - values[0]) / (MAX - MIN)) * 100}%`,
+                          }}
+                        />
+                        {children}
+                      </div>
+                    )}
+                    renderThumb={({ props, index }) => {
+                      const { key, ...rest } = props;
+
+                      return (
+                        <div
+                          key={key}
+                          {...rest}
+                          className={`w-4 h-4 rounded-full border-2 border-black shadow cursor-pointer relative
+                            ${index === 0 ? "bg-blue-500 z-10" : "bg-green-500 z-20"}`}
+                        />
+                      );
+                    }}
+                  />
+            
+                  <div className="flex justify-between text-sm text-gray-600 mt-6">
+                    <span>₹{values[0].toLocaleString()}</span>
+                    <span>₹{values[1].toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Brands Filter */}
+                <div className="bg-white p-4 rounded-lg shadow-sm border">
+                  <div className="flex items-center justify-between pb-2">
+                    <h3 className="text-base font-semibold text-gray-700">Brands</h3>
+                    <button onClick={toggleBrands} className="text-gray-500 hover:text-gray-700">
+                      {isBrandsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </button>
+                  </div>
+                  {isBrandsExpanded && (
+                    <ul className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+                      {categoryData.brands.map(brand => (
+                        <li key={brand._id} className="flex items-center">
+                          <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={selectedFilters.brands.includes(brand._id)}
+                              onChange={() => handleFilterChange("brands", brand._id)}
+                              className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                            />
+                            <span className="text-sm text-gray-600">{brand.brand_name} ({brand.count})</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Dynamic Filters */}
+                {isFiltersExpanded && Object.values(filterGroups).length > 0 &&  (
+                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                    <div className="pb-2 mb-2">
+                      <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
+                    </div>
+                    <div className="space-y-4">
+                      {Object.values(filterGroups).map(group => (
+                        <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                          <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
+                            <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
+                            <ChevronDown 
+                              size={18}
+                              className={`text-gray-400 transition-transform duration-200 ${
+                                expandedFilters[group._id] ? 'rotate-180' : ''
+                              }`}
+                            />
+                          </button>
+
+                          {expandedFilters[group._id] && (
+                            <ul className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+                              {group.filters.map(filter => (
+                                <li key={filter._id} className="flex items-center">
+                                  <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedFilters.filters.includes(filter._id)}
+                                      onChange={() => handleFilterChange('filters', filter._id)}
+                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-600">{filter.filter_name}</span>
+                                    {filter.count && (
+                                      <span className="text-xs text-gray-400 ml-auto">
+                                        ({filter.count})
+                                      </span>
+                                    )}
+                                  </label>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer button (fixed) */}
+              <div className="p-4 border-t flex-shrink-0 bg-white">
+                <button
+                  onClick={() => setIsFilterPanelOpen(false)}
+                  className="w-full bg-blue-600 text-white py-2 rounded-md"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+
+
+            
+      {!nofound && products.length > 0 ? (
+        <>
+          
+
+            {/* Products Section */}
+            <div className="flex-1">
+  {products.length > 0 ? (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+        {getSortedProducts().map(product => (
+          <div key={product._id} className="group relative bg-white rounded-lg border hover:border-blue-200 transition-all shadow-sm hover:shadow-md flex flex-col h-full">
+            {/* Product Image */}
+            <div className="relative aspect-square bg-white">
+              <Link
+                href={`/product/${product.slug}`}
+                className="block mb-2"
+                onClick={() => handleProductClick(product)}
+              >
+                {product.images?.[0] && (
+                  <Image
+                    src={
+                      product.images[0].startsWith("http")
+                        ? product.images[0]
+                        : `/uploads/products/${product.images[0]}`
+                    }
+                    alt={product.name}
+                    fill
+                    className="object-contain p-2 md:p-4 transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, 33vw, 25vw"
+                    unoptimized
+                  />
+                )}
               </Link>
-            </SwiperSlide>
-          );
-        })}
-      </Swiper>
+
+              {/* Discount Badge */}
+              {Number(product.special_price) > 0 &&
+                Number(product.special_price) < Number(product.price) && (
+                  <span className="absolute top-3 left-2 bg-orange-500 text-white tracking-wider text-xs font-bold px-2 py-0.5 rounded z-10">
+                    -{Math.round(100 - (Number(product.special_price) / Number(product.price)) * 100)}%
+                  </span>
+              )}
+
+              {/* Wishlist */}
+              <div className="absolute top-2 right-2">
+                <ProductCard productId={product._id} isOutOfStock={product.quantity === 0} />
+              </div>
+            </div>
+
+            {/* Product Info and Buttons */}
+            <div className="p-2 md:p-4 flex flex-col h-full">
+              <h4 className="text-xs text-gray-500 mb-2 uppercase">
+                <Link
+                  href={`/brand/${brandMap[product.brand] ? brandMap[product.brand].toLowerCase().replace(/\s+/g, "-") : ""}`}
+                  className="hover:text-blue-600"
+                >
+                  {brandMap[product.brand] || ""}
+                </Link>
+              </h4>
+
+              {/* Title with improved responsive height */}
+              <Link
+                href={`/product/${product.slug}`}
+                className="block mb-2 flex-1"
+                onClick={() => handleProductClick(product)}
+              >
+                <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb]  line-clamp-2 min-h-[3rem] sm:min-h-[2.5rem] leading-tight">
+                  {/* {product.name} */}
+                  {window.innerWidth < 540 && product.name.length > 140 ? product.name.slice(0, 100) + "..." : product.name}
+                </h3>
+              </Link>
+
+              {/* Price Row */}
+              <div className="mb-3">
+                {product.model_number && (
+                  <div className="bg-gray-100 rounded-md inline-block mb-2">
+                    <span className="text-sm font-semibold text-gray-700 tracking-wide">
+                      Model: <span className="text-[#0069c6]">({product.model_number})</span>
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-base font-semibold text-red-600">
+                    ₹ {(
+                      product.special_price &&
+                      product.special_price > 0 &&
+                      product.special_price !== '0' &&
+                      product.special_price < product.price
+                        ? Math.round(product.special_price)
+                        : Math.round(product.price)
+                    ).toLocaleString()}
+                  </span>
+
+                  {product.special_price > 0 &&
+                    product.special_price !== '0' &&
+                    product.special_price < product.price && (
+                      <span className="text-xs text-gray-500 line-through">
+                        ₹ {Math.round(product.price).toLocaleString()}
+                      </span>
+                  )}
+                </div>
+              </div>
+
+              <h4 className={`text-xs mb-3 ${product.quantity > 0 ? "text-green-600" : "text-red-600"}`}>
+                {product.quantity > 0
+                  ? `In Stock, ${product.quantity} units`
+                  : "Out Of Stock"}
+              </h4>
+
+              {/* Bottom Buttons */}
+              <div className="mt-auto flex items-center justify-between gap-2">
+                <Addtocart
+                  productId={product._id} 
+                  stockQuantity={product.quantity}  
+                  special_price={product.special_price}
+                  className="w-full text-xs sm:text-sm py-1.5"
+                />
+                <a
+                  href={`https://wa.me/919865555000?text=${encodeURIComponent(`Check Out This Product: ${apiUrl}/product/${product.slug}`)}`} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-green-500 hover:bg-green-600 text-white p-1 rounded-full transition-colors duration-300 flex items-center justify-center"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    viewBox="0 0 32 32"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination Controls */}
+      {renderPagination()}
+    </>
+  ) : (
+    <div className="text-center py-10">
+      <img 
+        src="/images/no-productbox.png" 
+        alt="No Products" 
+        className="mx-auto mb-4 w-32 h-32 md:w-40 md:h-40 object-contain" 
+      />
     </div>
-  </section>
-)}
+  )}
 
-
-
-  
-
-      
-
-      
-  
-  <ToastContainer />
-</main>
+  {loading && (
+    <div className="text-center py-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+    </div>
+  )}
+</div>
+          
+        </>
+      ) : (
+        <div className="text-center justify-center py-10 mx-auto">
+          <img 
+            src="/images/no-productbox.png" 
+            alt="No Products" 
+            className="mx-auto mb-4 w-32 h-32 md:w-40 md:h-40 object-contain" 
+          />
+        </div>
+      )}
+      </div>
+      <ToastContainer />
+    </div>
   );
 }
