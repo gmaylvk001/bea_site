@@ -75,7 +75,7 @@ const RecentlyViewedProducts = () => {
     const stored = stored_new.filter(product => product.quantity > 0);
 
     // Step 4: Log the result
-    console.log(stored);
+    //console.log(stored);
 
     // Step 5: Use stored directly (no JSON.parse here!)
     if (stored.length === 0) {
