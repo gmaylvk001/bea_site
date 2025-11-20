@@ -47,12 +47,44 @@ const RecentlyViewedProducts = () => {
   useEffect(() => {
     const fetchRecentProductsWithBrands = async () => {
       setIsLoading(true);
+      /*
       const stored = localStorage.getItem('recentlyViewed');
       if (!stored) {
         setIsLoading(false);
         return;
       }
       const products = JSON.parse(stored);
+      */
+      
+      // Step 1: Get localStorage value safely
+    const storedString = localStorage.getItem('recentlyViewed');
+    let stored_new = [];
+
+    try {
+      stored_new = JSON.parse(storedString) || [];
+    } catch (e) {
+      stored_new = [];
+    }
+
+    // Step 2: Ensure it's an array
+    if (!Array.isArray(stored_new)) {
+      stored_new = [];
+    }
+
+    // Step 3: Filter quantity > 0
+    const stored = stored_new.filter(product => product.quantity > 0);
+
+    // Step 4: Log the result
+    console.log(stored);
+
+    // Step 5: Use stored directly (no JSON.parse here!)
+    if (stored.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    // stored is already an array of products
+    const products = stored;
 
       try {
         const response = await fetch("/api/brand");
