@@ -7,6 +7,62 @@ import Category from "@/models/ecom_category_info";
 import Product_filter from "@/models/ecom_productfilter_info";
 import fs from "fs";
 import md5 from "md5";
+
+async function buildCategoryChain(categoryId) {
+  let md5_chain = [];
+  let name_chain = [];
+  let id_chain = [];
+
+  let current = await Category.findById(categoryId);
+  if (!current) {
+    return {
+      md5_chain: "",
+      name_chain: "",
+      id_chain: "",
+      root_chain: "",
+      root_md5: "",
+      root_id: "",
+      root_id_chain: ""
+    };
+  }
+
+  // Add current category
+  md5_chain.push(current.md5_cat_name);
+  name_chain.push(current.category_name);
+  id_chain.push(current._id.toString());
+
+  // Loop until root
+  while (current.parentid && current.parentid !== "none") {
+    const parent = await Category.findById(current.parentid);
+    if (!parent) break;
+
+    md5_chain.push(parent.md5_cat_name);
+    name_chain.push(parent.category_name);
+    id_chain.push(parent._id.toString());
+
+    current = parent;
+  }
+
+  // Reverse for root → child
+  md5_chain.reverse();
+  name_chain.reverse();
+  id_chain.reverse();
+
+  const root_chain = name_chain[0] || "";
+  const root_md5 = md5_chain[0] || "";
+  const root_id = id_chain[0] || "";
+
+  return {
+    md5_chain: md5_chain.join("##"),
+    name_chain: name_chain.join("##"),
+    id_chain: id_chain.join("##"),
+    root_chain,
+    root_md5,
+    root_id
+  };
+}
+
+
 export async function POST(req) {
   try {
     const formData = await req.formData();
@@ -147,11 +203,29 @@ console.log("..............................................................");
       productData.md5_name =md5_cat_name;
     }
     let main_Category = "";
+    let cat_new = "";
+    let sub_cat_new = "";
+    let sub_cat_name_new = "";
+    
+    /*
     if(category != ""){
       const main_cat = await Category.findOne({ _id: category });
       if(main_cat){
         main_Category = main_cat.parentid;
       }
+    }
+    */
+    
+    if(category != ""){
+        
+      const chain = await buildCategoryChain(category);
+      if(chain){
+          main_Category = chain.root_id;
+          cat_new = chain.root_md5;
+          sub_cat_new = chain.md5_chain;
+          sub_cat_name_new = chain.name_chain;
+      }
+        
     }
     
     if(!productData.hasVariants){
@@ -160,6 +234,9 @@ console.log("..............................................................");
 
     productData.category = main_Category;
     productData.sub_category = category;
+    productData.category_new = cat_new;  
+    productData.sub_category_new = sub_cat_new;
+    productData.sub_category_new_name = sub_cat_name_new;
 
     const highlights = JSON.parse(formData.get("highlights") || "[]");
     productData.product_highlights = highlights;

@@ -7,6 +7,62 @@ import connectDB from "@/lib/db";
 import Product from "@/models/product";
 import Product_filter from "@/models/ecom_productfilter_info";
 import md5 from "md5";
+import Category from "@/models/ecom_category_info";
+
+
+async function buildCategoryChain(categoryId) {
+  let md5_chain = [];
+  let name_chain = [];
+  let id_chain = [];
+
+  let current = await Category.findById(categoryId);
+  if (!current) {
+    return {
+      md5_chain: "",
+      name_chain: "",
+      id_chain: "",
+      root_chain: "",
+      root_md5: "",
+      root_id: "",
+      root_id_chain: ""
+    };
+  }
+
+  // Add current category
+  md5_chain.push(current.md5_cat_name);
+  name_chain.push(current.category_name);
+  id_chain.push(current._id.toString());
+
+  // Loop until root
+  while (current.parentid && current.parentid !== "none") {
+    const parent = await Category.findById(current.parentid);
+    if (!parent) break;
+
+    md5_chain.push(parent.md5_cat_name);
+    name_chain.push(parent.category_name);
+    id_chain.push(parent._id.toString());
+
+    current = parent;
+  }
+
+  // Reverse for root → child
+  md5_chain.reverse();
+  name_chain.reverse();
+  id_chain.reverse();
+
+  const root_chain = name_chain[0] || "";
+  const root_md5 = md5_chain[0] || "";
+  const root_id = id_chain[0] || "";
+
+  return {
+    md5_chain: md5_chain.join("##"),
+    name_chain: name_chain.join("##"),
+    id_chain: id_chain.join("##"),
+    root_chain,
+    root_md5,
+    root_id
+  };
+}
 
 export async function PUT(req, { params }) {
   try {
@@ -186,6 +242,12 @@ if (normalizedBrandCode) {
 } else {
   delete productData.brand_code;
 }
+
+
+const chain = await buildCategoryChain(productData.sub_category);
+
+
+
 console.log("Normalized brand_code:", productData);
 const updatedProduct = await Product.findByIdAndUpdate(
   productId,
@@ -195,8 +257,11 @@ const updatedProduct = await Product.findByIdAndUpdate(
       model_number: productData.model_number || "",
       movement: productData.movement || "",
       size: productData.size || "",
-     category: productData.category, // Parent category
+     category: chain.root_id, // Parent category
   sub_category: productData.sub_category, // Subcategory
+  category_new: chain.root_md5,
+  sub_category_new: chain.md5_chain,
+  sub_category_new_name: chain.name_chain,
     images: finalImages,
     // overview_image: savedOverviewImages.length > 0 
     //   ? savedOverviewImages 
@@ -206,7 +271,7 @@ const updatedProduct = await Product.findByIdAndUpdate(
     extend_warranty: extend_warranty,
   },
   { new: true }
-);
+); 
 
 console.log("Updated product extend_warranty:", updatedProduct?.extend_warranty);
 // Filters = array of strings
