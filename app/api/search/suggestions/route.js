@@ -10,7 +10,10 @@ export default async function handler(req, res) {
 
   try {
     const results = await Product.find({
-      product_name: { $regex: q, $options: "i" },
+      $or: [
+        { name: { $regex: q, $options: "i" } },
+        { keyword: { $regex: q, $options: "i" } }
+      ],
     })
       .limit(5) // only first 5
       .select("product_name price product_slug product_image");

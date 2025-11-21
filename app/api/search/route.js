@@ -30,7 +30,6 @@ export async function GET(req) {
       searchFilter.$or = [
         { name: regex },
         { item_code: regex },
-        { description: regex },
         { keywords: regex }
       ];
     }
