@@ -10,6 +10,7 @@ import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { FaSpinner } from 'react-icons/fa';
 import { Range as ReactRange } from "react-range";
+import { useRouter } from 'next/navigation';
 
 export default function SearchComponent() {
   const [categoryData, setCategoryData] = useState({
@@ -18,6 +19,7 @@ export default function SearchComponent() {
     filters: [],
     main_category: null
   });
+  const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("query") || "";
   const category = searchParams.get("category") || "";
@@ -38,6 +40,7 @@ export default function SearchComponent() {
   const [isBrandsExpanded, setIsBrandsExpanded] = useState(true);
   const [expandedFilters, setExpandedFilters] = useState({}); 
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
+  const page = Number(searchParams.get("page") || 1);
   const [wishlist, setWishlist] = useState([]); 
   const toggleFilters = () => setIsFiltersExpanded(!isFiltersExpanded);
   const toggleCategories = () => {
@@ -148,10 +151,15 @@ export default function SearchComponent() {
     const fetchResults = async () => {
       try {
         setLoading(true);
+        
         let url = '/api/search?';
         
         if (searchQuery) {
           url += `query=${encodeURIComponent(searchQuery)}`;
+        }
+
+        if(page > 1){
+          url += `&page=${page}`;
         }
         
         if (category) {
@@ -162,10 +170,17 @@ export default function SearchComponent() {
         // Add cache-busting timestamp and log outgoing request
         url += (url.endsWith('?') ? '' : '&') + `t=${Date.now()}`;
         console.log('[SearchComponent] Calling:', url);
+        
+
+        //let url = `/api/search?query=${searchQuery}&page=${page}`;
 
         const res = await axios.get(url);
+
+        //const res = await axios.get(url);
         const searchData = res.data;
         const productsData = searchData.products || searchData;
+
+        setPagination(res.data.pagination); 
 
         console.log('[SearchComponent] /api/search responded with products:', Array.isArray(productsData) ? productsData.length : 'unknown');
 
@@ -228,7 +243,7 @@ export default function SearchComponent() {
       setLoading(false);
       setProducts([]);
     }
-  }, [searchQuery, category]);
+  }, [searchQuery, category, page]);
 
   const fetchBrand = async () => {
     try {
@@ -252,6 +267,97 @@ export default function SearchComponent() {
   useEffect(() => {
     fetchBrand();
   }, []);
+
+  const renderAdvancedPagination = () => {
+  const { currentPage, totalPages, hasNext, hasPrev } = pagination;
+  if (totalPages <= 1) return null;
+
+  const goToPage = (pageNum) => {
+    router.push(`/search?query=${searchQuery}&page=${pageNum}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const generatePages = () => {
+    const pages = [];
+
+    // Show first page
+    if (currentPage > 3) {
+      pages.push(1);
+      if (currentPage > 4) pages.push("...");
+    }
+
+    // Pages before current
+    for (let i = currentPage - 2; i < currentPage; i++) {
+      if (i > 1) pages.push(i);
+    }
+
+    // Current
+    pages.push(currentPage);
+
+    // Pages after current
+    for (let i = currentPage + 1; i <= currentPage + 2; i++) {
+      if (i < totalPages) pages.push(i);
+    }
+
+    // Last page
+    if (currentPage < totalPages - 2) {
+      if (currentPage < totalPages - 3) pages.push("...");
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
+  const pageList = generatePages();
+
+  return (
+    <div className="flex justify-center items-center gap-2 my-6">
+
+      {/* Previous Button */}
+      <button
+        disabled={!hasPrev}
+        onClick={() => goToPage(currentPage - 1)}
+        className={`px-3 py-2 rounded ${
+          hasPrev ? "bg-gray-100 hover:bg-gray-200" : "bg-gray-200 text-gray-400 cursor-not-allowed"
+        }`}
+      >
+        Prev
+      </button>
+
+      {/* Page Numbers */}
+      {pageList.map((num, idx) =>
+        num === "..." ? (
+          <span key={idx} className="px-3 py-2">…</span>
+        ) : (
+          <button
+            key={idx}
+            onClick={() => goToPage(num)}
+            className={`px-3 py-2 rounded ${
+              num === currentPage
+                ? "bg-red-600 text-white"
+                : "bg-gray-100 hover:bg-gray-200"
+            }`}
+          >
+            {num}
+          </button>
+        )
+      )}
+
+      {/* Next Button */}
+      <button
+        disabled={!hasNext}
+        onClick={() => goToPage(currentPage + 1)}
+        className={`px-3 py-2 rounded ${
+          hasNext ? "bg-gray-100 hover:bg-gray-200" : "bg-gray-200 text-gray-400 cursor-not-allowed"
+        }`}
+      >
+        Next
+      </button>
+
+    </div>
+  );
+};
+
 
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -569,7 +675,7 @@ const MAX = priceRange[1] || 100000;
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-3 text-gray-600 pl-1">
           Search Results for 
-          {category && `  ${category}`}
+          {category && `  ${category} `} '{searchQuery && `${searchQuery}`}'
         </h1>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-1 gap-4">
@@ -954,6 +1060,7 @@ const MAX = priceRange[1] || 100000;
                   </div>
                 ))}
               </div>
+              {renderAdvancedPagination()}
             </div>
           </div>
         ) : (
