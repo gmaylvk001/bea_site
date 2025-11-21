@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import md5 from "md5";
 import { writeFile, unlink } from "fs/promises";
 import path from "path";
+import mongoose from "mongoose";
 
 function convertSlug(slug) {
   let result = slug.replace(/ /g, "-"); // replace spaces with hyphens
@@ -22,7 +23,8 @@ export async function PUT(req) {
     const formData = await req.formData();
     const _id = formData.get("_id");
     const category_name = formData.get("category_name");
-    const parentid = formData.get("parentid") || "none";
+    let parentid = formData.get("parentid") || "none";
+    let parentid_new = "none";
     const status = formData.get("status") || "Active";
     const content = formData.get("content") || ""; // ✅ Add content field
     const file = formData.get("image");
@@ -42,6 +44,16 @@ export async function PUT(req) {
     // Check if new category name already exists (excluding current category)
     let category_slug = convertSlug(category_name);
     const md5_cat_name = md5(category_slug);
+    
+    if (parentid === "none") {
+        parentid_new = "none";
+    }
+    else
+    {
+        const objectId = new mongoose.Types.ObjectId(parentid);
+        const getParentCategory = await Category.findOne({ _id: objectId });
+        parentid_new = getParentCategory.md5_cat_name;
+    }
 
     const duplicateCategory = await Category.findOne({
       category_slug,
@@ -142,6 +154,7 @@ export async function PUT(req) {
         category_slug,
         md5_cat_name,
         parentid,
+        parentid_new,
         status,
         content, // ✅ Add content field here
         image: image_url,
@@ -149,7 +162,7 @@ export async function PUT(req) {
         updatedAt: new Date(),
       },
       { new: true }
-    );
+    ); 
 
     if (!updatedCategory) {
       return NextResponse.json({ error: "Failed to update category" }, { status: 400 });

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import md5 from "md5";
 import { writeFile } from "fs/promises";
 import path from "path";
+import mongoose from "mongoose";
 
 function convertSlug(slug) {
   let result = slug.replace(/ /g, "-");
@@ -34,6 +35,16 @@ export async function POST(req) {
 
     let category_slug = convertSlug(category_name);
     let md5_cat_name = md5(category_slug);
+    
+    if (parentid === "none") {
+        parentid_new = "none";
+    }
+    else
+    {
+        const objectId = new mongoose.Types.ObjectId(parentid);
+        const getParentCategory = await Category.findOne({ _id: objectId });
+        parentid_new = getParentCategory.md5_cat_name;
+    }
     
     
     /*
