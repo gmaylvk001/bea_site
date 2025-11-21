@@ -172,7 +172,7 @@ export default function CategoryPage() {
   // }, [hasMore, products.length]);
 
   // const fetchFilteredProducts = async (categoryId) => {
-      const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
+    const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
     try {
       if (!initialLoad) setLoading(true);
       const query = new URLSearchParams();
@@ -193,7 +193,8 @@ export default function CategoryPage() {
         query.set('filters', selectedFilters.filters.join(','));
       }
 
-      const res = await fetch(`/api/product/filter/main?${query}`);
+      //const res = await fetch(`/api/product/filter/main?${query}`);
+      const res = await fetch(`/api/product/filter?${query}`);
       const { products, pagination: paginationData } = await res.json();
 
       //console.log('Raw filter Response:', products);
@@ -202,12 +203,12 @@ export default function CategoryPage() {
       
       // Update pagination state
       setPagination({
-        currentPage: paginationData.currentPage,
-        totalPages: paginationData.totalPages,
-        hasNext: paginationData.hasNext,
-        hasPrev: paginationData.hasPrev,
-        totalProducts: paginationData.totalProducts
-      });
+  currentPage: paginationData.currentPage,
+  totalPages: paginationData.totalPages,
+  totalProducts: paginationData.totalProducts,
+  hasNext: paginationData.currentPage < paginationData.totalPages,
+  hasPrev: paginationData.currentPage > 1
+});
       
       if (products.length === 0 && pageNum === 1) {
         setNofound(true);
@@ -219,6 +220,8 @@ export default function CategoryPage() {
      // toast.error('Error fetching filtered products:', error);
       // Redirect to 404 on error
     //  router.push('/noproduct');
+      console.error("❌ fetchFilteredProducts ERROR:", error);
+      toast.error("Error loading products");
     } finally {
       setLoading(false);
     }
@@ -400,7 +403,7 @@ export default function CategoryPage() {
   useEffect(() => {
     if (categoryData.category?._id) {
       setPage(1);
-      fetchFilteredProducts(categoryData.category._id,1);
+      fetchFilteredProducts(categoryData,1);
     }
   }, [selectedFilters]);
 
@@ -414,7 +417,7 @@ export default function CategoryPage() {
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= pagination.totalPages) {
-      fetchFilteredProducts(categoryData.category._id, page);
+      fetchFilteredProducts(categoryData, page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
