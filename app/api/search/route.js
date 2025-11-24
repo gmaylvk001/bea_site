@@ -15,6 +15,9 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get('query') || '';
   const category = searchParams.get('category') || '';
+   const page = Number(searchParams.get("page")) || 1;
+  const limit = Number(searchParams.get("limit")) || 12;
+  const skip = (page - 1) * limit;
  
   try {
     console.log('[API /api/search] Handler invoked at', new Date().toISOString());
@@ -93,18 +96,32 @@ export async function GET(req) {
   }
 
 console.log(searchFilter);
+const total = await Product.countDocuments(searchFilter);
     const products = await Product.find(searchFilter)
       .sort({ createdAt: -1 })
-      .lean();
+      .lean().skip(skip)
+      .limit(limit);
 
     console.log('[API /api/search] Returning products count:', products.length);
-
+    /*
     return NextResponse.json(products, {
       headers: {
         'x-api-route': 'search',
         'cache-control': 'no-store'
       }
     });
+*/
+    return NextResponse.json({
+      products,
+      pagination: {
+        total,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1
+      }
+    });
+
   } catch(error) {
     console.error('Search error:', error);
     return NextResponse.json(
