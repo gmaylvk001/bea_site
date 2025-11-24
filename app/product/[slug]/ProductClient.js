@@ -1525,9 +1525,11 @@ const fetchBrand = async () => {
             </div> */}
 
        <div className="mt-4">
+	   
+
   {/* Responsive 3 Boxes Section */}
   <div className="mt-3 flex flex-col md:flex-row md:justify-between gap-2 space-y-2 md:space-y-0">
-    {/* Replacement Box */}
+    {/* Replacement Box 
     <div
       className="flex items-start bg-blue-50 border border-blue-200 rounded-md p-4 w-full md:w-1/3 shadow-sm cursor-pointer"
       onClick={() => setShowReplacementModal(true)}
@@ -1540,8 +1542,10 @@ const fetchBrand = async () => {
         <div className="text-xs text-blue-600">in 7 days</div>
       </div>
     </div>
+	
+	*/}
 
-    {/* Warranty Box */}
+    {/* Warranty Box 
     <div
       className="flex items-start bg-blue-50 border border-blue-200 rounded-md p-4 w-full md:w-1/3 shadow-sm cursor-pointer"
       onClick={() => setshowWarrantyModal(true)}
@@ -1554,8 +1558,10 @@ const fetchBrand = async () => {
         <div className="text-xs text-blue-600">in 1 Year</div>
       </div>
     </div>
+	
+	*/}
 
-    {/* GST Invoice Box */}
+    {/* GST Invoice Box 
     <div
       className="flex items-start bg-blue-50 border border-blue-200 rounded-md p-4 w-full md:w-1/3 shadow-sm cursor-pointer"
       onClick={() => setshowGstInvoiceModal(true)}
@@ -1565,7 +1571,11 @@ const fetchBrand = async () => {
         <div className="text-sm font-semibold text-blue-800">GST Invoice</div>
         <div className="text-xs text-blue-600">Available</div>
       </div>
+	  
+	  
     </div>
+	*/}
+	
   </div>
 
             {/* Modal */}
