@@ -35,6 +35,8 @@ export default function SearchComponent() {
     total: 0,
   });
 
+  const [totalProducts, setTotalProducts] = useState(0);
+
   const [loading, setLoading] = useState(false);
   const [categoryData, setCategoryData] = useState({
     category: null,
@@ -170,6 +172,8 @@ export default function SearchComponent() {
         const data = res?.data || {};
         const productsFromApi = safeArray(data.products || []);
         setProducts(productsFromApi);
+
+        setTotalProducts(res.data.pagination.total);
 
         // pagination guard
         const p = data.pagination || {};
@@ -457,7 +461,8 @@ export default function SearchComponent() {
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-1 gap-4">
           <p className="text-gray-600">
-            {safeArray(products).length} result{safeArray(products).length !== 1 ? "s" : ""} found
+            
+             {totalProducts} result{totalProducts !== 1 ? 's' : ''} found
           </p>
           <div className="mb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
