@@ -50,7 +50,7 @@ const ProductSchema = new mongoose.Schema({
   meta_description: { type: String, default: "" }, 
   category_new: { type: String, default: "" },
   sub_category_new: { type: String, default: "" },
-  keywords: { type: String, default: "" },
+  search_keywords: { type: String, default: "" },
   sub_category_new_name: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
