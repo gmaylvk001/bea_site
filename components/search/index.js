@@ -362,7 +362,7 @@ export default function SearchComponent() {
         query.set("page", pageNum);
         query.set("limit", itemsPerPage);
 
-        const res = await fetch(`/api/search/filter?${query.toString()}`);
+        const res = await fetch(`/api/search?${query.toString()}`);
         const json = await res.json();
         const productsFromApi = safeArray(json.products || []);
         setProducts(productsFromApi);
