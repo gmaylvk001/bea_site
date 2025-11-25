@@ -95,7 +95,8 @@ export async function GET(req) {
     }
   }
 
-console.log(searchFilter);
+//console.log(searchFilter);
+const allbrand = await Product.find(searchFilter).select('brand');
 const total = await Product.countDocuments(searchFilter);
     const products = await Product.find(searchFilter)
       .sort({ createdAt: -1 })
@@ -113,6 +114,7 @@ const total = await Product.countDocuments(searchFilter);
 */
     return NextResponse.json({
       products,
+      allbrand,
       pagination: {
         total,
         currentPage: page,

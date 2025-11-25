@@ -49,7 +49,7 @@ export default function SearchComponent() {
   });
 
   const [brandMap, setBrandMap] = useState({});
-
+const [brands, setbrands] = useState([]);
   const [filterGroups, setFilterGroups] = useState({});
   const [selectedFilters, setSelectedFilters] = useState({
     categories: [],
@@ -154,6 +154,16 @@ export default function SearchComponent() {
     loadCategoryMeta();
   }, [slug, category]);
 
+  useEffect(() => {
+  if (Object.keys(filterGroups).length > 0) {
+    const expanded = {};
+    Object.values(filterGroups).forEach(group => {
+      expanded[group._id] = true; // expand all groups
+    });
+    setExpandedFilters(expanded);
+  }
+}, [filterGroups]);
+
   // Core search fetch (server-side filtering when query or category exist)
   useEffect(() => {
     const fetchSearch = async () => {
@@ -172,6 +182,7 @@ export default function SearchComponent() {
         const data = res?.data || {};
         const productsFromApi = safeArray(data.products || []);
         setProducts(productsFromApi);
+        setbrands(data.allbrand);
 
         setTotalProducts(res.data.pagination.total);
 
@@ -269,6 +280,10 @@ export default function SearchComponent() {
     },
     [selectedFilters, categoryData]
   );
+
+   useEffect(() => {
+  //console.log("Updated brands:", brands);
+}, [brands]);
 
   useEffect(() => {
     // If we are on a category page but not doing a query, use server-side category filter
@@ -595,11 +610,11 @@ export default function SearchComponent() {
                 </div>
                 {isBrandsExpanded && (
                   <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
-                    {Array.from(new Set(safeArray(products).map(p => p.brand)))
+                    {Array.from(new Set(safeArray(brands).map(p => p.brand)))
                       .filter(brandId => brandId)
                       .map(brandId => {
                         const brandName = brandMap[brandId] || brandId;
-                        const brandCount = safeArray(products).filter(p => p.brand === brandId).length;
+                        const brandCount = safeArray(brands).filter(p => p.brand === brandId).length;
                         return (
                           <li key={brandId} className="flex items-center">
                             <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2">
