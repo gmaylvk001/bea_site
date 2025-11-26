@@ -681,69 +681,76 @@ export default function CategoryPage() {
   ))}
 
   {/* ===== Brands Section ===== */}
-  {categoryData.brands && categoryData.brands.length > 0 && (
-    <section className="px-4 md:px-6 py-12 bg-gradient-to-r from-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-10">
-          <h2 className="text-left text-2xl md:text-3xl font-bold text-gray-800 mb-3">Shop by Brand</h2>
-        </div>
-        
-        <Swiper
-          modules={[Autoplay]}
-          spaceBetween={20}
-          slidesPerView={2}
-          autoplay={{ 
-            delay: 3000, 
-            disableOnInteraction: false 
-          }}
-          breakpoints={{
-            480: { slidesPerView: 3 },
-            640: { slidesPerView: 4 },
-            768: { slidesPerView: 5 },
-            1024: { slidesPerView: 6 },
-            1280: { slidesPerView: 8 }
-          }}
-          className="pb-2"
-        >
-          {categoryData.brands.map(brand => {
-            const fullBrandData = brandMap[brand._id] || brand;
-            const brandImage = fullBrandData.logo || fullBrandData.image;
-            
-            return (
-              <SwiperSlide key={brand._id}>
-                <Link 
-                  href={`/brand/${brand.brand_name?.toLowerCase().replace(/\s+/g, "-") || brand._id}`}
-                  className="block"
-                >
-                  <div className="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 group">
-                    <div className="relative w-full h-12">
-                      {brandImage ? (
-                        <Image
-                          src={
-                            brandImage.startsWith("http") 
-                              ? brandImage 
-                              : `/uploads/Brands/${brandImage}`
-                          }
-                          alt={brand.brand_name || "Brand"}
-                          fill
-                          className="object-contain transition-transform duration-300 group-hover:scale-110"
-                          unoptimized
-                        />
-                      ) : (
-                        <span className="text-lg font-semibold text-gray-700 text-center">
-                          {brand.brand_name || "Brand"}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              </SwiperSlide>
-            );
-          })}
-        </Swiper>
+{categoryData.brands && categoryData.brands.length > 0 && (
+  <section className="px-4 md:px-6 py-12 bg-gradient-to-r from-blue-50 to-indigo-50">
+    <div className="max-w-7xl mx-auto">
+      <div className="text-center mb-10">
+        <h2 className="text-left text-2xl md:text-3xl font-bold text-gray-800 mb-3">Shop by Brand</h2>
       </div>
-    </section>
-  )}
+      
+      <Swiper
+        modules={[Autoplay]}
+        spaceBetween={20}
+        slidesPerView={2}
+        autoplay={{ 
+          delay: 3000, 
+          disableOnInteraction: false 
+        }}
+        breakpoints={{
+          480: { slidesPerView: 3 },
+          640: { slidesPerView: 4 },
+          768: { slidesPerView: 5 },
+          1024: { slidesPerView: 6 },
+          1280: { slidesPerView: 8 }
+        }}
+        className="pb-2"
+      >
+        {categoryData.brands.map(brand => {
+          const hasImage = !!brand.image;
+          
+          return (
+            <SwiperSlide key={brand._id}>
+              <Link 
+                href={`/brand/${brand.brand_name?.toLowerCase().replace(/\s+/g, "-") || brand._id}`}
+                className="block"
+              >
+                <div className="bg-white rounded-xl p-4 h-24 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 group">
+                  <div className="relative w-full h-12">
+                    {/* Show image if available */}
+                    {hasImage && (
+                      <Image
+                        src={`/uploads/brands/${brand.image}`}
+                        alt={brand.brand_name || "Brand"}
+                        fill
+                        className="object-contain transition-transform duration-300 group-hover:scale-110"
+                        unoptimized
+                      />
+                    )}
+                    
+                    {/* Brand name - visible based on image existence */}
+                    {/* <div className={`
+                      absolute inset-0 flex items-center justify-center rounded-lg transition-opacity duration-300
+                      ${hasImage 
+                        ? 'opacity-0 group-hover:opacity-100 bg-white/90'  // Show on hover with background
+                        : 'opacity-100'                                    // Always visible without background
+                      }
+                    `}>
+                      <span className={`text-sm font-semibold text-center px-2 ${
+                        hasImage ? 'text-gray-700' : 'text-gray-800'
+                      }`}>
+                        {brand.brand_name || "Brand"}
+                      </span>
+                    </div> */}
+                  </div>
+                </div>
+              </Link>
+            </SwiperSlide>
+          );
+        })}
+      </Swiper>
+    </div>
+  </section>
+)}
 
   <ToastContainer />
 </main>
