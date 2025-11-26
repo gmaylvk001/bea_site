@@ -6,7 +6,8 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   await dbConnect();
-  const categories = await Category.find().sort({ createdAt: -1 });
+  //const categories = await Category.find().sort({ createdAt: -1 });
+  const categories = await Category.find({ status: "Active" }).sort({ createdAt: -1 });
   return NextResponse.json({ success: true, categories });
 }
 
