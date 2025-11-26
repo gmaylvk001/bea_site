@@ -590,6 +590,7 @@ const Header = () => {
         if (selectedCategory !== "All Category") {
           params.append("category", selectedCategory);
         }
+        
         router.push(`/search?${params.toString()}`);
     };
     // Load products once using shared util (for instant local filtering)
