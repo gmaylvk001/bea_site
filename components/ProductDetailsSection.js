@@ -910,37 +910,107 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
       </div>
     </div>
   );
-  const descriptionContent = (() => {
-    // reuse existing helpers already declared in this file
-    const descObj = parseJSONSafe(product?.description);
+const descriptionContent = (() => {
+  // Enhanced sanitize function to detect "<p>null</p>" and other null patterns
+  const isNullContent = (value) => {
+    if (!value) return true;
+    const strValue = String(value).trim().toLowerCase();
+    
+    // Check for various null patterns including HTML null
+    const nullPatterns = [
+      "", "null", "undefined", "n/a", "none", "-", 
+      "null null", "undefined undefined", "nan",
+      "<p>null</p>", "<p>undefined</p>", "<p>n/a</p>",
+      "&lt;p&gt;null&lt;/p&gt;", "&lt;p&gt;undefined&lt;/p&gt;"
+    ];
+    
+    return nullPatterns.includes(strValue) || 
+           strValue.replace(/<[^>]*>/g, '').trim() === 'null' ||
+           strValue === '<p></p>' ||
+           strValue === '<p> </p>';
+  };
 
-    const hasValidDescription =
-      descObj && typeof descObj === "object" && Object.keys(descObj).length > 0;
+  // Check if we have any real content
+  const hasRealContent = () => {
+    // Check description
+    if (product?.description && !isNullContent(product.description)) {
+      return true;
+    }
+    
+    // Check specifications
+    const specs = [
+      product?.ingredients,
+      product?.weight,
+      product?.dimensions,
+      product?.item_code
+    ];
+    
+    return specs.some(spec => spec && !isNullContent(spec));
+  };
 
-    const hasPlainDescription =
-      product?.description &&
-      typeof product.description === "string" &&
-      !descObj;
+  // If no real content, return null to hide the entire tab
+  if (!hasRealContent()) {
+    return null;
+  }
 
-    const hasSpecifications = [
-      product.ingredients,
-      product.weight,
-      product.dimensions,
-    ].some(Boolean);
-    if (!hasValidDescription && !hasPlainDescription && !hasSpecifications) return null;
+  const descObj = parseJSONSafe(product?.description);
+  const hasValidDescription = descObj && typeof descObj === "object" && Object.keys(descObj).length > 0;
+  
+  // Only show plain description if it's not null content
+  const hasPlainDescription = product?.description && 
+                            !isNullContent(product.description) && 
+                            !descObj;
 
-    return (
-      <div>
-        {/* Product Description */}
-        {(hasValidDescription || hasPlainDescription) && (
-          <>
-            <h2 className={`text-sm font-bold text-left ${poppins.className}`}>
-              Product Description
-            </h2>
+  // Build specifications - filter out null values
+  const specifications = [
+    {
+      icon: <TbBrandAppgallery size={14} className="text-white" />,
+      label: "Brand",
+      value: Array.isArray(brand) ? brand.find((b) => b.value === product.brand)?.label : "",
+    },
+    {
+      icon: <FiHash size={16} className="text-white" />,
+      label: "Item Code", 
+      value: product?.item_code,
+    },
+    {
+      icon: <FiBox size={14} className="text-white" />,
+      label: "Ingredients",
+      value: product?.ingredients,
+    },
+    {
+      icon: <FiBox size={14} className="text-white" />,
+      label: "Weight",
+      value: product?.weight,
+    },
+    {
+      icon: <FiBox size={14} className="text-white" />,
+      label: "Dimensions",
+      value: product?.dimensions, 
+    }
+  ].filter(item => {
+    const value = item.value;
+    return value && !isNullContent(value);
+  });
 
-            {hasValidDescription ? (
-              <div className="mt-3 text-xs sm:text-sm text-gray-700 space-y-1">
-                {Object.entries(descObj).map(([key, val]) => {
+  const hasSpecifications = specifications.length > 0;
+
+  return (
+    <div>
+      {/* Product Description - only show if we have valid content */}
+      {(hasValidDescription || hasPlainDescription) && (
+        <>
+          <h2 className={`text-sm font-bold text-left ${poppins.className}`}>
+            Product Description
+          </h2>
+
+          {hasValidDescription ? (
+            <div className="mt-3 text-xs sm:text-sm text-gray-700 space-y-1">
+              {Object.entries(descObj)
+                .filter(([key, val]) => {
+                  return key && val && !isNullContent(key) && !isNullContent(val);
+                })
+                .map(([key, val]) => {
                   const cleanKey = decodeAndClean(key);
                   const cleanVal = decodeAndClean(val);
                   return (
@@ -957,76 +1027,45 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
                     </div>
                   );
                 })}
-              </div>
-            ) : (
-              <div
-                className="mt-3 text-xs sm:text-sm text-gray-700 prose prose-gray max-w-none text-left [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_th]:border [&_td]:border [&_th]:p-2 [&_td]:p-2 [&_tr:nth-child(even)]:bg-gray-50 [&_th]:bg-gray-100 [&_th]:font-semibold"
-                dangerouslySetInnerHTML={{
-                  __html: decodeAndClean(String(product?.description || "")),
-                }}
-              />
-            )}
-          </>
-        )}
+            </div>
+          ) : (
+            <div
+              className="mt-3 text-xs sm:text-sm text-gray-700 prose prose-gray max-w-none text-left [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_th]:border [&_td]:border [&_th]:p-2 [&_td]:p-2 [&_tr:nth-child(even)]:bg-gray-50 [&_th]:bg-gray-100 [&_th]:font-semibold"
+              dangerouslySetInnerHTML={{
+                __html: decodeAndClean(String(product?.description || "")),
+              }}
+            />
+          )}
+        </>
+      )}
 
-        {/* Product Specifications */}
-        {hasSpecifications && (
-          <>
-            <h2 className={`text-sm font-bold mt-3 text-left ${poppins.className}`}>
-              Product Specifications
-            </h2>
+      {/* Product Specifications - only show if we have valid specifications */}
+      {hasSpecifications && (
+        <>
+          <h2 className={`text-sm font-bold mt-3 text-left ${poppins.className}`}>
+            Product Specifications
+          </h2>
 
-            <ul className="mt-1 sm:mt-2 text-gray-700 text-xs sm:text-sm space-y-1">
-              {[
-                {
-                  icon: <TbBrandAppgallery size={14} className="text-white" />,
-                  label: "Brand",
-                  value:
-                    (Array.isArray(brand)
-                      ? brand.find((b) => b.value === product.brand)?.label
-                      : null) || "N/A",
-                },
-                {
-                  icon: <FiHash size={16} className="text-white" />,
-                  label: "Item Code",
-                  value: product.item_code || "N/A",
-                },
-                product.ingredients && {
-                  icon: <FiBox size={14} className="text-white" />,
-                  label: "Ingredients",
-                  value: product.ingredients,
-                },
-                product.weight && {
-                  icon: <FiBox size={14} className="text-white" />,
-                  label: "Weight",
-                  value: product.weight,
-                },
-                product.dimensions && {
-                  icon: <FiBox size={14} className="text-white" />,
-                  label: "Dimensions",
-                  value: product.dimensions,
-                },
-              ]
-                .filter(Boolean)
-                .map((item, idx) => (
-                  <li key={idx} className="flex items-center">
-                    <div className="w-5 h-5 flex items-center justify-center bg-gray-600 rounded-md mr-2">
-                      {item.icon}
-                    </div>
-                    <div className="flex gap-x-1">
-                      <strong className={`text-xs sm:text-sm ${poppins.className}`}>
-                        {item.label}:
-                      </strong>
-                      <span className={`${poppins.className}`}>{item.value}</span>
-                    </div>
-                  </li>
-                ))}
-            </ul>
-          </>
-        )}
-      </div>
-    );
-  })();
+          <ul className="mt-1 sm:mt-2 text-gray-700 text-xs sm:text-sm space-y-1">
+            {specifications.map((item, idx) => (
+              <li key={idx} className="flex items-center">
+                <div className="w-5 h-5 flex items-center justify-center bg-gray-600 rounded-md mr-2">
+                  {item.icon}
+                </div>
+                <div className="flex gap-x-1">
+                  <strong className={`text-xs sm:text-sm ${poppins.className}`}>
+                    {item.label}:
+                  </strong>
+                  <span className={`${poppins.className}`}>{item.value}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+})();
   //const resolveFlixIds = (p = {}) => { ... }
 {/*   {activeTab === "videos" && (
           <div>
