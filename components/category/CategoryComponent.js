@@ -719,7 +719,7 @@ export default function CategoryPage() {
                     {/* Show image if available */}
                     {hasImage && (
                       <Image
-                        src={`/uploads/brands/${brand.image}`}
+                        src={`/uploads/Brands/${brand.image}`}
                         alt={brand.brand_name || "Brand"}
                         fill
                         className="object-contain transition-transform duration-300 group-hover:scale-110"
