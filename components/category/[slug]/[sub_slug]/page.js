@@ -778,20 +778,20 @@ const scroll = (direction) => {
           </div>
 
           {/* Content section */}
-          <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
-            <h3 className="text-lg font-bold text-gray-900 mb-3 text-nowrap">
-              {subcategory.category_name}
-            </h3>
-           {subcategory.content && (
-  <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2">
-    {subcategory.content}
-  </p>
-)}
+         <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
+  <h3 className="text-lg font-bold text-gray-900 mb-3 text-nowrap">
+    {subcategory.category_name}
+  </h3>
 
-            <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
-              Explore
-            </button>
-          </div>
+  <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
+    {subcategory.content || ""}
+  </p>
+
+  <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
+    Explore
+  </button>
+</div>
+
         </Link>
       ))
     ) : (
