@@ -26,7 +26,7 @@ export async function POST(req) {
 
     if (!deletedPosition) {
       return NextResponse.json(
-        { error: "Job position not found" },
+        { error: "Job position not founds" },
         { status: 404 }
       );
     }

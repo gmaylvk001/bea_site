@@ -9,7 +9,7 @@ export async function POST(req) {
     const { positionId, position_name, status } = await req.json();
 
     if (!positionId) {
-      return NextResponse.json({ error: "Job position ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Job position ID is requireds" }, { status: 400 });
     }
 
     const updateData = { updatedAt: new Date() };

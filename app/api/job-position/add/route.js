@@ -10,7 +10,7 @@ export async function POST(req) {
     const { position_name, status } = data;
 
     if (!position_name) {
-      return NextResponse.json({ error: "Position name is required" }, { status: 400 });
+      return NextResponse.json({ error: "Position name is requireds" }, { status: 400 });
     }
 
     let position_slug = position_name.toLowerCase().replace(/\s+/g, "-");
