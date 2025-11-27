@@ -24,13 +24,16 @@ export async function GET(req) {
 
     // Build base query
     let query = { 
-      status: "Active",
-      sub_category_new: { 
-        $regex: sub_category_new,
-        $options: "i"
-      },
-      quantity: { $gt: 0 } 
-    };
+  status: "Active",
+  quantity: { $gt: 0 } 
+};
+
+if (sub_category_new && typeof sub_category_new === "string") {
+  query.sub_category_new = { 
+    $regex: sub_category_new,
+    $options: "i"
+  };
+}
 
     // Category filter - try different possible category fields
     /*
