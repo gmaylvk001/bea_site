@@ -1,0 +1,99 @@
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/db";
+import ContactModel from "@/models/ecom_contact_info";
+import fs from "fs";
+import path from "path";
+
+export async function POST(request) {
+  try {
+    await dbConnect();
+
+    const formData = await request.formData();
+
+    const name = formData.get("name");
+    const email = formData.get("email");
+    const mobile_number = formData.get("mobile_number");
+    const city = formData.get("city");
+    const job_post = formData.get("job_post");
+
+    const resumeFile = formData.get("resume");
+
+    // ❌ Validate missing fields
+    if (!name || !email || !mobile_number || !city || !job_post || !resumeFile) {
+      return NextResponse.json(
+        { success: false, message: "All fields are required" },
+        { status: 400 }
+      );
+    }
+
+    // ✔ Save Resume to /public/uploads/resumes
+    const uploadDir = path.join(process.cwd(), "public/uploads/resumes");
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const buffer = Buffer.from(await resumeFile.arrayBuffer());
+    const fileName = `${Date.now()}-${resumeFile.name}`;
+    const filePath = path.join(uploadDir, fileName);
+
+    fs.writeFileSync(filePath, buffer);
+    
+    
+    // Email list
+    const emailadmin = ["gmaylvk001@gmail.com"];
+
+    // Loop through emails one by one
+    for (const adminEmail of emailadmin) {
+      const adminForm = new FormData();
+      adminForm.append("campaign_id", "ce8a4ccc-8ade-4cdb-b850-fe3d4574ddc5");
+      adminForm.append("email", adminEmail);
+      adminForm.append("params", JSON.stringify([name, mobile_number, email, city, job_post]));
+
+      const adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L",
+        },
+        body: adminForm,
+      });
+
+      const adminData = await adminresponse.json();
+      //console.log("Mail Sent:", adminEmail, adminData);
+    }
+
+
+    /* return NextResponse.json(
+      { success: true, adminData },
+      { status: 201 }
+    ); */
+        
+        
+
+
+    /*
+    // ✔ Save in DB
+    const newEntry = new ContactModel({
+      name,
+      email_address: email,
+      mobile_number,
+      city,
+      job_post,
+      resume_path: `/uploads/resumes/${fileName}`, // store file path
+      status: 1,
+    });
+
+    await newEntry.save();*/
+
+    return NextResponse.json(
+      { success: true, message: "Form submitted successfully" },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("API Error:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
