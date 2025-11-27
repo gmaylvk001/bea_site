@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ContactBEA() {
   const [form, setForm] = useState({
@@ -16,17 +16,18 @@ export default function ContactBEA() {
   const [loading, setLoading] = useState(false);
   const [responseMsg, setResponseMsg] = useState("");
 
-  const jobPosts = [
-    "Software Developer",
-    "UI/UX Designer",
-    "Project Manager",
-    "Business Analyst",
-    "Marketing Executive",
-    "Accountant",
-    "Sales Executive",
-    "HR Executive",
-    "Back Office Staff",
-  ];
+ const [jobPositions, setJobPositions] = useState([]);
+
+useEffect(() => {
+  const fetchJobPositions = async () => {
+    const res = await fetch("/api/job-position");
+    const data = await res.json();
+    setJobPositions(data.data || []); 
+  };
+
+  fetchJobPositions();
+}, []);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -228,30 +229,38 @@ export default function ContactBEA() {
           </div>
 
           {/* Job Post Dropdown */}
-          <div>
-            <label className="block font-medium mb-1">
-              Job Position <span className="text-red-600">*</span>
-            </label>
+         {/* Job Position Dropdown */}
+<div>
+  <label className="block font-medium mb-1">
+    Job Position <span className="text-red-600">*</span>
+  </label>
 
-            <select
-              name="job_post"
-              value={form.job_post}
-              onChange={handleChange}
-              className={`${inputClass} bg-white`}
-            >
-              <option value="">-- Select Job Position --</option>
+  <select
+    name="job_post"
+    value={form.job_post}
+    onChange={handleChange}
+    className={`${inputClass} bg-white`}
+  >
+    <option value="">-- Select Job Position --</option>
 
-              {jobPosts.map((job, idx) => (
-                <option key={idx} value={job}>
-                  {job}
-                </option>
-              ))}
-            </select>
+    {jobPositions.length > 0 ? (
+      jobPositions
+        .filter((job) => job.status === "Active") // Optional: only show active ones
+        .map((job) => (
+          <option key={job._id} value={job.position_name}>
+            {job.position_name}
+          </option>
+        ))
+    ) : (
+      <option disabled>Loading...</option>
+    )}
+  </select>
 
-            {errors.job_post && (
-              <p className="text-red-500 text-sm mt-1">{errors.job_post}</p>
-            )}
-          </div>
+  {errors.job_post && (
+    <p className="text-red-500 text-sm mt-1">{errors.job_post}</p>
+  )}
+</div>
+
 
           {/* Resume Upload */}
           <div>
