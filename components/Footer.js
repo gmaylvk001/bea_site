@@ -354,6 +354,7 @@ const capitalizeFirstLetter = (str) =>
                     <li><Link href="/aboutus" className="hover:underline hover:text-white">About Us</Link></li>
                     <li><Link href="/contact" className="hover:underline hover:text-white">Contact Us</Link></li>
                     <li><Link href="/blog" className="hover:underline hover:text-white">Blogs</Link></li>
+                    <li><Link href="/careers" className="hover:underline hover:text-white">Careers</Link></li>
                   </ul>
                 </div>
               <div>
