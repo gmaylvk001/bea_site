@@ -1307,7 +1307,7 @@ const fetchInitialData = async () => {
 
 
             
-      {!nofound && products.length > 0 ? (
+      {!nofound && products?.length > 0 ? (
         <>
           
 
