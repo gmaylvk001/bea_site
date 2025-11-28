@@ -8,29 +8,33 @@ import Link from "next/link";
 import "swiper/css";
 import "swiper/css/navigation";
 
-export default function FlashCategorySlider() {
+export default function FlashCategorySlider({ slug }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchFlashCategories = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/categories/main_flash_cat");
-      const data = await res.json();
-      
-      if (data.success) {
-        setCategories(data.banners);
-      } else {
-        setError(data.error || "Failed to fetch categories");
-      }
-    } catch (err) {
-      setError("Error fetching categories");
-      console.error("Flash category fetch error:", err);
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+
+    const currentSlug = window.location.pathname.split("/").pop(); // get category slug from URL
+
+    const res = await fetch(`/api/fetchflashcat?categorySlug=${currentSlug}`);
+    const data = await res.json();
+    
+    if (data.success) {
+      setCategories(data.banners);
+    } else {
+      setError(data.error || "Failed to fetch categories");
     }
-  };
+  } catch (err) {
+    setError("Error fetching categories");
+    console.error("Flash category fetch error:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchFlashCategories();

@@ -12,7 +12,7 @@ import { Range as ReactRange } from "react-range";
 import FlashCategorySlider from "../FlashCategorySlider";
 import BannerSlider from "../main-cat-banner";
 
-export default function CategoryPage() {
+export default function CategoryPage(params) {
   const [categoryData, setCategoryData] = useState({
     category: null,
     brands: [],
@@ -539,7 +539,8 @@ const fetchInitialData = async () => {
       <BannerSlider categorySlug={slug} />
 
       {/* ✅ Dynamic Flash Category SLIDER from Database */}
-        <FlashCategorySlider />
+      <FlashCategorySlider slug={params.slug} />
+
 
       
 
