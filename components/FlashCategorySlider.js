@@ -1,0 +1,139 @@
+"use client";
+
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+
+import "swiper/css";
+import "swiper/css/navigation";
+
+export default function FlashCategorySlider() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchFlashCategories = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/categories/main_flash_cat");
+      const data = await res.json();
+      
+      if (data.success) {
+        setCategories(data.banners);
+      } else {
+        setError(data.error || "Failed to fetch categories");
+      }
+    } catch (err) {
+      setError("Error fetching categories");
+      console.error("Flash category fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFlashCategories();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="mt-6 pb-4 bg-white">
+        <h2 className="text-2xl font-bold text-center py-4">Categories</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-8">
+          {[...Array(8)].map((_, index) => (
+            <div key={index} className="bg-gray-200 rounded-xl aspect-square animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-6 pb-4 bg-white">
+        <h2 className="text-2xl font-bold text-center py-4">Categories</h2>
+        <div className="text-center py-8">
+          <p className="text-red-500 mb-4">Failed to load categories</p>
+          <button 
+            onClick={fetchFlashCategories}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (categories.length === 0) {
+    return (
+      <div className="mt-6 pb-4 bg-white">
+        <h2 className="text-2xl font-bold text-center py-4">Categories</h2>
+        <div className="text-center py-8 text-gray-500">
+          <p>No categories available</p>
+          <p className="text-sm">Add category banners from the admin panel</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 pb-4 bg-white">
+      <h2 className="text-2xl font-bold text-center py-4">Categories</h2>
+
+      <Swiper
+        modules={[Navigation]}
+        navigation
+        spaceBetween={20}
+        breakpoints={{
+          0: { slidesPerView: 2 },
+          640: { slidesPerView: 4 },
+          1024: { slidesPerView: 4 },
+        }}
+        className="pb-8 customSwiper"
+      >
+        {categories.map((category) => (
+          <SwiperSlide key={category._id}>
+            {category.redirect_url ? (
+              <a 
+                href={category.redirect_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <div className="bg-[#2453D3] rounded-xl flex flex-col items-center overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <img
+                    src={category.banner_image}
+                    alt={category.banner_name}
+                    className="w-full h-full object-cover rounded-[10px_10px_10px_10px] aspect-square"
+                    loading="lazy"
+                  />
+                </div>
+              </a>
+            ) : (
+              <Link href={`/category/${category.category_slug}`} className="block">
+                <div className="bg-[#2453D3] rounded-xl flex flex-col items-center overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <img
+                    src={category.banner_image}
+                    alt={category.banner_name}
+                    className="w-full h-full object-cover rounded-[10px_10px_10px_10px] aspect-square"
+                    loading="lazy"
+                  />
+                </div>
+              </Link>
+            )}
+            
+            {/* Category Name - Optional */}
+            {/* <div className="text-center mt-2">
+              <h3 className="text-sm font-semibold text-gray-800">
+                {category.category_name}
+              </h3>
+              <p className="text-xs text-gray-600">{category.banner_name}</p>
+            </div> */}
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </div>
+  );
+}

@@ -39,6 +39,18 @@ export default function AdminSider({ collapsed }) {
       { icon: 'mdi:truck-delivery-outline', label: 'Shipped Order', link: 'shippedorder', dotColor: 'bg-green-500' }
     ]
   },
+
+   {
+      icon: 'material-symbols:receipt-long',
+          label: 'Main Settings',
+    submenu: [
+      { icon: 'mdi:truck-delivery', label: 'Banner', link: 'main-cat', dotColor: 'bg-yellow-500' },
+      { icon: 'mdi:truck-delivery', label: 'Category Flash', link: 'main-cat-flash', dotColor: 'bg-yellow-500' },
+    
+      
+ 
+    ]
+  },
     { icon: 'mdi:tag-outline', label: 'Offer', link: 'offer' },
    { icon: "mdi:briefcase-account-outline", label: "Job Positions", link: "careers" },
     { icon: 'mdi:note-text-outline', label: 'Blog', link: 'blog' },

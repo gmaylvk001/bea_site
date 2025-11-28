@@ -9,6 +9,7 @@ import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
+import FlashCategorySlider from "../FlashCategorySlider";
 import BannerSlider from "../main-cat-banner";
 
 export default function CategoryPage() {
@@ -536,6 +537,10 @@ const fetchInitialData = async () => {
       
   {/* Pass the current category slug to show only relevant banners */}
       <BannerSlider categorySlug={slug} />
+
+      {/* ✅ Dynamic Flash Category SLIDER from Database */}
+        <FlashCategorySlider />
+
       
 
 
