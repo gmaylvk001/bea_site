@@ -1299,28 +1299,29 @@ export default function CategoryPage() {
                               </Link> */}
 
                                                                        
-                              <Link
-                                href={`/product/${product.slug}`}
-                                onClick={() => handleProductClick(product)}
-                                className="block mb-1"
-                              >
-                                <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
-                                  {(() => {
-                                    const model = product.model_number ? `(${product.model_number.trim()})` : "";
-                                    const name = product.name ? product.name.trim() : "";
-                                    const maxLen = 40;
+                            <Link
+                                                href={`/product/${product.slug}`}
+                                                className="block mb-2 flex-1"
+                                                onClick={() => handleProductClick(product)}
+                                              >
+                                               <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
+                                            {(() => {
+                                              const model = product.model_number ? `(${product.model_number.trim()})` : "";
+                                              const name = product.name ? product.name.trim() : "";
+                                              const maxLen = 40;
 
-                                    if (model) {
-                                      const remaining = maxLen - model.length - 1; // 1 for space before model
-                                      const truncatedName =
-                                        name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
-                                      return `${truncatedName} `;
-                                    } else {
-                                      return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
-                                    }
-                                  })()}
-                                </h3>
-                              </Link>
+                                              if (model) {
+                                                const remaining = maxLen - model.length - 1; // 1 for space before model
+                                                const truncatedName =
+                                                  name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
+                                                return `${truncatedName} `;
+                                              } else {
+                                                return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
+                                              }
+                                            })()}
+                                          </h3>
+                                              </Link>
+                            
 
          
                               {/* Price Row (same level always) */}
