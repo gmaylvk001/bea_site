@@ -38,6 +38,8 @@ export default function CategoryPage() {
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
   const [wishlist, setWishlist] = useState([]); 
   const toggleFilters = () => setIsFiltersExpanded(!isFiltersExpanded);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const toggleCategories = () => {
     setIsCategoriesExpanded(!isCategoriesExpanded);
   };
@@ -779,18 +781,18 @@ const scroll = (direction) => {
 
           {/* Content section */}
          <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
-  <h3 className="text-lg font-bold text-gray-900 mb-3 text-nowrap">
-    {subcategory.category_name}
-  </h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-3 text-nowrap">
+            {subcategory.category_name}
+          </h3>
 
-  <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
-    {subcategory.content || ""}
-  </p>
+          <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
+            {subcategory.content || ""}
+          </p>
 
-  <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
-    Explore
-  </button>
-</div>
+          <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
+            Explore
+          </button>
+        </div>
 
         </Link>
       ))
@@ -1465,16 +1467,30 @@ const scroll = (direction) => {
                       </h4>
 
                       {/* Title with improved responsive height */}
-                      <Link
-                        href={`/product/${product.slug}`}
-                        className="block mb-2 flex-1"
-                        onClick={() => handleProductClick(product)}
-                      >
-                        <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb]  line-clamp-2 min-h-[3rem] sm:min-h-[2.5rem] leading-tight">
-                          {/* {product.name} */}
-                          {window.innerWidth < 540 && product.name.length > 140 ? product.name.slice(0, 100) + "..." : product.name}
-                        </h3>
-                      </Link>
+                  <Link
+                    href={`/product/${product.slug}`}
+                    className="block mb-2 flex-1"
+                    onClick={() => handleProductClick(product)}
+                  >
+                   <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
+                                            {(() => {
+                                              const model = product.model_number ? `(${product.model_number.trim()})` : "";
+                                              const name = product.name ? product.name.trim() : "";
+                                              const maxLen = 40;
+
+                                              if (model) {
+                                                const remaining = maxLen - model.length - 1; // 1 for space before model
+                                                const truncatedName =
+                                                  name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
+                                                return `${truncatedName} `;
+                                              } else {
+                                                return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
+                                              }
+                                            })()}
+                                          </h3>
+                  </Link>
+
+
 
                       {/* Price Row */}
                       <div className="flex items-center gap-2 mb-3">

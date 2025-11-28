@@ -37,11 +37,15 @@ export async function GET(req) {
     await dbConnect();
 
     /* ---------------- BASE QUERY ---------------- */
+    /*
     let searchFilter = {
       status: "Active",
       quantity: { $gt: 0 },
     };
-
+  */
+     let searchFilter = {
+      status: "Active"
+    };
     /* ---------------- TEXT SEARCH ---------------- */
     if (query) {
       const safe = escapeRegExp(query);

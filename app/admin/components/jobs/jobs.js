@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FaEdit } from "react-icons/fa";
+import { FaEdit, FaTimes } from "react-icons/fa";
 import { Icon } from "@iconify/react";
 import ReactPaginate from "react-paginate";
 import { ToastContainer, toast } from "react-toastify";
@@ -196,8 +196,16 @@ export default function JobPositionComponent() {
 
       {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-30 flex justify-center items-center">
-          <div className="bg-white p-6 w-96 rounded-lg">
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-30 flex justify-center items-center z-50">
+          <div className="bg-white p-6 w-96 rounded-lg relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <FaTimes size={20} />
+            </button>
+
             <h2 className="text-xl font-semibold mb-4">
               {newPosition._id ? "Edit Position" : "Add Position"}
             </h2>
@@ -230,20 +238,31 @@ export default function JobPositionComponent() {
 
       {/* Delete Confirmation Modal */}
       {showConfirmationModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-80 relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowConfirmationModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <FaTimes size={20} />
+            </button>
+
             <h2 className="text-lg font-semibold mb-3">Delete Position?</h2>
             <p className="mb-4 text-gray-600">Are you sure you want to delete?</p>
 
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowConfirmationModal(false)}
-                className="px-4 py-2 bg-gray-300 rounded-md"
+                className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition-colors"
               >
                 Cancel
               </button>
 
-              <button onClick={deletePosition} className="px-4 py-2 bg-red-500 text-white rounded-md">
+              <button 
+                onClick={deletePosition} 
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+              >
                 Delete
               </button>
             </div>
