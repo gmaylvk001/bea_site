@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import Category from "@/models/ecom_category_info";
+import ProductFilter from "@/models/ecom_productfilter_info";
+import mongoose from "mongoose";
 
 export const runtime = "nodejs";
 
@@ -17,127 +19,171 @@ export async function GET(req) {
   const category = (searchParams.get("category") || "").trim();
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const limit = Math.max(1, Number(searchParams.get("limit")) || 12);
-  const brands = (searchParams.get("brands") || "").split(",").filter(Boolean);
-  const filters = (searchParams.get("filters") || "").split(",").filter(Boolean);
+
+  const brands = (searchParams.get("brands") || "")
+    .split(",")
+    .filter((v) => mongoose.Types.ObjectId.isValid(v));
+
+  const filters = (searchParams.get("filters") || "")
+    .split(",")
+    .filter((v) => mongoose.Types.ObjectId.isValid(v));
+
   const minPrice = Number(searchParams.get("minPrice") || 0);
-  const maxPrice = Number(searchParams.get("maxPrice") || 9999999999);
+  const maxPrice = Number(searchParams.get("maxPrice") || 1000000);
+
   const skip = (page - 1) * limit;
 
   try {
     await dbConnect();
 
-    // Build base search filter (includes everything except selected brand/filter exclusions we want for aggregated counts)
-    const searchFilter = { status: "Active" };
-
-    // Text search
+    /* ---------------- BASE QUERY ---------------- */
+    /*
+    let searchFilter = {
+      status: "Active",
+      quantity: { $gt: 0 },
+    };
+  */
+     let searchFilter = {
+      status: "Active"
+    };
+    /* ---------------- TEXT SEARCH ---------------- */
     if (query) {
-      const q = escapeRegExp(query);
-      const regex = new RegExp(q, "i");
-      searchFilter.$or = [{ name: regex }, { item_code: regex }, { search_keywords: regex }];
+      const safe = escapeRegExp(query);
+      const regex = new RegExp(safe, "i");
+      searchFilter.$or = [
+        { name: regex },
+        { item_code: regex },
+        { search_keywords: regex },
+      ];
     }
 
-    // Category mapping (same as before)
+    /* ---------------- CATEGORY MAPPING ---------------- */
     if (category && category !== "All Categories") {
-      let search_category = "";
-      if (category === "Televisions") search_category = "Television";
-      else if (category === "Computers & Laptops") search_category = "Laptops";
-      else if (category === "Mobiles & Accessories") search_category = "Mobile Phones";
-      else if (category === "Gadgets") search_category = "Gadget";
-      else if (category === "Accessories") search_category = "Accessory";
-      else if (category === "Sound Systems") search_category = "Sound System";
-
       const categoryDoc = await Category.findOne({
-        category_name: search_category || category,
+        category_name: category,
         status: "Active",
-      })
-        .select("_id")
-        .lean();
+      }).select("_id md5_cat_name");
 
       if (!categoryDoc) {
-        return NextResponse.json(
-          { products: [], pagination: { total: 0, currentPage: page, totalPages: 0, hasNext: false, hasPrev: false }, brandSummary: [], filterSummary: [] },
-          { headers: { "x-api-route": "search" } }
-        );
+        return NextResponse.json({
+          products: [],
+          pagination: { total: 0, currentPage: page, totalPages: 0 },
+          brandSummary: [],
+          filterSummary: [],
+        });
       }
 
-      if (category === "Large Appliance" || category === "Small Appliances") {
-        const children = await Category.find({ parentid: categoryDoc._id, status: "Active" }).select("_id").lean();
-        searchFilter.category = children.length ? { $in: children.map((c) => c._id) } : categoryDoc._id;
-      } else {
-        searchFilter.category = categoryDoc._id;
-      }
+      // ✅ same logic as working category filter
+      searchFilter.sub_category_new = {
+        $regex: categoryDoc.md5_cat_name,
+        $options: "i",
+      };
     }
 
-    // Apply price restriction via $expr
-    searchFilter.$expr = {
-      $and: [
-        {
-          $gte: [
-            {
-              $cond: [
-                { $and: [{ $gt: ["$special_price", 0] }, { $lt: ["$special_price", "$price"] }] },
-                "$special_price",
-                "$price",
-              ],
-            },
-            minPrice,
-          ],
-        },
-        {
-          $lte: [
-            {
-              $cond: [
-                { $and: [{ $gt: ["$special_price", 0] }, { $lt: ["$special_price", "$price"] }] },
-                "$special_price",
-                "$price",
-              ],
-            },
-            maxPrice,
-          ],
-        },
-      ],
-    };
-
-    // Apply filters that SHOULD restrict the returned product set (brand and filters selected by user)
-    if (brands.length) {
+    /* ---------------- BRAND FILTER ---------------- */
+    if (brands.length > 0) {
       searchFilter.brand = { $in: brands };
     }
-    if (filters.length) {
-      searchFilter.filters = { $in: filters };
+
+    /* ---------------- PRICE FILTER (MATCHES CATEGORY ROUTE) ---------------- */
+    searchFilter.$and = [
+      {
+        $or: [
+          {
+            $and: [
+              { special_price: { $ne: null, $ne: 0 } },
+              { special_price: { $gte: minPrice, $lte: maxPrice } },
+            ],
+          },
+          {
+            $and: [
+              { $or: [{ special_price: null }, { special_price: 0 }] },
+              { price: { $gte: minPrice, $lte: maxPrice } },
+            ],
+          },
+        ],
+      },
+    ];
+
+    /* ---------------- BASE PRODUCT QUERY ---------------- */
+    let productsQuery = Product.find(searchFilter);
+
+    /* ---------------- PRODUCT FILTER (USING ecom_productfilter_info) ---------------- */
+    let filteredProductIds = null;
+
+    if (filters.length > 0) {
+      const baseProductIds = await productsQuery.distinct("_id");
+
+      if (baseProductIds.length > 0) {
+        const productFilters = await ProductFilter.find({
+          product_id: { $in: baseProductIds },
+          filter_id: { $in: filters },
+        });
+
+        const filtersByProduct = productFilters.reduce((acc, pf) => {
+          const productId = pf.product_id.toString();
+          if (!acc[productId]) acc[productId] = new Set();
+          acc[productId].add(pf.filter_id.toString());
+          return acc;
+        }, {});
+
+        filteredProductIds = baseProductIds.filter((id) => {
+          const productId = id.toString();
+          const productFilterIds = filtersByProduct[productId] || new Set();
+          return filters.some((fid) => productFilterIds.has(fid));
+        });
+
+        searchFilter._id = { $in: filteredProductIds };
+        productsQuery = Product.find(searchFilter);
+      }
     }
 
-    // Now compute counts and return paged products.
+    /* ---------------- PAGINATION ---------------- */
     const total = await Product.countDocuments(searchFilter);
-    const products = await Product.find(searchFilter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
 
-    // ---- IMPORTANT: compute brandSummary based on the same search criteria BUT EXCLUDING the brand filter
-    // That ensures brand counts reflect the matched set ignoring which brands are currently selected.
-    const searchFilterForBrandAgg = { ...searchFilter };
-    delete searchFilterForBrandAgg.brand; // remove brand constraint so we count across all brands for same other filters
+    const products = await productsQuery
+      .sort({ createdAt: -1, _id: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-    // Similarly, compute filterSummary excluding the active filters (so counts reflect full matched set ignoring selection)
-    const searchFilterForFilterAgg = { ...searchFilter };
-    delete searchFilterForFilterAgg.filters;
+    /* ---------------- ✅ GLOBAL BRAND COUNT (NOT PAGE-BASED) ---------------- */
+    const brandAggMatch = { ...searchFilter };
+    delete brandAggMatch.brand;
+    delete brandAggMatch._id;
 
-    // Aggregation for brand counts (full matched set except brand selection)
     const brandAgg = await Product.aggregate([
-      { $match: searchFilterForBrandAgg },
+      { $match: brandAggMatch },
       { $group: { _id: "$brand", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
 
-    //const brandSummary = brandAgg.map((b) => ({ brandId: b._id, count: b.count }));
+    
+    const brandSummary = brandAgg
+      .filter((b) => mongoose.Types.ObjectId.isValid(b._id))
+      .map((b) => ({ brandId: b._id, count: b.count }));
+      
 
-    const brandSummary = await Product.find(searchFilter).select('brand');
+    //  const brandSummary = await Product.find(searchFilter).select('brand');
 
-    // Aggregation for filter counts (full matched set except filter selection)
-    const filterAgg = await Product.aggregate([
-      { $match: searchFilterForFilterAgg },
-      { $unwind: { path: "$filters", preserveNullAndEmptyArrays: false } },
-      { $group: { _id: "$filters", count: { $sum: 1 } } },
+    /* ---------------- ✅ GLOBAL PRODUCT FILTER COUNT ---------------- */
+    const filterAggMatch = { ...searchFilter };
+    delete filterAggMatch._id;
+
+    const filterAgg = await ProductFilter.aggregate([
+      {
+        $match: {
+          product_id: { $in: await Product.distinct("_id", filterAggMatch) },
+        },
+      },
+      { $group: { _id: "$filter_id", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
-    const filterSummary = filterAgg.map((f) => ({ filterId: f._id, count: f.count }));
+
+    const filterSummary = filterAgg.map((f) => ({
+      filterId: f._id,
+      count: f.count,
+    }));
 
     return NextResponse.json({
       products,
@@ -152,7 +198,7 @@ export async function GET(req) {
       filterSummary,
     });
   } catch (error) {
-    console.error("Search API error:", error);
+    console.error("❌ Search API Error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
