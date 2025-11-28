@@ -41,7 +41,9 @@ export async function POST(request) {
     
     
     // Email list
-    const emailadmin = ["gmaylvk001@gmail.com"];
+    const emailadmin = ["ecom@bharathelectronics.in"];
+    
+    //"arunkarthik@bharathelectronics.in"
 
     // Loop through emails one by one
     for (const adminEmail of emailadmin) {
