@@ -339,3 +339,24 @@ label {
     @apply rounded-[50rem] !important;
   }
 }
+
+/* ✅ POSITION LIKE YOUR DESIGN */
+.customSwiper .swiper-button-prev {
+  left: -2px;
+}
+ 
+.customSwiper .swiper-button-next {
+  right: -2px;
+}
+ 
+/* ✅ DOTS DESIGN */
+.customSwiper .swiper-pagination-bullet {
+  width: 7px;
+  height: 7px;
+  background: #d1d5db;
+  opacity: 1;
+}
+ 
+.customSwiper .swiper-pagination-bullet-active {
+  background: #111827;
+}
