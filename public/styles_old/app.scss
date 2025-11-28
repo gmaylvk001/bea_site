@@ -1,0 +1,57 @@
+// select2 css
+@import "~select2/dist/css/select2.css";
+// slick slider css
+@import "~slick-carousel/slick/slick.css";
+// jquery ui css
+@import "~jquery-ui/themes/base/theme.css";
+@import "~jquery-ui/themes/base/slider.css";
+// animate css
+@import "~animate.css";
+// aos css
+@import "~aos/dist/aos.css";
+
+// tailwind styles
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --main-color: #299e60;
+  --main-color-50: #e7f9ef;
+  --main-color-100: #cef2df;
+  --main-color-200: #b6eccf;
+  --main-color-300: #9ee6bf;
+  --main-color-400: #85e0af;
+  --main-color-500: #6dd9a0;
+  --main-color-600: #299e60;
+  --main-color-700: #258e56;
+  --main-color-800: #207e4c;
+  --main-color-900: #1c6d42;
+}
+
+.color-two {
+  --main-color: #fa6800;
+  --main-color-50: #ffede0;
+  --main-color-100: #ffe1cc;
+  --main-color-200: #ffcfad;
+  --main-color-300: #ffc194;
+  --main-color-400: #ffb27a;
+  --main-color-500: #ffa361;
+  --main-color-600: #fa6800;
+  --main-color-700: #e05e00;
+  --main-color-800: #c75300;
+  --main-color-900: #ad4800;
+}
+
+// abstract
+@import "abstracts/index";
+// Component
+@import "components/index";
+// utilities
+@import "utilities/index";
+// Module
+@import "layout/index";
+// All partials
+@import "partials/index";
+// global styles
+@import "./global";
