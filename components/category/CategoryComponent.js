@@ -9,8 +9,10 @@ import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
+//import FlashCategorySlider from "../FlashCategorySlider";
+//import BannerSlider from "../main-cat-banner";
 
-export default function CategoryPage() {
+export default function CategoryPage(params) {
   const [categoryData, setCategoryData] = useState({
     category: null,
     brands: [],
@@ -19,6 +21,7 @@ export default function CategoryPage() {
   });
   const [showEndMessage, setShowEndMessage] = useState(false);
   const [products, setProducts] = useState([]);
+   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
     categories: [],
     brands: [],
@@ -30,7 +33,8 @@ export default function CategoryPage() {
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [filterGroups, setFilterGroups] = useState({});
   const [loading, setLoading] = useState(true);
-  const { slug } = useParams();
+  const { slug,sub_slug } = useParams();
+  //const { slug } = useParams();
   const [sortOption, setSortOption] = useState('');
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [isBrandsExpanded, setIsBrandsExpanded] = useState(true);
@@ -80,71 +84,121 @@ export default function CategoryPage() {
     }
   }, [slug]);
   
-  const fetchInitialData = async () => {
-    try {
-      setLoading(true);
-      const categoryRes = await fetch(`/api/categories/${slug}`);
-      const categoryData = await categoryRes.json();
-      const banners = categoryData.main_category?.banners || [];
-      setCategoryData({
-        ...categoryData,
-        categoryTree: categoryData.category,
-        allCategoryIds: categoryData.allCategoryIds,
-         banners: banners
-      });
+  const scrollRef = useRef(null);
+  
+  const scroll = (direction) => {
+  const container = scrollRef.current;
+  if (!container) return;
 
-      if (categoryData.products?.length > 0) {
-        const prices = categoryData.products.map(p => p.special_price);
-        let minPrice = Math.min(...prices);
-        let maxPrice = Math.max(...prices);
+  const cardWidth = 320 + 24; // card width + gap
+  const visibleCards = 3;
+  const scrollAmount = cardWidth * visibleCards;
 
-        // ✅ Fix: If only one product, add a small buffer
-        if (minPrice === maxPrice) {
-          minPrice = minPrice - 1; // or e.g., minPrice * 0.95
-          maxPrice = maxPrice + 1; // or e.g., maxPrice * 1.05
-        }
+  if (direction === "left") {
+    container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+  } else {
+    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  }
+};
+  
+  // In your fetchInitialData function, update the filter grouping:
+const fetchInitialData = async () => {
+  try {
+    setLoading(true);
+    console.log('🔍 Fetching category data for slug:', slug);
+    
+    const categoryRes = await fetch(`/api/categories/${slug}`);
+    const categoryData = await categoryRes.json();
+    
+    console.log('📦 Raw API Response:', categoryData);
+    console.log('🎯 Filters from API:', categoryData.filters);
+    console.log('📊 Number of filters:', categoryData.filters?.length || 0);
 
-        setPriceRange([minPrice, maxPrice]);
-        setSelectedFilters(prev => ({
-          ...prev,
-          price: { min: minPrice, max: maxPrice }
-        }));
+    setCategoryData({
+      ...categoryData,
+      categoryTree: categoryData.category,
+      allCategoryIds: categoryData.allCategoryIds,
+      banners: categoryData.main_category?.banners || []
+    });
+
+    // Price range logic
+    if (categoryData.products?.length > 0) {
+      const prices = categoryData.products.map(p => p.special_price || p.price);
+      let minPrice = Math.min(...prices);
+      let maxPrice = Math.max(...prices);
+
+      if (minPrice === maxPrice) {
+        minPrice = Math.max(1, minPrice - 100);
+        maxPrice = maxPrice + 100;
       }
 
+      setPriceRange([minPrice, maxPrice]);
+      setSelectedFilters(prev => ({
+        ...prev,
+        price: { min: minPrice, max: maxPrice }
+      }));
+    }
+
+    // IMPROVED FILTER GROUPING LOGIC
+    if (categoryData.filters && categoryData.filters.length > 0) {
+      console.log('🔄 Processing filters...');
+      
       const groups = {};
-      categoryData.filters.forEach(filter => {
-        const groupId = filter.filter_group_name;
+      
+      categoryData.filters.forEach((filter, index) => {
+        console.log(`📋 Filter ${index + 1}:`, filter);
+        
+        // Use filter_group_id as the primary key, fallback to filter_group_name
+        const groupId = filter.filter_group_id || filter.filter_group_name;
+        
         if (groupId) {
           if (!groups[groupId]) {
             groups[groupId] = {
               _id: groupId,
-              name: filter.filter_group_name,
-              slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
+              name: filter.filter_group_name || 'Unnamed Group',
+              slug: (filter.filter_group_name || 'unnamed').toLowerCase().replace(/\s+/g, '-'),
               filters: []
             };
+            console.log(`✅ Created new group: ${filter.filter_group_name}`);
           }
-          groups[groupId].filters.push(filter);
+          
+          // Add filter to group
+          groups[groupId].filters.push({
+            _id: filter._id,
+            filter_name: filter.filter_name,
+            count: filter.count || 0
+          });
+          console.log(`✅ Added filter "${filter.filter_name}" to group "${filter.filter_group_name}"`);
+        } else {
+          console.log('❌ Filter missing group ID:', filter);
         }
       });
+      
+      console.log('🏷️ Final filter groups:', groups);
       setFilterGroups(groups);
 
+      // Initialize expanded state
       const initialExpanded = {};
-        Object.keys(groups).forEach(groupId => {
-          initialExpanded[groupId] = true;
-        });
-        setExpandedFilters(initialExpanded);
+      Object.keys(groups).forEach(groupId => {
+        initialExpanded[groupId] = true;
+      });
+      setExpandedFilters(initialExpanded);
       
-      // Fetch products after setting up initial data
-      await fetchFilteredProducts(categoryData, 1, true);
-    } catch (error) {
-      toast.error("Error fetching initial data");
-      // Redirect to 404 on error as well
-      router.push('/noproduct');
-    } finally {
-      setInitialLoadComplete(true);
-      // setLoading(false);
+    } else {
+      console.log('❌ No filters found in category data');
+      setFilterGroups({});
     }
-  };
+
+    await fetchFilteredProducts(categoryData, 1, true);
+    
+  } catch (error) {
+    console.error('💥 Error in fetchInitialData:', error);
+    toast.error("Error fetching initial data");
+    router.push('/noproduct');
+  } finally {
+    setInitialLoadComplete(true);
+  }
+};
   const [brandMap, setBrandMap] = useState([]);
  
   const fetchBrand = async () => {
@@ -255,29 +309,36 @@ export default function CategoryPage() {
     }
   };
 
-  const handleFilterChange = (type, value) => {
-    setSelectedFilters(prev => {
-      const newFilters = { ...prev };
-      
-      if (type === 'brands') {
-        newFilters.brands = prev.brands.includes(value)
-          ? prev.brands.filter(item => item !== value)
-          : [...prev.brands, value];
-      } else if (type === 'price') {
-        newFilters.price = value;
-      } else  if (type === 'categories') {
-        newFilters.categories = prev.categories.includes(value)
-          ? prev.categories.filter(item => item !== value)
-          : [...prev.categories, value];
-      }
-       else {
+  const handleFilterChange = (type, value, checked = null) => {
+  setSelectedFilters(prev => {
+    const newFilters = { ...prev };
+    
+    if (type === 'brands') {
+      newFilters.brands = prev.brands.includes(value)
+        ? prev.brands.filter(item => item !== value)
+        : [...prev.brands, value];
+    } else if (type === 'price') {
+      newFilters.price = value;
+    } else if (type === 'categories') {
+      newFilters.categories = prev.categories.includes(value)
+        ? prev.categories.filter(item => item !== value)
+        : [...prev.categories, value];
+    } else if (type === 'filters') {
+      // For filters, we need to handle checkbox state properly
+      if (checked !== null) {
+        newFilters.filters = checked
+          ? [...prev.filters, value]
+          : prev.filters.filter(item => item !== value);
+      } else {
+        // Toggle if no checked parameter
         newFilters.filters = prev.filters.includes(value)
-          ? prev.filters.filter(item => item !== item)
+          ? prev.filters.filter(item => item !== value)
           : [...prev.filters, value];
       }
-      return newFilters;
-    });
-  };
+    }
+    return newFilters;
+  });
+};
 
   const handlePriceChange = (values) => {
     let min = Math.max(1, values[0]);     // clamp to >= 1
@@ -486,172 +547,233 @@ export default function CategoryPage() {
     );
   }
 
+  console.log("📌 Category Data:", categoryData);
+
   return (
 
 
     <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
 
-     {categoryData.banners && categoryData.banners.length > 0 && (
+      
+  {/* Pass the current category slug to show only relevant banners */}
+      {/* <BannerSlider categorySlug={slug} /> */}
 
-        // <div className="relative w-full mb-8 rounded-lg overflow-hidden shadow-md">
-        //   <div
-        //     className="relative h-48 md:h-64 lg:h-80 cursor-pointer"
-        //     onClick={() => {
-        //       const redirectUrl = categoryData.banners[currentCategoryBannerIndex].redirect_url;
-        //       if (redirectUrl) window.location.href = redirectUrl;
-        //     }}
-        //   >
-        //     <Image
-        //       src={
-        //         categoryData.banners[currentCategoryBannerIndex].banner_image.startsWith("http")
-        //           ? categoryData.banners[currentCategoryBannerIndex].banner_image
-        //           : `${categoryData.banners[currentCategoryBannerIndex].banner_image}`
-        //       }
-        //       alt={categoryData.banners[currentCategoryBannerIndex].banner_name}
-        //       fill
-        //       className="object-cover"
-        //       unoptimized
-        //     />
-
-        //     {/* Navigation Arrows */}
-        //     {categoryData.banners.length > 1 && (
-        //       <>
-        //         {/* <button
-        //           onClick={(e) => {
-        //             e.stopPropagation();
-        //             setCurrentCategoryBannerIndex(
-        //               (prev) =>
-        //                 prev === 0 ? categoryData.banners.length - 1 : prev - 1
-        //             );
-        //           }}
-        //           className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-        //         >
-        //           <ChevronLeft size={24} />
-        //         </button>
-        //         <button
-        //           onClick={(e) => {
-        //             e.stopPropagation();
-        //             setCurrentCategoryBannerIndex(
-        //               (prev) =>
-        //                 prev === categoryData.banners.length - 1 ? 0 : prev + 1
-        //             );
-        //           }}
-        //           className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-        //         >
-        //           <ChevronRight size={24} />
-        //         </button> */}
-        //       </>
-        //     )}
-
-        //     {/* Radio Button Indicators */}
-        //     {categoryData.banners.length > 1 && (
-        //       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        //         {categoryData.banners.map((_, index) => (
-        //           <label
-        //             key={index}
-        //             className="flex items-center cursor-pointer"
-        //             onClick={(e) => {
-        //               e.stopPropagation();
-        //               setCurrentCategoryBannerIndex(index);
-        //             }}
-        //           >
-        //             <input
-        //               type="radio"
-        //               name="category-banner-indicator"
-        //               checked={index === currentCategoryBannerIndex}
-        //               onChange={() => setCurrentCategoryBannerIndex(index)}
-        //               className="sr-only"
-        //             />
-        //             <span
-        //               className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-        //                 index === currentCategoryBannerIndex
-        //                   ? "bg-white border-white"
-        //                   : "bg-transparent border-white/70"
-        //               }`}
-        //             >
-        //               {index === currentCategoryBannerIndex && (
-        //                 <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-        //               )}
-        //             </span>
-        //           </label>
-        //         ))}
-        //       </div>
-        //     )}
-        //   </div>
-
-        //   {/* Banner Title */}
-        //   {/* {categoryData.banners[currentCategoryBannerIndex].banner_name && (
-        //     <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-4">
-        //       <h2 className="text-xl font-semibold">
-        //         {categoryData.banners[currentCategoryBannerIndex].banner_name}
-        //       </h2>
-        //       {categoryData.banners[currentCategoryBannerIndex].redirect_url && (
-        //         <p className="text-sm mt-1 opacity-80">Click to explore</p>
-        //       )}
-        //     </div>
-        //   )} */}
-        // </div>
-
-
-
+      {/* ✅ Dynamic Flash Category SLIDER from Database */}
+     {/*  <FlashCategorySlider slug={params.slug} /> */}  
+     
+     {categoryData.main_category.banners && categoryData.main_category.banners.length > 0 && (
         <div className="relative w-full mb-8 rounded-lg overflow-hidden shadow-md">
-  <div
-    className="relative w-full aspect-[16/6] sm:aspect-[16/7] lg:aspect-[16/5] cursor-pointer"
-    onClick={() => {
-      const redirectUrl =
-        categoryData.banners[currentCategoryBannerIndex].redirect_url;
-      if (redirectUrl) window.location.href = redirectUrl;
-    }}
-  >
-    <Image
-      src={
-        categoryData.banners[currentCategoryBannerIndex].banner_image.startsWith("http")
-          ? categoryData.banners[currentCategoryBannerIndex].banner_image
-          : `${categoryData.banners[currentCategoryBannerIndex].banner_image}`
-      }
-      alt={categoryData.banners[currentCategoryBannerIndex].banner_name}
-      fill
-      className="object-cover w-full h-full"
-      unoptimized
-    />
-
-    {/* Radio Button Indicators */}
-    {categoryData.banners.length > 1 && (
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-        {categoryData.banners.map((_, index) => (
-          <label
-            key={index}
-            className="flex items-center cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              setCurrentCategoryBannerIndex(index);
+          <div className="relative w-full aspect-[16/6] sm:aspect-[16/7] lg:aspect-[16/5] cursor-pointer"
+            onClick={() => {
+              const redirectUrl = categoryData.main_category.banners[currentCategoryBannerIndex].redirect_url;
+              if (redirectUrl) window.location.href = redirectUrl;
             }}
           >
-            <input
-              type="radio"
-              name="category-banner-indicator"
-              checked={index === currentCategoryBannerIndex}
-              onChange={() => setCurrentCategoryBannerIndex(index)}
-              className="sr-only"
+            <Image
+              src={
+                categoryData.main_category.banners[currentCategoryBannerIndex].banner_image.startsWith("http")
+                  ? categoryData.main_category.banners[currentCategoryBannerIndex].banner_image
+                  : `${categoryData.main_category.banners[currentCategoryBannerIndex].banner_image}`
+              }
+              alt={categoryData.main_category.banners[currentCategoryBannerIndex].banner_name}
+              fill
+              className="object-cover w-full h-full"
+              unoptimized
             />
-            <span
-              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                index === currentCategoryBannerIndex
-                  ? "bg-white border-white"
-                  : "bg-transparent border-white/70"
-              }`}
-            >
-              {index === currentCategoryBannerIndex && (
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+      
+            {/* Navigation Arrows */}
+            {/* {categoryData.banners.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentCategoryBannerIndex(
+                      (prev) =>
+                        prev === 0 ? categoryData.banners.length - 1 : prev - 1
+                    );
+                  }}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentCategoryBannerIndex(
+                      (prev) =>
+                        prev === categoryData.banners.length - 1 ? 0 : prev + 1
+                    );
+                  }}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )} */}
+      
+            {/* Radio Button Indicators */}
+            {categoryData.main_category.banners.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {categoryData.main_category.banners.map((_, index) => (
+                  <label
+                    key={index}
+                    className="flex items-center cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentCategoryBannerIndex(index);
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="category-banner-indicator"
+                      checked={index === currentCategoryBannerIndex}
+                      onChange={() => setCurrentCategoryBannerIndex(index)}
+                      className="sr-only"
+                    />
+                    <span
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        index === currentCategoryBannerIndex
+                          ? "bg-white border-white"
+                          : "bg-transparent border-white/70"
+                      }`}
+                    >
+                      {index === currentCategoryBannerIndex && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                      )}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+      
+          {/* Banner Title */}
+          {/* {categoryData.banners[currentCategoryBannerIndex].banner_name && (
+            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-4">
+              <h2 className="text-xl font-semibold">
+                {categoryData.banners[currentCategoryBannerIndex].banner_name}
+              </h2>
+              {categoryData.banners[currentCategoryBannerIndex].redirect_url && (
+                <p className="text-sm mt-1 opacity-80">Click to explore</p>
               )}
-            </span>
-          </label>
-        ))}
+            </div>
+          )} */}
+        </div>
+      )}
+{/* Categories Circle Section - Dynamic based on subcategories */}
+
+<div className="relative my-12 px-6">
+  {/* Left arrow */}
+  <button
+    onClick={() => scroll("left")}
+    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-md hidden md:flex items-center justify-center"
+  >
+    <span className="text-2xl font-bold text-gray-700">{`‹`}</span>
+  </button>
+
+  {/* Right arrow */}
+  <button
+    onClick={() => scroll("right")}
+    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-md hidden md:flex items-center justify-center"
+  >
+    <span className="text-2xl font-bold text-gray-700">{`›`}</span>
+  </button>
+
+  {/* Scroll container */}
+  <div
+    ref={scrollRef}
+    className={`flex ${
+      categoryData?.categoryTree?.length > 3
+        ? "overflow-x-auto scroll-smooth hide-scrollbar"
+        : "justify-center flex-wrap gap-6"
+    } py-4`}
+    style={{
+      scrollSnapType: "x mandatory",
+      scrollPadding: "0 24px",
+      gap: "24px", // spacing between cards
+      maxWidth: "calc((320px * 3) + (24px * 2))", // 3 cards + 2 gaps
+      margin: "0 auto", // center container
+    }}
+  >
+
+    
+    {categoryData?.categoryTree?.length > 0 ? (
+      categoryData.categoryTree.map((subcategory) => (
+        
+        <Link
+          key={subcategory._id}
+          href={`/category/${slug}/${subcategory.category_slug}`}
+          className="flex flex-row items-center flex-shrink-0 w-[320px] h-[264px] border border-gray-200 rounded-xl bg-white hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:bg-gray-50"
+          style={{ scrollSnapAlign: "start" }}
+        >
+          {/* Image section */}
+          <div className="flex justify-center items-center w-[150px] h-full ml-4 flex-shrink-0">
+            {subcategory.image ? (
+              <div className="relative w-[170px] h-[220px] flex items-center justify-center">
+                <Image
+                  src={
+                    subcategory.image.startsWith("http")
+                      ? subcategory.image
+                      : `${subcategory.image}`
+                  }
+                  alt={subcategory.category_name}
+                  fill
+                  className="object-contain object-center"
+                  unoptimized
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                    const fallback = e.target.nextSibling;
+                    if (fallback) fallback.style.display = "block";
+                  }}
+                />
+                <div className="relative w-full h-full hidden">
+                  <Image
+                    src="/no-catimg.png"
+                    alt="Fallback image"
+                    fill
+                    className="object-contain object-center"
+                    unoptimized
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="relative w-[170px] h-[220px] flex items-center justify-center">
+                <Image
+                  src="/no-catimg.png"
+                  alt="Fallback image"
+                  fill
+                  className="object-contain object-center"
+                  unoptimized
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Content section */}
+         <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
+          <h3 className="text-lg font-bold text-gray-900 mb-3 text-nowrap">
+            {subcategory.category_name}
+          </h3>
+
+          <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
+            {subcategory.content || ""}
+          </p>
+
+          <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
+            Explore
+          </button>
+        </div>
+
+        </Link>
+      ))
+    ) : (
+      <div className="text-center w-full py-8">
+        <p className="text-gray-500">No subcategories available</p>
       </div>
     )}
   </div>
-        </div>
-      )}
+</div>
+
       
 
 
@@ -994,23 +1116,23 @@ export default function CategoryPage() {
                         {expandedFilters[group._id] && (
                           <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
                             {group.filters.map(filter => (
-                              <li key={filter._id} className="flex items-center">
-                                <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedFilters.filters.includes(filter._id)}
-                                    onChange={() => handleFilterChange('filters', filter._id)}
-                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-gray-600">{filter.filter_name}</span>
-                                  {filter.count && (
-                                    <span className="text-xs text-gray-400 ml-auto">
-                                      ({filter.count})
-                                    </span>
-                                  )}
-                                </label>
-                              </li>
-                            ))}
+  <li key={filter._id} className="flex items-center">
+    <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
+      <input
+        type="checkbox"
+        checked={selectedFilters.filters.includes(filter._id)}
+        onChange={(e) => handleFilterChange('filters', filter._id, e.target.checked)}
+        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+      />
+      <span className="text-sm text-gray-600">{filter.filter_name}</span>
+      {filter.count > 0 && (
+        <span className="text-xs text-gray-400 ml-auto">
+          ({filter.count})
+        </span>
+      )}
+    </label>
+  </li>
+))}
                           </ul>
                         )}
                       </div>
@@ -1265,7 +1387,7 @@ export default function CategoryPage() {
 
 
             
-      {!nofound && products.length > 0 ? (
+      {!nofound && products?.length > 0 ? (
         <>
           
 
@@ -1325,43 +1447,68 @@ export default function CategoryPage() {
               </h4>
 
               {/* Title with improved responsive height */}
-              <Link
+              {/* <Link
                 href={`/product/${product.slug}`}
                 className="block mb-2 flex-1"
                 onClick={() => handleProductClick(product)}
               >
                 <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb]  line-clamp-2 min-h-[3rem] sm:min-h-[2.5rem] leading-tight">
-                  {/* {product.name} */}
                   {window.innerWidth < 540 && product.name.length > 140 ? product.name.slice(0, 100) + "..." : product.name}
                 </h3>
-              </Link>
+              </Link> */}
+<Link
+  href={`/product/${product.slug}`}
+  className="block mb-2 flex-1"
+  onClick={() => handleProductClick(product)}
+>
+  <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
+                                            {(() => {
+                                              const model = product.model_number ? `(${product.model_number.trim()})` : "";
+                                              const name = product.name ? product.name.trim() : "";
+                                              const maxLen = 40;
+
+                                              if (model) {
+                                                const remaining = maxLen - model.length - 1; // 1 for space before model
+                                                const truncatedName =
+                                                  name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
+                                                return `${truncatedName} `;
+                                              } else {
+                                                return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
+                                              }
+                                            })()}
+                                          </h3>
+</Link>
+
 
               {/* Price Row */}
-              <div className="flex items-center gap-2 mb-3">
-                {Number(product.special_price) > Number(product.price) ? (
-                  <span className="text-base font-semibold text-red-600">
-                    ₹ {Math.round(product.special_price).toLocaleString()}
-                  </span>
-                ) : (
-                  <>
-                    <span className="text-base font-semibold text-red-600">
-                      ₹ {(
-                        product.special_price &&
-                        product.special_price > 0 &&
-                        product.special_price < product.price
-                          ? Math.round(product.special_price)
-                          : Math.round(product.price)
-                      ).toLocaleString()}
+              <div className="mb-3">
+                {/* {product.model_number && (
+                  <div className="bg-gray-100 rounded-md inline-block mb-2">
+                    <span className="text-sm font-semibold text-gray-700 tracking-wide">
+                      Model: <span className="text-[#0069c6]">({product.model_number})</span>
                     </span>
+                  </div>
+                )} */}
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-base font-semibold text-red-600">
+                    ₹ {(
+                      product.special_price &&
+                      product.special_price > 0 &&
+                      product.special_price !== '0' &&
+                      product.special_price < product.price
+                        ? Math.round(product.special_price)
+                        : Math.round(product.price)
+                    ).toLocaleString()}
+                  </span>
 
-                    {product.special_price > 0 &&
-                      product.special_price < product.price && (
-                        <span className="text-xs text-gray-500 line-through">
-                          ₹ {Math.round(product.price).toLocaleString()}
-                        </span>
-                    )}
-                  </>
-                )}
+                  {product.special_price > 0 &&
+                    product.special_price !== '0' &&
+                    product.special_price < product.price && (
+                      <span className="text-xs text-gray-500 line-through">
+                        ₹ {Math.round(product.price).toLocaleString()}
+                      </span>
+                  )}
+                </div>
               </div>
 
               <h4 className={`text-xs mb-3 ${product.quantity > 0 ? "text-green-600" : "text-red-600"}`}>
