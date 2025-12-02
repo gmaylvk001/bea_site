@@ -248,7 +248,7 @@ const fetchInitialData = async () => {
         query.set('filters', selectedFilters.filters.join(','));
       }
 
-      const res = await fetch(`/api/product/filter/main-cat?${query}`);
+      const res = await fetch(`/api/product/filter/main?${query}`);
       const { products, pagination: paginationData } = await res.json();
 
       setProducts(products);
@@ -751,7 +751,7 @@ const fetchInitialData = async () => {
 
           {/* Content section */}
          <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
-          <h3 className="text-lg font-bold text-gray-900 mb-3 text-nowrap">
+          <h3 className="text-md font-bold text-gray-900 mb-3 text-nowrap">
             {subcategory.category_name}
           </h3>
 
