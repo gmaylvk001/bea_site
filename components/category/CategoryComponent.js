@@ -9,8 +9,8 @@ import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
-import FlashCategorySlider from "../FlashCategorySlider";
-import BannerSlider from "../main-cat-banner";
+//import FlashCategorySlider from "../FlashCategorySlider";
+//import BannerSlider from "../main-cat-banner";
 
 export default function CategoryPage(params) {
   const [categoryData, setCategoryData] = useState({
@@ -33,7 +33,8 @@ export default function CategoryPage(params) {
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [filterGroups, setFilterGroups] = useState({});
   const [loading, setLoading] = useState(true);
-  const { slug } = useParams();
+  const { slug,sub_slug } = useParams();
+  //const { slug } = useParams();
   const [sortOption, setSortOption] = useState('');
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [isBrandsExpanded, setIsBrandsExpanded] = useState(true);
@@ -62,7 +63,7 @@ export default function CategoryPage(params) {
   };
   const [nofound, setNofound] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-  // const [currentCategoryBannerIndex, setCurrentCategoryBannerIndex] = useState(0);
+  const [currentCategoryBannerIndex, setCurrentCategoryBannerIndex] = useState(0);
   
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -82,6 +83,23 @@ export default function CategoryPage(params) {
       fetchInitialData();
     }
   }, [slug]);
+  
+  const scrollRef = useRef(null);
+  
+  const scroll = (direction) => {
+  const container = scrollRef.current;
+  if (!container) return;
+
+  const cardWidth = 320 + 24; // card width + gap
+  const visibleCards = 3;
+  const scrollAmount = cardWidth * visibleCards;
+
+  if (direction === "left") {
+    container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+  } else {
+    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+  }
+};
   
   // In your fetchInitialData function, update the filter grouping:
 const fetchInitialData = async () => {
@@ -536,11 +554,220 @@ const fetchInitialData = async () => {
 
       
   {/* Pass the current category slug to show only relevant banners */}
-      <BannerSlider categorySlug={slug} />
+      {/* <BannerSlider categorySlug={slug} /> */}
 
       {/* ✅ Dynamic Flash Category SLIDER from Database */}
-      <FlashCategorySlider slug={params.slug} />
+     {/*  <FlashCategorySlider slug={params.slug} /> */}  
+     
+     {categoryData.main_category.banners && categoryData.main_category.banners.length > 0 && (
+        <div className="relative w-full mb-8 rounded-lg overflow-hidden shadow-md">
+          <div className="relative w-full aspect-[16/6] sm:aspect-[16/7] lg:aspect-[16/5] cursor-pointer"
+            onClick={() => {
+              const redirectUrl = categoryData.main_category.banners[currentCategoryBannerIndex].redirect_url;
+              if (redirectUrl) window.location.href = redirectUrl;
+            }}
+          >
+            <Image
+              src={
+                categoryData.main_category.banners[currentCategoryBannerIndex].banner_image.startsWith("http")
+                  ? categoryData.main_category.banners[currentCategoryBannerIndex].banner_image
+                  : `${categoryData.main_category.banners[currentCategoryBannerIndex].banner_image}`
+              }
+              alt={categoryData.main_category.banners[currentCategoryBannerIndex].banner_name}
+              fill
+              className="object-cover w-full h-full"
+              unoptimized
+            />
+      
+            {/* Navigation Arrows */}
+            {/* {categoryData.banners.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentCategoryBannerIndex(
+                      (prev) =>
+                        prev === 0 ? categoryData.banners.length - 1 : prev - 1
+                    );
+                  }}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentCategoryBannerIndex(
+                      (prev) =>
+                        prev === categoryData.banners.length - 1 ? 0 : prev + 1
+                    );
+                  }}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )} */}
+      
+            {/* Radio Button Indicators */}
+            {categoryData.main_category.banners.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {categoryData.main_category.banners.map((_, index) => (
+                  <label
+                    key={index}
+                    className="flex items-center cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentCategoryBannerIndex(index);
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="category-banner-indicator"
+                      checked={index === currentCategoryBannerIndex}
+                      onChange={() => setCurrentCategoryBannerIndex(index)}
+                      className="sr-only"
+                    />
+                    <span
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        index === currentCategoryBannerIndex
+                          ? "bg-white border-white"
+                          : "bg-transparent border-white/70"
+                      }`}
+                    >
+                      {index === currentCategoryBannerIndex && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                      )}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+      
+          {/* Banner Title */}
+          {/* {categoryData.banners[currentCategoryBannerIndex].banner_name && (
+            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-4">
+              <h2 className="text-xl font-semibold">
+                {categoryData.banners[currentCategoryBannerIndex].banner_name}
+              </h2>
+              {categoryData.banners[currentCategoryBannerIndex].redirect_url && (
+                <p className="text-sm mt-1 opacity-80">Click to explore</p>
+              )}
+            </div>
+          )} */}
+        </div>
+      )}
+{/* Categories Circle Section - Dynamic based on subcategories */}
 
+<div className="relative my-12 px-6">
+  {/* Left arrow */}
+  <button
+    onClick={() => scroll("left")}
+    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-md hidden md:flex items-center justify-center"
+  >
+    <span className="text-2xl font-bold text-gray-700">{`‹`}</span>
+  </button>
+
+  {/* Right arrow */}
+  <button
+    onClick={() => scroll("right")}
+    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-md hidden md:flex items-center justify-center"
+  >
+    <span className="text-2xl font-bold text-gray-700">{`›`}</span>
+  </button>
+
+  {/* Scroll container */}
+  <div
+    ref={scrollRef}
+    className={`flex ${
+      categoryData?.categoryTree?.length > 3
+        ? "overflow-x-auto scroll-smooth hide-scrollbar"
+        : "justify-center flex-wrap gap-6"
+    } py-4`}
+    style={{
+      scrollSnapType: "x mandatory",
+      scrollPadding: "0 24px",
+      gap: "24px", // spacing between cards
+      maxWidth: "calc((320px * 3) + (24px * 2))", // 3 cards + 2 gaps
+      margin: "0 auto", // center container
+    }}
+  >
+    {categoryData?.categoryTree?.length > 0 ? (
+      categoryData.categoryTree.map((subcategory) => (
+        <Link
+          key={subcategory._id}
+          href={`/category/${slug}/${sub_slug}/${subcategory.category_slug}`}
+          className="flex flex-row items-center flex-shrink-0 w-[320px] h-[264px] border border-gray-200 rounded-xl bg-white hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:bg-gray-50"
+          style={{ scrollSnapAlign: "start" }}
+        >
+          {/* Image section */}
+          <div className="flex justify-center items-center w-[150px] h-full ml-4 flex-shrink-0">
+            {subcategory.image ? (
+              <div className="relative w-[170px] h-[220px] flex items-center justify-center">
+                <Image
+                  src={
+                    subcategory.image.startsWith("http")
+                      ? subcategory.image
+                      : `${subcategory.image}`
+                  }
+                  alt={subcategory.category_name}
+                  fill
+                  className="object-contain object-center"
+                  unoptimized
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                    const fallback = e.target.nextSibling;
+                    if (fallback) fallback.style.display = "block";
+                  }}
+                />
+                <div className="relative w-full h-full hidden">
+                  <Image
+                    src="/no-catimg.png"
+                    alt="Fallback image"
+                    fill
+                    className="object-contain object-center"
+                    unoptimized
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="relative w-[170px] h-[220px] flex items-center justify-center">
+                <Image
+                  src="/no-catimg.png"
+                  alt="Fallback image"
+                  fill
+                  className="object-contain object-center"
+                  unoptimized
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Content section */}
+         <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
+          <h3 className="text-lg font-bold text-gray-900 mb-3 text-nowrap">
+            {subcategory.category_name}
+          </h3>
+
+          <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
+            {subcategory.content || ""}
+          </p>
+
+          <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
+            Explore
+          </button>
+        </div>
+
+        </Link>
+      ))
+    ) : (
+      <div className="text-center w-full py-8">
+        <p className="text-gray-500">No subcategories available</p>
+      </div>
+    )}
+  </div>
+</div>
 
       
 

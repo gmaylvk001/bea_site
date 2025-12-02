@@ -5,6 +5,7 @@ import ProductFilter from "@/models/ecom_productfilter_info";
 import Brand from "@/models/ecom_brand_info"; 
 import Filter from "@/models/ecom_filter_infos";
 import FilterGroup from "@/models/ecom_filter_group_infos";
+import CategoryFilter from "@/models/ecom_categoryfilters_infos"; // <-- new import
 import mongoose from "mongoose";
 
 export async function GET(req, { params }) {
@@ -64,27 +65,37 @@ export async function GET(req, { params }) {
       }));
     }
     
-    // Extract product IDs for filtering
+    
+    // ✅ Fetch category-level filters (new logic)
+    const categoryFilters = await CategoryFilter.find({
+      category_id: category._id,
+    });
+
+    const filterIds = [
+      ...new Set(categoryFilters.map((cf) => cf.filter_id)),
+    ];
+
+    /* const filters = await Filter.find({ _id: { $in: filterIds } })
+      .populate({
+        path: "filter_group",
+        select: "filtergroup_name -_id",
+        model: FilterGroup,
+      })
+      .lean();
+
+    const formattedFilters = filters.map((filter) => ({
+      ...filter,
+      filter_group_name: filter.filter_group?.filtergroup_name || "No Group",
+      filter_group: filter.filter_group?._id,
+    })); */
+
+    
+    /* // Extract product IDs for filtering
     const productIds = products.map(product => product._id);
     const productFilters = await ProductFilter.find({ product_id: { $in: productIds } });
 
-    // // Count products per brand
-    // const brandCountMap = products.reduce((acc, product) => {
-    //   const brandId = product.brand?.toString();
-    //   if (brandId) {
-    //     acc[brandId] = (acc[brandId] || 0) + 1;
-    //   }
-    //   return acc;
-    // }, {});
-
-    // // Attach count to brands
-    // const brandsWithCount = brands.map(b => ({
-    //   ...b.toObject(),
-    //   count: brandCountMap[b._id.toString()] || 0
-    // }));
-    
     // Extract unique filter IDs
-    const filterIds = [...new Set(productFilters.map(pf => pf.filter_id))];
+    const filterIds = [...new Set(productFilters.map(pf => pf.filter_id))]; */ 
     const filters = await Filter.find({ _id: { $in: filterIds } }).populate({
             path: 'filter_group',
             select: 'filtergroup_name -_id',
