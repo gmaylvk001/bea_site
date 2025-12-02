@@ -547,6 +547,8 @@ const fetchInitialData = async () => {
     );
   }
 
+  console.log("📌 Category Data:", categoryData);
+
   return (
 
 
@@ -693,11 +695,14 @@ const fetchInitialData = async () => {
       margin: "0 auto", // center container
     }}
   >
+
+    
     {categoryData?.categoryTree?.length > 0 ? (
       categoryData.categoryTree.map((subcategory) => (
+        
         <Link
           key={subcategory._id}
-          href={`/category/${slug}/${sub_slug}/${subcategory.category_slug}`}
+          href={`/category/${slug}/${subcategory.category_slug}`}
           className="flex flex-row items-center flex-shrink-0 w-[320px] h-[264px] border border-gray-200 rounded-xl bg-white hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:bg-gray-50"
           style={{ scrollSnapAlign: "start" }}
         >
