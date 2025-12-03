@@ -54,7 +54,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
         query.set('minPrice', 0);
         query.set('maxPrice', 1000000);
 
-        const res = await fetch(`/api/product/filter/main-cat?${query}`);
+        const res = await fetch(`/api/product/filter/main?${query}`);
         const data = await res.json();
         
         if (data.products) {
