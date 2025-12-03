@@ -46,6 +46,7 @@ export default function AdminSider({ collapsed }) {
     submenu: [
       { icon: 'mdi:truck-delivery', label: 'Banner', link: 'main-cat', dotColor: 'bg-yellow-500' },
       { icon: 'mdi:truck-delivery', label: 'Category Flash', link: 'main-cat-flash', dotColor: 'bg-yellow-500' },
+      { icon: 'mdi:truck-delivery', label: 'Category banner', link: 'main_cat_prod', dotColor: 'bg-yellow-500' },
     
       
  
