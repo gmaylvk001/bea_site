@@ -32,7 +32,7 @@ export async function GET(request) {
       banners 
     });
   } catch (err) {
-    console.error("Fetch category banners error:", err);
+    console.error("Fetch category banners errors:", err);
     return NextResponse.json({ 
       success: false, 
       error: err.message 

@@ -8,7 +8,7 @@ import Link from "next/link";
 import "swiper/css";
 import "swiper/css/navigation";
 
-export default function FlashCategorySlider({ slug }) {
+export default function FlashCategorySlider({ slug, onBannerStatusChange }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,6 +24,7 @@ export default function FlashCategorySlider({ slug }) {
     
     if (data.success) {
       setCategories(data.banners);
+      onBannerStatusChange(data.banners.length > 0);
     } else {
       setError(data.error || "Failed to fetch categories");
     }
