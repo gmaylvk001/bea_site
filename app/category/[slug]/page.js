@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, use } from "react"; // Import 'use' from React
-import CategoryComponent from "@/components/category/CategoryComponent";
+import CategoryComponent from "@/components/category/sample_cat";
 
 export default function Dashboard({ params }) {
   // Unwrap the params promise using React.use()
