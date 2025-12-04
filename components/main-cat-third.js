@@ -64,7 +64,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
         }
         
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching product:', error);
       } finally {
         setLoadingProducts(false);
       }
