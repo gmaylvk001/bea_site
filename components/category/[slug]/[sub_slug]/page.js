@@ -26,16 +26,16 @@ export default function CategoryPage() {
     filters: []
   });
   const CUSTOM_FILTER_ORDER = [
-  "stock status",
-  "rating",
-  "price range",
-  "type",
-  "capacity",
-  "features",
-  "technology",
-  "condensor coil",
-  "colour",
-  "wifi connectivity"
+  "Stock Status",
+  "Rating",
+  "Price Range",
+  "Type",
+  "Capacity",
+  "Features",
+  "Technology",
+  "Condensor Coil",
+  "Colour",
+  "WiFi Connectivity"
 ];
 
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -154,7 +154,7 @@ const scroll = (direction) => {
         router.push('/noproduct');
       }
     } catch (error) {
-      toast.error("Error fetching initial data:");
+      toast.error("Error fetching initial data");
       // Redirect to 404 on error as well
       router.push('/noproduct');
     } finally {
