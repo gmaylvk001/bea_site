@@ -115,7 +115,7 @@ if (productData.slug) {
 }
 
  // ✅ Duplicate check for model_number (if you want it to be unique)
-    if (productData.model_number) {
+    /* if (productData.model_number) {
       const existingModel = await Product.findOne({
         model_number: productData.model_number,
         _id: { $ne: productId } // exclude current product
@@ -127,7 +127,7 @@ if (productData.slug) {
           { status: 400 }
         );
       }
-    }
+    } */
 
  // ✅ Get extend_warranty from productData instead of separate formData
     const extend_warranty = (productData.extend_warranty || []).map(item => ({

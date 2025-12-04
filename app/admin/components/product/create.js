@@ -1586,15 +1586,15 @@ const handleSubmit = async (e) => {
                   value={product.name || ''}
                   onChange={handleChange}
                  className={`w-full border p-2 rounded ${
-                product.name.length < 20 && product.name.length > 0 ? "border-red-500" : ""
+                product.name.length < 5 && product.name.length > 0 ? "border-red-500" : ""
               }`}
               required
-              minLength={20}  // HTML5 validation (but may not show until form submission)
+              minLength={5}  // HTML5 validation (but may not show until form submission)
             />
              {/* Show error message if less than 20 chars */}
-                        {product.name.length > 0 && product.name.length < 20 && (
+                        {product.name.length > 0 && product.name.length < 5 && (
                           <p className="text-red-500 text-xs mt-1">
-                            Minimum 20 characters required (currently: {product.name.length})
+                            Minimum 5 characters required (currently: {product.name.length})
                           </p>
                         )}
               </div>

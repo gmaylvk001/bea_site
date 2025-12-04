@@ -114,12 +114,14 @@ export async function POST(req) {
       }
 
       // ✅ Duplicate check for model_number (optional - remove if not needed)
+      /*
     if (productData.model_number) {
       let existingModel = await Product.findOne({ model_number: productData.model_number });
       if (existingModel) {
         return NextResponse.json({ error: "Product with this model number already exists" }, { status: 400 });
       }
     }
+    */
 
       console.log(productData);
 console.log("..............................................................");
