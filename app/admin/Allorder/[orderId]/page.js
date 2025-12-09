@@ -90,6 +90,9 @@ const addHistory = async () => {
     }
   }, [orderId]);
 
+  
+
+
   if (!order) return <p className="text-center mt-10">Loading...</p>;
   // console.log('Order:', order);
 
@@ -252,29 +255,37 @@ const addHistory = async () => {
               </tr>
             </thead>
             <tbody>
- {order.order_details?.map((item, i) => (
-  <tr key={i} className="border-b">
-    <td className="p-2">
-  {item.slug ? (
-    <a 
-      href={`/product/${item.slug}`} 
-      className="text-[#0069c6] hover:text-[#00badb] hover:underline"
-    >
-      {item.product_name} - ({item.item_code.replace(/^ITEM/, "")})
-    </a>
-  ) : (
-    <span>
-      {item.product_name} - ({item.item_code.replace(/^ITEM/, "")})
-    </span>
-  )}
-</td>
-
-    <td className="p-2">{item.model}</td>
-    <td className="p-2 text-center">{item.quantity}</td>
-    <td className="p-2 text-right text-red-600">₹{item.product_price}</td>
-    <td className="p-2 text-right text-red-600">₹{item.quantity * item.product_price}</td>
-  </tr>
-))}
+{order.order_details?.map((item, i) => {
+  // Log each item for debugging
+  console.log(`Item ${i}:`, item);
+  
+  // Calculate the price - use order_amount if product_price is 0
+  const itemPrice = item.product_price === 0 ? parseFloat(order.order_amount) : item.product_price;
+  const totalPrice = item.quantity * itemPrice;
+  
+  return (
+    <tr key={i} className="border-b">
+      <td className="p-2">
+        {item.slug ? (
+          <a 
+            href={`/product/${item.slug}`} 
+            className="text-[#0069c6] hover:text-[#00badb] hover:underline"
+          >
+            {item.product_name} - ({item.item_code.replace(/^ITEM/, "")})
+          </a>
+        ) : (
+          <span>
+            {item.product_name} - ({item.item_code.replace(/^ITEM/, "")})
+          </span>
+        )}
+      </td>
+      <td className="p-2">{item.model}</td>
+      <td className="p-2 text-center">{item.quantity}</td>
+      <td className="p-2 text-right text-red-600">₹{itemPrice}</td>
+      <td className="p-2 text-right text-red-600">₹{totalPrice}</td>
+    </tr>
+  );
+})}
   {order.order_item.map((item, index) =>
   item.extendedWarranty > 0 && (
     <tr key={index} className="font-semibold">
