@@ -33,7 +33,7 @@ export default function CategoryPage() {
   "Capacity",
   "Features",
   "Technology",
-  "Condensor Coil",
+  "Condensor coil",
   "Colour",
   "WiFi Connectivity"
 ];
@@ -146,6 +146,18 @@ const scroll = (direction) => {
           groups[groupId].filters.push(filter);
         }
       });
+      // Console log full filter list
+console.log("🔎 Raw Filters From APIIIII:", categoryData.filters);
+
+// Console log grouped filters
+console.log("🗂 Grouped Filterssssss:", groups);
+
+// Console log each group with its filters
+Object.keys(groups).forEach(key => {
+  console.log(`📌 Group: ${key}`, groups[key]);
+  console.log(`➡ Filters inside "${key}":`, groups[key].filters);
+});
+
       setFilterGroups(groups);
       if (categoryData.products?.length > 0) {
       await fetchFilteredProducts(categoryData, 1, true);
@@ -1149,10 +1161,13 @@ const scroll = (direction) => {
     <div className="space-y-4">
       {Object.values(filterGroups)
         .sort((a, b) => {
-          const indexA = CUSTOM_FILTER_ORDER.indexOf(a.name.toLowerCase());
-          const indexB = CUSTOM_FILTER_ORDER.indexOf(b.name.toLowerCase());
-          return indexA - indexB;
-        })
+  const order = CUSTOM_FILTER_ORDER.map(i => i.toLowerCase());
+  const indexA = order.indexOf(a.name.toLowerCase());
+  const indexB = order.indexOf(b.name.toLowerCase());
+
+  return indexA - indexB;
+})
+
         .map(group => (
           <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
             <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
