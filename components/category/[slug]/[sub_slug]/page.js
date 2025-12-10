@@ -25,16 +25,15 @@ export default function CategoryPage() {
     price: { min: 0, max: 100000 },
     filters: []
   });
-  const CUSTOM_FILTER_ORDER = [
+ const CUSTOM_FILTER_ORDER = [
   "Stock Status",
-  "Rating",
-  "Price Range",
-  "Type",
-  "Capacity",
-  "Features",
-  "Technology",
-  "Condensor coil",
-  "Colour",
+  "STAR RATING",
+  "TYPE",
+  "CAPACITY",
+  "FEATURES",
+  "TECHNOLOGY",
+  "CONDENSER COIL",
+  "COLOR",
   "WiFi Connectivity"
 ];
 
