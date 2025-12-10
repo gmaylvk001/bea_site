@@ -28,6 +28,33 @@ export default function CategoryPage(params) {
     price: { min: 0, max: 100000 },
     filters: []
   });
+   const CUSTOM_FILTER_ORDER = [
+  "Stock Status",
+  "STAR RATING",
+  "TYPE",
+  "CAPACITY",
+  "FEATURES",
+  "NUMBER OF RACKS",
+  "material",
+  "TYPE OF LID",
+  "NO OF JARS",
+  "Power Consumption",
+  "CONTROL TYPE",
+  "IGNITION SYSTEM",
+  "NUMBER OF BURNERS",
+  "FILTER TYPE",
+  "NO OF SLICES",
+  "FUNCTION TYPE",
+  "AUTO CLEAN",
+  "DUCTLESS",
+  "CHIMNEY SIZE",
+  "COMPATIBLE DEVICES",
+  "SPEED CONTROLS",
+  "TECHNOLOGY",
+  "CONDENSER COIL",
+  "WiFi Connectivity",
+  "COLOR"
+];
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSortPanelOpen, setIsSortPanelOpen] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 100000]);
@@ -1095,51 +1122,63 @@ const fetchInitialData = async () => {
               </div>
 
               {/* Dynamic Filters */}
-              {isFiltersExpanded && Object.values(filterGroups).length > 0 &&  (
-                <div className="bg-white p-4 rounded-lg shadow-sm border mb-3 border-gray-100">
-                  <div className="pb-2 mb-2">
-                    <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
-                  </div>
-                  <div className="space-y-4">
-                    {Object.values(filterGroups).map(group => (
-                      <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
-                        <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
-                          <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
-                          <ChevronDown 
-                            size={18}
-                            className={`text-gray-400 transition-transform duration-200 ${
-                              expandedFilters[group._id] ? 'rotate-180' : ''
-                            }`}
-                          />
-                        </button>
-
-                        {expandedFilters[group._id] && (
-                          <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
-                            {group.filters.map(filter => (
-  <li key={filter._id} className="flex items-center">
-    <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
-      <input
-        type="checkbox"
-        checked={selectedFilters.filters.includes(filter._id)}
-        onChange={(e) => handleFilterChange('filters', filter._id, e.target.checked)}
-        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-      />
-      <span className="text-sm text-gray-600">{filter.filter_name}</span>
-      {filter.count > 0 && (
-        <span className="text-xs text-gray-400 ml-auto">
-          ({filter.count})
-        </span>
-      )}
-    </label>
-  </li>
-))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {isFiltersExpanded && Object.values(filterGroups).length > 0 && (
+                        <div className="bg-white p-4 rounded-lg shadow-sm border mb-3 border-gray-100">
+                          <div className="pb-2 mb-2">
+                            <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
+                          </div>
+                      
+                          <div className="space-y-4">
+                            {Object.values(filterGroups)
+                              .sort((a, b) => {
+                        const order = CUSTOM_FILTER_ORDER.map(i => i.toLowerCase());
+                        const indexA = order.indexOf(a.name.toLowerCase());
+                        const indexB = order.indexOf(b.name.toLowerCase());
+                      
+                        return indexA - indexB;
+                      })
+                      
+                              .map(group => (
+                                <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                                  <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
+                                    <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-color flex-1 text-left ">
+                                      {group.name}
+                                    </span>
+                                    <ChevronDown 
+                                      size={18}
+                                      className={`text-gray-400 transition-transform duration-200 ${
+                                        expandedFilters[group._id] ? 'rotate-180' : ''
+                                      }`}
+                                    />
+                                  </button>
+                      
+                                  {expandedFilters[group._id] && (
+                                    <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+                                      {group.filters.map(filter => (
+                                        <li key={filter._id} className="flex items-center">
+                                          <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
+                                            <input
+                                              type="checkbox"
+                                              checked={selectedFilters.filters.includes(filter._id)}
+                                              onChange={() => handleFilterChange('filters', filter._id)}
+                                              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            />
+                                            <span className="text-sm text-gray-600">{filter.filter_name}</span>
+                                            {/* {filter.count && (
+                                              <span className="text-xs text-gray-400 ml-auto">
+                                                ({filter.count})
+                                              </span>
+                                            )} */}
+                                          </label>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
             </div>
 
         {isFilterPanelOpen && (
