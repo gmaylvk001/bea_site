@@ -25,18 +25,33 @@ export default function CategoryPage() {
     price: { min: 0, max: 100000 },
     filters: []
   });
- const CUSTOM_FILTER_ORDER = [
+const CUSTOM_FILTER_ORDER = [
   "Stock Status",
   "STAR RATING",
   "TYPE",
   "CAPACITY",
   "FEATURES",
+  "NUMBER OF RACKS",
+  "material",
+  "TYPE OF LID",
+  "NO OF JARS",
+  "Power Consumption",
+  "CONTROL TYPE",
+  "IGNITION SYSTEM",
+  "NUMBER OF BURNERS",
+  "FILTER TYPE",
+  "NO OF SLICES",
+  "FUNCTION TYPE",
+  "AUTO CLEAN",
+  "DUCTLESS",
+  "CHIMNEY SIZE",
+  "COMPATIBLE DEVICES",
+  "SPEED CONTROLS",
   "TECHNOLOGY",
   "CONDENSER COIL",
-  "COLOR",
-  "WiFi Connectivity"
+  "WiFi Connectivity",
+  "COLOR"
 ];
-
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSortPanelOpen, setIsSortPanelOpen] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 100000]);
