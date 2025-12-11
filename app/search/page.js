@@ -1,20 +1,10 @@
-"use client";
-import { useState, useEffect } from "react";
+import { Suspense } from "react";
+import SearchPage from "./SearchPage";
 
-import SearchComponent from "@/components/search/index";
-
-
-export default function Dashboard() {
-  const [time, setTime] = useState(null);
-
-  useEffect(() => {
-    setTime(Date.now());
-  }, []);
-
+export default function Page() {
   return (
-    <div>
-      
-      <SearchComponent /> 
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchPage />
+    </Suspense>
   );
 }
