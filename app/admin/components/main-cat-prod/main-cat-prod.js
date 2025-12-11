@@ -1,585 +1,709 @@
 "use client";
 import { useEffect, useState } from "react";
+import Select from "react-select";
+import { Icon } from '@iconify/react';
+import { FaPlus, FaMinus, FaEdit, FaGripVertical } from "react-icons/fa";
 
-export default function CategoryProductManager() {
+export default function CategoryBannerPage() {
+  const [showModal, setShowModal] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+const [selectedDeleteId, setSelectedDeleteId] = useState(null);
   const [banners, setBanners] = useState([]);
-  const [selectedBanner, setSelectedBanner] = useState(null);
-  const [bannerType, setBannerType] = useState("top"); // "top" or "sub"
+    const [allProducts, setAllProducts] = useState([]); // ADD THIS
+  // FOR EDIT 
+  const [editBannerId, setEditBannerId] = useState(null);
+
+  const [toast, setToast] = useState("");
+const showToast = (msg) => {
+  setToast(msg);
+  setTimeout(() => setToast(""), 3000); // hide after 3 sec
+};
+  
+
+
   const [formData, setFormData] = useState({
-    bannerName: "",
-    bannerImage: null,
-    redirectUrl: "",
-    bannerStatus: "Active",
-    displayOrder: 0,
-    categoryId: ""
+    category: "",
+    status: "active",
+    banners: [
+      {
+        topBanner: {
+          name: "",
+          image: null,
+          imagePreview: "",
+          url: "",
+          status: "active",
+          featured_products: [],
+        },
+        subBanners: [
+          {
+            name: "",
+            image: null,
+            imagePreview: "",
+            url: "",
+            status: "active",
+          },
+        ],
+      },
+    ],
   });
-  const [loading, setLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [messageModal, setMessageModal] = useState(null);
-  const [deleteModal, setDeleteModal] = useState(null);
-
-  // Fetch categories for dropdown
-  const fetchCategories = async () => {
-    const res = await fetch("/api/categories/banner");
-    const data = await res.json();
-    if (data.success) setCategories(data.categories);
-  };
-
-  // Fetch all banners
-  const fetchBanners = async () => {
-    const res = await fetch("/api/main-cat-products");
-    const data = await res.json();
-    if (data.success) setBanners(data.banners);
-  };
 
   useEffect(() => {
     fetchCategories();
     fetchBanners();
+    fetchAllProducts();
   }, []);
 
-  const handleInputChange = (key, value) => {
-    setFormData({ ...formData, [key]: value });
+  const fetchCategories = async () => {
+    const res = await fetch("/api/categories");
+    const data = await res.json();
+    console.log("CATEGORY RESPONSE:", data);
+    setCategories(data.categories || data); 
   };
 
-  const openModal = (type = "top", banner = null) => {
-    setBannerType(type);
-    setSelectedBanner(banner);
+  // ADD THIS FUNCTION - Updated to use filter endpoint
+  const fetchAllProducts = async () => {
+    try {
+      const res = await fetch("/api/product/filter/main?limit=1000&sort=featured");
+      const data = await res.json();
+      console.log("ALL PRODUCTS:", data);
+
+      const prodOptions = (data.products || []).map((prod) => ({
+        value: prod._id,
+        label: prod.name || prod.product_name,
+      }));
+      setAllProducts(prodOptions);
+    } catch (error) {
+      console.error("Failed to fetch all products:", error);
+    }
+  };
+
+   // ADD THIS FUNCTION
+  const handleFeaturedChange = (bannerIndex, subIndex, selectedOptions) => {
+    const updated = [...formData.banners];
+
+    if (subIndex !== null) {
+      // For sub banner featured products
+      updated[bannerIndex].subBanners[subIndex].featured_products = selectedOptions.map(
+        (option) => option.value
+      );
+    } else {
+      // For top banner featured products
+      updated[bannerIndex].topBanner.featured_products = selectedOptions.map(
+        (option) => option.value
+      );
+    }
+
+    setFormData({ ...formData, banners: updated });
+  };
+
+  const fetchBanners = async () => {
+    const res = await fetch("/api/category-banner_2");
+    const data = await res.json();
+    setBanners(data);
+  };
+
+  const handleFileUpload = (e, bannerIndex, type, subIndex = null) => {
+    const file = e.target.files[0];
+    const updated = [...formData.banners];
+
+    if (type === "top") {
+      updated[bannerIndex].topBanner.image = file;
+      updated[bannerIndex].topBanner.imagePreview = URL.createObjectURL(file);
+    } else {
+      updated[bannerIndex].subBanners[subIndex].image = file;
+      updated[bannerIndex].subBanners[subIndex].imagePreview = URL.createObjectURL(file);
+    }
+
+    setFormData({ ...formData, banners: updated });
+  };
+
+  const addBannerGroup = () => {
     setFormData({
-      bannerName: banner ? banner.banner_name : "",
-      bannerImage: null,
-      redirectUrl: banner ? banner.redirect_url : "",
-      bannerStatus: banner ? banner.banner_status : "Active",
-      displayOrder: banner ? banner.display_order : 0,
-      categoryId: banner ? (banner.category_id?._id || banner.category_id) : ""
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    // Find the selected category to get slug and name
-    const selectedCategory = categories.find(cat => cat._id === formData.categoryId);
-    
-    if (!selectedCategory && !selectedBanner) {
-      setMessageModal("Please select a category first");
-      setLoading(false);
-      return;
-    }
-
-    const fd = new FormData();
-    fd.append("banner_name", formData.bannerName);
-    fd.append("redirect_url", formData.redirectUrl);
-    fd.append("banner_status", formData.bannerStatus);
-    fd.append("display_order", formData.displayOrder);
-    fd.append("banner_type", bannerType);
-    fd.append("categoryId", formData.categoryId);
-    
-    // ADD THESE REQUIRED FIELDS
-    fd.append("category_slug", selectedCategory?.category_slug || selectedBanner?.category_slug || "");
-    fd.append("category_name", selectedCategory?.category_name || selectedBanner?.category_name || "");
-
-    if (formData.bannerImage) {
-      fd.append("bannerImage", formData.bannerImage);
-    }
-
-    if (selectedBanner) {
-      fd.append("bannerId", selectedBanner._id);
-    }
-
-    console.log("📤 Sending form data:", {
-      banner_name: formData.bannerName,
-      category_slug: selectedCategory?.category_slug || selectedBanner?.category_slug,
-      category_name: selectedCategory?.category_name || selectedBanner?.category_name
-    });
-
-    const res = await fetch("/api/main-cat-products", {
-      method: "POST",
-      body: fd,
-    });
-    
-    const data = await res.json();
-    setLoading(false);
-
-    if (data.success) {
-      setMessageModal(data.message || "Saved successfully!");
-      closeModal();
-      fetchBanners();
-    } else {
-      setMessageModal(data.error || "Error saving data");
-    }
-  };
-
-  const handleDelete = (bannerId) => {
-    setDeleteModal(bannerId);
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteModal) return;
-
-    const res = await fetch("/api/main-cat-products", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bannerId: deleteModal }),
-    });
-    
-    const data = await res.json();
-    setDeleteModal(null);
-
-    if (data.success) {
-      setMessageModal(data.message || "Deleted successfully!");
-      fetchBanners();
-    } else {
-      setMessageModal(data.error || "Error deleting data");
-    }
-  };
-
-  const updateDisplayOrder = async (bannerId, newOrder) => {
-    const res = await fetch("/api/main-cat-products", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bannerId, display_order: newOrder }),
-    });
-    
-    const data = await res.json();
-    if (data.success) {
-      fetchBanners();
-    } else {
-      setMessageModal(data.error || "Error updating order");
-    }
-  };
-
-  const closeModal = () => {
-    setSelectedBanner(null);
-    setBannerType("top");
-    setFormData({
-      bannerName: "",
-      bannerImage: null,
-      redirectUrl: "",
-      bannerStatus: "Active",
-      displayOrder: 0,
-      categoryId: ""
-    });
-    setIsModalOpen(false);
-  };
-
-  // Filter banners by type
-  const topBanners = banners.filter(banner => banner.banner_type === "top");
-  const subBanners = banners.filter(banner => banner.banner_type === "sub");
-
-  // Group banners by category
-  const groupBannersByCategory = (banners) => {
-    return banners.reduce((acc, banner) => {
-      const categoryId = banner.category_id?._id || banner.category_id;
-      if (!acc[categoryId]) {
-        acc[categoryId] = {
-          category: banner.category_id || { 
-            category_name: banner.category_name, 
-            category_slug: banner.category_slug 
+      ...formData,
+      banners: [
+        ...formData.banners,
+        {
+          topBanner: {
+            name: "",
+            image: null,
+            url: "",
+            status: "active",
+            imagePreview: "",
+            featured_products: [], // ADD THIS
           },
-          banners: []
-        };
-      }
-      acc[categoryId].banners.push(banner);
-      return acc;
-    }, {});
+          subBanners: [
+            {
+              name: "",
+              image: null,
+              url: "",
+              status: "active",
+              imagePreview: "",
+            },
+          ],
+        },
+      ],
+    });
   };
 
-  const groupedTopBanners = groupBannersByCategory(topBanners);
-  const groupedSubBanners = groupBannersByCategory(subBanners);
+  const addSubBanner = (bannerIndex) => {
+    const updated = [...formData.banners];
+    updated[bannerIndex].subBanners.push({
+      name: "",
+      image: null,
+      url: "",
+      status: "active",
+      imagePreview: "",
+      featured_products: [], // ADD THIS
+    });
+
+    setFormData({ ...formData, banners: updated });
+  };
+
+  const handleEdit = (banner) => {
+    setEditBannerId(banner._id);
+
+    setFormData({
+      category: banner.category_id?._id || "",
+      status: banner.category_status,
+      banners: banner.banners.map((b) => ({
+        topBanner: {
+          name: b.topBanner.name,
+          url: b.topBanner.url,
+          status: b.topBanner.status,
+          image: null, // keeps empty until user uploads new file
+          imagePreview: b.topBanner.image ? b.topBanner.image : "",
+          featured_products: b.topBanner.featured_products?.map(p => p._id) || [], // ✅ Preserve IDs
+        },
+        subBanners: b.subBanners.map((sb) => ({
+          name: sb.name,
+          url: sb.url,
+          status: sb.status,
+          image: null,
+          imagePreview: sb.image ?? "",
+        })),
+      })),
+    });
+
+    setShowModal(true);
+  };
+
+  const handleUpdate = async () => {
+    const form = new FormData();
+
+    form.append("category_id", formData.category);
+    form.append("category_status", formData.status);
+
+    form.append("banners", JSON.stringify(formData.banners));
+
+    formData.banners.forEach((b, idx) => {
+      if (b.topBanner.image instanceof File) {
+        form.append(`topBanner_${idx}`, b.topBanner.image);
+      }
+
+      b.subBanners.forEach((sb, sIdx) => {
+        if (sb.image instanceof File) {
+          form.append(`subBanner_${idx}_${sIdx}`, sb.image);
+        }
+      });
+    });
+
+    const res = await fetch(`/api/category-banner_2/${editBannerId}`, {
+      method: "PUT",
+      body: form,
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+     showToast("Updated successfully!");
+      setShowModal(false);
+      setEditBannerId(null);
+      resetForm();
+      fetchBanners();
+    } else {
+      alert("Update failed!");
+    }
+  };
+
+ const handleDelete = async (id) => {
+  const res = await fetch(`/api/category-banner_2/${id}`, { method: "DELETE" });
+
+  if (res.ok) {
+    showToast("Banner deleted successfully");
+    setShowConfirmationModal(false);   // close modal
+    fetchBanners();                    // refresh list
+  } else {
+    alert("Failed to delete");
+  }
+};
+
+
+  const submitForm = async () => {
+    const form = new FormData();
+
+    form.append("category_id", formData.category);
+    form.append("category_status", formData.status);
+
+    form.append(
+      "banners",
+      JSON.stringify(
+        formData.banners.map((b) => ({
+          topBanner: {
+            name: b.topBanner.name,
+            url: b.topBanner.url,
+            status: b.topBanner.status,
+            featured_products: b.topBanner.featured_products || [], // ADD THIS
+          },
+          subBanners: b.subBanners.map((sb) => ({
+            name: sb.name,
+            url: sb.url,
+            status: sb.status,
+          })),
+        }))
+      )
+    );
+
+    formData.banners.forEach((b, idx) => {
+      if (b.topBanner.image) {
+        form.append(`topBanner_${idx}`, b.topBanner.image);
+      }
+
+      b.subBanners.forEach((sb, sIdx) => {
+        if (sb.image) {
+          form.append(`subBanner_${idx}_${sIdx}`, sb.image);
+        }
+      });
+    });
+
+   
+
+    await fetch("/api/category-banner_2", {
+      method: "POST",
+      body: form,
+    });
+
+    showToast("Banner saved successfully!");
+    setShowModal(false);
+    resetForm();
+    fetchBanners();
+  };
+
+  const resetForm = () => {
+    setFormData({
+      category: "",
+      status: "active",
+      banners: [
+        {
+          topBanner: {
+            name: "",
+            image: null,
+            imagePreview: "",
+            url: "",
+            status: "active",
+            featured_products: [], // ADD THIS
+          },
+          subBanners: [
+            {
+              name: "",
+              image: null,
+              imagePreview: "",
+              url: "",
+              status: "active",
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditBannerId(null);
+    resetForm();
+  };
+
+  
 
   return (
-    <div className="p-6 space-y-8">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Manage Category Banners</h2>
-        <div className="flex gap-3">
-          <button
-            onClick={() => openModal("top")}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
-          >
-            + Add Top Banner
-          </button>
-          <button
-            onClick={() => openModal("sub")}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
-          >
-            + Add Sub Banner
-          </button>
-        </div>
+    <div className="p-6">
+ {/* Toast Notification */}
+    {toast && (
+      <div className="fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade z-[9999]">
+        {toast}
+      </div>
+    )}
+      
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold">Category Banner Manager</h2>
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+          onClick={() => setShowModal(true)}
+        >
+          + Add Banner
+        </button>
       </div>
 
-      {/* Top Banners Section (1900×400) */}
-      <div className="border border-gray-300 rounded-lg bg-white shadow">
-        <div className="bg-blue-50 px-4 py-3 border-b border-gray-300">
-          <h3 className="font-bold text-lg text-blue-800">Top Category Banners (1900×400)</h3>
-          <p className="text-sm text-blue-600">Main category header banners</p>
-        </div>
+      {/* Table */}
+      <table className="w-full border text-left mb-6">
+        <thead className="bg-gray-200">
+          <tr>
+            <th className="border p-2">Category</th>
+            <th className="border p-2">Groups</th>
+            <th className="border p-2">Status</th>
+            <th className="border p-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {banners.map((b, i) => (
+            <tr key={i}>
+              <td className="border p-2">{b.category_id?.category_name}</td>
+              <td className="border p-2">{b.banners?.length}</td>
+              <td className="border p-2">{b.category_status}</td>
+              <td className="border p-2 flex gap-2">
 
-        {Object.keys(groupedTopBanners).length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No top category banners found
-          </div>
-        ) : (
-          Object.entries(groupedTopBanners).map(([categoryId, { category, banners }]) => (
-            <div key={`top-${categoryId}`} className="border-b border-gray-200 last:border-b-0">
-              <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-                <h4 className="font-semibold">{category.category_name}</h4>
-                <p className="text-xs text-gray-500">{category.category_slug}</p>
-              </div>
-              
-              <table className="w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border px-3 py-2">Banner (1900×400)</th>
-                    <th className="border px-3 py-2">Redirect URL</th>
-                    <th className="border px-3 py-2 w-20">Status</th>
-                    <th className="border px-3 py-2 w-40">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {banners
-                    .sort((a, b) => a.display_order - b.display_order)
-                    .map((banner) => (
-                    <tr key={banner._id} className="hover:bg-gray-50">
-                      <td className="border px-3 py-2">
-                        <div className="flex items-center space-x-3">
-                          <img
-                            src={banner.banner_image}
-                            alt={banner.banner_name}
-                            className="h-16 w-40 object-cover border rounded"
-                          />
-                          <div>
-                            <p className="font-medium">{banner.banner_name}</p>
-                            <p className="text-xs text-gray-500">
-                              Added: {new Date(banner.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="border px-3 py-2">
-                        <p className="truncate max-w-xs" title={banner.redirect_url}>
-                          {banner.redirect_url || '-'}
-                        </p>
-                      </td>
-                      <td className="border px-3 py-2 text-center">
-                        <span
-                          className={`px-2 py-1 text-xs rounded ${
-                            banner.banner_status === "Active"
-                              ? "bg-green-100 text-green-600"
-                              : "bg-red-100 text-red-600"
-                          }`}
-                        >
-                          {banner.banner_status}
-                        </span>
-                      </td>
-                      <td className="border px-3 py-2 text-center">
-                        <div className="space-x-2">
-                          <button
-                            onClick={() => openModal("top", banner)}
-                            className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(banner._id)}
-                            className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                {/* Edit Button */}
+               
+                <button 
+                onClick={() => handleEdit(b)} 
+                className="w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200"title="Edit">
+                    <FaEdit className="w-4 h-4" />
+                </button>
+
+                {/* Delete Button */}
+               <button
+                onClick={() => {
+                  setSelectedDeleteId(b._id);   // store ID correctly
+                  setShowConfirmationModal(true);
+                }}
+                className="w-8 h-8 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-200"
+                title="Delete"
+              ><Icon icon="mingcute:delete-2-line" className="w-4 h-4" /></button>
+
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-start overflow-y-auto p-4 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-4xl my-8">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold">
+                {editBannerId ? "Edit Banner Group" : "Add Banner Group"}
+              </h3>
+              <button
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+                onClick={handleCloseModal}
+              >
+                ×
+              </button>
             </div>
-          ))
-        )}
-      </div>
 
-      {/* Sub Category Banners Section (238×238) - Updated to Table Format */}
-     <div className="border border-gray-300 rounded-lg bg-white shadow">
-  {/* Page Header */}
-  <div className="bg-green-50 px-4 py-3 border-b border-gray-300">
-    <h3 className="font-bold text-lg text-green-800">Sub Category Banners (238×238)</h3>
-    <p className="text-sm text-green-600">Small square banners for sub-categories</p>
-  </div>
-
-  {Object.keys(groupedSubBanners).length === 0 ? (
-    <div className="text-center py-8 text-gray-500">No sub-category banners found</div>
-  ) : (
-    Object.entries(groupedSubBanners).map(([categoryId, { category, banners }]) => (
-      <div key={`sub-${categoryId}`} className="py-6 border-b last:border-none">
-        
-        {/* Category Heading */}
-        <div className="px-5 mb-4">
-          <h2 className="text-xl font-bold text-gray-800">{category.category_name}</h2>
-          <p className="text-sm text-gray-500">{category.category_slug}</p>
-        </div>
-
-        {/* Table */}
-        <div className="px-4">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                
-                <th className="border px-3 py-2">Banner</th>
-                <th className="border px-3 py-2">Redirect URL</th>
-                <th className="border px-3 py-2 w-24 text-center">Status</th>
-                <th className="border px-3 py-2 w-40 text-center">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {banners.sort((a, b) => a.display_order - b.display_order).map((banner) => (
-                <tr key={banner._id} className="hover:bg-gray-50">
-
-              
-
-                  {/* Banner Details */}
-                  <td className="border px-3 py-2">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={banner.banner_image}
-                        alt={banner.banner_name}
-                        className="h-16 w-16 object-cover border rounded"
-                      />
-                      <div>
-                        <p className="font-medium">{banner.banner_name}</p>
-                        <p className="text-xs text-gray-500">
-                          Added: {new Date(banner.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Redirect URL */}
-                  <td className="border px-3 py-2">
-                    <p className="truncate max-w-xs" title={banner.redirect_url}>
-                      {banner.redirect_url || "-"}
-                    </p>
-                  </td>
-
-                  {/* Status */}
-                  <td className="border px-3 py-2 text-center">
-                    <span
-                      className={`px-2 py-1 text-xs rounded ${
-                        banner.banner_status === "Active"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-600"
-                      }`}
-                    >
-                      {banner.banner_status}
-                    </span>
-                  </td>
-
-                  {/* Action Buttons */}
-                  <td className="border px-3 py-2 text-center">
-                    <div className="space-x-2">
-                      <button
-                        onClick={() => openModal("sub", banner)}
-                        className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-xs"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => handleDelete(banner._id)}
-                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-xs"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    ))
-  )}
-</div>
-
-
-      {/* Add/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg w-[500px] max-h-[90vh] overflow-y-auto relative">
-            <button
-              onClick={closeModal}
-              className="absolute top-2 right-2 text-gray-600 hover:text-black"
-            >
-              ✖
-            </button>
-            <h3 className="text-lg font-semibold mb-4">
-              {selectedBanner ? "Edit Banner" : `Add ${bannerType === "top" ? "Top" : "Sub"} Banner`}
-            </h3>
-
-            <form onSubmit={handleSave} className="space-y-4">
-              {!selectedBanner && (
-               <div>
-  <label className="block text-sm font-medium mb-1">
-    Select Category *
-  </label>
-  <select
-    value={formData.categoryId}
-    onChange={(e) => handleInputChange("categoryId", e.target.value)}
-    className="w-full border px-2 py-2 rounded"
-    required
-  >
-    <option value="">Choose a category</option>
-    {categories.map((category) => (
-      <option 
-        key={category._id} 
-        value={category._id}
-      >
-        {category.category_name}
-      </option>
-    ))}
-  </select>
-</div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Banner Name *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Banner Name"
-                  value={formData.bannerName}
-                  onChange={(e) => handleInputChange("bannerName", e.target.value)}
-                  className="w-full border px-2 py-1 rounded"
-                  required
-                />
-              </div>
-              
-            
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Banner Image {!selectedBanner && "*"}
-                </label>
-                <p className="text-gray-500 text-sm mb-2">
-                  Recommended Size: <span className="font-semibold">
-                    {bannerType === "top" ? "1900 × 400 px" : "238 × 238 px"}
-                  </span>
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    handleInputChange("bannerImage", e.target.files[0])
-                  }
-                  className="w-full border px-2 py-1 rounded"
-                  required={!selectedBanner}
-                />
-                {selectedBanner?.banner_image && !formData.bannerImage && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-600">Current Image:</p>
-                    <img 
-                      src={selectedBanner.banner_image} 
-                      alt="Current banner" 
-                      className={`${bannerType === "top" ? "h-20 w-full object-cover" : "h-20 w-20 object-cover"} mt-1 border rounded`}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Redirect URL
-                </label>
-                <input
-                  type="text"
-                  placeholder="Redirect URL"
-                  value={formData.redirectUrl}
-                  onChange={(e) => handleInputChange("redirectUrl", e.target.value)}
-                  className="w-full border px-2 py-1 rounded"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Status
-                </label>
+            <div className="max-h-[70vh] overflow-y-auto pr-2">
+              {/* Category Select */}
+              <div className="mb-4">
+                <label className="font-medium block mb-2">Select Category</label>
                 <select
-                  value={formData.bannerStatus}
-                  onChange={(e) =>
-                    handleInputChange("bannerStatus", e.target.value)
-                  }
-                  className="w-full border px-2 py-1 rounded"
+                  className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
+                  <option value="">Select Category</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c._id}>{c.category_name}</option>
+                  ))}
                 </select>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="flex-1 bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+              {/* Category Status */}
+              <div className="mb-6">
+                <label className="font-medium block mb-2">Category Status</label>
+                <select
+                  className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-blue-400"
-                >
-                  {loading ? "Saving..." : "Save"}
-                </button>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* Delete Confirmation Modal */}
-      {deleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg w-[400px] text-center shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              Are you sure you want to delete this banner?
-            </h3>
-            <p className="text-gray-600 mb-4">This action cannot be undone.</p>
-            <div className="flex justify-center gap-4">
+              {/* Banner Groups */}
+              {formData.banners.map((group, bIndex) => (
+                <div key={bIndex} className="border border-gray-300 rounded-lg p-4 mb-6 bg-gray-50">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-semibold text-lg">Banner Group {bIndex + 1}</h4>
+                    {formData.banners.length > 1 && (
+                      <button
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        onClick={() => {
+                          const updated = formData.banners.filter((_, idx) => idx !== bIndex);
+                          setFormData({ ...formData, banners: updated });
+                        }}
+                      >
+                        Remove Group
+                      </button>
+                    )}
+                  </div>
+
+                  {/* TOP Banner */}
+                  <div className="mb-4 p-4 border border-gray-300 bg-white rounded">
+                    <h5 className="font-semibold mb-3 text-blue-600 text-lg">Top Banner</h5>
+
+                    {/* Name */}
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium mb-1">Banner Name</label>
+                      <input
+                        className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter banner name"
+                        value={group.topBanner.name || ""}
+                        onChange={(e) => {
+                          const updated = [...formData.banners];
+                          updated[bIndex].topBanner.name = e.target.value;
+                          setFormData({ ...formData, banners: updated });
+                        }}
+                      />
+                    </div>
+
+                    {/* File Upload */}
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium mb-1">Banner Image</label>
+                      <input
+                        type="file"
+                        className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) => handleFileUpload(e, bIndex, "top")}
+                      />
+                    </div>
+
+                    {/* Image Preview */}
+                    {group.topBanner.imagePreview && (
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium mb-1">Preview</label>
+                        <img src={group.topBanner.imagePreview} className="w-60 h-auto rounded border border-gray-300" />
+                      </div>
+                    )}
+
+                    {/* URL */}
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium mb-1">Redirect URL</label>
+                      <input
+                        className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://example.com"
+                        value={group.topBanner.url || ""}
+                        onChange={(e) => {
+                          const updated = [...formData.banners];
+                          updated[bIndex].topBanner.url = e.target.value;
+                          setFormData({ ...formData, banners: updated });
+                        }}
+                      />
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Status</label>
+                      <select
+                        className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={group.topBanner.status}
+                        onChange={(e) => {
+                          const updated = [...formData.banners];
+                          updated[bIndex].topBanner.status = e.target.value;
+                          setFormData({ ...formData, banners: updated });
+                        }}
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                                        <label className="block text-sm font-medium mb-2">Featured Products</label>
+                                        <Select
+                                          isMulti
+                                          options={allProducts}
+                                          onChange={(selected) => handleFeaturedChange(bIndex, null, selected)}
+                                          value={allProducts.filter((option) =>
+                                            Array.isArray(group.topBanner.featured_products) &&
+                                            group.topBanner.featured_products.includes(option.value)
+                                          )}
+                                          placeholder="Select products for featured..."
+                                          closeMenuOnSelect={false}
+                                          classNamePrefix="react-select"
+                                        />
+                                      </div>
+
+                  {/* Sub Banners */}
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h5 className="font-semibold text-green-600 text-lg">Sub Banners</h5>
+                      <button
+                        className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
+                        onClick={() => addSubBanner(bIndex)}
+                      >
+                        + Add Sub Banner
+                      </button>
+                    </div>
+                    
+                    {group.subBanners.map((sb, sbIndex) => (
+                      <div key={sbIndex} className="border border-gray-300 p-4 mb-3 bg-white rounded">
+                        <div className="flex justify-between items-center mb-2">
+                          <h6 className="font-medium">Sub Banner {sbIndex + 1}</h6>
+                          {group.subBanners.length > 1 && (
+                            <button
+                              className="text-red-600 hover:text-red-800 text-sm"
+                              onClick={() => {
+                                const updated = [...formData.banners];
+                                updated[bIndex].subBanners = updated[bIndex].subBanners.filter((_, idx) => idx !== sbIndex);
+                                setFormData({ ...formData, banners: updated });
+                              }}
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Name */}
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium mb-1">Banner Name</label>
+                          <input
+                            className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter sub banner name"
+                            value={sb.name || ""}
+                            onChange={(e) => {
+                              const updated = [...formData.banners];
+                              updated[bIndex].subBanners[sbIndex].name = e.target.value;
+                              setFormData({ ...formData, banners: updated });
+                            }}
+                          />
+                        </div>
+
+                        {/* File */}
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium mb-1">Banner Image</label>
+                          <input
+                            type="file"
+                            className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onChange={(e) => handleFileUpload(e, bIndex, "sub", sbIndex)}
+                          />
+                        </div>
+
+                        {/* Image Preview */}
+                        {sb.imagePreview && (
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium mb-1">Preview</label>
+                            <img src={sb.imagePreview} className="w-32 h-auto rounded border border-gray-300" />
+                          </div>
+                        )}
+
+                        {/* URL */}
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium mb-1">Redirect URL</label>
+                          <input
+                            className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="https://example.com"
+                            value={sb.url || ""}
+                            onChange={(e) => {
+                              const updated = [...formData.banners];
+                              updated[bIndex].subBanners[sbIndex].url = e.target.value;
+                              setFormData({ ...formData, banners: updated });
+                            }}
+                          />
+                        </div>
+
+                        {/* Status */}
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Status</label>
+                          <select
+                            className="border border-gray-300 rounded p-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={sb.status}
+                            onChange={(e) => {
+                              const updated = [...formData.banners];
+                              updated[bIndex].subBanners[sbIndex].status = e.target.value;
+                              setFormData({ ...formData, banners: updated });
+                            }}
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {/* Add Banner Group Button - Inside modal */}
               <button
-                onClick={() => setDeleteModal(null)}
-                className="bg-gray-400 px-4 py-2 rounded text-white hover:bg-gray-500"
+                className="bg-purple-600 text-white px-4 py-2 rounded mb-6 hover:bg-purple-700 transition-colors"
+                onClick={addBannerGroup}
+              >
+                + Add Another Banner Group
+              </button>
+            </div>
+
+            {/* Modal Footer with action buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-300">
+              <button
+                className="px-5 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                onClick={handleCloseModal}
               >
                 Cancel
               </button>
               <button
-                onClick={confirmDelete}
-                className="bg-red-600 px-4 py-2 rounded text-white hover:bg-red-700"
+                className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                onClick={editBannerId ? handleUpdate : submitForm}
               >
-                Delete
+                {editBannerId ? "Update Banner" : "Save Banner"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Message Modal */}
-      {messageModal && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-          <div className="bg-white p-4 rounded-lg w-[300px] text-center shadow-lg">
-            <p className="text-lg font-medium">{messageModal}</p>
-            <button
-              onClick={() => setMessageModal(null)}
-              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              OK
-            </button>
-          </div>
+        {/* Confirmation Modal */}
+          {showConfirmationModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          {/* <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+            <Icon icon="mdi:alert" className="w-6 h-6 text-red-600" />
+          </div> */}
+          <h3 className="text-lg font-semibold text-gray-900">
+            Delete Filter Group
+          </h3>
         </div>
-      )}
+
+        <p className="text-gray-600 mb-6">
+          Are you sure you want to delete this banner group? 
+        </p>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => setShowConfirmationModal(false)}
+            className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={() => handleDelete(selectedDeleteId)}
+            className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

@@ -519,47 +519,68 @@ const fetchInitialData = async () => {
    const [checkingContent, setCheckingContent] = useState(false);
  
    // Function to check if components have content
-   const checkComponentsContent = useCallback(async () => {
-     if (!slug) return;
-     
-     setCheckingContent(true);
-     try {
-       // Check BannerSlider content
-       const bannerUrl = `/api/main-cat-banner?categorySlug=${slug}`;
-       const bannerRes = await fetch(bannerUrl);
-       const bannerData = await bannerRes.json();
-       const hasBanners = bannerData && bannerData.banners && bannerData.banners.length > 0;
-       setHasBannerContent(hasBanners);
- 
-       // Check FlashCategorySlider content
-       const flashUrl = `/api/fetchflashcat?categorySlug=${slug}`;
-       const flashRes = await fetch(flashUrl);
-       const flashData = await flashRes.json();
-       const hasFlash = flashData && flashData.flashCategories && flashData.flashCategories.length > 0;
-       setHasFlashContent(hasFlash);
- 
-       // Check CategoryMainPage content
-       const mainUrl = `/api/main-tird-sec/${slug}`;
-       const mainRes = await fetch(mainUrl);
-       const mainData = await mainRes.json();
-       const hasMainContent = mainData && mainData.sections && mainData.sections.length > 0;
-       setHasCategoryMainContent(hasMainContent);
- 
-       console.log('Content check results:', {
-         banners: hasBanners,
-         flash: hasFlash,
-         main: hasMainContent
-       });
-     } catch (error) {
-       console.error('Error checking component content:', error);
-       // If there's an error checking, assume no content
-       setHasBannerContent(false);
-       setHasFlashContent(false);
-       setHasCategoryMainContent(false);
-     } finally {
-       setCheckingContent(false);
-     }
-   }, [slug]);
+    // Function to check if components have content
+  const checkComponentsContent = useCallback(async () => {
+    if (!slug) {
+      console.log("❌ No slug provided");
+      return;
+    }
+    
+    setCheckingContent(true);
+    console.log("🔍 Starting content check for slug:", slug);
+    
+    try {
+      // Check BannerSlider content
+      // console.log("📋 Checking BannerSlider...");
+      const bannerUrl = `/api/main-cat-banner?categorySlug=${slug}`;
+      // console.log("📡 Banner API URL:", bannerUrl);
+      const bannerRes = await fetch(bannerUrl);
+      const bannerData = await bannerRes.json();
+      // console.log("📦 Banner response:", bannerData);
+      const hasBanners = bannerData && bannerData.banners && bannerData.banners.length > 0;
+      // console.log("✅ Banner content found:", hasBanners);
+      setHasBannerContent(hasBanners);
+
+      // Check FlashCategorySlider content
+      // console.log("📋 Checking FlashCategorySlider...");
+      const flashUrl = `/api/fetchflashcat?categorySlug=${slug}`;
+      // console.log("📡 Flash API URL:", flashUrl);
+      const flashRes = await fetch(flashUrl);
+      const flashData = await flashRes.json();
+      // console.log("📦 Flash response:", flashData);
+      const hasFlash = flashData && flashData.banners && flashData.banners.length > 0;
+      // console.log("✅ Flash content found:", hasFlash);
+      setHasFlashContent(hasFlash);
+
+      // Check CategoryMainPage content
+      // console.log("📋 Checking CategoryMainPage...");
+      const mainUrl = `/api/main-tird-sec/${slug}`;
+      // console.log("📡 Main API URL:", mainUrl);
+      const mainRes = await fetch(mainUrl);
+      const mainData = await mainRes.json();
+      // console.log("📦 Main response:", mainData);
+      const hasMainContent = mainData && mainData.data && mainData.data.length > 0;
+      // console.log("✅ Main content found:", hasMainContent);
+      setHasCategoryMainContent(hasMainContent);
+
+      console.log("📊 Final content check results:", {
+        banners: hasBanners,
+        flash: hasFlash,
+        main: hasMainContent
+      });
+    } catch (error) {
+      console.error("❌ Error checking component content:", error);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      // If there's an error checking, assume no content
+      setHasBannerContent(false);
+      setHasFlashContent(false);
+      setHasCategoryMainContent(false);
+    } finally {
+      setCheckingContent(false);
+      console.log("✅ Content check completed");
+    }
+  }, [slug]);
  
    // Check content when slug changes
    useEffect(() => {
@@ -569,7 +590,11 @@ const fetchInitialData = async () => {
    }, [slug, checkComponentsContent]);
  
    // Determine if we should show the fallback
-   const showFallback = !hasBannerContent && !hasFlashContent && !hasCategoryMainContent;
+  const showFallback =
+  !hasBannerContent ||
+  !hasFlashContent ||
+  !hasCategoryMainContent;
+
  
    // Show loader while checking content or loading
    if (checkingContent || loading || !initialLoadComplete) {
