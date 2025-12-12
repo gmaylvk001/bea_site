@@ -616,6 +616,40 @@ const handleUpdateNavImageChange = async (e) => {
     return result;
   };
 
+  useEffect(() => {
+  if (searchQuery.trim() !== "") {
+    // Find all categories that match the search
+    const allCategories = flattenAllCategories(categories);
+    const matchedCategories = allCategories.filter(category =>
+      category.category_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    // Get all parent IDs of matched categories
+    const parentIdsToExpand = new Set();
+    matchedCategories.forEach(category => {
+      // Function to get all parent IDs of a category
+      const getParentIds = (catId) => {
+        const parentIds = [];
+        let current = categories.find(c => c._id === catId);
+        while (current && current.parentid !== "none") {
+          parentIds.push(current.parentid);
+          current = categories.find(c => c._id === current.parentid);
+        }
+        return parentIds;
+      };
+      
+      getParentIds(category._id).forEach(parentId => parentIdsToExpand.add(parentId));
+    });
+    
+    // Expand all parent categories
+    const newExpanded = { ...expandedCategories };
+    parentIdsToExpand.forEach(parentId => {
+      newExpanded[parentId] = true;
+    });
+    setExpandedCategories(newExpanded);
+  }
+}, [searchQuery, categories]);
+
   // Render category tree for dropdown
   const renderCategoryTree = (categories, level = 0) => {
     return categories.map((category) => (
@@ -665,33 +699,45 @@ const handleUpdateNavImageChange = async (e) => {
     return parentCategory ? parentCategory.category_name : "Unknown";
   };
 
-  // Filter categories based on search, status, and date
-  const filteredCategories = useMemo(() => {
-    const flattened = flattenCategories(categories);
-    return flattened.filter((category) => {
-      // Search filter
-      const matchesSearch = 
-        category.category_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (category.category_slug && category.category_slug.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      // Status filter
-      const matchesStatus = 
-        statusFilter === "" || category.status.toLowerCase() === statusFilter.toLowerCase();
-      
-      // Date filter
-      let matchesDate = true;
-      if (dateFilter.startDate && dateFilter.endDate && category.createdAt) {
-        const categoryDate = new Date(category.createdAt);
-        const startDate = new Date(dateFilter.startDate);
-        const endDate = new Date(dateFilter.endDate);
-        endDate.setHours(23, 59, 59, 999); // Include the entire end day
-        
-        matchesDate = categoryDate >= startDate && categoryDate <= endDate;
-      }
-      
-      return matchesSearch && matchesStatus && matchesDate;
+  // For search only (always includes all categories)
+const flattenAllCategories = (categories, parentId = "none", level = 0, result = []) => {
+  categories
+    .filter((category) => category.parentid === parentId)
+    .forEach((category) => {
+      result.push({ ...category, level });
+      flattenAllCategories(categories, category._id, level + 1, result);
     });
-  }, [categories, searchQuery, statusFilter, dateFilter.startDate, dateFilter.endDate, expandedCategories]);
+  return result;
+};
+
+  // Filter categories based on search, status, and date
+ const filteredCategories = useMemo(() => {
+  const flattened = flattenCategories(categories); // This respects expanded state
+  
+  return flattened.filter((category) => {
+    // Search filter
+    const matchesSearch = 
+      category.category_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (category.category_slug && category.category_slug.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    // Status filter
+    const matchesStatus = 
+      statusFilter === "" || category.status.toLowerCase() === statusFilter.toLowerCase();
+    
+    // Date filter
+    let matchesDate = true;
+    if (dateFilter.startDate && dateFilter.endDate && category.createdAt) {
+      const categoryDate = new Date(category.createdAt);
+      const startDate = new Date(dateFilter.startDate);
+      const endDate = new Date(dateFilter.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      
+      matchesDate = categoryDate >= startDate && categoryDate <= endDate;
+    }
+    
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+}, [categories, searchQuery, statusFilter, dateFilter.startDate, dateFilter.endDate, expandedCategories]);
 
   // Handle date change
   const handleDateChange = ({ startDate, endDate }) => {
