@@ -98,9 +98,16 @@ const showToast = (msg) => {
   };
 
   const fetchBanners = async () => {
-    const res = await fetch("/api/category-banner_2");
-    const data = await res.json();
-    setBanners(data);
+    console.log("fetchBanners: starting fetch for /api/category-banner_2");
+    try {
+      const res = await fetch("/api/category-banner_2");
+      console.log("fetchBanners: response status", res.status, res.statusText);
+      const data = await res.json();
+      console.log("fetchBanners: parsed data:", data);
+      setBanners(data);
+    } catch (error) {
+      console.error("fetchBanners: failed to fetch banners:", error);
+    }
   };
 
   const handleFileUpload = (e, bannerIndex, type, subIndex = null) => {
@@ -214,6 +221,7 @@ const showToast = (msg) => {
     });
 
     const data = await res.json();
+    console
 
     if (res.ok) {
      showToast("Updated successfully!");
