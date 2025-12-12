@@ -833,7 +833,7 @@ Object.keys(groups).forEach(key => {
           </p>
 
           <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
-            Exploree
+            Explore
           </button>
         </div>
 
