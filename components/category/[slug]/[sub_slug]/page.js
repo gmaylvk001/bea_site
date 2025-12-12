@@ -821,9 +821,9 @@ Object.keys(groups).forEach(key => {
           {/* Content section */}
          <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
          <h3
-  className={`font-bold text-gray-900 mb-3 text-nowrap ${
-    subcategory.category_name.length > 13 ? "text-sm" : "text-md"
-  }`}
+  className={`font-bold text-gray-900 mb-3 text-nowrap
+    ${subcategory.category_name.length > 13 ? "text-xs leading-tight tracking-wide" : "text-sm"}
+  `}
 >
   {subcategory.category_name}
 </h3>

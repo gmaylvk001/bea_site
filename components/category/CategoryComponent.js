@@ -778,9 +778,14 @@ const fetchInitialData = async () => {
 
           {/* Content section */}
          <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
-          <h3 className="text-md font-bold text-gray-900 mb-3 text-nowrap">
-            {subcategory.category_name}
-          </h3>
+          <h3
+  className={`font-bold text-gray-900 mb-3 text-nowrap
+    ${subcategory.category_name.length > 13 ? "text-xs leading-tight tracking-wide" : "text-sm"}
+  `}
+>
+  {subcategory.category_name}
+</h3>
+
 
           <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
             {subcategory.content || ""}
