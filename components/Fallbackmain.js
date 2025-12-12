@@ -703,7 +703,7 @@ const fetchInitialData = async () => {
         <Link
           key={subcategory._id}
           href={`/category/${slug}/${subcategory.category_slug}`}
-          className="flex flex-row items-center flex-shrink-0 w-[320px] h-[264px] border border-gray-200 rounded-xl bg-white hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:bg-gray-50"
+          className={`flex flex-row items-center flex-shrink-0 ${subcategory.category_name.length > 12 ? 'w-[360px]' : 'w-[320px]'} h-[264px] border border-gray-200 rounded-xl bg-white hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:bg-gray-50`}
           style={{ scrollSnapAlign: "start" }}
         >
           {/* Image section */}
@@ -750,10 +750,13 @@ const fetchInitialData = async () => {
           </div>
 
           {/* Content section */}
-         <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
-          <h3 className="text-md font-bold text-gray-900 mb-3 text-nowrap">
-            {subcategory.category_name}
-          </h3>
+         <div className={`flex flex-col text-left px-3 py-10 ${subcategory.category_name.length > 12 ? 'w-[200px] max-w-[200px]' : 'w-[150px]'} max-h-[220px] overflow-hidden`}>
+          <h3
+  className={`font-bold text-gray-900 mb-3 whitespace-normal break-words overflow-hidden line-clamp-2 ${subcategory.category_name.length > 12 ? "text-xs leading-tight tracking-wide" : "text-sm"}`}
+  title={subcategory.category_name}
+>
+  {subcategory.category_name}
+</h3>
 
           <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
             {subcategory.content || ""}
