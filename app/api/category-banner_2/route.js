@@ -1,13 +1,35 @@
 import fs from "fs";
 import path from "path";
 import dbConnect from "@/lib/db";
+import mongoose from "mongoose";
 import CategoryBanner from "@/models/category_banner_2";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
     await dbConnect();
-    
+
+    console.log("GET /api/category-banner_2: mongoose models:", mongoose.modelNames());
+
+    let docCount = null;
+    let collections = [];
+    try {
+      docCount = await CategoryBanner.countDocuments();
+      console.log("GET /api/category-banner_2: CategoryBanner count:", docCount);
+    } catch (countErr) {
+      console.error("GET /api/category-banner_2: countDocuments error:", countErr.message);
+    }
+
+    try {
+      if (mongoose.connection && mongoose.connection.db) {
+        const cols = await mongoose.connection.db.listCollections().toArray();
+        collections = cols.map((c) => c.name);
+        console.log("GET /api/category-banner_2: collections:", collections);
+      }
+    } catch (colErr) {
+      console.error("GET /api/category-banner_2: listCollections error:", colErr.message);
+    }
+
     const data = await CategoryBanner.find()
       .populate({
         path: "category_id",
@@ -18,40 +40,44 @@ export async function GET() {
         model: "Product",
         select: "name product_name _id" // Select only necessary fields
       });
-    
-    // Check if data exists and is an array
-    if (!data) {
+
+    // If empty, return diagnostics so client shows reason
+    if (!data || (Array.isArray(data) && data.length === 0)) {
       return NextResponse.json(
-        { error: "No banner data found" },
-        { status: 404 }
+        {
+          data: [],
+          diagnostics: {
+            modelNames: mongoose.modelNames(),
+            docCount,
+            collections,
+            connectionState: mongoose.connection ? mongoose.connection.readyState : null,
+          },
+        },
+        { status: 200 }
       );
     }
-    
+
     // Return success response
     return NextResponse.json(data, { status: 200 });
-    
   } catch (error) {
     console.error("Error fetching category banners:", error);
-    
+
+    const diagnostics = {
+      modelNames: mongoose.modelNames(),
+      connectionState: mongoose.connection ? mongoose.connection.readyState : null,
+      details: error.message,
+    };
+
     // Return specific error based on the type
     if (error.name === "CastError") {
-      return NextResponse.json(
-        { error: "Invalid ID format in database" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid ID format in database", diagnostics }, { status: 400 });
     }
-    
+
     if (error.name === "MongoServerError") {
-      return NextResponse.json(
-        { error: "Database connection error" },
-        { status: 503 }
-      );
+      return NextResponse.json({ error: "Database connection error", diagnostics }, { status: 503 });
     }
-    
-    return NextResponse.json(
-      { error: "Failed to fetch category banners", details: error.message },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: "Failed to fetch category banners", diagnostics }, { status: 500 });
   }
 }
 
