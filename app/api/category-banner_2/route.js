@@ -1,22 +1,13 @@
 import fs from "fs";
 import path from "path";
 import dbConnect from "@/lib/db";
-import mongoose from "mongoose";
 import CategoryBanner from "@/models/category_banner_2";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
     await dbConnect();
-
-    let docCount = null;
-    try {
-      docCount = await CategoryBanner.countDocuments();
-      console.log("GET /api/category-banner_2: CategoryBanner count:", docCount);
-    } catch (countErr) {
-      console.error("GET /api/category-banner_2: countDocuments error:", countErr.message);
-    }
-
+    
     const data = await CategoryBanner.find()
       .populate({
         path: "category_id",
@@ -27,71 +18,40 @@ export async function GET() {
         model: "Product",
         select: "name product_name _id" // Select only necessary fields
       });
-
-    // If empty, return diagnostics so client shows reason
-    if (!data || (Array.isArray(data) && data.length === 0)) {
-      let rawSample = null;
-      try {
-        // get a raw document without population
-        rawSample = await CategoryBanner.findOne().lean();
-      } catch (rawErr) {
-        console.error("GET /api/category-banner_2: raw sample error:", rawErr.message);
-      }
-
-      // Safely derive some metadata from the raw sample
-      let rawSampleSafe = null;
-      let rawSampleHasBanners = false;
-      let rawSampleBannersLength = 0;
-      try {
-        if (rawSample) {
-          rawSampleSafe = JSON.parse(JSON.stringify(rawSample));
-          rawSampleHasBanners = Array.isArray(rawSampleSafe.banners);
-          rawSampleBannersLength = rawSampleSafe.banners ? rawSampleSafe.banners.length : 0;
-        }
-      } catch (sErr) {
-        rawSampleSafe = String(rawSample);
-      }
-
-      const errorReason = docCount > 0 ? "documents_exist_but_not_returned" : "no_documents";
-
+    
+    // Check if data exists and is an array
+    if (!data) {
       return NextResponse.json(
-        {
-          data: [],
-          error: "no_banners",
-          message: "No category banners found (empty result)",
-          diagnostics: {
-            docCount,
-            errorReason,
-            rawSample: rawSampleSafe,
-            rawSampleHasBanners,
-            rawSampleBannersLength,
-          },
-        },
-        { status: 200 }
+        { error: "No banner data found" },
+        { status: 404 }
       );
     }
-
+    
     // Return success response
     return NextResponse.json(data, { status: 200 });
+    
   } catch (error) {
     console.error("Error fetching category banners:", error);
-
-    const diagnostics = {
-      modelNames: mongoose.modelNames(),
-      connectionState: mongoose.connection ? mongoose.connection.readyState : null,
-      details: error.message,
-    };
-
+    
     // Return specific error based on the type
     if (error.name === "CastError") {
-      return NextResponse.json({ error: "Invalid ID format in database", diagnostics }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid ID format in database" },
+        { status: 400 }
+      );
     }
-
+    
     if (error.name === "MongoServerError") {
-      return NextResponse.json({ error: "Database connection error", diagnostics }, { status: 503 });
+      return NextResponse.json(
+        { error: "Database connection error" },
+        { status: 503 }
+      );
     }
-
-    return NextResponse.json({ error: "Failed to fetch category banners", diagnostics }, { status: 500 });
+    
+    return NextResponse.json(
+      { error: "Failed to fetch category banners", details: error.message },
+      { status: 500 }
+    );
   }
 }
 
