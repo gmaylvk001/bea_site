@@ -21,7 +21,7 @@ const schema = new mongoose.Schema(
            featured_products: [
             {
               type: mongoose.Schema.Types.ObjectId,
-              ref: "products"
+              ref: "Product" /*Product*/
             }
           ]
         },
