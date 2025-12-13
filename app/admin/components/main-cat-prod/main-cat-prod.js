@@ -221,7 +221,7 @@ const showToast = (msg) => {
     });
 
     const data = await res.json();
-    console
+    
 
     if (res.ok) {
      showToast("Updated successfully!");
