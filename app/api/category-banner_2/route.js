@@ -9,25 +9,12 @@ export async function GET() {
   try {
     await dbConnect();
 
-    console.log("GET /api/category-banner_2: mongoose models:", mongoose.modelNames());
-
     let docCount = null;
-    let collections = [];
     try {
       docCount = await CategoryBanner.countDocuments();
       console.log("GET /api/category-banner_2: CategoryBanner count:", docCount);
     } catch (countErr) {
       console.error("GET /api/category-banner_2: countDocuments error:", countErr.message);
-    }
-
-    try {
-      if (mongoose.connection && mongoose.connection.db) {
-        const cols = await mongoose.connection.db.listCollections().toArray();
-        collections = cols.map((c) => c.name);
-        console.log("GET /api/category-banner_2: collections:", collections);
-      }
-    } catch (colErr) {
-      console.error("GET /api/category-banner_2: listCollections error:", colErr.message);
     }
 
     const data = await CategoryBanner.find()
@@ -43,14 +30,41 @@ export async function GET() {
 
     // If empty, return diagnostics so client shows reason
     if (!data || (Array.isArray(data) && data.length === 0)) {
+      let rawSample = null;
+      try {
+        // get a raw document without population
+        rawSample = await CategoryBanner.findOne().lean();
+      } catch (rawErr) {
+        console.error("GET /api/category-banner_2: raw sample error:", rawErr.message);
+      }
+
+      // Safely derive some metadata from the raw sample
+      let rawSampleSafe = null;
+      let rawSampleHasBanners = false;
+      let rawSampleBannersLength = 0;
+      try {
+        if (rawSample) {
+          rawSampleSafe = JSON.parse(JSON.stringify(rawSample));
+          rawSampleHasBanners = Array.isArray(rawSampleSafe.banners);
+          rawSampleBannersLength = rawSampleSafe.banners ? rawSampleSafe.banners.length : 0;
+        }
+      } catch (sErr) {
+        rawSampleSafe = String(rawSample);
+      }
+
+      const errorReason = docCount > 0 ? "documents_exist_but_not_returned" : "no_documents";
+
       return NextResponse.json(
         {
           data: [],
+          error: "no_banners",
+          message: "No category banners found (empty result)",
           diagnostics: {
-            modelNames: mongoose.modelNames(),
             docCount,
-            collections,
-            connectionState: mongoose.connection ? mongoose.connection.readyState : null,
+            errorReason,
+            rawSample: rawSampleSafe,
+            rawSampleHasBanners,
+            rawSampleBannersLength,
           },
         },
         { status: 200 }
