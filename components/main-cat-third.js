@@ -163,7 +163,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
   return (
     <div className="bg-white">
       {banners.map((group, idx) => (
-        <div key={idx} className="mt-6 overflow-hidden">
+        <div key={idx} className="mt-6 ">
 
           {/* TOP BANNER */}
           {group.top && (
@@ -207,15 +207,17 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
             <div className="bg-white p-4 rounded-lg mt-6">
               <h2 className="text-2xl font-bold mb-4">Best Deals</h2>
 
-              <Swiper
-                navigation
-                spaceBetween={16}
-                breakpoints={{
-                  0: { slidesPerView: 2 },
-                  640: { slidesPerView: 3 },
-                  1024: { slidesPerView: 5 },
-                }}
-              >
+                <Swiper
+                        modules={[Navigation]}
+                        navigation
+                        spaceBetween={16}
+                        breakpoints={{
+                          0: { slidesPerView: 2 },
+                          640: { slidesPerView: 3 },
+                          1024: { slidesPerView: 5 },
+                        }}
+                        className="customSwiper"
+                      >
                 {featuredProducts[idx].map((product) => {
                  
 
