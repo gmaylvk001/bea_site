@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import dbConnect from "@/lib/db";
 import CategoryBanner from "@/models/category_banner_2";
+import "@/models/ecom_category_info"; // ensure related models are registered before using populate
 import { NextResponse } from "next/server";
 
 export async function GET() {
