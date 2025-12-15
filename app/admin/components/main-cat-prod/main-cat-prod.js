@@ -462,7 +462,7 @@ const showToast = (msg) => {
 
                   {/* TOP Banner */}
                   <div className="mb-4 p-4 border border-gray-300 bg-white rounded">
-                    <h5 className="font-semibold mb-3 text-blue-600 text-lg">Top Banner</h5>
+                    <h5 className="font-semibold mb-3 text-blue-600 text-lg">Top Banner(1900 x 400)</h5>
 
                     {/* Name */}
                     <div className="mb-3">
@@ -549,7 +549,7 @@ const showToast = (msg) => {
                   {/* Sub Banners */}
                   <div>
                     <div className="flex justify-between items-center mb-3">
-                      <h5 className="font-semibold text-green-600 text-lg">Sub Banners</h5>
+                      <h5 className="font-semibold text-green-600 text-lg">Sub Banners(238 x 238)</h5>
                       <button
                         className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
                         onClick={() => addSubBanner(bIndex)}
