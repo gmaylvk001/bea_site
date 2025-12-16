@@ -1145,7 +1145,7 @@ const fetchInitialData = async () => {
                               .map(group => (
                                 <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                                   <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
-                                    <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-color flex-1 text-left ">
+                                    <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-color flex-1 text-left uppercase">
                                       {group.name}
                                     </span>
                                     <ChevronDown 
