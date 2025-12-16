@@ -25,6 +25,7 @@ export default function CategoryComponent() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters]   = useState([]);
+  const [filterGroups, setFilterGroups] = useState({});
   
   // Filters
   const [statusFilter, setStatusFilter] = useState("");
@@ -42,6 +43,29 @@ export default function CategoryComponent() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 20;
+
+  // Add this useEffect to fetch filter groups
+useEffect(() => {
+  const fetchFilterGroups = async () => {
+    try {
+      const response = await fetch("/api/filter_group/all");
+      const data = await response.json();
+      
+      // Create a map of filter_group_id -> filter_group_name
+      const groupsMap = {};
+      data.forEach(group => {
+        groupsMap[group._id] = group.filtergroup_name;
+      });
+      
+      setFilterGroups(groupsMap);
+      console.log("Filter groups loaded:", groupsMap);
+    } catch (error) {
+      console.error("Error fetching filter groups:", error);
+    }
+  };
+  
+  fetchFilterGroups();
+}, []);
 
   // Fetch products, categories and brands from API
   const fetchProducts = async () => {
@@ -188,128 +212,149 @@ export default function CategoryComponent() {
   //   XLSX.writeFile(workbook, `products_export_${new Date().toISOString().slice(0,10)}.xlsx`);
   // };
   
-  const exportToExcel = () => {
-    // Create mapping objects for faster lookup
-    const categoryMap = {};
-    categories.forEach(cat => {
-      categoryMap[cat._id] = cat.category_name;
-    });
+const exportToExcel = () => {
+  // Create mapping objects for faster lookup
+  const categoryMap = {};
+  categories.forEach(cat => {
+    categoryMap[cat._id] = cat.category_name;
+  });
 
-    const brandMap = {};
-    brands.forEach(brand => {
-      // Check what ID field your brands actually have
-      const brandId = brand._id || brand.id;
-      if (brandId) {
-        brandMap[brandId] = brand.brand_name || brand.name;
+  const brandMap = {};
+  brands.forEach(brand => {
+    const brandId = brand._id || brand.id;
+    if (brandId) {
+      brandMap[brandId] = brand.brand_name || brand.name;
+    }
+  });
+
+  // Prepare data with names instead of IDs
+  const dataForExport = filteredProducts.map(product => {
+    // Resolve category name
+    let categoryName = 'No Category';
+    if (product.category) {
+      if (typeof product.category === 'object') {
+        categoryName = product.category.category_name;
+      } else if (categoryMap[product.category]) {
+        categoryName = categoryMap[product.category];
       }
-    });
+    }
 
-    // Prepare data with names instead of IDs
-    const dataForExport = filteredProducts.map(product => {
-      // Resolve category name
-      let categoryName = 'No Category';
-      if (product.category) {
-        if (typeof product.category === 'object') {
-          categoryName = product.category.category_name;
-        } else if (categoryMap[product.category]) {
-          categoryName = categoryMap[product.category];
-        }
+    // Resolve subcategory name
+    let subcategoryName = 'No Subcategory';
+    if (product.sub_category) {
+      if (typeof product.sub_category === 'object') {
+        subcategoryName = product.sub_category.category_name;
+      } else if (categoryMap[product.sub_category]) {
+        subcategoryName = categoryMap[product.sub_category];
       }
+    }
 
-      // Resolve subcategory name
-      let subcategoryName = 'No Subcategory';
-      if (product.sub_category) {
-        if (typeof product.sub_category === 'object') {
-          subcategoryName = product.sub_category.category_name;
-        } else if (categoryMap[product.sub_category]) {
-          subcategoryName = categoryMap[product.sub_category];
-        }
+    // Resolve brand name
+    let brandName = 'No Brand';
+    if (product.brand) {
+      if (typeof product.brand === 'object') {
+        brandName = product.brand.brand_name || product.brand.name || 'No Brand Name';
+      } else {
+        brandName = brandMap[product.brand] || 'Brand not found';
       }
+    }
 
-      // Resolve brand name
-      let brandName = 'No Brand';
-      if (product.brand) {
-        if (typeof product.brand === 'object') {
-          brandName = product.brand.brand_name || product.brand.name || 'No Brand Name';
-        } else {
-          // If brand is stored as ID
-          brandName = brandMap[product.brand] || 'Brand not found';
+    // Process filters with group names
+    let filterString = '';
+    
+    if (product.filterDetails && product.filterDetails.length > 0) {
+      // Create an array to store formatted filter strings
+      const formattedFilters = product.filterDetails.map(filter => {
+        let groupName = 'Other';
+        
+        // Get group name from filter_group
+        if (filter.filter_group) {
+          if (typeof filter.filter_group === 'object') {
+            groupName = filter.filter_group.filtergroup_name || 'Other';
+          } else if (filter.filter_group_name) {
+            // If filter_group_name is directly available
+            groupName = filter.filter_group_name;
+          }
         }
-      }
-
-      let sizeFilter        = "";
-      const filter          = product.sizeFilterDetails;
-      const filter_length   = filter.length;    
-      filter.forEach(filter_det => {
-        if(filter_length > 1) {
-          sizeFilter        += filter_det.filter_name +",";
-        }else {
-          sizeFilter        = filter_det.filter_name;
-        }
+        
+        return `${groupName}: ${filter.filter_name}`;
       });
+      
+      filterString = formattedFilters.join(', ');
+    }
 
-      //     const brandName = brands.find(b => b._id === product.brand)?.name || '';
-      // // const categoryName = categories.find(c => c._id === product.category)?.name || '';
-      // const subcategoryName = subcategories.find(sc => sc._id === product.sub_category)?.name || '';
+    // Separate size filters if you want them in their own column
+    let sizeFilter = '';
+    if (product.sizeFilterDetails && product.sizeFilterDetails.length > 0) {
+      const sizeFilters = product.sizeFilterDetails.map(filter => {
+        let groupName = 'Size';
+        if (filter.filter_group && typeof filter.filter_group === 'object') {
+          groupName = filter.filter_group.filtergroup_name || 'Size';
+        }
+        return `${groupName}: ${filter.filter_name}`;
+      });
+      sizeFilter = sizeFilters.join(', ');
+    }
 
-      return {
-        'Item No.': product.item_code,
-        'Product Name': product.name,
-        'StockQty': product.quantity,
-        'Category': categoryName.toUpperCase(),
-        'Subcategory': subcategoryName.toUpperCase(),
-        'Brand': brandName,
-        // 'Size': product.size,
-        'Size': sizeFilter,
-        'Star': product.star || '',
-        'Movement': product.movement,
-        'MRP PRICE': product.price,
-        'Special Price': product.special_price,
-        'Description': product.description || '',
-        'Key Features': product.key_specifications || '',
-        'image1': product.images?.[0] || '',
-        'image2': product.images?.[1] || '',
-        'image3': product.images?.[2] || '',
-        'overview images': product.overview_image?.join(", ") || '',
-        'overview_description': product.overviewdescription || '',
-        'variants': product.hasVariants ? JSON.stringify(product.variants) : '',
-        'Status': product.status
-      };
-    });
+    return {
+      'Item No.': product.item_code,
+      'Product Name': product.name,
+      'StockQty': product.quantity,
+      'Category': categoryName.toUpperCase(),
+      'Subcategory': subcategoryName.toUpperCase(),
+      'Brand': brandName,
+      'Size': sizeFilter, // Size with group name
+      'Filters': filterString, // All filters with group names
+      'Star': product.star || '',
+      'Movement': product.movement || '',
+      'MRP PRICE': product.price,
+      'Special Price': product.special_price,
+      'Description': product.description || '',
+      'Key Features': product.key_specifications || '',
+      'image1': product.images?.[0] || '',
+      'image2': product.images?.[1] || '',
+      'image3': product.images?.[2] || '',
+      'overview images': product.overview_image?.join(", ") || '',
+      'overview_description': product.overviewdescription || '',
+      'variants': product.hasVariants ? JSON.stringify(product.variants) : '',
+      'Status': product.status
+    };
+  });
 
-    // Create worksheet with the exact column order
-    const worksheet = XLSX.utils.json_to_sheet(dataForExport, {
-      header: [
-        'Item No.',
-        'Product Name',
-        'StockQty',
-        'Category',
-        'Subcategory',
-        'Brand',
-        'Size',
-        'Star',
-        'Movement',
-        'MRP PRICE',
-        'Special Price',
-        'Description',
-        'Key Features',
-        'image1',
-        'image2',
-        'image3',
-        'overview images',
-        'overview_description',
-        'variants',
-        'Status'
-      ]
-    });
-    
-    // Create workbook
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
-    
-    // Generate file and trigger download
-    XLSX.writeFile(workbook, `products_export_${new Date().toISOString().slice(0,10)}.xlsx`);
-  };
+  // Create worksheet with the exact column order
+  const worksheet = XLSX.utils.json_to_sheet(dataForExport, {
+    header: [
+      'Item No.',
+      'Product Name',
+      'StockQty',
+      'Category',
+      'Subcategory',
+      'Brand',
+      'Size',
+      'Filters',
+      'Star',
+      'Movement',
+      'MRP PRICE',
+      'Special Price',
+      'Description',
+      'Key Features',
+      'image1',
+      'image2',
+      'image3',
+      'overview images',
+      'overview_description',
+      'variants',
+      'Status'
+    ]
+  });
+  
+  // Create workbook
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+  
+  // Generate file and trigger download
+  XLSX.writeFile(workbook, `products_export_${new Date().toISOString().slice(0,10)}.xlsx`);
+};
 
   const [isBulkUploadModel, setIsBulkUploadModel] = useState({
     isOpen: false, 
