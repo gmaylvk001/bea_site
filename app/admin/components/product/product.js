@@ -260,28 +260,32 @@ const exportToExcel = () => {
     }
 
     // Process filters with group names
-    let filterString = '';
-    
-    if (product.filterDetails && product.filterDetails.length > 0) {
-      // Create an array to store formatted filter strings
-      const formattedFilters = product.filterDetails.map(filter => {
-        let groupName = 'Other';
-        
-        // Get group name from filter_group
-        if (filter.filter_group) {
-          if (typeof filter.filter_group === 'object') {
-            groupName = filter.filter_group.filtergroup_name || 'Other';
-          } else if (filter.filter_group_name) {
-            // If filter_group_name is directly available
-            groupName = filter.filter_group_name;
-          }
-        }
-        
-        return `${groupName}: ${filter.filter_name}`;
-      });
-      
-      filterString = formattedFilters.join(', ');
+  let filterString = '';
+
+if (product.filterDetails && product.filterDetails.length > 0) {
+  const formattedFilters = product.filterDetails.map(filter => {
+    let groupName = 'Other';
+
+    // CASE 1: filter_group is populated object
+    if (filter.filter_group && typeof filter.filter_group === 'object') {
+      groupName = filter.filter_group.filtergroup_name || 'Other';
     }
+
+    // CASE 2: filter_group is ID → lookup from filterGroups map
+    else if (filter.filter_group && typeof filter.filter_group === 'string') {
+      groupName = filterGroups[filter.filter_group] || 'Other';
+    }
+
+    // CASE 3: backend already sends group name
+    else if (filter.filter_group_name) {
+      groupName = filter.filter_group_name;
+    }
+
+    return `${groupName}: ${filter.filter_name}`;
+  });
+
+  filterString = formattedFilters.join(', ');
+}
 
     // Separate size filters if you want them in their own column
     let sizeFilter = '';
