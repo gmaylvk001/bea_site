@@ -1100,7 +1100,7 @@ export default function CartComponent() {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Your cart is empty</h2>
           <p className="text-gray-600 mb-6">Looks like you haven't added anything to your cart yet</p>
           <button 
-            onClick={() => router.push('/index')}
+            onClick={() => router.push('/')}
             className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
           >
             Continue Shopping
