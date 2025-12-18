@@ -49,23 +49,28 @@ useEffect(() => {
   const fetchFilterGroups = async () => {
     try {
       const response = await fetch("/api/filter_group/all");
-      const data = await response.json();
-      
-      // Create a map of filter_group_id -> filter_group_name
+      const result = await response.json();
+
+      // 👇 adjust according to API shape
+      const groupsArray = Array.isArray(result)
+        ? result
+        : result.data || result.groups || [];
+
       const groupsMap = {};
-      data.forEach(group => {
+      groupsArray.forEach(group => {
         groupsMap[group._id] = group.filtergroup_name;
       });
-      
+
       setFilterGroups(groupsMap);
       console.log("Filter groups loaded:", groupsMap);
     } catch (error) {
       console.error("Error fetching filter groups:", error);
     }
   };
-  
+
   fetchFilterGroups();
 }, []);
+
 
   // Fetch products, categories and brands from API
   const fetchProducts = async () => {
@@ -253,7 +258,7 @@ const exportToExcel = () => {
     let brandName = 'No Brand';
     if (product.brand) {
       if (typeof product.brand === 'object') {
-        brandName = product.brand.brand_name || product.brand.name || 'No Brand Name';
+        brandName = product.brand.brand_name || product.brand.name || 'No Brand Namee';
       } else {
         brandName = brandMap[product.brand] || 'Brand not found';
       }
