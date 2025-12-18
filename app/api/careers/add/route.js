@@ -41,7 +41,7 @@ export async function POST(request) {
     
     
     // Email list
-    const emailadmin = ["ecom@bharathelectronics.in"];
+    const emailadmin = ["ecom@bharathelectronics.in","customercare@bharatelectronics.in"];
     
     //"arunkarthik@bharathelectronics.in"
 
