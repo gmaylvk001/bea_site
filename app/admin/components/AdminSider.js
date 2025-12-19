@@ -54,6 +54,7 @@ export default function AdminSider({ collapsed }) {
   },
     { icon: 'mdi:tag-outline', label: 'Offer', link: 'offer' },
    { icon: "mdi:briefcase-account-outline", label: "Job Positions", link: "careers" },
+   { icon: "mdi:briefcase-account-outline", label: "Feedback", link: "feedback_page" },
     { icon: 'mdi:note-text-outline', label: 'Blog', link: 'blog' },
     { icon: 'mdi:account-outline', label: 'User', link: 'user' },
     { icon: 'mdi:phone-outline', label: 'Contact Us', link: 'contact' },
