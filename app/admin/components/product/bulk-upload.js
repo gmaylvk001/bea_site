@@ -22,6 +22,9 @@ export default function BulkUploadPage() {
   const filterGroupFormRef                                          = useRef(null);
   const filterFormRef                                               = useRef(null);
   const categoryFormRef                                             = useRef(null);
+    const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
   const notifiedRef = useRef(false);
 
   const showToast = (type, message) => {
@@ -59,6 +62,60 @@ export default function BulkUploadPage() {
     // allow next upload to show a toast
     notifiedRef.current = false;
   };
+
+  
+
+  
+  /* ---------------- UPLOAD FILE ---------------- */
+ const handleUpload = async () => {
+  if (!file) {
+    showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+    return;
+  }
+
+  setLoading(true);
+  setResult(null);
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("/api/categories/bulk-export", {
+      method: "POST",
+      body: formData,
+    });
+
+    const text = await res.text();
+
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error("Invalid server response");
+    }
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || "Upload failed");
+    }
+
+    // ✅ Show toast with upload result
+    showToast(
+      "success",
+      `Upload Completed! Updated: ${data.updated}, Skipped: ${data.skipped}`
+    );
+
+    // Reset file input
+    setFile(null);
+    document.getElementById("category-file-input").value = "";
+
+  } catch (err) {
+    showToast("error", err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const validateFile = (file, allowedExtensions) => {
     if (!file) return false;
@@ -165,6 +222,16 @@ export default function BulkUploadPage() {
       setIsFilterGroupUploadLoading(false);
     }
   };
+
+  const handleCategoryFilterDownload = () => {
+  const link = document.createElement("a");
+  link.href = `/uploads/files/sample_category_filter_upload.xlsx?t=${Date.now()}`;
+  link.download = "sample_category_filter_upload.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 
   const handleFilterGroupSampleDownload = () => {
     const link = document.createElement("a");
@@ -659,7 +726,9 @@ export default function BulkUploadPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      
       <div className="max-w-3xl mx-auto">
+        
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Bulk Product Upload</h1>
           <p className="text-gray-600">Upload products in bulk using Excel/CSV and ZIP files</p>
@@ -671,6 +740,67 @@ export default function BulkUploadPage() {
           >
             Status bulkupload
           </Link>
+
+                <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+      {/* HEADER */}
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-blue-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          Category  Filter Bulk Upload
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Upload category filter mapping via Excel / CSV
+        </p>
+      </div>
+
+      {/* FILE INPUT */}
+      <input
+  id="category-file-input"
+  type="file"
+  accept=".xlsx,.csv"
+  onChange={(e) => setFile(e.target.files?.[0] || null)}
+  className="block w-full text-sm text-gray-500
+    file:mr-4 file:py-2 file:px-4
+    file:rounded-lg file:border-0
+    file:text-sm file:font-semibold
+    file:bg-blue-50 file:text-blue-700
+    hover:file:bg-red-100"
+/>
+
+
+      {/* ACTIONS */}
+      <div className="flex items-center gap-4 mt-4">
+        <button
+          onClick={handleUpload}
+          disabled={loading}
+          className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? "Uploading..." : "Upload"}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCategoryFilterDownload}
+          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+        >
+          Download Sample
+        </button>
+      </div>
+
+    
+    </div>
           
           {/* Excel File Section */}
           <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
@@ -1056,6 +1186,8 @@ export default function BulkUploadPage() {
 
           </div>
         </form> */}
+
+   
         <form ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "category")} className="bg-white rounded-xl mt-6 shadow-lg overflow-hidden p-6 space-y-8">
           <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
             <div className="mb-4">
