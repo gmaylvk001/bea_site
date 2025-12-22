@@ -6,6 +6,7 @@ import { ToastContainer, toast } from "react-toastify";
 import ReactPaginate from "react-paginate";
 import BulkFilterGroupUploadPage from "../filter/filter_group_upload";
 import { Icon } from '@iconify/react';
+import * as XLSX from "xlsx";
 
 export default function FiltergroupComponent() {
   const [filterGroups, setFilterGroups] = useState([]);
@@ -62,6 +63,26 @@ useEffect(() => {
   useEffect(() => {
     fetchFilterGroups();
   }, []);
+
+  const handleExport = () => {
+  if (!filterGroups.length) {
+    toast.error("No data to export");
+    return;
+  }
+
+  const exportData = filterGroups.map((item) => ({
+    "Filter Group Name": item.filtergroup_name,
+    "Filter Group Slug": item.filtergroup_slug,
+    "Status": item.status,
+  
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "FilterGroups");
+
+  XLSX.writeFile(workbook, `filter-groups-${Date.now()}.xlsx`);
+};
 
   const handlePageClick = ({ selected }) => {
     setCurrentPage(selected);
@@ -298,6 +319,14 @@ useEffect(() => {
           >
             ⬆️ Bulk Upload
           </button>
+          <button
+  onClick={handleExport}
+  className="bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+>
+  <Icon icon="mdi:download" className="w-4 h-4" />
+  Export
+</button>
+
         </div>
       </div>
 

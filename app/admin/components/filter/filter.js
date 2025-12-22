@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 const Select = dynamic(() => import('react-select'), { ssr: false });
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import * as XLSX from "xlsx";
 
 export default function FilterComponent() {
   const [filters, setFilters] = useState([]);
@@ -71,6 +72,30 @@ export default function FilterComponent() {
     fetchFilters();
     fetchFilterGroups();
   }, []);
+
+  const handleExportFilters = () => {
+  if (!filteredFilters.length) {
+    toast.error("No filters to export");
+    return;
+  }
+
+  const exportData = filteredFilters.map((filter) => ({
+    "Filter Name": filter.filter_name,
+    "Filter Slug": filter.filter_slug,
+    "Filter Group":
+      filter.filter_group?.filtergroup_name ||
+      filter.filter_group_name ||
+      "N/A",
+    "Status": filter.status,
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Filters");
+
+  XLSX.writeFile(workbook, `filters-${Date.now()}.xlsx`);
+};
+
 
   const handlePageClick = ({ selected }) => {
     setCurrentPage(selected);
@@ -361,6 +386,15 @@ useEffect(() => {
             >
               + Add Filter
             </button>
+
+            <button
+  onClick={handleExportFilters}
+  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
+>
+  <Icon icon="mdi:download" className="w-4 h-4" />
+  Export
+</button>
+
             {/* <button
             onClick={() => setIsFilterModalOpen(true)}
             className="bg-blue-500 text-white px-4 py-2 rounded-md"
