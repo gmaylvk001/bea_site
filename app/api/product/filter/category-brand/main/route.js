@@ -3,185 +3,157 @@ import Product from "@/models/product";
 import ProductFilter from "@/models/ecom_productfilter_info";
 import ecom_category_info from "@/models/ecom_category_info";
 import Brand from "@/models/ecom_brand_info";
+
 export async function GET(req) {
   try {
     await dbConnect();
-    
+
     const { searchParams } = new URL(req.url);
-    const maincategoryId = searchParams.get('maincategoryId')?.split(',') || [];
-    const categoryIds = searchParams.get('categoryIds')?.split(',') || [];
-    let categorySlug = searchParams.get('categorySlug') || null;
-    const brandSlug = searchParams.get('brandSlug') || null;
-    const subcategoryIds = searchParams.get('subcategoryIds')?.split(',') || [];
-    const brandIds = searchParams.get('brands')?.split(',') || [];
-    const minPrice = parseFloat(searchParams.get('minPrice')) || 0;
-    const maxPrice = parseFloat(searchParams.get('maxPrice')) || 1000000;
-    const filterIds = searchParams.get('filters')?.split(',') || [];
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 20;
 
+    const categorySlug = searchParams.get("categorySlug");
+    const brandSlug = searchParams.get("brandSlug");
+    const minPrice = parseFloat(searchParams.get("minPrice")) || 0;
+    const maxPrice = parseFloat(searchParams.get("maxPrice")) || 1000000;
+    const filterIds = searchParams.get("filters")?.split(",") || [];
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 20;
 
-    // Base query (will be replaced once brand/category are resolved)
-    let query = { status: "Active" };
-
-    // Handle category and subcategory filters
-    if (categoryIds.length > 0 || subcategoryIds.length > 0) {
-      query.$or = [];
-      
-      if (categoryIds.length > 0) {
-        query.$or.push({ category: { $in: categoryIds } });
-      }else{
-        query.$or.push({ category: { $in: maincategoryId } });
-      }
-      
-      if (subcategoryIds.length > 0) {
-        query.$or.push({ sub_category: { $in: subcategoryIds } });
-      }
+    if (!categorySlug || !brandSlug) {
+      return Response.json({ error: "Category or Brand missing" }, { status: 400 });
     }
 
-      if (maincategoryId.length > 0) {
-        query.$or = [];
-        query.$or.push({ category: { $in: maincategoryId } });
-      }
+    /* --------------------------------------------------
+       1️⃣ Resolve CATEGORY hierarchy (parent → child → sub-child)
+    -------------------------------------------------- */
+    const parentCategory = await ecom_category_info.findOne({
+      category_slug: categorySlug,
+      status: "Active",
+    });
 
-    // Add brand filters if any
-    if (brandIds.length > 0) {
-      query.brand = { $in: brandIds };
+    if (!parentCategory) {
+      return Response.json({ error: "Category not found" }, { status: 404 });
     }
 
-    console.log(query);
-    if( categorySlug === "televisions" ){
-      categorySlug = "television";
-    }else if( categorySlug === "computers-laptops" ){
-      categorySlug = "computers-laptops";
-    }else if( categorySlug === "mobiles-accessories" ){
-      categorySlug = "mobiles-accessories";
-    }else if( categorySlug === "gadgets" ){
-      categorySlug = "gadgets";
-    }else if( categorySlug === "accessories" ){
-      categorySlug = "accessories";
-    }else if( categorySlug === "sound-systems" ){
-      categorySlug = "accessories";
-    }
+    const childCategories = await ecom_category_info.find({
+      parentid: parentCategory._id,
+      status: "Active",
+    });
 
-    // REPLACED: resolve category as array for large-appliance/small-appliances and build categoryIdsArray
-    let find_category;
-    let categoryIdsArray = [];
-    if (categorySlug === "large-appliance" || categorySlug === "small-appliances") {
-      const parentCat = await ecom_category_info.findOne({ category_slug: categorySlug, status: "Active" });
-      if (!parentCat) {
-        return Response.json({ error: "Category not found" }, { status: 404 });
-      }
-      const childCats = await ecom_category_info.find({ parentid: parentCat?._id, status: "Active" });
-      categoryIdsArray = [parentCat._id.toString(), ...childCats.map(c => c._id.toString())];
-      find_category = parentCat;
-    } else {
-      find_category = await ecom_category_info.findOne({ category_slug: categorySlug ,status: "Active"});
-      if (!find_category) {
-        return Response.json({ error: "Category not found" }, { status: 404 });
-      }
-      categoryIdsArray = [find_category._id.toString()];
-    }
+    const childIds = childCategories.map(c => c._id);
 
-    const find_brand = await Brand.findOne({ brand_slug: brandSlug ,status: "Active"});
+    const subChildCategories = await ecom_category_info.find({
+      parentid: { $in: childIds },
+      status: "Active",
+    });
+
+    const categoryIdsArray = [
+      parentCategory._id.toString(),
+      ...childCategories.map(c => c._id.toString()),
+      ...subChildCategories.map(c => c._id.toString()),
+    ];
+
+    /* --------------------------------------------------
+       2️⃣ Resolve BRAND
+    -------------------------------------------------- */
+    const find_brand = await Brand.findOne({
+      brand_slug: brandSlug,
+      status: "Active",
+    });
+
     if (!find_brand) {
       return Response.json({ error: "Brand not found" }, { status: 404 });
     }
 
-    // Price range clause (special_price takes precedence when present)
+    /* --------------------------------------------------
+       3️⃣ Price logic (special_price priority)
+    -------------------------------------------------- */
     const priceClause = {
       $or: [
         {
           $and: [
             { special_price: { $nin: [null, 0] } },
-            { special_price: { $gte: minPrice, $lte: maxPrice } }
-          ]
+            { special_price: { $gte: minPrice, $lte: maxPrice } },
+          ],
         },
         {
           $and: [
             { $or: [{ special_price: null }, { special_price: 0 }] },
-            { price: { $gte: minPrice, $lte: maxPrice } }
-          ]
-        }
-      ]
+            { price: { $gte: minPrice, $lte: maxPrice } },
+          ],
+        },
+      ],
     };
 
-   // This part is already correct in your filter API
-// In /api/product/filter/category-brand/main/
-query = {
-  status: "Active",
-  brand: find_brand._id.toString(),
-  $and: [
-    {
-      $or: [
-        { category: { $in: categoryIdsArray } },
-        { sub_category: { $in: categoryIdsArray } }
-      ]
-    },
-    priceClause,
-    {
+    /* --------------------------------------------------
+       4️⃣ FINAL PRODUCT QUERY
+    -------------------------------------------------- */
+    let query = {
+      status: "Active",
+      brand: find_brand._id.toString(),
       $and: [
         {
           $or: [
-            { 
-              $and: [
-                { quantity: { $gt: 0 } },
-                { stock_status: "In Stock" }
-              ]
-            },
-            {
-              $and: [
-                { quantity: { $exists: false } },
-                { stock_status: "In Stock" }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]
-};
+            { category: { $in: categoryIdsArray } },
+            { sub_category: { $in: categoryIdsArray } },
+          ],
+        },
+        priceClause,
+        {
+          $or: [
+            { quantity: { $gt: 0 }, stock_status: "In Stock" },
+            { quantity: { $exists: false }, stock_status: "In Stock" },
+          ],
+        },
+      ],
+    };
 
+    let productsQuery = Product.find(query).populate(
+      "brand",
+      "brand_name brand_slug"
+    );
 
-    let productsQuery = Product.find(query).populate('brand', 'brand_name brand_slug');
-
-    // Apply additional filters if any (must match all filterIds)
+    /* --------------------------------------------------
+       5️⃣ Apply FILTERS (must match ALL)
+    -------------------------------------------------- */
     if (filterIds.length > 0) {
-      const productIds = await productsQuery.distinct('_id');
+      const productIds = await productsQuery.distinct("_id");
+
       const productFilters = await ProductFilter.find({
         product_id: { $in: productIds },
-        filter_id: { $in: filterIds }
+        filter_id: { $in: filterIds },
       });
 
-      const filtersByProduct = productFilters.reduce((acc, pf) => {
-        const productId = pf.product_id.toString();
-        if (!acc[productId]) acc[productId] = new Set();
-        acc[productId].add(pf.filter_id.toString());
-        return acc;
-      }, {});
-
-      const filteredProductIds = productIds.filter(id => {
-        const productId = id.toString();
-        const productFilterIds = filtersByProduct[productId] || new Set();
-        return filterIds.every(fid => productFilterIds.has(fid));
+      const filterMap = {};
+      productFilters.forEach(pf => {
+        const pid = pf.product_id.toString();
+        if (!filterMap[pid]) filterMap[pid] = new Set();
+        filterMap[pid].add(pf.filter_id.toString());
       });
 
-      query._id = { $in: filteredProductIds };
-      productsQuery = Product.find(query).populate('brand', 'brand_name brand_slug');
+      const matchedProductIds = productIds.filter(id =>
+        filterIds.every(fid => filterMap[id.toString()]?.has(fid))
+      );
+
+      query._id = { $in: matchedProductIds };
+      productsQuery = Product.find(query).populate(
+        "brand",
+        "brand_name brand_slug"
+      );
     }
 
-    // Apply pagination
+    /* --------------------------------------------------
+       6️⃣ Pagination
+    -------------------------------------------------- */
     const skip = (page - 1) * limit;
+
     const products = await productsQuery
       .skip(skip)
       .limit(limit)
       .lean();
 
-
-    // Get total count for pagination info
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
-    
+
     return Response.json({
       products,
       pagination: {
@@ -189,11 +161,11 @@ query = {
         totalPages,
         totalProducts,
         hasNext: page < totalPages,
-        hasPrev: page > 1
-      }
+        hasPrev: page > 1,
+      },
     });
   } catch (error) {
-    console.error('Error in /api/product/filter/category-brand:', error);
+    console.error("Error in category-brand filter:", error);
     return Response.json(
       { error: "Internal server error" },
       { status: 500 }
