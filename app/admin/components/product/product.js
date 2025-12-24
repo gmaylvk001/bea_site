@@ -138,6 +138,9 @@ useEffect(() => {
     };
   }, [searchQuery]);
 
+
+
+
   // const exportToExcel = () => {
   //   // Prepare data in the exact requested format
   //   const dataForExport = filteredProducts.map(product => ({
@@ -364,6 +367,55 @@ if (product.filterDetails && product.filterDetails.length > 0) {
   // Generate file and trigger download
   XLSX.writeFile(workbook, `products_export_${new Date().toISOString().slice(0,10)}.xlsx`);
 };
+
+const exportFilterDataToExcel = () => {
+  const exportRows = [];
+
+  filteredProducts.forEach(product => {
+    if (product.filterDetails && product.filterDetails.length > 0) {
+      product.filterDetails.forEach(filter => {
+        let groupName = "Other";
+
+        // 1️⃣ populated object
+        if (filter.filter_group && typeof filter.filter_group === "object") {
+          groupName = filter.filter_group.filtergroup_name || "Other";
+        }
+        // 2️⃣ ID lookup
+        else if (typeof filter.filter_group === "string") {
+          groupName = filterGroups[filter.filter_group] || "Other";
+        }
+        // 3️⃣ already sent name
+        else if (filter.filter_group_name) {
+          groupName = filter.filter_group_name;
+        }
+
+        exportRows.push({
+          "Item Code": product.item_code,
+          "Filter Group": groupName,
+          "Filter Value": filter.filter_name
+        });
+      });
+    }
+  });
+
+  if (exportRows.length === 0) {
+    toast.error("No filter data available to export");
+    return;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(exportRows, {
+    header: ["Item Code", "Filter Group", "Filter Value"]
+  });
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Product Filters");
+
+  XLSX.writeFile(
+    workbook,
+    `product_filters_${new Date().toISOString().slice(0, 10)}.xlsx`
+  );
+};
+
 
   const [isBulkUploadModel, setIsBulkUploadModel] = useState({
     isOpen: false, 
@@ -764,6 +816,16 @@ if (stockFilter) {
           <button onClick={() => OpenModelBulk("size")} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2" >
             <Icon icon="mdi:upload" className="text-lg" /> Bulk uploads two
           </button> */}
+<button
+  onClick={exportFilterDataToExcel}
+  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+>
+  <Icon icon="mdi:microsoft-excel" className="text-lg" />
+  Export Filters
+</button>
+
+
+
 
           <button
             onClick={exportToExcel}
