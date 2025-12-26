@@ -74,7 +74,7 @@ const subCategoryIds = [
     for (const catId of categoryIds) {
   if (!catId || catId.toString().trim() === "") continue; // skip invalid IDs
   
-  const mainCategory = await ecom_category_info.findById(catId).lean();
+  const mainCategory = await ecom_category_info.findOne({_id: catId,parentid: { $nin: [null, "none"] }}).lean();
   if (!mainCategory) continue;
 
   const subTree = await getCategoryTree(mainCategory._id, subCategoryIds);
