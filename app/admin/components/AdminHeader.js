@@ -124,6 +124,13 @@ const AdminHeader = ({ toggleSidebar }) => {
                     {notif.orderId && (
                       <div className="text-xs text-gray-500">Order: #{notif.orderId.order_number} | Amount: {notif.orderId.order_amount} | Status: {notif.orderId.order_status}</div>
                     )}
+                     {notif.type === 'feedback' && notif.feedbackId && (
+      <div className="text-xs text-gray-500 mt-1">
+        <div>Name: {notif.feedbackId.name}</div>
+        <div>Email: {notif.feedbackId.email_address}</div>
+        <div>Invoice: {notif.feedbackId.invoice_number}</div>
+      </div>
+    )}
                     <div className="text-xs text-gray-400">{new Date(notif.createdAt).toLocaleString()}</div>
                   </div>
                 ))

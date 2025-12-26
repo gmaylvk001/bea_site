@@ -16,7 +16,12 @@ export async function GET(req) {
         path: 'orderId',
         model: 'ecom_order_info',
         select: 'order_number order_amount order_status order_item order_details',
-      });
+      })
+      .populate({
+          path: 'feedbackId',
+          model: 'ecom_feedback_infos',
+          select: 'name email_address mobile_number feedback invoice_number',
+        });
     return Response.json({ success: true, notifications });
   } catch (error) {
     return Response.json({ success: false, message: error.message }, { status: 500 });
