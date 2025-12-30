@@ -358,9 +358,12 @@ export default function BulkUploadPage() {
       }
 
     }else if (uploadType == "filter_values") {
-
-      if(!productFilterValue || !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
+      if(!productFilterValue|| !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
         showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+        // Clear the file input element
+        const fileInput = document.getElementById('filter-values-file-input');
+        if (fileInput) fileInput.value = "";
+        setProductFilterValue(null);
         return;
       }
 
@@ -384,9 +387,17 @@ export default function BulkUploadPage() {
         }
 
         resetUploadForm();
+        // Clear the file input element
+        const fileInput = document.getElementById('filter-values-file-input');
+        if (fileInput) fileInput.value = "";
+        setProductFilterValue(null);
       }catch(error) {
         showToast("error", error?.message || String(error) || "Upload failed.");
         resetUploadForm();
+        // Clear the file input element
+        const fileInput = document.getElementById('filter-values-file-input');
+        if (fileInput) fileInput.value = "";
+        setProductFilterValue(null);
       }finally {
         setIsLoading(false);
         setActiveUploadType(null);
@@ -1040,7 +1051,7 @@ export default function BulkUploadPage() {
         <form ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "filter_values")} className="bg-white rounded-xl mt-6 shadow-lg overflow-hidden p-6 space-y-8">
           <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
             <div className="mb-4">
-              <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Filter Values Bulk Upload <small className="items-start"> (size,capacity,type,etc,..)</small> </h2>
+              <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Product's Filter Values Bulk Upload <small className="items-start"> (size,capacity,type,etc,..)</small> </h2>
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1050,7 +1061,7 @@ export default function BulkUploadPage() {
               <p className="text-sm text-gray-500 mt-1">Upload your product filter values file</p>
             </div>
             <div className="space-y-4">
-              <input type="file" accept=".xlsx,.csv" onChange={(e) => setProductFilterValue(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100" required />
+              <input id="filter-values-file-input" type="file" accept=".xlsx,.csv" onChange={(e) => setProductFilterValue(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100" required />
             </div>
 
             <button type="button" onClick={handleDownloadFilterValues} className="inline-flex items-center pt-5 text-sm text-blue-600 hover:text-blue-800 transition-colors" >
