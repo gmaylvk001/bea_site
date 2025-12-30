@@ -262,7 +262,7 @@ export default function ContactComponent() {
                      <th className="p-2">Email</th>
                     <th className="p-2">Mobile Number</th>
                     <th className="p-2">Message</th>
-                    <th className="p-2">Status</th>
+                    {/* <th className="p-2">Status</th> */}
                     {/* <th className="p-2">Created At</th>
                     <th className="p-2">Actions</th> */}
                   </tr>
@@ -275,13 +275,13 @@ export default function ContactComponent() {
                       <td className="p-2">{contact.email_address || '-'}</td>
                       <td className="p-2">{contact.mobile_number || '-'}</td>
                       <td className="p-2">{contact.message || '-'}</td>
-                      <td className="p-2">
+                      {/* <td className="p-2">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           contact.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
                           {contact.status || '-'}
                         </span>
-                      </td>
+                      </td> */}
                       {/* <td className="p-2">
                         {contact.createdAt ? new Date(contact.createdAt).toLocaleDateString() : '-'}
                       </td>

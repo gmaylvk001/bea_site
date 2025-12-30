@@ -123,7 +123,7 @@ export default function FeedbackComponent() {
                   <th className="p-2">Mobile</th>
                   <th className="p-2">Invoice</th>
                   <th className="p-2">Feedback</th>
-                  <th className="p-2">Status</th>
+                  {/* <th className="p-2">Status</th> */}
                 </tr>
               </thead>
 
@@ -135,7 +135,7 @@ export default function FeedbackComponent() {
                     <td className="p-2">{f.mobile_number || "-"}</td>
                     <td className="p-2">{f.invoice_number || "-"}</td>
                     <td className="p-2">{f.feedback || "-"}</td>
-                    <td className="p-2">
+                    {/* <td className="p-2">
                     <select
                       value={f.status}
                       onChange={(e) =>
@@ -146,7 +146,7 @@ export default function FeedbackComponent() {
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                     </select>
-                  </td>
+                  </td> */}
                     {/* <td className="p-2">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
