@@ -24,7 +24,7 @@ export async function GET(req) {
         })
         .populate({
           path: 'contactId',
-          model: 'ecom_contactx_infos',
+          model: 'ecom_contact_info',
           select: 'name email_address mobile_number message city status',
         });
     return Response.json({ success: true, notifications });

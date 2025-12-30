@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema({
       },
       contactId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "ecom_contactx_infos",
+        ref: "ecom_contact_info",
       },
   orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
   createdAt: { type: Date, default: Date.now },
