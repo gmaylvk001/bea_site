@@ -75,14 +75,21 @@ export async function POST(req) {
                     _id: cat_id,
                 });
 
-                if(categories) {
-                    let groupName = await GroupInfo.findOne({
-                        category_slug: categories.category_slug,
-                    });
-                    filter_group_name = groupName.group_name;
-                }else {
-                    filter_group_name = "size";
-                }
+                if (categories) {
+    const groupInfo = await GroupInfo.findOne({
+        category_slug: categories.category_slug,
+    });
+
+    if (groupInfo && groupInfo.group_name) {
+        filter_group_name = groupInfo.group_name;
+    } else {
+        // fallback if mapping not found
+        filter_group_name = "size";
+    }
+} else {
+    filter_group_name = "size";
+}
+
             }
 
             const filter_name                       = row.filter_name.toString().trim(); 
@@ -95,69 +102,63 @@ export async function POST(req) {
                 continue;
             }
 
-            const normalizedGroupName = filter_group_name.trim().toLowerCase();
+           const normalizedGroupName = filter_group_name.trim().toLowerCase();
 
-            let filterGroup = await FilterGroup.findOne({
-                filtergroup_name: new RegExp(`^${normalizedGroupName}$`, 'i'),
-            });
+const filterGroup = await FilterGroup.findOne({
+    filtergroup_name: new RegExp(`^${normalizedGroupName}$`, 'i'),
+});
 
+if (!filterGroup) {
+    errors.push({
+        row: index + 2,
+        error: `Filter group not found: ${filter_group_name}`,
+    });
+    continue;
+}
 
-            if (!filterGroup && filterGroup == null) {
-                filterGroup = await FilterGroup.create({
-                    filtergroup_name: filter_group_name,
-                    filtergroup_slug: filter_group_name.toLowerCase().replace(/[^\w\s.-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, ''),
-                    status: "Active",
-                });
-            }
+const filterSlug = filter_name
+  .trim()
+  .toLowerCase()
+  .replace(/[^\w\s.-]/g, '')
+  .replace(/\s+/g, '-')
+  .replace(/-+/g, '-')
+  .replace(/^-+|-+$/g, '');
 
-            // Check for existing filter correctly
-            let existingFilter = await Filter.findOne({
-                filter_name: filter_name.trim(),
-                filter_group: filterGroup._id,
-            });
+const existingFilter = await Filter.findOne({
+    filter_slug: filterSlug,
+    filter_group: filterGroup._id,
+});
 
-            // console.log(existingFilter);
-    
-            if (existingFilter) {
-                if (existingFilter.status !== "Active") {
-                    existingFilter.status = "Active";
-                    await existingFilter.save();
-                }
-            } else {
-                existingFilter =  await Filter.create({
-                    filter_name: filter_name.trim(),
-                    filter_slug: filter_name.trim().toLowerCase().replace(/[^\w\s.-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, ''),
-                    filter_group: filterGroup._id,
-                    status: "Active",
-                });
-            }
+if (!existingFilter) {
+    errors.push({
+        row: index + 2,
+        error: `Filter not found: ${filter_name}`,
+    });
+    continue;
+}
+
 
             // let products = await Product.findOne({
             //     item_code: item_code.trim(),
             // });
 
-            if(products) {
-                const product_id = products._id;
-                const existFilterVal = await ProductFilter.findOne({
-                    product_id: product_id,
-                    filter_id: existingFilter._id,
-                });
+          if (products) {
+    const existFilterVal = await ProductFilter.findOne({
+        product_id: products._id,
+        filter_id: existingFilter._id,
+    });
 
-                if(!existFilterVal || existFilterVal == null) {
-                    await ProductFilter.create({
-                        filter_id: existingFilter._id,
-                        product_id: product_id,
-                    });
-                    addedCount++;
-                }else {
-                    existCount++;
-                }
-            }else {
-                return NextResponse.json(
-                    { error: 'Product Is not Found On this Item_Code!' },
-                    { status: 404 }
-                )
-            }
+    if (!existFilterVal) {
+        await ProductFilter.create({
+            filter_id: existingFilter._id,
+            product_id: products._id,
+        });
+        addedCount++;
+    } else {
+        existCount++;
+    }
+}
+
 
         }
 
