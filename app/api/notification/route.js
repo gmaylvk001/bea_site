@@ -21,6 +21,11 @@ export async function GET(req) {
           path: 'feedbackId',
           model: 'ecom_feedback_infos',
           select: 'name email_address mobile_number feedback invoice_number',
+        })
+        .populate({
+          path: 'contactId',
+          model: 'ecom_contact_info',
+          select: 'name email_address mobile_number message city status',
         });
     return Response.json({ success: true, notifications });
   } catch (error) {

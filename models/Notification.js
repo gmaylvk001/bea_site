@@ -7,6 +7,10 @@ const notificationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "ecom_feedback_infos",
       },
+      contactId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ecom_contactx_infos",
+      },
   orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
   createdAt: { type: Date, default: Date.now },
   read: { type: Boolean, default: false }

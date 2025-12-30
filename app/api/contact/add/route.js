@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import ContactModel from "@/models/ecom_contact_info";
+import Notification from "@/models/Notification";
 
 export async function POST(request) {
   try {
@@ -26,8 +27,8 @@ export async function POST(request) {
       );
     }
 
-    // Create new contact
-    const newContact = new ContactModel({
+     // Create new contact
+    const newContact = await ContactModel.create({
       name,
       email_address,
       mobile_number,
@@ -36,7 +37,14 @@ export async function POST(request) {
       status,
     });
 
-    await newContact.save();
+   // 🔔 CREATE NOTIFICATION (THIS IS THE KEY PART)
+    await Notification.create({
+      type: "contact",
+      contactId: newContact._id,
+      message: `New contact received from ${name}`,
+      read: false,
+    });
+
 
     return NextResponse.json(
       { success: true, message: "Contact added successfully", data: newContact },
