@@ -483,7 +483,8 @@ export default function BulkUploadPage() {
 
             const fd = new FormData();
             fd.append('category_name', category_name);
-            fd.append('parentid_new', parentid);
+            // fd.append('parentid_new', parentid);
+            fd.append('parent_name', parentid);
             fd.append('status', status);
             fd.append('show_on_home', show_on_home);
 

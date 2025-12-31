@@ -21,8 +21,23 @@ export async function POST(req) {
 
     const formData = await req.formData();
     const category_name = formData.get("category_name");
-    let parentid = formData.get("parentid") || "none";
-    let parentid_new = "none";
+    // let parentid = formData.get("parentid") || "none";
+    // let parentid_new = "none";
+    const parent_name = formData.get("parent_name") || "none";
+let parentid = "none";
+let parentid_new = "none";
+
+if (parent_name !== "none") {
+  const parentCategory = await Category.findOne({
+    category_name: parent_name
+  });
+
+  if (parentCategory) {
+    parentid = parentCategory._id;
+    parentid_new = parentCategory.md5_cat_name;
+  }
+}
+
     const status = formData.get("status") || "Active";
     const show_on_home = formData.get("show_on_home") || "No";
     const content = formData.get("content") || ""; // ✅ Add content field
@@ -125,11 +140,17 @@ export async function POST(req) {
     
 
     // Check if category already exists
-    let existingCategory = await Category.findOne({
-      category_slug: category_slug,
-      parentid: parentid,
+    // let existingCategory = await Category.findOne({
+    //   category_slug: category_slug,
+    //   parentid: parentid,
       //parentid_new: parentid_new
-    });
+    // });
+
+    let existingCategory = await Category.findOne({
+  category_slug,
+  parentid_new
+});
+
 
     if (existingCategory) {
       return NextResponse.json(
