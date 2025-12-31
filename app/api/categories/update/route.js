@@ -23,6 +23,9 @@ export async function PUT(req) {
     const formData = await req.formData();
     const _id = formData.get("_id");
     const category_name = formData.get("category_name");
+    const meta_title = formData.get("meta_title");
+    const meta_description = formData.get("meta_description");
+    const meta_keyword = formData.get("meta_keyword");
     let parentid = formData.get("parentid") || "none";
     let parentid_new = "none";
     const status = formData.get("status") || "Active";
@@ -153,6 +156,9 @@ export async function PUT(req) {
         category_name,
         category_slug,
         md5_cat_name,
+        meta_title,
+      meta_description,
+      meta_keyword,
         parentid,
         parentid_new,
         status,

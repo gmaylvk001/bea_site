@@ -15,6 +15,9 @@ const CategorySchema = new mongoose.Schema({
   md5_cat_name: { type: String, required: true },
   parentid: { type: String, default: "none" },
   parentid_new: { type: String, default: "none" },
+  meta_title : { type: String, default: "none" },
+  meta_description : { type: String, default: "none" },
+  meta_keyword : { type: String, default: "none" },
   status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
   image: { type: String }, // category image
   navImage: { type: String }, // nav image

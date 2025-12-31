@@ -21,6 +21,9 @@ export async function POST(req) {
 
     const formData = await req.formData();
     const category_name = formData.get("category_name");
+    const meta_title = formData.get("meta_title");
+    const meta_description = formData.get("meta_description");
+    const meta_keyword = formData.get("meta_keyword");
     let parentid = formData.get("parentid") || "none";
     let parentid_new = "none";
     const status = formData.get("status") || "Active";
@@ -176,6 +179,9 @@ export async function POST(req) {
       md5_cat_name,
       parentid,
       parentid_new,
+      meta_title,
+      meta_description,
+      meta_keyword,
       status,
       show_on_home,
       content, // ✅ Add content field here
