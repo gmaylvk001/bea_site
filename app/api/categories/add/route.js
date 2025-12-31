@@ -24,20 +24,23 @@ export async function POST(req) {
     // let parentid = formData.get("parentid") || "none";
     // let parentid_new = "none";
     const parent_name = formData.get("parent_name") || "none";
-let parentid = "none";
-let parentid_new = "none";
+    let parentid = "none";
+    let parentid_new = "none";
 
-if (parent_name !== "none") {
-  const parentCategory = await Category.findOne({
-    category_name: parent_name
-  });
+    if (parent_name !== "none") {
+      const parentCategory = await Category.findOne({
+        category_name: parent_name
+      });
 
-  if (parentCategory) {
-    parentid = parentCategory._id;
-    parentid_new = parentCategory.md5_cat_name;
-  }
-}
+      if (parentCategory) {
+        parentid = parentCategory._id;
+        parentid_new = parentCategory.md5_cat_name;
+      }
+    }
 
+    const meta_title = formData.get("meta_title");
+    const meta_description = formData.get("meta_description");
+    const meta_keyword = formData.get("meta_keyword");
     const status = formData.get("status") || "Active";
     const show_on_home = formData.get("show_on_home") || "No";
     const content = formData.get("content") || ""; // ✅ Add content field
@@ -197,6 +200,9 @@ if (parent_name !== "none") {
       md5_cat_name,
       parentid,
       parentid_new,
+      meta_title,
+      meta_description,
+      meta_keyword,
       status,
       show_on_home,
       content, // ✅ Add content field here

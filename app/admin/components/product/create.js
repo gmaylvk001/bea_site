@@ -56,6 +56,7 @@ export default function AddProductPage({ mode = "add", productData = null, produ
     warranty: "",
     extended_warranty: "",
     product_highlights: [],
+    search_keywords : ""
   });
 
     const [variant, setVariant] = useState([{
@@ -1542,7 +1543,7 @@ const handleSubmit = async (e) => {
   break;
 
       case 4:
-        if (!product.meta_title || !product.description) {
+        if (!product.meta_title || !product.description || !product.search_keywords) {
           return "Please fill in all required fields: Meta Title and Meta Description.";
         }
         break;
@@ -2065,6 +2066,17 @@ const handleSubmit = async (e) => {
                 value={product.meta_title || ''}
                 onChange={handleChange}
                 className="w-full border p-2 rounded"
+              />
+            </div>
+            {/* Meta Keywords */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Meta Keywords</label>
+              <textarea
+                name="search_keywords"
+                value={product.search_keywords || ''}
+                onChange={handleChange}
+                className="w-full border p-2 rounded"
+                rows="2"
               />
             </div>
             {/* Meta Description */}
