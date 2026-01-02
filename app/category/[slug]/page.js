@@ -1,5 +1,5 @@
 
-import CategoryClient from "@/components/category/CategoryComponent";
+import CategoryPrimaryPage from "@/components/category/sample_cat";
 
 export async function generateMetadata({ params }) {
   const { slug } = params;
@@ -50,5 +50,5 @@ export async function generateMetadata({ params }) {
 }
 
 export default function Page() {
-  return <CategoryClient />;
+  return <CategoryPrimaryPage />;
 }
