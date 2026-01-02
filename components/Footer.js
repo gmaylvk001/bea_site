@@ -564,7 +564,7 @@ const capitalizeFirstLetter = (str) =>
   <div className="rounded overflow-hidden">
     <iframe
       src={`https://www.google.com/maps?q=${encodeURIComponent(
-        "26/1 Dr. Alagappa Chettiyar Rd, Tatabad, Coimbatore-641012"
+        "26/1 Dr.ALAGAPPA CHETTIYAR ROAD,TATABAD, NEAR KOVAI SCAN CENTRE, COIMBATORE – 641012"
       )}&output=embed`}
       width="100%"
       height="200"
