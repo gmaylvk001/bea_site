@@ -555,14 +555,37 @@ const capitalizeFirstLetter = (str) =>
 
           </div>
           {/* RIGHT SECTION (Our Location) */}
-          <div className="space-y-4">
-            <h3 className="text-white font-semibold text-lg mb-4">Our Location</h3>
-            {Object.entries(groupedStores).map(([city, orgs], index) => (
-              <div key={index}>
-                <p className="text-sm text-gray-400">{orgs.join(", ")}</p>
-              </div>
-            ))}
-          </div>
+         <div className="space-y-4">
+  {/* Corporate Office Direction */}
+  <h3 className="text-white font-semibold text-lg mb-2">
+    Corporate Office Direction
+  </h3>
+
+  <div className="rounded overflow-hidden">
+    <iframe
+      src={`https://www.google.com/maps?q=${encodeURIComponent(
+        "26/1 Dr. Alagappa Chettiyar Rd, Tatabad, Coimbatore-641012"
+      )}&output=embed`}
+      width="100%"
+      height="200"
+      style={{ border: 0 }}
+      allowFullScreen
+      loading="lazy"
+    ></iframe>
+  </div>
+
+  {/* Our Location */}
+  <h3 className="text-white font-semibold text-lg mt-6 mb-4">
+    Our Location
+  </h3>
+
+  {Object.entries(groupedStores).map(([city, orgs], index) => (
+    <div key={index}>
+      <p className="text-sm text-gray-400">{orgs.join(", ")}</p>
+    </div>
+  ))}
+</div>
+
         </div>
       </div>
       <div className="bg-[#2e2a2a] text-gray-400 mt-10 pt-5">
