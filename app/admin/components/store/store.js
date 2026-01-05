@@ -15,7 +15,7 @@ export default function StoreComponent() {
   const [dateFilter, setDateFilter] = useState({ startDate: null, endDate: null });
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 20;
+  const itemsPerPage = 10;
 
   const [newStore, setNewStore] = useState({
     organisation_name: "",
@@ -316,20 +316,14 @@ export default function StoreComponent() {
 
             {/* Date Range Picker */}
             <div className="w-full col-span-1 md:col-span-1">
+              
               <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
+                  
                   <DateRangePicker onDateChange={handleDateChange} />
                 </div>
-                {/* {(dateFilter.startDate || dateFilter.endDate) && (
-                  <button
-                    onClick={clearDateFilter}
-                    className="p-2 text-sm text-red-600 hover:text-red-800 bg-red-50 rounded-md"
-                    title="Clear date filter"
-                  >
-                    <Icon icon="mdi:close-circle-outline" className="w-5 h-5" />
-                  </button>
-                )} */}
+             
               </div>
             </div>
 
@@ -376,7 +370,7 @@ export default function StoreComponent() {
                           </td>
                           <td className="p-2">
                             <div className="flex items-center gap-2">
-                               <Link href={`/admin/store/edit/${store._id}`} passHref>
+                               <Link href={`/admin/store/edit/${store.slug}`}>
                                <button
                                 className="w-7 h-7 bg-red-100 text-red-600 rounded-full inline-flex items-center justify-center hover:bg-red-200 transition"
                                 title="Edit"
