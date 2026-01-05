@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { useEffect, useState } from "react";
+import Link from "next/link";
 export default function LocationPage() {
 
 const [branches, setBranches] = useState([]);
@@ -68,6 +69,11 @@ const [branches, setBranches] = useState([]);
       loading="lazy"
     ></iframe>
   </div>
+  <Link href={`/store/${branch.slug}`} 
+              className="mt-3 inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md transition-colors"
+            >
+              Visit Store
+            </Link>
 </div>
 
       ))}

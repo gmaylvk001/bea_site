@@ -2,7 +2,9 @@
 import CategoryPrimaryPage from "@/components/category/sample_cat";
 
 export async function generateMetadata({ params }) {
-  const { slug } = params;
+  //const { slug } = params;
+  const awaitedParams = await params;
+    const slug = awaitedParams.slug;
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
   try {
