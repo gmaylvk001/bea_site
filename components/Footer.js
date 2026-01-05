@@ -561,14 +561,14 @@ const capitalizeFirstLetter = (str) =>
     Corporate Office Direction
   </h3>
 
-  <div className="rounded overflow-hidden">
+  <div className="rounded overflow-hidden" style={{maxWidth:'320px'}}>
     <iframe
       src={`https://www.google.com/maps?q=${encodeURIComponent(
         "26/1 Dr.ALAGAPPA CHETTIYAR ROAD,TATABAD, NEAR KOVAI SCAN CENTRE, COIMBATORE – 641012"
       )}&output=embed`}
       width="100%"
-      height="200"
-      style={{ border: 0 }}
+      height="160"
+      style={{ border: 0, maxWidth: '320px', minWidth: '120px', display: 'block' }}
       allowFullScreen
       loading="lazy"
     ></iframe>
