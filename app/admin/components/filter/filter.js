@@ -74,25 +74,30 @@ export default function FilterComponent() {
   }, []);
 
   const handleExportFilters = () => {
-  if (!filteredFilters.length) {
+  // Determine if a search is active (non-empty searchQuery)
+  const isSearchActive = searchQuery.trim().length > 0;
+  let exportList = [];
+  if (isSearchActive) {
+    exportList = filteredFilters;
+  } else {
+    exportList = flattenFilters(filters);
+  }
+  if (!exportList.length) {
     toast.error("No filters to export");
     return;
   }
-
-  const exportData = filteredFilters.map((filter) => ({
+  const exportData = exportList.map((filter) => ({
     "Filter Name": filter.filter_name,
     "Filter Slug": filter.filter_slug,
     "Filter Group":
-      filter.filter_group?.filtergroup_name ||
+      (filter.filter_group && filter.filter_group.filtergroup_name) ||
       filter.filter_group_name ||
       "N/A",
     "Status": filter.status,
   }));
-
   const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Filters");
-
   XLSX.writeFile(workbook, `filters-${Date.now()}.xlsx`);
 };
 
@@ -302,10 +307,18 @@ useEffect(() => {
 
   const renderFilterRows = () => {
     const flattenedFilters = flattenFilters(filters);
-    const filteredFilters = flattenedFilters.filter((filter) =>
-      filter.filter_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      filter.filter_slug.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredFilters = flattenedFilters.filter((filter) => {
+      const query = searchQuery.toLowerCase();
+      const filterGroupName =
+        (filter.filter_group && filter.filter_group.filtergroup_name) ||
+        filter.filter_group_name ||
+        "";
+      return (
+        filter.filter_name.toLowerCase().includes(query) ||
+        filter.filter_slug.toLowerCase().includes(query) ||
+        filterGroupName.toLowerCase().includes(query)
+      );
+    });
 
     return filteredFilters
       .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
@@ -350,10 +363,18 @@ useEffect(() => {
   };
 
   const flattenedFilters = flattenFilters(filters);
-  const filteredFilters = flattenedFilters.filter((filter) =>
-    filter.filter_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    filter.filter_slug.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredFilters = flattenedFilters.filter((filter) => {
+    const query = searchQuery.toLowerCase();
+    const filterGroupName =
+      (filter.filter_group && filter.filter_group.filtergroup_name) ||
+      filter.filter_group_name ||
+      "";
+    return (
+      filter.filter_name.toLowerCase().includes(query) ||
+      filter.filter_slug.toLowerCase().includes(query) ||
+      filterGroupName.toLowerCase().includes(query)
+    );
+  });
   const pageCount = Math.ceil(filteredFilters.length / itemsPerPage);
   const startEntry = currentPage * itemsPerPage + 1;
   const endEntry = Math.min((currentPage + 1) * itemsPerPage, filteredFilters.length);
