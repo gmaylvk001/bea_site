@@ -120,6 +120,7 @@ const [errorMessage, setErrorMessage] = useState("");
         groupedFilters[groupName].push({
           value: filter._id,
           label: filter.filter_name,
+          groupLabel: groupName // Add groupLabel for search
         });
       });
 
@@ -1166,9 +1167,19 @@ const handleUpdateNavImageChange = async (e) => {
     hideSelectedOptions={false}
     closeMenuOnSelect={false}
     components={{ Option: CustomOption }}
-    value={newCategory.selectedFilters} 
-    onChange={handleFilterChange} 
+    value={newCategory.selectedFilters}
+    onChange={handleFilterChange}
     placeholder="Select filters..."
+    filterOption={(option, inputValue) => {
+      // option.label is filter name, option.data.groupLabel is group name
+      const filterName = option.label?.toLowerCase() || "";
+      const groupLabel = option.data?.groupLabel?.toLowerCase?.() || "";
+      const input = inputValue.toLowerCase();
+      // If input matches group label, show all options in that group
+      if (groupLabel && groupLabel.includes(input)) return true;
+      // Otherwise, match by filter name
+      return filterName.includes(input);
+    }}
     styles={{
       groupHeading: (base) => ({
         ...base,
@@ -1451,6 +1462,13 @@ const handleUpdateNavImageChange = async (e) => {
                               value={categoryToUpdate.selectedFilters}
                               onChange={handleUpdateFilterChange}
                               placeholder="Select filters..."
+                              filterOption={(option, inputValue) => {
+                                const filterName = option.label?.toLowerCase() || "";
+                                const groupLabel = option.data?.groupLabel?.toLowerCase?.() || "";
+                                const input = inputValue.toLowerCase();
+                                if (groupLabel && groupLabel.includes(input)) return true;
+                                return filterName.includes(input);
+                              }}
                               styles={{
                                 groupHeading: (base) => ({
                                   ...base,
