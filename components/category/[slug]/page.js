@@ -826,7 +826,7 @@ const STEP = 100;
 
           {/* Brand Filter */}
           <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
-              <div className="flex items-center justify-between pb-2">
+              <div className="flex items-center justify-between pb-2 bg-gray-300 p-2">
                 <h3 className="text-base font-semibold text-gray-700">Brands</h3>
                 <button onClick={toggleBrands} className="text-gray-500 hover:text-gray-700">
                   {isBrandsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -866,8 +866,8 @@ const STEP = 100;
 
           {/* Dynamic Filters */}
                       
-          <div className="bg-white p-4 rounded-lg shadow-sm border mb-3 border-gray-100">
-            <div className="pb-2 mb-2">
+          <div className="bg-white  rounded-lg shadow-sm border mb-3 border-gray-100">
+            <div className="pb-2 mb-2 bg-gray-300 p-2">
               <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
             </div>
             {isFiltersExpanded && (
@@ -875,7 +875,7 @@ const STEP = 100;
                 {Object.values(filterGroups).map(group => (
                   <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                     {/* Filter Group Header */}
-                    <button  onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
+                    <button  onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group bg-gray-300 p-1">
                       <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
                       <ChevronDown 
                         size={18}
