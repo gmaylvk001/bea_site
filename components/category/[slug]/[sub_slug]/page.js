@@ -1126,8 +1126,8 @@ Object.keys(groups).forEach(key => {
                           </div>
         
                       {/* Brand Filter */}
-                      <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
-                        <div className="flex items-center justify-between pb-2">
+                      <div className="bg-white  rounded-lg shadow-sm border mb-3">
+                        <div className="flex items-center justify-between bg-gray-300 p-2">
                           <h3 className="text-base font-semibold text-gray-700">Brands</h3>
                           <button onClick={toggleBrands} className="text-gray-500 hover:text-gray-700">
                             {isBrandsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -1167,8 +1167,8 @@ Object.keys(groups).forEach(key => {
         
                       {/* Dynamic Filters */}
                      {isFiltersExpanded && Object.values(filterGroups).length > 0 && (
-  <div className="bg-white p-4 rounded-lg shadow-sm border mb-3 border-gray-100">
-    <div className="pb-2 mb-2">
+  <div className="bg-white  rounded-lg shadow-sm border mb-3 border-gray-100">
+    <div className="pb-2 mb-2 bg-gray-300 p-2">
       <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
     </div>
 
@@ -1184,8 +1184,8 @@ Object.keys(groups).forEach(key => {
 
         .map(group => (
           <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
-            <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
-             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors flex-1 text-left uppercase">
+            <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group bg-gray-200 p-1">
+             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors flex-1 text-left uppercase ">
   {group.name}
 </span>
 
