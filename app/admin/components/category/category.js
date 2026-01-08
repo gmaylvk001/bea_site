@@ -177,6 +177,30 @@ const fetchCategoryFilters = async (categoryId) => {
     fetchFilter();
   }, []);
 
+   // Export categories to Excel
+  const exportCategories = async () => {
+  const params = new URLSearchParams();
+
+  if (searchQuery) params.append("search", searchQuery);
+  if (statusFilter) params.append("status", statusFilter);
+
+  if (dateFilter.startDate && dateFilter.endDate) {
+    params.append("startDate", dateFilter.startDate);
+    params.append("endDate", dateFilter.endDate);
+  }
+
+  const res = await fetch(`/api/categories/export?${params.toString()}`);
+  const blob = await res.blob();
+
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "categories.xlsx";
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
+
+
   // When opening update modal, populate existing filters
     // When opening update modal, populate existing filters
 const handleEditClick = async (category) => {
@@ -830,12 +854,41 @@ const handleUpdateNavImageChange = async (e) => {
         <p>Loading categories...</p>
       ) : (
         <div className="bg-white shadow-md rounded-lg p-5 mb-5 overflow-x-auto">
-        <Link
-      href="/admin/category/navcat"
-      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 r mb-2 ounded-md text-sm font-medium shadow-sm transition duration-150 inline-block"
+        <div className="flex items-center justify-between mb-5">
+  {/* LEFT SIDE */}
+  <Link
+    href="/admin/category/navcat"
+    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition duration-150"
+  >
+    NavMenu
+  </Link>
+
+  {/* RIGHT SIDE */}
+  <div className="flex items-center gap-3">
+    <button
+      onClick={() => setIsModalOpen(true)}
+      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition duration-150"
     >
-      NavMenu
-    </Link>
+      + Add Category
+    </button>
+
+    <button
+      onClick={() => {
+        const params = new URLSearchParams({
+          search: searchQuery,
+          status: statusFilter,
+          startDate: dateFilter.startDate || "",
+          endDate: dateFilter.endDate || "",
+        });
+
+        window.location.href = `/api/categories/export?${params.toString()}`;
+      }}
+      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+    >
+      Export Excel
+    </button>
+  </div>
+</div>
         {/* Search and Filter Section */}
 {/* Search and Filter Section */}
 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end mb-4">
@@ -898,14 +951,7 @@ const handleUpdateNavImageChange = async (e) => {
       )} */}
     </div>
   </div>
-  <div>
-   <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition duration-150"
-        >
-          + Add Category
-        </button>
-</div>
+ 
 </div>
 
 
