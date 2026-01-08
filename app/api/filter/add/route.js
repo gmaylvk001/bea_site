@@ -20,10 +20,10 @@ export async function POST(req) {
  
     let filter_slug = filter_name.toLowerCase().replace(/\s+/g, "-");
  
-    // Check if filter already exists
-    let existingFilter = await Filter.findOne({ filter_slug });
+    // Check if filter already exists in the same filter group
+    let existingFilter = await Filter.findOne({ filter_slug, filter_group });
     if (existingFilter) {
-      return NextResponse.json({ error: "filter already exists" }, { status: 400 });
+      return NextResponse.json({ error: "filter already exists in this group" }, { status: 400 });
     }
  
     const newFilter = new Filter({
