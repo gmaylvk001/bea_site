@@ -100,7 +100,7 @@ export default function CategoryPage(params) {
     hasPrev: false,
     totalProducts: 0
   });
-  const itemsPerPage = 12;
+  const itemsPerPage = 24;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter(); // Added router
 
