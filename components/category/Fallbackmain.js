@@ -110,7 +110,7 @@ const fetchInitialData = async () => {
     const categoryRes = await fetch(`/api/categories/${slug}`);
     const categoryData = await categoryRes.json();
     
-    console.log('📦 Raw API Response:', categoryData);
+    console.log('📦 Raw API Responses:', categoryData);
     console.log('🎯 Filters from API:', categoryData.filters);
     console.log('📊 Number of filters:', categoryData.filters?.length || 0);
 
