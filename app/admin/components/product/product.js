@@ -73,17 +73,18 @@ useEffect(() => {
 
 
   // Fetch products, categories and brands from API
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch("/api/product/get");
-      const data = await response.json();
-      setProducts(data);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setIsLoading(false);
-    }
-  };
+ const fetchProducts = async () => {
+  try {
+    setIsLoading(true); // ✅ start loader
+    const response = await fetch("/api/product/get");
+    const data = await response.json();
+    setProducts(data);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+  } finally {
+    setIsLoading(false); // ✅ stop loader
+  }
+};
 
   const [subcategories, setSubcategories] = useState([]);
   const fetchSubcategories = async () => {
@@ -947,10 +948,40 @@ if (stockFilter) {
                 <th className="p-2">Action</th>
               </tr>
             </thead>
-            <tbody>
-              {paginatedProducts.length > 0 ? (
-                paginatedProducts.map((product, index) => (
-                  <tr key={product._id} className="text-center border-b">
+           <tbody>
+  {isLoading ? (
+    <tr>
+      <td colSpan="8" className="text-center p-6">
+        <div className="flex justify-center items-center gap-2">
+          <svg
+            className="animate-spin h-5 w-5 text-red-500"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            />
+          </svg>
+          <span className="text-gray-600 font-medium">
+            Loading products...
+          </span>
+        </div>
+      </td>
+    </tr>
+  ) : paginatedProducts.length > 0 ? (
+    paginatedProducts.map((product) => (
+     <tr key={product._id} className="text-center border-b">
                     {/* Item Code Column */}
                     <td className="p-2 text-center align-middle">
                       {product.item_code}
@@ -1027,15 +1058,16 @@ if (stockFilter) {
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="8" className="text-center p-4">
-                    No Products found
-                  </td>
-                </tr>
-              )}
-            </tbody>
+    ))
+  ) : (
+    <tr>
+      <td colSpan="8" className="text-center p-4 text-gray-500">
+        No Products found
+      </td>
+    </tr>
+  )}
+</tbody>
+
           </table>
 
           {/* Pagination */}
