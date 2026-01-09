@@ -12,8 +12,37 @@ export async function GET(req) {
   try {
     await dbConnect();
 
+    const { searchParams } = new URL(req.url);
+
+const search = searchParams.get("search");
+const status = searchParams.get("status");
+const startDate = searchParams.get("startDate");
+const endDate = searchParams.get("endDate");
+
+
+const query = {};
+
+if (search) {
+  query.$or = [
+    { category_name: { $regex: search, $options: "i" } },
+    { category_slug: { $regex: search, $options: "i" } },
+  ];
+}
+
+if (status) {
+  query.status = status;
+}
+
+if (startDate && endDate) {
+  query.createdAt = {
+    $gte: new Date(startDate),
+    $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999)),
+  };
+}
+
+
     /* ---------------- FETCH CATEGORIES ---------------- */
-    const categories = await Category.find().lean();
+    const categories = await Category.find(query).lean();
 
     if (!categories.length) {
       return NextResponse.json({ success: false }, { status: 404 });
@@ -107,3 +136,6 @@ export async function GET(req) {
     );
   }
 }
+
+
+
