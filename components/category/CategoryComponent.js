@@ -195,7 +195,7 @@ const fetchInitialData = async () => {
             filter_name: filter.filter_name,
             count: filter.count || 0
           });
-          console.log(`✅ Added filter "${filter.filter_name}" to group "${filter.filter_group_name}"`);
+          // console.log(`✅ Added filter "${filter.filter_name}" to group "${filter.filter_group_name}"`);
         } else {
           console.log('❌ Filter missing group ID:', filter);
         }
@@ -1375,7 +1375,7 @@ const fetchInitialData = async () => {
                     <div className="space-y-4">
                       {Object.values(filterGroups).map(group => (
                         <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
-                          <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
+                          <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group ">
                             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
                             <ChevronDown 
                               size={18}

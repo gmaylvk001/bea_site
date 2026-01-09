@@ -87,7 +87,7 @@ export default function CategoryPage() {
     totalProducts: 0
   });
 
-  const itemsPerPage = 12;
+  const itemsPerPage = 24;
   const productsContainerRef = useRef(null);
   const scrollPositionBeforeFetch = useRef({
     y: 0,
@@ -170,6 +170,12 @@ export default function CategoryPage() {
         }
       });
       setFilterGroups(groups);
+       // Expand all filter groups by default
+        const initialExpanded = {};
+        Object.keys(groups).forEach(key => {
+          initialExpanded[key] = true;
+        });
+        setExpandedFilters(initialExpanded);
       
       if (categoryData.products?.length > 0) {
         
