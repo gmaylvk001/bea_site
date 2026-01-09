@@ -19,6 +19,8 @@ export default function CategoryPage() {
     filters: []
   });
   const [products, setProducts] = useState([]);
+  // For filter group show more
+    const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
     brands: [],
     price: { min: 0, max: 100000 },
@@ -1014,6 +1016,14 @@ export default function CategoryPage() {
                      )}
                    </div>
                  ))}
+                 {Object.values(filterGroups).length > 9 && (
+                      <button
+                        className="mt-2 text-blue-600 text-sm hover:underline"
+                        onClick={() => setShowAllFilterGroups(v => !v)}
+                      >
+                        {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                      </button>
+                    )}
              </div>
            </div>
          )}
@@ -1251,6 +1261,14 @@ export default function CategoryPage() {
                     )}
                   </div>
                 ))}
+                {Object.values(filterGroups).length > 9 && (
+                        <button
+                          className="mt-2 text-blue-600 text-sm hover:underline"
+                          onClick={() => setShowAllFilterGroups(v => !v)}
+                        >
+                          {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                        </button>
+                      )}
               </div>
             </div>
           )}

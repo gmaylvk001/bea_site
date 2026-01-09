@@ -18,6 +18,8 @@ export default function CategoryPage() {
   });
   //console.log(categoryData);
   const [showEndMessage, setShowEndMessage] = useState(false);
+  // For filter group show more
+    const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
   const [products, setProducts] = useState([]);
   const [selectedFilters, setSelectedFilters] = useState({
     categories: [],
@@ -1226,6 +1228,14 @@ Object.keys(groups).forEach(key => {
                                                      )}
                                                    </div>
                                                  ))}
+                                                 {Object.values(filterGroups).length > 9 && (
+                      <button
+                        className="mt-2 text-blue-600 text-sm hover:underline"
+                        onClick={() => setShowAllFilterGroups(v => !v)}
+                      >
+                        {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                      </button>
+                    )}
                                              </div>
                                            </div>
                                          )}
@@ -1455,6 +1465,14 @@ Object.keys(groups).forEach(key => {
                                       )}
                                     </div>
                                   ))}
+                                  {Object.values(filterGroups).length > 9 && (
+                        <button
+                          className="mt-2 text-blue-600 text-sm hover:underline"
+                          onClick={() => setShowAllFilterGroups(v => !v)}
+                        >
+                          {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                        </button>
+                      )}
                                 </div>
                               </div>
                             )}

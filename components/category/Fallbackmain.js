@@ -21,6 +21,8 @@ export default function CategoryPage(params) {
   });
   const [showEndMessage, setShowEndMessage] = useState(false);
   const [products, setProducts] = useState([]);
+  // For filter group show more
+    const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
     categories: [],
@@ -1137,6 +1139,14 @@ const fetchInitialData = async () => {
                         )}
                       </div>
                     ))}
+                     {Object.values(filterGroups).length > 9 && (
+                      <button
+                        className="mt-2 text-blue-600 text-sm hover:underline"
+                        onClick={() => setShowAllFilterGroups(v => !v)}
+                      >
+                        {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -1366,6 +1376,14 @@ const fetchInitialData = async () => {
                           )}
                         </div>
                       ))}
+                      {Object.values(filterGroups).length > 9 && (
+                        <button
+                          className="mt-2 text-blue-600 text-sm hover:underline"
+                          onClick={() => setShowAllFilterGroups(v => !v)}
+                        >
+                          {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
