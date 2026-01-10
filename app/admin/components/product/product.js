@@ -843,9 +843,9 @@ if (stockFilter) {
       </div>
 
 
-      {isLoading ? (
-        <p>Loading Products...</p>
-      ) : (
+     
+       
+      
         <div className="bg-white shadow-md rounded-lg p-5 mb-5 overflow-x-auto">
           {/* Search and Filters */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end mb-4">
@@ -954,7 +954,7 @@ if (stockFilter) {
       <td colSpan="8" className="text-center p-6">
         <div className="flex justify-center items-center gap-2">
           <svg
-            className="animate-spin h-5 w-5 text-red-500"
+            className="animate-spin h-5 w-5 text-blue-500"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -1144,7 +1144,7 @@ if (stockFilter) {
             </div>
           </div>
         </div>
-      )}
+     
 
       {/* Confirmation Modal */}
       {showConfirmationModal && (
