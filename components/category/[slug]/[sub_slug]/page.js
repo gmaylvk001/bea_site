@@ -166,7 +166,7 @@ const scroll = (direction) => {
 console.log("🔎 Raw Filters From APIIIII:", categoryData.filters);
 
 // Console log grouped filters
-console.log("🗂 Grouped Filterssssss:", groups);
+console.log("🗂 Grouped Filters:", groups);
 
 // Console log each group with its filters
 Object.keys(groups).forEach(key => {
@@ -742,41 +742,41 @@ Object.keys(groups).forEach(key => {
       )}
 {/* Categories Circle Section - Dynamic based on subcategories */}
 
-<div className="relative my-12 px-6">
-  {/* Left arrow */}
-  <button
-    onClick={() => scroll("left")}
-    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-md hidden md:flex items-center justify-center"
-  >
-    <span className="text-2xl font-bold text-gray-700">{`‹`}</span>
-  </button>
+{categoryData?.categoryTree?.length > 0 && (
+  <div className="relative my-12 px-6">
+    {/* Left arrow */}
+    <button
+      onClick={() => scroll("left")}
+      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-md hidden md:flex items-center justify-center"
+    >
+      <span className="text-2xl font-bold text-gray-700">{`‹`}</span>
+    </button>
 
-  {/* Right arrow */}
-  <button
-    onClick={() => scroll("right")}
-    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-md hidden md:flex items-center justify-center"
-  >
-    <span className="text-2xl font-bold text-gray-700">{`›`}</span>
-  </button>
+    {/* Right arrow */}
+    <button
+      onClick={() => scroll("right")}
+      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-md hidden md:flex items-center justify-center"
+    >
+      <span className="text-2xl font-bold text-gray-700">{`›`}</span>
+    </button>
 
-  {/* Scroll container */}
-  <div
-    ref={scrollRef}
-    className={`flex ${
-      categoryData?.categoryTree?.length > 3
-        ? "overflow-x-auto scroll-smooth hide-scrollbar"
-        : "justify-center flex-wrap gap-6"
-    } py-4`}
-    style={{
-      scrollSnapType: "x mandatory",
-      scrollPadding: "0 24px",
-      gap: "24px", // spacing between cards
-      maxWidth: "calc((320px * 3) + (24px * 2))", // 3 cards + 2 gaps
-      margin: "0 auto", // center container
-    }}
-  >
-    {categoryData?.categoryTree?.length > 0 ? (
-      categoryData.categoryTree.map((subcategory) => (
+    {/* Scroll container */}
+    <div
+      ref={scrollRef}
+      className={`flex ${
+        categoryData.categoryTree.length > 3
+          ? "overflow-x-auto scroll-smooth hide-scrollbar"
+          : "justify-center flex-wrap gap-6"
+      } py-4`}
+      style={{
+        scrollSnapType: "x mandatory",
+        scrollPadding: "0 24px",
+        gap: "24px",
+        maxWidth: "calc((320px * 3) + (24px * 2))",
+        margin: "0 auto",
+      }}
+    >
+      {categoryData.categoryTree.map((subcategory) => (
         <Link
           key={subcategory._id}
           href={`/category/${slug}/${sub_slug}/${subcategory.category_slug}`}
@@ -785,76 +785,47 @@ Object.keys(groups).forEach(key => {
         >
           {/* Image section */}
           <div className="flex justify-center items-center w-[150px] h-full ml-4 flex-shrink-0">
-            {subcategory.image ? (
-              <div className="relative w-[170px] h-[220px] flex items-center justify-center">
-                <Image
-                  src={
-                    subcategory.image.startsWith("http")
-                      ? subcategory.image
-                      : `${subcategory.image}`
-                  }
-                  alt={subcategory.category_name}
-                  fill
-                  className="object-contain object-center"
-                  unoptimized
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                    const fallback = e.target.nextSibling;
-                    if (fallback) fallback.style.display = "block";
-                  }}
-                />
-                <div className="relative w-full h-full hidden">
-                  <Image
-                    src="/no-catimg.png"
-                    alt="Fallback image"
-                    fill
-                    className="object-contain object-center"
-                    unoptimized
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="relative w-[170px] h-[220px] flex items-center justify-center">
-                <Image
-                  src="/no-catimg.png"
-                  alt="Fallback image"
-                  fill
-                  className="object-contain object-center"
-                  unoptimized
-                />
-              </div>
-            )}
+            <div className="relative w-[170px] h-[220px] flex items-center justify-center">
+              <Image
+                src={
+                  subcategory.image?.startsWith("http")
+                    ? subcategory.image
+                    : subcategory.image || "/no-catimg.png"
+                }
+                alt={subcategory.category_name}
+                fill
+                className="object-contain object-center"
+                unoptimized
+              />
+            </div>
           </div>
 
           {/* Content section */}
-         <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
-         <h3
-  className={`font-bold text-gray-900 mb-3  ${
-    subcategory.category_name.length > 13 ? "text-sm text-wrap" : "text-md"
-  }`}
->
-  {subcategory.category_name}
-</h3>
+          <div className="flex flex-col text-left px-3 py-10 w-[150px] h-full">
+            <h3
+              className={`font-bold text-gray-900 mb-3 ${
+                subcategory.category_name.length > 13
+                  ? "text-sm text-wrap"
+                  : "text-md"
+              }`}
+            >
+              {subcategory.category_name}
+            </h3>
 
+            <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
+              {subcategory.content || ""}
+            </p>
 
-          <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 min-h-[40px]">
-            {subcategory.content || ""}
-          </p>
-
-          <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
-            Explore
-          </button>
-        </div>
-
+            <button className="bg-[#2b8ef6] text-white rounded-md px-4 py-2 font-semibold w-fit hover:bg-[#1f77db] transition-colors">
+              Explore
+            </button>
+          </div>
         </Link>
-      ))
-    )  : (
-      <div className="text-center w-full py-8">
-        <p className="text-gray-500">No subcategories available</p>
-      </div>
-    )}
+      ))}
+    </div>
   </div>
-</div>
+)}
+
 
 
        <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 lg:gap-8">
