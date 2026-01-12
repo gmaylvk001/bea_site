@@ -48,7 +48,7 @@ export async function POST(req) {
         const existingBrand = await Brand.findOne({  brand_name: { $regex: new RegExp(`^${item.brand}$`, "i") } });
         const brand_id = existingBrand?._id?.toString() || null;
         console.log(item.brand,existingBrand,brand_id);
-        if (existingProduct) {
+        if (existingProduct && item.Status == 'Yes') {
             // await Product.updateOne(
             //     {
             //      item_code: item.name 
@@ -63,12 +63,51 @@ export async function POST(req) {
             //     }
                 
             // );
+            
+            /*
+            
+            const price = '';
+            
+            if(item.MRP == '')
+            {
+                price = 0;
+            }
+            else
+            {
+                price = parseFloat(item.MRP);
+            }
+            
+            
+            const SellingPrice = '';
+            
+            if(item.SellingPrice == '')
+            {
+                SellingPrice = 0;
+            }
+            else
+            {
+                SellingPrice = parseFloat(item.SellingPrice);
+            }
+            
+           
               const updateFields = {
-                  price: parseFloat(item.MRP),
-                  special_price: parseFloat(item.SellingPrice),
-                  quantity: parseFloat(item.stock),
+                  price: price,
+                  special_price: SellingPrice,
+                  quantity: parseFloat(item.stock) || 0,
                   // movement: item.movement,
               };
+              
+              */
+              
+                const price = item.MRP === '' ? 0 : parseFloat(item.MRP);
+                const sellingPrice = item.SellingPrice === '' ? 0 : parseFloat(item.SellingPrice);
+                const quantity = parseFloat(item.stock) || 0;
+
+                const updateFields = {
+                    price,
+                    special_price: sellingPrice,
+                    quantity,
+                };
               if(brand_id) {
                   updateFields['brand'] = brand_id;
               }
@@ -85,6 +124,11 @@ export async function POST(req) {
             const existingProductall = await Product_all.findOne({
                 item_code: item.name,
             });
+            
+            const price2 = item.MRP === '' ? 0 : parseFloat(item.MRP);
+            const sellingPrice2 = item.SellingPrice === '' ? 0 : parseFloat(item.SellingPrice);
+            const quantity2 = parseFloat(item.stock) || 0;
+            
             if (existingProductall) {
                 await Product_all.updateOne(
                     {
@@ -92,9 +136,9 @@ export async function POST(req) {
                     },
                     {
                         $set: {
-                            price: parseFloat(item.MRP),
-                            special_price: parseFloat(item.SellingPrice),
-                            quantity: parseFloat(item.stock),
+                            price: price2,
+                            special_price: sellingPrice2,
+                            quantity: quantity2,
                             brand : item.brand
                             // movement: item.movement,
                         },
@@ -104,9 +148,9 @@ export async function POST(req) {
             }else{
                 await Product_all.create({
                     item_code: item.name,
-                    price: parseFloat(item.MRP),
-                    special_price: parseFloat(item.SellingPrice),
-                    quantity: parseFloat(item.stock),
+                    price: price2,
+                    special_price: sellingPrice2,
+                    quantity: quantity2,
                     brand   : item.brand,
                     // movement: item.movement,
                 });
