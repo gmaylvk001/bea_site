@@ -71,9 +71,16 @@ export default function CategoryPage() {
   const { sub_slug } = useParams();
   const { slug,sub_slug_one } = useParams();
   const toggleBrands = () => setIsBrandsExpanded(!isBrandsExpanded);
-  const toggleFilterGroup = (id) => {
+  /* const toggleFilterGroup = (id) => {
     setExpandedFilters(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  }; */
+
+      const toggleFilterGroup = (groupId) => {
+  setExpandedFilters((prev) => ({
+    ...prev,
+    [groupId]: !prev[groupId],
+  }));
+};
 
   const [currentCategoryBannerIndex, setCurrentCategoryBannerIndex] = useState(0);
   const [nofound,setNofound]=useState(false);
@@ -102,6 +109,28 @@ export default function CategoryPage() {
   const router = useRouter(); // Added router
   
 
+  useEffect(() => {
+    if (!filterGroups || Object.values(filterGroups).length === 0) return;
+  
+    const initialExpanded = {};
+    let openCount = 1;
+  
+    if (pagination.totalProducts > 24) {
+      openCount = 8;
+    } else if (pagination.totalProducts > 12) {
+      openCount = 4;
+    } else if (pagination.totalProducts > 4) {
+      openCount = 1;
+    }
+  
+    Object.values(filterGroups).forEach((group, index) => {
+      initialExpanded[group._id] = index < openCount;
+    });
+  
+    setExpandedFilters(initialExpanded);
+  }, [filterGroups, pagination.totalProducts]);
+
+  
   useEffect(() => {
     if (sub_slug) {
       fetchInitialData();

@@ -59,7 +59,7 @@ export default function CategoryPage(params) {
   };
 
 
-  useEffect(() => {
+/*   useEffect(() => {
   if (Object.values(filterGroups).length > 0) {
     const initialExpanded = {};
 
@@ -69,7 +69,9 @@ export default function CategoryPage(params) {
 
     setExpandedFilters(initialExpanded);
   }
-}, [filterGroups]);
+}, [filterGroups]); */
+
+
 
 
   const toggleBrands = () => setIsBrandsExpanded(!isBrandsExpanded);
@@ -99,6 +101,31 @@ export default function CategoryPage(params) {
   const itemsPerPage = 24;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter(); // Added router
+
+
+
+
+  useEffect(() => {
+  if (Object.values(filterGroups).length > 0) {
+    const initialExpanded = {};
+    let openCount = 1; // default
+
+    if (pagination.totalProducts > 24) {
+      openCount = 8;
+    } else if (pagination.totalProducts > 12) {
+      openCount = 4;
+    } else if (pagination.totalProducts > 4) {
+      openCount = 1;
+    }
+
+    Object.values(filterGroups).forEach((group, index) => {
+      initialExpanded[group._id] = index < openCount;
+    });
+
+    setExpandedFilters(initialExpanded);
+  }
+}, [filterGroups, pagination.totalProducts]);
+
 
   // Fetch initial data
   useEffect(() => {
@@ -1131,7 +1158,13 @@ const fetchInitialData = async () => {
                     {Object.values(filterGroups).map(group => (
                       <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                         <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
-                          <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
+                          {/* <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span> */}
+                          <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
+  {group.name.length > 24
+    ? group.name.slice(0, 24) + ".."
+    : group.name}
+</span>
+
                           <ChevronDown 
                             size={18}
                             className={`text-gray-400 transition-transform duration-200 ${
