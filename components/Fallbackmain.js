@@ -1159,10 +1159,12 @@ const fetchInitialData = async () => {
                       <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                         <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
                           {/* <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span> */}
-                          <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
-  {group.name.length > 24
-    ? group.name.slice(0, 24) + ".."
-    : group.name}
+                          <span
+  className={`font-medium text-gray-700 group-hover:text-blue-600 transition-colors ${
+    group.name.length > 25 ? "text-[12px]" : "text-sm"
+  }`}
+>
+  {group.name}
 </span>
 
                           <ChevronDown 
