@@ -1222,6 +1222,7 @@ export default function HomeComponent() {
                       className="object-fill w-full h-full"
                       style={{ objectPosition: "center 30%" }}
                       priority
+                      unoptimized
                     />
                   </div>
                   {/* Clickable accessible banner - REMOVED HOVER EFFECT */}
@@ -1260,6 +1261,7 @@ export default function HomeComponent() {
                       className="object-fill w-full h-full"
                       style={{ objectPosition: "center 30%" }}
                       priority
+                      unoptimized
                     />
                   </div>
                 </motion.div>
@@ -1277,6 +1279,7 @@ export default function HomeComponent() {
                   fill
                   className="object-fill w-full h-full"
                   priority
+                  unoptimized
                 />
               </div>
             </motion.div>
