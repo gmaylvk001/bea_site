@@ -13,57 +13,53 @@ export async function GET(req) {
     await dbConnect();
 
     const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search");
 
-const search = searchParams.get("search");
-const status = searchParams.get("status");
-const startDate = searchParams.get("startDate");
-const endDate = searchParams.get("endDate");
+    /* ---------------- SEARCH QUERY ---------------- */
+    const query = {};
 
+    if (search) {
+      query.$or = [
+        { category_name: { $regex: search, $options: "i" } },
+        { category_slug: { $regex: search, $options: "i" } },
+      ];
+    }
 
-const query = {};
+    /* ---------------- FETCH SEARCHED (CHILD) CATEGORIES ---------------- */
+    const searchedCategories = await Category.find(query).lean();
 
-if (search) {
-  query.$or = [
-    { category_name: { $regex: search, $options: "i" } },
-    { category_slug: { $regex: search, $options: "i" } },
-  ];
-}
-
-if (status) {
-  query.status = status;
-}
-
-if (startDate && endDate) {
-  query.createdAt = {
-    $gte: new Date(startDate),
-    $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999)),
-  };
-}
-
-
-    /* ---------------- FETCH CATEGORIES ---------------- */
-    const categories = await Category.find(query).lean();
-
-    if (!categories.length) {
+    if (!searchedCategories.length) {
       return NextResponse.json({ success: false }, { status: 404 });
     }
 
-    /* ---------------- CATEGORY LOOKUP ---------------- */
+    const searchedCategoryIds = searchedCategories.map(c => c._id.toString());
+
+    /* ---------------- FETCH PARENT FOR DISPLAY ---------------- */
     const categoryMap = {};
-    categories.forEach(cat => {
+
+    for (const cat of searchedCategories) {
       categoryMap[cat._id.toString()] = cat;
-    });
 
-    const categoryIds = categories.map(c => c._id.toString());
+      if (cat.parentid) {
+        const parent = await Category.findById(cat.parentid).lean();
+        if (parent) {
+          categoryMap[parent._id.toString()] = parent;
+        }
+      }
+    }
 
-    /* ---------------- CATEGORY ↔ FILTER ---------------- */
+    /* ---------------- CATEGORY ↔ FILTER (ONLY SEARCHED CATEGORY) ---------------- */
     const categoryFilters = await CategoryFilter.find({
-      category_id: { $in: categoryIds },
+      category_id: { $in: searchedCategoryIds },
     }).lean();
 
-    const filterIds = categoryFilters.map(cf => cf.filter_id);
+    if (!categoryFilters.length) {
+      return NextResponse.json({ success: false }, { status: 404 });
+    }
 
     /* ---------------- FILTERS ---------------- */
+    const filterIds = categoryFilters.map(cf => cf.filter_id);
+
     const filters = await Filter.find({
       _id: { $in: filterIds },
     }).lean();
@@ -75,6 +71,7 @@ if (startDate && endDate) {
 
     /* ---------------- FILTER GROUPS ---------------- */
     const filterGroupIds = filters.map(f => f.filter_group);
+
     const filterGroups = await FilterGroup.find({
       _id: { $in: filterGroupIds },
     }).lean();
@@ -84,7 +81,20 @@ if (startDate && endDate) {
       filterGroupMap[g._id.toString()] = g.filtergroup_name;
     });
 
-    /* ---------------- PREPARE EXCEL ROWS ---------------- */
+    /* ---------------- CATEGORY DISPLAY LOGIC (SMALL CHANGE) ---------------- */
+    const getCategoryNames = (category) => {
+      let categoryName = "-";
+      let subCategoryName = category.category_name;
+
+      if (category.parentid) {
+        const parent = categoryMap[category.parentid];
+        categoryName = parent?.category_name || "-";
+      }
+
+      return { categoryName, subCategoryName };
+    };
+
+    /* ---------------- PREPARE EXCEL DATA ---------------- */
     const excelData = [];
 
     categoryFilters.forEach(cf => {
@@ -93,18 +103,12 @@ if (startDate && endDate) {
 
       if (!category || !filter) return;
 
-      const filterGroupName =
-        filterGroupMap[filter.filter_group] || "-";
-
-      const parentCategory =
-        category.parentid && categoryMap[category.parentid]
-          ? categoryMap[category.parentid].category_name
-          : "-";
+      const { categoryName, subCategoryName } = getCategoryNames(category);
 
       excelData.push({
-        "Category": parentCategory === "-" ? category.category_name : parentCategory,
-        "Sub Category": parentCategory === "-" ? "-" : category.category_name,
-        "Filter Group": filterGroupName,
+        "Category": categoryName,
+        "Sub Category": subCategoryName,
+        "Filter Group": filterGroupMap[filter.filter_group] || "-",
         "Filter Value": filter.filter_name,
       });
     });
@@ -136,6 +140,3 @@ if (startDate && endDate) {
     );
   }
 }
-
-
-
