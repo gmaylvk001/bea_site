@@ -131,6 +131,65 @@ export default function CategoryPage() {
   }, [filterGroups, pagination.totalProducts]);
 
   
+/*   useEffect(() => {
+  if (!filterGroups || Object.values(filterGroups).length === 0) return;
+
+  const order = CUSTOM_FILTER_ORDER.map(i => i.toLowerCase());
+
+  // 👇 SAME SORT AS RENDER
+  const sortedGroups = Object.values(filterGroups).sort((a, b) => {
+    const indexA = order.indexOf(a.name.toLowerCase());
+    const indexB = order.indexOf(b.name.toLowerCase());
+    return indexA - indexB;
+  });
+
+  const initialExpanded = {};
+
+  // ❗ only FIRST ONE open
+  sortedGroups.forEach((group, index) => {
+    initialExpanded[group._id] = index === 0;
+  });
+
+  setExpandedFilters(initialExpanded);
+}, [filterGroups, pagination.totalProducts]); */
+
+
+
+
+useEffect(() => {
+  if (!filterGroups || Object.values(filterGroups).length === 0) return;
+
+  const order = CUSTOM_FILTER_ORDER.map(i => i.toLowerCase());
+
+  const sortedGroups = Object.values(filterGroups).sort((a, b) => {
+    const indexA = order.indexOf(a.name.toLowerCase());
+    const indexB = order.indexOf(b.name.toLowerCase());
+    return indexA - indexB;
+  });
+
+  let openCount = 1; // ✅ default minimum ONE open
+
+  if (pagination.totalProducts > 24) {
+    openCount = 8;
+  } else if (pagination.totalProducts > 12) {
+    openCount = 4;
+  } else if (pagination.totalProducts > 4) {
+    openCount = 1;
+  }
+
+  const initialExpanded = {};
+
+  sortedGroups.forEach((group, index) => {
+    initialExpanded[group._id] = index < openCount;
+  });
+
+  setExpandedFilters(initialExpanded);
+}, [filterGroups, pagination.totalProducts]);
+
+
+
+
+
   useEffect(() => {
     if (sub_slug) {
       fetchInitialData();
