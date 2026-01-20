@@ -655,6 +655,40 @@ const handleUpdateNavImageChange = async (e) => {
       });
     return result;
   };
+  
+  useEffect(() => {
+  if (searchQuery.trim() !== "") {
+    // Find all categories that match the search
+    const allCategories = flattenAllCategories(categories);
+    const matchedCategories = allCategories.filter(category =>
+      category.category_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    // Get all parent IDs of matched categories
+    const parentIdsToExpand = new Set();
+    matchedCategories.forEach(category => {
+      // Function to get all parent IDs of a category
+      const getParentIds = (catId) => {
+        const parentIds = [];
+        let current = categories.find(c => c._id === catId);
+        while (current && current.parentid !== "none") {
+          parentIds.push(current.parentid);
+          current = categories.find(c => c._id === current.parentid);
+        }
+        return parentIds;
+      };
+      
+      getParentIds(category._id).forEach(parentId => parentIdsToExpand.add(parentId));
+    });
+    
+    // Expand all parent categories
+    const newExpanded = { ...expandedCategories };
+    parentIdsToExpand.forEach(parentId => {
+      newExpanded[parentId] = true;
+    });
+    setExpandedCategories(newExpanded);
+  }
+}, [searchQuery, categories]); 
 
   // Render category tree for dropdown
   const renderCategoryTree = (categories, level = 0) => {
@@ -704,6 +738,16 @@ const handleUpdateNavImageChange = async (e) => {
     const parentCategory = categories.find((category) => category._id === parentId);
     return parentCategory ? parentCategory.category_name : "Unknown";
   };
+  
+  const flattenAllCategories = (categories, parentId = "none", level = 0, result = []) => {
+  categories
+    .filter((category) => category.parentid === parentId)
+    .forEach((category) => {
+      result.push({ ...category, level });
+      flattenAllCategories(categories, category._id, level + 1, result);
+    });
+  return result;
+ }; 
 
   // Filter categories based on search, status, and date
   const filteredCategories = useMemo(() => {
