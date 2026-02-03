@@ -292,10 +292,10 @@ const capitalizeFirstLetter = (str) =>
                 <div className="flex items-center gap-2">
                   <FiMail />
                   <a
-                    href="mailto:customercare@bharatelectronics.in"
+                    href="mailto:customercare@bharathelectronics.in"
                     className="text-blue-600 hover:underline"
                   >
-                    customercare@bharatelectronics.in
+                    customercare@bharathelectronics.in
                   </a>
                 </div>
                 <hr className="border-gray-600 my-3" />
@@ -346,16 +346,16 @@ const capitalizeFirstLetter = (str) =>
                   </ul>
                 </div>
               </div>
-              {/* Company & Social Media */}
+              {/* Company & Social Media  */}
               <div className="md:ml-12">
                 <div className="mb-8">
                   <h3 className="text-white font-semibold text-lg mb-4">Company</h3>
                   <ul className="space-y-2">
                     <li><Link href="/aboutus" className="hover:underline hover:text-white">About Us</Link></li>
-                    <li><Link href="/contact" className="hover:underline hover:text-white">Contact Us</Link></li>
                     <li><Link href="/blog" className="hover:underline hover:text-white">Blogs</Link></li>
-                    <li><Link href="/careers" className="hover:underline hover:text-white">Careers</Link></li>
-                    <li><Link href="/feedback" className="hover:underline hover:text-white">Feedback</Link></li> 
+                    <li><Link href="/contact" className="hover:underline hover:text-white text-blue-600">Contact Us</Link></li>
+                    <li><Link href="/careers" className="hover:underline hover:text-white text-blue-600">Careers</Link></li>
+                    <li><Link href="/feedback" className="hover:underline hover:text-white text-blue-600">Feedback</Link></li> 
                   </ul>
                 </div>
               <div>
