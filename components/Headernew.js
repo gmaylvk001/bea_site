@@ -1816,23 +1816,40 @@ const Header = () => {
                         </button>
 
                         {/* Feedback Icon */}
-                        <Link href="/feedback" className="hidden sm:flex items-center relative">
+							{/* <Link href="/feedback" className="hidden sm:flex items-center relative">
                             <FiMessageSquare size={18} className="text-customBlue" />
-                        </Link>
+							</Link> */}
+						
+						<Link href="/feedback" className="hidden sm:flex items-center relative group z-50">
+						  <FiMessageSquare size={18} className="text-customBlue" />
+
+						  <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
+							Feedback
+						  </span>
+						</Link>
+
+
+
 
                         {/* Contact Icon */}
-                        <Link href="/contact" className="hidden sm:flex items-center relative">
+                        <Link href="/contact" className="hidden sm:flex items-center relative group z-50">
                             <FiPhoneCall size={18} className="text-customBlue" />
+							<span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
+							Contact
+						  </span>
                         </Link>
 
                         {/* Location (Hidden on mobile) */}
-                        <Link href="/location" className="hidden sm:flex items-center relative">
+                        <Link href="/location" className="hidden sm:flex items-center relative group z-50">
                             <FiMapPin size={18} className="text-customBlue" />
+							<span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
+							Store
+						  </span>
                                 {/* <span className="ml-1 text-xs sm:text-sm text-customBlue hidden lg:inline">Location</span> */}
                         </Link>
 
                         {/* Wishlist */}
-                        <Link href="/wishlist" className="flex items-center relative p-1 sm:p-0">
+                        <Link href="/wishlist" className="flex items-center relative p-1 sm:p-0 group z-50">
                             <FiHeart size={18} className="text-customBlue" />
                             {/* {wishlistCount > 0 && ( */}
                                 <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
@@ -1840,15 +1857,21 @@ const Header = () => {
                                 </span>
                             {/* )} */}
                             {/* <span className="ml-1 text-xs sm:text-sm text-customBlue hidden lg:inline">Wishlist</span> */}
+							<span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
+							Wishlist
+						  </span>
                         </Link>
 
                         {/* Cart */}
-                        <Link href="/cart" className="flex items-center relative p-1 sm:p-0 ">
+                        <Link href="/cart" className="flex items-center relative p-1 sm:p-0 group z-50">
                             <FiShoppingCart size={18} className="text-customBlue" />
                             <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
                                 {cartCount}
                             </span>
                             {/* <span className="ml-1 text-xs sm:text-sm text-customBlue hidden lg:inline">Cart</span> */}
+							<span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
+							Cart
+						  </span>
                         </Link>
 
                         {/* User Account */}
