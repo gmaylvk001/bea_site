@@ -163,6 +163,20 @@ export async function POST(req) {
             if(existingProductall){
             await Product_all.deleteOne({ item_code: item.name });
             }
+            if (existingProductall) {
+              // 2️⃣ Find product in Product table
+              const existingProductall = await Product.findOne({
+                  item_code: item.name,
+              });
+
+              if (existingProductall) {
+                  // 3️⃣ Update Product status to inactive
+                  await Product.updateOne(
+                      { item_code: item.name },
+                      { $set: { status: 'inactive' } }
+                  );
+              }
+            }
           }
 
         // }
