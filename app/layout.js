@@ -25,9 +25,22 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
        <head>
+<Script async src="https://www.googletagmanager.com/gtag/js?id=G-15V9VS13Q7"></Script>
+        <Script id="gtm-new" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+ 
+  gtag('config', 'G-15V9VS13Q7');
+          `}
+        </Script>
+
+
+
         {/* ✅ Google Tag Manager */}
         <Script
-          id="gtm-script"
+          id="gtm-script-1"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
@@ -75,17 +88,7 @@ export default function RootLayout({ children }) {
 
         <ClientLayout>{children}</ClientLayout>
         {/* ✅ Tracking Script */}
-        <Script id="adtarbo-tracking" strategy="afterInteractive">
-          {`(function(dd, ss, idd) {
-              var js, ajs = dd.getElementsByTagName(ss)[0];
-              if (dd.getElementById(idd)) {return;}
-              js = dd.createElement(ss);
-              js.id = idd;
-              js.aun_id = "DxxR7VDj28N7";
-              js.src = "https://pixel.adtarbo.com/pixelTrack1.js";
-              ajs.parentNode.insertBefore(js, ajs);
-          }(document, 'script', 'adtarbo-js-v2'));`}
-        </Script>
+       
       </body>
     </html>
   );

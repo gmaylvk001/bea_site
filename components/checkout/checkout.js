@@ -743,6 +743,7 @@ const grandTotal = subtotal - totalDiscount;
         });
         const authData = await authResponse.json();
         //console.log(cartItems);
+        /*
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         trackCheckout({
           user: {
@@ -760,7 +761,7 @@ const grandTotal = subtotal - totalDiscount;
             currency: "INR",
           },
         });
-       
+       */
        
         // Send confirmation emails
         // const emailResponse = await fetch('/api/send-order-email', {
