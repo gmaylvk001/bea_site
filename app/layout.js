@@ -39,7 +39,7 @@ export default function RootLayout({ children }) {
 
 
         {/* ✅ Google Tag Manager */}
-        <Script
+        {/* <Script
           id="gtm-script-1"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
@@ -54,7 +54,7 @@ export default function RootLayout({ children }) {
               })(window,document,'script','dataLayer','GTM-KVT2Z9RR');
             `,
           }}
-        />
+        /> */}
 
         {/* Google Tag Manager */}
         <Script id="gtm-script" strategy="afterInteractive" dangerouslySetInnerHTML={{
@@ -72,14 +72,14 @@ export default function RootLayout({ children }) {
 
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <noscript>
+        {/* <noscript>
   <iframe
     src="https://www.googletagmanager.com/ns.html?id=GTM-KVT2Z9RR"
     height="0"
     width="0"
     style={{ display: "none", visibility: "hidden" }}
   />
-</noscript>
+</noscript> */}
 
 {/* Google Tag Manager (noscript) */}
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P7LW8D7X" height="0" width="0" style={{ display: "none", visibility: "hidden" }}></iframe></noscript>
