@@ -90,7 +90,7 @@ export default function BannerSlider({ categorySlug = null }) {
         disableOnInteraction: false 
       }}
       loop={banners.length > 1}
-      className="customSwiper overflow-hidden rounded-lg shadow-lg"
+      className="customSwiper overflow-hidden"
     >
       {banners.map((banner, index) => (
         <SwiperSlide key={banner._id || index}>
@@ -105,7 +105,7 @@ export default function BannerSlider({ categorySlug = null }) {
                 src={banner.banner_image}
                 alt={banner.banner_name}
                 loading="lazy"
-                className="w-full h-[180px] sm:h-[280px] md:h-[300px] lg:h-[411px] object-contain sm:object-contain bg-white"
+                className="w-full h-[180px] sm:h-[280px] md:h-[300px] lg:h-[402px] object-contain sm:object-contain bg-white"
               />
             </a>
           ) : (

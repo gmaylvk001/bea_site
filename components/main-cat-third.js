@@ -198,7 +198,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
 
           {/* SUB BANNERS - Centered with proper spacing */}
           {group.sub?.length > 0 && (
-            <div className="mt-4 pb-4">
+            <div className="mt-6 pb-4">
               <div className="flex justify-center">
                 {group.sub.length < 5 ? (
                   // For fewer than 5 banners, use flexbox for centering
@@ -225,8 +225,8 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                   </div>
                 ) : (
                   // For 5 or more banners, use Swiper with centered configuration
-                  <div className="w-full max-w-6xl mx-auto">
-                    <Swiper
+                  <div className="w-full max-w-7xl mx-auto px-2">
+                    {/* <Swiper
                       modules={[Navigation]}
                       navigation
                       spaceBetween={20}
@@ -256,22 +256,33 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                         },
                       }}
                       className="centered-swiper"
-                    >
+                    > */}
+                    <Swiper
+          modules={[Navigation]}
+          navigation
+          spaceBetween={20}
+          breakpoints={{
+            0: { slidesPerView: 2 },
+            640: { slidesPerView: 4 },
+            1024: { slidesPerView: 4 },
+          }}
+          className="pb-8 customSwiper"
+        >
                       {group.sub.map((sb, i) => (
                         <SwiperSlide key={i}>
-                          <div className="flex justify-center">
-                            <div className="max-w-[200px] w-full">
+                          {/* <div className="flex justify-center">
+                            <div className="max-w-[200px] w-full"> */}
                               <div className="rounded-xl flex flex-col items-center">
                                 <a href={sb.url || "#"} target="_blank" className="w-full block">
                                   <img 
                                     src={sb.image} 
-                                    className="w-full h-auto rounded-[10px]" 
+                                    className="w-full h-[full] rounded-[10px_10px_10px_10px]" 
                                     alt={sb.name || `Sub banner ${i + 1}`}
                                   />
                                 </a>
                               </div>
-                            </div>
-                          </div>
+                            {/* </div>
+                          </div> */}
                         </SwiperSlide>
                       ))}
                     </Swiper>

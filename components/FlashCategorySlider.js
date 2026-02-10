@@ -87,10 +87,10 @@ export default function FlashCategorySlider({ slug }) {
   }
 
   return (
-    <div className="mt-6 pb-4 bg-white">
+    <div className="mt-6 pb-4 px-2 bg-white">
       <h2 className="text-2xl font-bold text-center py-4">Categories</h2>
 
-      <div className="px-4 md:px-12">
+      {/* <div className="px-4 md:px-12"> */}
         <Swiper
           modules={[Navigation]}
           navigation
@@ -111,11 +111,13 @@ export default function FlashCategorySlider({ slug }) {
                   rel="noopener noreferrer"
                   className="block"
                 >
-                  <div className="bg-[#2453D3] rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  {/* <div className="bg-[#2453D3] rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300"> */}
+                  <div className="bg-[#2453D3] rounded-xl flex flex-col items-center">
                     <img
                       src={category.banner_image}
                       alt={category.banner_name}
-                      className="w-full h-full object-cover aspect-square rounded-xl"
+                      // className="w-full h-full object-cover aspect-square rounded-xl"
+                      className="w-full h-[full] rounded-[10px_10px_10px_10px]"
                       loading="lazy"
                     />
                   </div>
@@ -125,11 +127,11 @@ export default function FlashCategorySlider({ slug }) {
                   href={`/category/${category.category_slug}`}
                   className="block"
                 >
-                  <div className="bg-[#2453D3] rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                  <div className="bg-[#2453D3] rounded-xl flex flex-col items-center">
                     <img
                       src={category.banner_image}
                       alt={category.banner_name}
-                      className="w-full h-full object-cover aspect-square rounded-xl"
+                      className="w-full h-[full] rounded-[10px_10px_10px_10px]"
                       loading="lazy"
                     />
                   </div>
@@ -138,7 +140,7 @@ export default function FlashCategorySlider({ slug }) {
             </SwiperSlide>
           ))}
         </Swiper>
-      </div>
+      {/* </div> */}
     </div>
   );
 }
