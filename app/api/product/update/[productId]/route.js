@@ -263,6 +263,7 @@ const updatedProduct = await Product.findByIdAndUpdate(
   sub_category_new: chain.md5_chain,
   sub_category_new_name: chain.name_chain,
     images: finalImages,
+    add_ons:productData.add_ons,
     // overview_image: savedOverviewImages.length > 0 
     //   ? savedOverviewImages 
     //   : productData.overview_image,
@@ -337,6 +338,7 @@ if (req.files && req.files.overviewImages) {
     }
 
     updatedProduct.removalReason = "Outdated";
+    updatedProduct.add_ons = productData.add_ons;
 
 
     return NextResponse.json(

@@ -46,7 +46,40 @@ export default function ProductClient() {
   const [showNoWarrantyModal, setShowNoWarrantyModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
+const [addOnProducts, setAddOnProducts] = useState([]);
 
+const addOnIds = Array.isArray(product?.add_ons)
+  ? product.add_ons.map(id => id.toString())
+  : [];
+
+
+  useEffect(() => {
+  console.log("useEffect triggered", product?._id, addOnIds);
+}, [product?._id]);
+
+
+useEffect(() => {
+  if (!Array.isArray(product?.add_ons) || product.add_ons.length === 0) return;
+
+  const ids = product.add_ons.map(id => id.toString());
+
+  const fetchAddOnProducts = async () => {
+    try {
+      const res = await fetch("/api/product/addons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+
+      const data = await res.json();
+      setAddOnProducts(data.products || []);
+    } catch (e) {
+      setAddOnProducts([]);
+    }
+  };
+
+  fetchAddOnProducts();
+}, [product?.add_ons]);
 
 
 const handleDecrease = () => {
@@ -1865,6 +1898,67 @@ const fetchBrand = async () => {
       )}
     </div>
   )} */}
+
+  {addOnProducts.filter(
+  (item) => item.quantity > 0 && item.status === "Active"
+).length > 0 && (
+<div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
+    <div className="px-4 py-4">
+      <h2 className="text-sm font-bold text-customBlue underline mb-2">
+        Add Ons
+      </h2>
+  {addOnProducts.filter((item) => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
+    <div key={item._id} className="flex items-start mb-4 ">
+      {item.quantity > 0 && (
+        <input
+          type="checkbox"
+          className="mt-2 mr-3"
+          checked={selectedRelatedProducts.some(p => p._id === item._id)}
+          onChange={() => toggleRelatedProduct(item)}
+        />
+      )}
+
+      <div className="flex items-start gap-3 flex-1 min-w-0">
+        <Link
+          href={`/product/${item.slug}`}
+          onClick={() => handleProductClick(item)}
+        >
+          {item.images?.[0] && (
+            <img
+              src={`/uploads/products/${item.images[0]}`}
+              alt={item.name}
+              className="w-16 h-16 object-contain"
+            />
+          )}
+        </Link>
+
+        <div className="text-sm flex-1 min-w-0">
+          <Link
+            href={`/product/${item.slug}`}
+            onClick={() => handleProductClick(item)}
+          >
+            <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">
+              {item.name}
+            </h3>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <span className="text-base font-semibold text-red-600">
+              ₹ {(item.special_price > 0 ? item.special_price : item.price).toLocaleString()}
+            </span>
+          </div>
+
+          <h4 className={`text-xs ${item.stock_status === "In Stock" ? "text-green-600" : "text-red-600"}`}>
+            {item.stock_status}
+          </h4>
+        </div>
+      </div>
+    </div>
+  ))}
+  </div>
+  </div>
+  )}
+  
 {relatedProducts.filter((item) => item.quantity > 0 && item.status === "Active").length > 0 && (
   <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
     <div className="px-4 py-4">

@@ -15,6 +15,7 @@ export async function PUT(req) {
     const image = formData.get("image");
     const existingImage = formData.get("existingImage");
     const item_code = formData.get("item_code");
+    const add_ons = formData.get("add_ons");
 
     let existingProduct = await Product.findOne({ item_code });
     if (existingProduct) {
@@ -69,6 +70,7 @@ export async function PUT(req) {
         brand_name,
         brand_slug: brand_name.toLowerCase().replace(/\s+/g, "-"),
         status,
+        add_ons,
         image: imagePath
       },
       { new: true }

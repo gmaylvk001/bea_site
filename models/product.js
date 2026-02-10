@@ -32,7 +32,11 @@ const ProductSchema = new mongoose.Schema({
   ref: "Product", 
   default: [] 
 },
-
+add_ons: {
+  type: [mongoose.Schema.Types.ObjectId],
+  ref: "Product",
+  default: [],
+},
   warranty: Number,
   extended_warranty:Number,
   extend_warranty: {
