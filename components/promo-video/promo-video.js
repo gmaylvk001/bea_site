@@ -99,7 +99,7 @@ const [openSuccess, setOpenSuccess] = useState(false);
   return (
     <>
         <section className="w-full bg-white">
-            <img src="/uploads/promo-video-banner-image.jpg" alt="Republic Day Sale Banner" className="w-full h-auto"/>
+            <img src="/uploads/promo-video-Banner.jpeg" alt="Republic Day Sale Banner" className="w-full h-auto"/>
         </section>
 
         <div className="max-w-7xl mx-auto px-6 py-8">
