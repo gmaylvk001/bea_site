@@ -611,6 +611,14 @@ const grandTotal = subtotal - totalDiscount;
         ? `${useraddress[selectedAddress].address}, ${useraddress[selectedAddress].city}, ${useraddress[selectedAddress].state}, ${useraddress[selectedAddress].country}, ${useraddress[selectedAddress].postCode}`
         : `${addressData.address}, ${addressData.city}, ${addressData.state}, ${addressData.country}, ${addressData.postCode}`;
   
+        alert(
+  `pickup_store: ${
+    formData.deliveryType === "store"
+      ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
+      : "undefined"
+  }`
+);
+
       // Save Order
       const orderRes = await fetch('/api/orders/add', {
         method: 'POST',
@@ -647,12 +655,12 @@ const grandTotal = subtotal - totalDiscount;
             created_at: new Date(),
             updated_at: new Date(),
             quantity: 1,
-            //store_id: formData.deliveryType === "store" ? formData.selectedStore : "STORE01",
+            store_id: formData.deliveryType === "store" ? formData.selectedStore : "STORE01",
             orderNumber: "ORD" + Date.now(),
           })),
         }),
       });
-      
+      console.log(orderRes);
       if (!orderRes.ok) {
         throw new Error('Order creation failed');
       }
@@ -816,7 +824,7 @@ const grandTotal = subtotal - totalDiscount;
 
         const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"]; 
 
-        //const emailadmin = ["sorambeevi@gmail.com"];
+        // const emailadmin = ["sorambeeviuit@gmail.com"];
         //const emailadmin = ["gmaylvk001@gmail.com"]; "siva96852@gmail.com"
         emailadmin.forEach(async (adminEmail) => {
           adminemailFormData.set("email", adminEmail);
@@ -832,14 +840,14 @@ const grandTotal = subtotal - totalDiscount;
         });
         
         
-        // send_order_detail_to_sap
+        /* // send_order_detail_to_sap
         const Send_SAP_Res = await fetch('/api/send-order-detail-to-sap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           order_number: orderData.order.order_number,
         }),
-      });
+      }); */
   
         //console.log("SAP_STATUS", Send_SAP_Res.status); 
 

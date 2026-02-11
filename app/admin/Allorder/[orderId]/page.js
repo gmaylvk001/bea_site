@@ -14,7 +14,7 @@ const OrderDetails = () => {
   const params = useParams();
   const orderId = params?.orderId;
   const [isUpdating, setIsUpdating] = useState(false);
- 
+ const [stores, setStores] = useState([]);
   // FOR ORDER HISTORY
   const [status, setStatus] = useState("");
   const [comment, setComment] = useState("");
@@ -43,6 +43,19 @@ const OrderDetails = () => {
   //     },
   //   ],
   // };
+
+  // 🔹 Fetch Stores
+  useEffect(() => {
+    fetch("/api/store/get")
+      .then(res => res.json())
+      .then(data => {
+        console.log("Store API Response:", data);
+
+        // IMPORTANT: change this if API returns {data: []}
+        setStores(Array.isArray(data) ? data : data.data || []);
+      })
+      .catch(err => console.error("Store fetch error:", err));
+  }, []);
 
 const addHistory = async () => {
   if (!status || !comment) {
@@ -176,7 +189,14 @@ const addHistory = async () => {
           <td className="p-2 flex items-center gap-2 font-semibold text-gray-700">
             <FaStore className="bg-red-500 text-white p-1 rounded-md w-6 h-6" />
             store:</td>
-         <td className="p-2">{order.order_details?.[0]?.store_id}</td>
+         {/* <td className="p-2">{order.order_details?.[0]?.store_id}</td> */}
+         <td className="p-2">
+          {
+            stores.find(s =>
+              String(s._id) === String(order?.order_details?.[0]?.store_id)
+            )?.organisation_name || ""
+          }
+        </td>
 
         </tr>
         <tr>
