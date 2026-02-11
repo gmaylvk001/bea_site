@@ -28,6 +28,7 @@ export default function FilterComponent() {
 };
   const [newFilter, setNewFilter] = useState({
     filter_name: "",
+    filter_slug: "",
     status: "Active",
     filter_group: "",
     _id: null,
@@ -124,6 +125,7 @@ export default function FilterComponent() {
   // Create a regular object instead of FormData
   const requestBody = {
     filter_name: newFilter.filter_name,
+    filter_slug: newFilter.filter_slug,
     status: newFilter.status,
     filter_group: newFilter.filter_group
   };
@@ -290,6 +292,7 @@ useEffect(() => {
 
   setNewFilter({
     filter_name: filter.filter_name,
+    filter_slug: filter.filter_slug,
     status: filter.status,
     filter_group: groupId, // Make sure this is set
     _id: filter._id,
@@ -536,6 +539,15 @@ useEffect(() => {
                     id="filter_group"
                   />
                 </div>
+
+                {/* Filter Slug */}
+                <div>
+                  <label htmlFor="filter_slug" className="block mb-1 text-sm font-semibold text-gray-700">
+                    Filter Slug
+                  </label>
+                  <input name="filter_slug" value={newFilter.filter_slug} onChange={handleInputChange} id="filter_slug" className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400" placeholder="Enter Filter Slug" required/>
+                </div>
+                
 
                 {/* Status */}
                 <div>

@@ -7,7 +7,7 @@ export async function POST(req) {
 
   try {
     const body = await req.json();
-    const { filterId, filter_name, filter_group, status } = body;
+    const { filterId, filter_name,filter_slug, filter_group, status } = body;
 
     if (!filterId) {
       return NextResponse.json({ error: "Filter ID is required" }, { status: 400 });
@@ -18,6 +18,7 @@ export async function POST(req) {
     };
 
     if (filter_name !== undefined) updatedData.filter_name = filter_name;
+    if (filter_slug !== undefined) updatedData.filter_slug = filter_slug;
     if (filter_group !== undefined) updatedData.filter_group = filter_group;
     if (status !== undefined) updatedData.status = status;
 
