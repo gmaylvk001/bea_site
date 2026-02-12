@@ -184,6 +184,16 @@ const CategoryProducts = () => {
 
                 return (
                   <div key={categoryProduct._id} className="space-y-4">
+                    {/* Banner Image section */}
+                    <div className="w-full my-6">
+                      <Link href={categoryProduct.banner_redirect || "#"}>
+                        <img
+                          src={categoryProduct.bannerImage}
+                          alt={categoryProduct.bannerImage}
+                          className="w-full h-auto rounded-lg shadow-md hover:opacity-90 transition"
+                        />
+                      </Link>
+                    </div>
                     {/* Category Products Section */}
                     <div className={`bg-white flex flex-col md:flex-row mb-8 ${alignment === "right" ? "md:flex-row-reverse" : ""}`} >
                       {/* Category Banner */}
