@@ -42,7 +42,20 @@ export default function FilterComponent() {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 20;
 
-  const fetchFilters = async () => {
+
+ const slugify = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9.\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
+
+  /* const fetchFilters = async () => {
     try {
       const response = await fetch("/api/filter");
       const data = await response.json();
@@ -52,7 +65,63 @@ export default function FilterComponent() {
       console.error("Error fetching filters:", error);
       setIsLoading(false);
     }
-  };
+  }; */
+
+/* const fetchFilters = async () => {
+  try {
+    const response = await fetch("/api/filter");
+    const data = await response.json();
+      setFilters(data.data);
+      setIsLoading(false);
+    const updatedFilters = await Promise.all(
+      data.data.map(async (filter) => {
+        const filter_slug = slugify(filter.filter_name);
+        // update DB
+        await fetch(`/api/filter/${filter._id.toString()}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filter_slug }),
+        });
+
+
+        return { ...filter, filter_slug };
+      })
+    );
+
+    setFilters(updatedFilters);
+    // setIsLoading(false);
+
+  } catch (error) {
+    console.error("Error fetching filters:", error);
+    setIsLoading(false);
+  }
+}; */
+
+const fetchFilters = async () => {
+  try {
+    const res = await fetch("/api/filter");
+    const data = await res.json();
+ setFilters(data.data);
+ setIsLoading(false);
+    for (const filter of data.data) {
+      const filter_slug = slugify(filter.filter_name);
+
+      await fetch(`/api/filter/${filter._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filter_slug }),
+      });
+    }
+
+   
+    
+
+  } catch (err) {
+    console.error("Error:", err);
+    setIsLoading(false);
+  }
+};
+
 
   const fetchFilterGroups = async () => {
     try {
