@@ -191,7 +191,7 @@ const CategoryProducts = () => {
                           <img
                             src={categoryProduct.bannerImage}
                             alt={categoryProduct.category_name}
-                            className="w-full h-auto rounded-lg shadow-md transition" unoptimized
+                            className="w-full h-auto rounded-lg shadow-md transition"
                           />
                         </Link>
                       </div>
