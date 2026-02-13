@@ -611,13 +611,13 @@ const grandTotal = subtotal - totalDiscount;
         ? `${useraddress[selectedAddress].address}, ${useraddress[selectedAddress].city}, ${useraddress[selectedAddress].state}, ${useraddress[selectedAddress].country}, ${useraddress[selectedAddress].postCode}`
         : `${addressData.address}, ${addressData.city}, ${addressData.state}, ${addressData.country}, ${addressData.postCode}`;
   
-        alert(
+        /* alert(
   `pickup_store: ${
     formData.deliveryType === "store"
       ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
       : "undefined"
   }`
-);
+); */
 
       // Save Order
       const orderRes = await fetch('/api/orders/add', {
