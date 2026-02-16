@@ -560,7 +560,7 @@ const exportFilterDataToExcel = () => {
     ];
   };
 
-  const getFilteredProducts = () => {
+/*   const getFilteredProducts = () => {
     const flattenedProducts = flattenProducts(products);
    
     return flattenedProducts.filter((product) => {
@@ -644,7 +644,114 @@ if (stockFilter) {
  
       return matchesSearch && matchesStatus && matchesDate && matchesCategory && matchesBrand && matchesStock;
     });
-  };
+  }; */
+
+  const getFilteredProducts = () => {
+  const flattenedProducts = flattenProducts(products);
+
+  const filteredProducts = flattenedProducts.filter((product) => {
+    const matchesSearch =
+      debouncedSearchQuery === "" ||
+      product.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      product.slug?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      product.item_code?.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "" ||
+      product.status?.toLowerCase() === statusFilter.toLowerCase();
+
+    let matchesDate = true;
+    if (dateFilter.startDate && dateFilter.endDate && product.createdAt) {
+      const productDate = new Date(product.createdAt);
+      const startDate = new Date(dateFilter.startDate);
+      const endDate = new Date(dateFilter.endDate);
+
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+
+      matchesDate = productDate >= startDate && productDate <= endDate;
+    }
+
+    let matchesCategory = true;
+    if (categoryFilter) {
+      if (product.category && typeof product.category === "object") {
+        const productCategoryId = product.category._id.toString();
+        const selectedCategory = categories.find(
+          (cat) => cat._id.toString() === categoryFilter
+        );
+
+        if (selectedCategory.parentid === "none") {
+          const subCategoryIds = categories
+            .filter((cat) => cat.parentid === categoryFilter)
+            .map((cat) => cat._id.toString());
+
+          matchesCategory =
+            productCategoryId === categoryFilter ||
+            subCategoryIds.includes(productCategoryId);
+        } else {
+          matchesCategory = productCategoryId === categoryFilter;
+        }
+      } else if (product.category) {
+        const productCategoryId = product.category.toString();
+        const selectedCategory = categories.find(
+          (cat) => cat._id.toString() === categoryFilter
+        );
+
+        if (selectedCategory.parentid === "none") {
+          const subCategoryIds = categories
+            .filter((cat) => cat.parentid === categoryFilter)
+            .map((cat) => cat._id.toString());
+
+          matchesCategory =
+            productCategoryId === categoryFilter ||
+            subCategoryIds.includes(productCategoryId);
+        } else {
+          matchesCategory = productCategoryId === categoryFilter;
+        }
+      } else {
+        matchesCategory = false;
+      }
+    }
+
+    let matchesBrand = true;
+    if (brandFilter) {
+      if (product.brand && typeof product.brand === "object") {
+        matchesBrand = product.brand._id.toString() === brandFilter;
+      } else if (product.brand) {
+        matchesBrand = product.brand.toString() === brandFilter;
+      } else {
+        matchesBrand = false;
+      }
+    }
+
+    let matchesStock = true;
+    if (stockFilter === "In Stock" || stockFilter === "Out of Stock") {
+      matchesStock =
+        product.stock_status?.toLowerCase() === stockFilter.toLowerCase();
+    }
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesDate &&
+      matchesCategory &&
+      matchesBrand &&
+      matchesStock
+    );
+  });
+
+  // ✅ STOCK SORTING
+  if (stockFilter === "stock_low_high") {
+    filteredProducts.sort((a, b) => Number(a.quantity ?? 0) - Number(b.quantity ?? 0));
+  }
+
+  if (stockFilter === "stock_high_low") {
+    filteredProducts.sort((a, b) => Number(b.quantity ?? 0) - Number(a.quantity ?? 0));
+  }
+
+  return filteredProducts;
+};
+
 
   // const getFilteredProducts = () => {
   //   const flattenedProducts = flattenProducts(products);
@@ -920,6 +1027,8 @@ if (stockFilter) {
                 <option value="">All Stock</option>
                 <option value="In Stock">In Stock</option>
                 <option value="Out of Stock">Out of Stock</option>
+                <option value="stock_low_high">Stock Low → High</option>
+                <option value="stock_high_low">Stock High → Low</option>
               </select>
             </div>
             {/* Date Range Picker */}
