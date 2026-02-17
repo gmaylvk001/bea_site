@@ -13,7 +13,7 @@ export default function AdminSider({ collapsed }) {
   const submenuRef = useRef(null);
 
   const menuItems = [
-    { icon: 'material-symbols:category', label: 'Dashboard', link: 'dashboard' },
+    { icon: 'material-symbols:dashboard', label: 'Dashboard', link: 'dashboard' },
     { icon: 'material-symbols:category', label: 'Category', link: 'category' },
     {
       icon: 'mdi:package-variant-closed',
