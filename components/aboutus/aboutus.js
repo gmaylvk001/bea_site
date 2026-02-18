@@ -201,7 +201,7 @@ const AboutUs = () => {
             <div className="relative animate-fade-in-up delay-200">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl transform transition-all hover:scale-[1.02]">
                 <Image 
-                src="/user/bea.webp" 
+                src="/user/bea_store_img.jpg" 
                 alt="BEA Storefront" 
                 width={600} 
                 height={500} 
@@ -303,75 +303,67 @@ const AboutUs = () => {
       
       
       <section className="relative min-h-[700px] w-full overflow-hidden">
-            {/* Blue-tinted Background Overlay */}
-            <div className="absolute inset-0 z-0">
-                <Image
-                src="/user/ambassador.jpg"
-                alt="Happy Customers Across TamilNadu"
-                layout="fill"
-                objectFit="cover"
-                className="object-cover"
-                priority
-                />
-            
-            </div>
 
-            {/* Content Container */}
-            <div className="relative z-10 h-full flex flex-col items-end justify-center max-w-7xl mx-auto px-6 pt-32 pb-20">
-                
-                {/* Customer Count - Right-Aligned Blue Theme */}
-                <div className="w-full max-w-xl mb-12 relative group ml-auto">
-                {/* Floating bubbles (blue version) */}
-                <div className="absolute -top-5 -left-5 w-10 h-10 rounded-full bg-sky-400/30 animate-float"></div>
-                <div className="absolute -bottom-3 -right-3 w-8 h-8 rounded-full bg-blue-500/30 animate-float-delay"></div>
-                
-                <div className="relative bg-slate-800/70 backdrop-blur-lg border-l-4 border-sky-400 rounded-r-2xl rounded-l-none p-8 shadow-2xl overflow-hidden text-left">
-                    {/* Animated blue shine */}
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-sky-400 to-transparent animate-shine"></div>
-                    
-                    <p className="text-2xl md:text-3xl font-medium leading-snug text-white">
-                    Trusted by over {" "}
-                    <span className="font-bold text-4xl md:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-600">
-                        50 Lakh
-                    </span>{" "}
-                    happy customers across TamilNadu
-                    </p>
-                    
-                    {/* Sparkle icon (blue tint) */}
-                    <div className="absolute -bottom-4 -right-4 text-5xl opacity-20 text-sky-300">
-                    ✨
-                    </div>
-                </div>
-                </div>
+  {/* Background Image */}
+  <div className="absolute inset-0 z-0">
+    <Image
+      src="/user/Dinamalar-Smart-Shopper-Expo-30.jpg"
+      alt="Happy Customers Across TamilNadu"
+      fill
+      className="object-cover"
+      priority
+    />
 
-                {/* Stats Grid - Blue Theme */}
-                <div className="flex flex-col items-end w-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
-                    {/* Branches Card - Blue Gradient */}
-                    <div className="bg-gradient-to-br from-blue-700 to-blue-900 p-8 rounded-2xl shadow-lg border border-sky-400/20 transform transition-all hover:scale-[1.02] hover:shadow-xl">
-                    <div className="flex flex-col items-center">
-                        <div className="text-6xl font-bold mb-2 text-sky-300 drop-shadow-md">38</div>
-                        <p className="text-lg uppercase tracking-widest font-medium text-sky-200">Branches</p>
-                        <div className="mt-4 w-full bg-blue-800/40 h-1 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-sky-400 to-blue-400 animate-progress" style={{ width: '100%' }}></div>
-                        </div>
-                    </div>
-                    </div>
+    {/* Bottom Dark Gradient */}
+    <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
+  </div>
 
-                    {/* Cities Card - Blue/White */}
-                    <div className="bg-gradient-to-br from-white to-gray-100 p-8 rounded-2xl shadow-lg border border-blue-200/30 transform transition-all hover:scale-[1.02] hover:shadow-xl">
-                    <div className="flex flex-col items-center">
-                        <div className="text-6xl font-bold mb-2 text-blue-600 drop-shadow-sm">17</div>
-                        <p className="text-lg uppercase tracking-widest font-medium text-blue-800">Cities</p>
-                        <div className="mt-4 w-full bg-blue-100 h-1 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-blue-400 to-sky-500 animate-progress-delay" style={{ width: '100%' }}></div>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-                </div>
-            </div>
-      </section>
+  {/* Bottom Content */}
+ {/* Bottom Content */}
+<div className="relative z-10 flex items-end min-h-[700px]">
+  <div className="max-w-7xl mx-auto w-full px-6 pb-16 flex flex-col md:flex-row justify-between items-end gap-10">
+
+    {/* Left Side Heading */}
+    <div className="max-w-3xl">
+      <h2 className="text-3xl md:text-5xl font-semibold text-white leading-snug">
+        Trusted by over{" "}
+        <span className="text-sky-400 font-bold">
+          50 Lakh
+        </span>{" "}
+        happy customers across TamilNadu
+      </h2>
+    </div>
+
+    {/* Right Side Glass Stats */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-md">
+
+      <div className="bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-2xl border border-white/20 shadow-xl">
+        <div className="text-4xl md:text-5xl font-bold text-sky-400 mb-2">
+          38
+        </div>
+        <p className="uppercase tracking-widest text-gray-200 text-sm">
+          Branches
+        </p>
+      </div>
+
+      <div className="bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-2xl border border-white/20 shadow-xl">
+        <div className="text-4xl md:text-5xl font-bold text-sky-400 mb-2">
+          17
+        </div>
+        <p className="uppercase tracking-widest text-gray-200 text-sm">
+          Cities
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+</section>
+
+
 </div>
   );
 };
