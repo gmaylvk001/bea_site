@@ -322,8 +322,6 @@ const handleSave = async (subcategoryId) => {
     );
 
     const data = formData[subcategoryId] || {};
-console.log("Bismillah:)",data);
-alert("hvlkjdxzv");
 // Only append files if they exist and are actually File objects
     /* if (data.bannerImage instanceof File) {
       // Replace spaces with underscores (or remove them)
