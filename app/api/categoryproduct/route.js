@@ -31,8 +31,23 @@ export async function POST(req) {
       return `/uploads/${filename}`;
     }
 
-    const bannerImage = await saveFile(formData.get("bannerImage"));
+    /* const bannerImage = await saveFile(formData.get("bannerImage"));
+    const categoryImage = await saveFile(formData.get("categoryImage")); */
+
+    // MULTIPLE BANNER IMAGES
     const categoryImage = await saveFile(formData.get("categoryImage"));
+  const bannerFiles = formData.getAll("bannerImage[]");
+  const bannerRedirectUrls = formData.getAll("bannerRedirectUrls[]");
+
+  const bannerImage = [];
+
+  for (let i = 0; i < bannerFiles.length; i++) {
+    const imageUrl = await saveFile(bannerFiles[i]);
+    bannerImage.push({
+      imageUrl,
+      redirectUrl: bannerRedirectUrls[i] || "",
+    });
+  }
 
     const saved = await CategoryProduct.create({
       subcategoryId,
@@ -58,7 +73,7 @@ export async function POST(req) {
   }
 }
 
-export async function PUT(req) {
+/* export async function PUT(req) {
   try {
     await connectDB();
 
@@ -134,7 +149,89 @@ export async function PUT(req) {
       { status: 500 }
     );
   }
+} */
+
+  export async function PUT(req) {
+  try {
+    await connectDB();
+    const formData = await req.formData();
+
+    const subcategoryId = formData.get("subcategoryId");
+    const subcategoryName = formData.get("subcategoryName");
+    const products = JSON.parse(formData.get("products") || "[]");
+
+    const borderColor = formData.get("borderColor") || "#000000";
+    const alignment = formData.get("alignment") || "left";
+    const status = formData.get("status") || "Active";
+    const position = parseInt(formData.get("position") || "0");
+
+    const existingRecord = await CategoryProduct.findOne({ subcategoryId });
+    if (!existingRecord) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // 🔥 FILE SAVE FUNCTION
+    async function saveFile(file) {
+      if (!file || typeof file === "string") return file;
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const filename = Date.now() + "-" + file.name;
+      const filepath = path.join(process.cwd(), "public/uploads", filename);
+      await writeFile(filepath, buffer);
+      return `/uploads/${filename}`;
+    }
+
+    // ✅ MULTIPLE BANNER IMAGES
+    const bannerImages = [];
+    const bannerUrls = [];
+
+    let i = 0;
+    while (formData.get(`bannerImage[${i}]`)) {
+      const file = formData.get(`bannerImage[${i}]`);
+      const url = formData.get(`bannerRedirectUrl[${i}]`) || "";
+      bannerImages.push(await saveFile(file));
+      bannerUrls.push(url);
+      i++;
+    }
+
+    // ✅ MULTIPLE CATEGORY IMAGES
+    const categoryImages = [];
+    const categoryUrls = [];
+
+    i = 0;
+    while (formData.get(`categoryImage[${i}]`)) {
+      const file = formData.get(`categoryImage[${i}]`);
+      const url = formData.get(`categoryRedirectUrl[${i}]`) || "";
+      categoryImages.push(await saveFile(file));
+      categoryUrls.push(url);
+      i++;
+    }
+
+    const updated = await CategoryProduct.findOneAndUpdate(
+      { subcategoryId },
+      {
+        subcategoryName,
+        products,
+        borderColor,
+        alignment,
+        status,
+        position,
+        bannerImage: bannerImages.length ? bannerImages : existingRecord.bannerImage,
+        bannerRedirectUrl: bannerUrls.length ? bannerUrls : existingRecord.bannerRedirectUrl,
+        categoryImage: categoryImages.length ? categoryImages : existingRecord.categoryImage,
+        categoryRedirectUrl: categoryUrls.length ? categoryUrls : existingRecord.categoryRedirectUrl,
+      },
+      { new: true }
+    );
+
+    return NextResponse.json({ success: true, data: updated });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }
+
 
 export async function GET() {
   try {

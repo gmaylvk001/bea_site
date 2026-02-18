@@ -6,6 +6,11 @@ import ProductCard from "@/components/ProductCard";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Autoplay } from "swiper/modules";
+import 'swiper/css';
+import 'swiper/css/navigation';
+
 const CategoryProducts = () => {
   const [categoryProducts, setCategoryProducts] = useState([]);
   const [brandMap, setBrandMap] = useState({});
@@ -14,7 +19,7 @@ const CategoryProducts = () => {
   const categoryScrollRefs = useRef({});
 
   const priorityCategories = ["air-conditioner", "mobile-phones", "television", "refrigerator", "washing-machine"];
-    const getSanitizedImage = (img) => {
+    /* const getSanitizedImage = (img) => {
       if (!img || img.trim() === "") return null;
 
       // If multiple images separated by commas, pick the last one
@@ -23,7 +28,46 @@ const CategoryProducts = () => {
 
       // Replace spaces with underscores
       return lastImg.replace(/\s+/g, "_");
-    };
+    }; */
+    const getSanitizedImage = (img) => {
+  if (!img) return null;
+
+  // Case 1: If array → sanitize all & return last image
+  if (Array.isArray(img)) {
+    if (img.length === 0) return null;
+
+    return img
+      .map(i => i?.toString().trim().replace(/\s+/g, "_"))
+      .filter(Boolean)   // remove null/undefined
+      .pop();             // last image
+  }
+
+  // Case 2: If comma separated string
+  if (typeof img === "string") {
+    if (img.trim() === "") return null;
+
+    const parts = img.split(",");
+    const lastImg = parts[parts.length - 1].trim();
+    return lastImg.replace(/\s+/g, "_");
+  }
+
+  return null;
+};
+
+const getBannerImages = (bannerImage) => {
+  if (!bannerImage) return [];
+
+  if (Array.isArray(bannerImage)) {
+    return bannerImage.filter(Boolean);
+  }
+
+  if (typeof bannerImage === "string") {
+    return bannerImage.split(",").map(img => img.trim()).filter(Boolean);
+  }
+
+  return [];
+};
+
   
     const categoryStyles = {
       "air-conditioner": {
@@ -185,7 +229,7 @@ const CategoryProducts = () => {
                 return (
                   <div key={categoryProduct._id} className="space-y-4">
                     {/* Banner Image section */}
-                    {categoryProduct.bannerImage && categoryProduct.bannerImage.trim() !== "" && (
+                    {/* {categoryProduct.bannerImage && categoryProduct.bannerImage.trim() !== "" && (
                       <div className="w-full my-6">
                         <Link href={categoryProduct.bannerRedirectUrl || "#"}>
                           <img
@@ -195,7 +239,54 @@ const CategoryProducts = () => {
                           />
                         </Link>
                       </div>
-                    )}
+                    )} */}
+
+                    {(() => {
+  const bannerImages = getBannerImages(categoryProduct.bannerImage);
+
+  if (!bannerImages.length) return null;
+
+  return (
+    <div className="w-full my-6">
+
+      {/* ✅ Single Banner */}
+      {bannerImages.length === 1 ? (
+        <Link href={categoryProduct.bannerRedirectUrl || "#"}>
+          <img
+            src={bannerImages[0]}
+            alt={categoryProduct.category_name}
+            className="w-full h-auto rounded-lg shadow-md transition"
+          />
+        </Link>
+      ) : (
+
+        /* ✅ Multiple Banner Slider */
+        <Swiper
+          modules={[Navigation, Autoplay]}
+          slidesPerView={1}
+          loop={true}
+          navigation
+          autoplay={{ delay: 3000 }}
+          className="rounded-lg shadow-md"
+        >
+          {bannerImages.map((img, index) => (
+            <SwiperSlide key={index}>
+              <Link href={categoryProduct.bannerRedirectUrl || "#"}>
+                <img
+                  src={img}
+                  alt={`banner-${index}`}
+                  className="w-full h-auto rounded-lg"
+                />
+              </Link>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+
+      )}
+    </div>
+  );
+})()}
+
 
                     {/* Category Products Section */}
                     <div className={`bg-white flex flex-col md:flex-row mb-8 ${alignment === "right" ? "md:flex-row-reverse" : ""}`} >

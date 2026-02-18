@@ -202,6 +202,64 @@ export default function AllCategoriesPage() {
     }));
   };
 
+
+
+
+  // 🔁 IMAGE CHANGE: Add new image row
+const handleAddImage = (subcategoryId, type) => {
+  setFormData(prev => ({
+    ...prev,
+    [subcategoryId]: {
+      ...prev[subcategoryId],
+      [type]: [...(prev[subcategoryId]?.[type] || []), { file: null, redirectUrl: "" }]
+    }
+  }));
+};
+
+// 🔁 IMAGE CHANGE: File / URL change
+const handleMultiImageChange = (subcategoryId, type, index, field, value) => {
+  setFormData(prev => {
+    const images = [...(prev[subcategoryId]?.[type] || [])];
+    images[index] = { ...images[index], [field]: value };
+
+    return {
+      ...prev,
+      [subcategoryId]: {
+        ...prev[subcategoryId],
+        [type]: images
+      }
+    };
+  });
+};
+
+// 🔁 IMAGE CHANGE: Delete image (UI + DB)
+const handleDeleteImage = async (subcategoryId, type, index, imageUrl) => {
+  setFormData(prev => {
+    const images = [...(prev[subcategoryId]?.[type] || [])];
+    images.splice(index, 1);
+    return {
+      ...prev,
+      [subcategoryId]: {
+        ...prev[subcategoryId],
+        [type]: images
+      }
+    };
+  });
+
+  // optional DB delete
+  if (imageUrl) {
+    await fetch("/api/categoryproduct/delete-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subcategoryId, imageUrl })
+    });
+  }
+};
+
+
+
+
+
   // ✅ Handle input changes
   const handleInputChange = (subcategoryId, field, value) => {
     setFormData((prev) => ({
@@ -226,6 +284,7 @@ const handleSave = async (subcategoryId) => {
     
     // Add subcategory name - find the category from the categories list
     const subcategory = categories.find(cat => cat._id === subcategoryId);
+    console.log("asdkjaS",subcategory);
     if (subcategory) {
       fd.append("subcategoryName", subcategory.category_name);
     }
@@ -236,9 +295,10 @@ const handleSave = async (subcategoryId) => {
     );
 
     const data = formData[subcategoryId] || {};
-
+console.log("Bismillah:)",data);
+alert("hvlkjdxzv");
 // Only append files if they exist and are actually File objects
-    if (data.bannerImage instanceof File) {
+    /* if (data.bannerImage instanceof File) {
       // Replace spaces with underscores (or remove them)
       const sanitizedBanner = new File(
         [data.bannerImage],
@@ -256,14 +316,45 @@ const handleSave = async (subcategoryId) => {
       );
       fd.append("categoryImage", sanitizedCategory);
     }
-    
-    // Append other fields
-    fd.append("borderColor", data.borderColor || "#000000");
-    fd.append("alignment", data.alignment || "left");
-    fd.append("status", data.status || "Active");
-    fd.append("position", data.position || 0);
-    fd.append("bannerRedirectUrl", data.bannerRedirectUrl || "");
-    fd.append("categoryRedirectUrl", data.categoryRedirectUrl || "");
+ */
+
+// MULTIPLE BANNER IMAGES
+data.bannerImage?.forEach((img, index) => {
+  if (img.file instanceof File) {
+    const sanitizedBanner = new File(
+      [img.file],
+      img.file.name.replace(/\s+/g, "_"),
+      { type: img.file.type }
+    );
+
+    fd.append(`bannerImage[${index}]`, sanitizedBanner);
+    fd.append(`bannerRedirectUrl[${index}]`, img.redirectUrl || "");
+  }
+});
+
+// MULTIPLE CATEGORY IMAGES
+data.categoryImage?.forEach((img, index) => {
+  if (img.file instanceof File) {
+    const sanitizedCategory = new File(
+      [img.file],
+      img.file.name.replace(/\s+/g, "_"),
+      { type: img.file.type }
+    );
+
+    fd.append(`categoryImage[${index}]`, sanitizedCategory);
+    fd.append(`categoryRedirectUrl[${index}]`, img.redirectUrl || "");
+  }
+});
+
+// OTHER FIELDS
+fd.append("borderColor", data.borderColor || "#000000");
+fd.append("alignment", data.alignment || "left");
+fd.append("status", data.status || "Active");
+fd.append("position", data.position || 0);
+
+    // fd.append("bannerRedirectUrl", data.bannerRedirectUrl || "");
+    // fd.append(`bannerRedirectUrl[${index}]`);
+    // fd.append("categoryRedirectUrl", data.categoryRedirectUrl || "");
     //console.log("FormData prepared:", Array.from(fd.entries()));
     // Determine if we're updating or creating
     const method = existingCategoryProducts[subcategoryId] ? "PUT" : "POST";
@@ -445,7 +536,7 @@ const handleSave = async (subcategoryId) => {
                     {/* First Row: Banner Image and Category Image */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Banner Image */}
-                      <div>
+                      {/* <div>
                         <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
                           <span>Banner Image</span>
                           {existingData?.bannerImage && (
@@ -474,7 +565,94 @@ const handleSave = async (subcategoryId) => {
                           }
                           className="w-full p-2 border rounded"
                         />
-                      </div>
+                      </div> */}
+
+                      {/* 🔁 NEW MULTIPLE BANNER IMAGES */}
+<div className="space-y-3 border p-3 rounded bg-gray-50">
+
+  <div className="flex justify-between items-center">
+    <span className="font-medium">Banner Images</span>
+
+    <button
+      type="button"
+      onClick={() => handleAddImage(subcat._id, "bannerImage")}
+      className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+    >
+      + Add Image
+    </button>
+  </div>
+
+  {(formData[subcat._id]?.bannerImage || []).map((img, index) => (
+    <div key={index} className="border p-3 rounded relative bg-white space-y-2">
+
+      {/* Existing Image Preview */}
+      {existingData?.bannerImage?.[index] && !img.file && (
+        <img
+          src={existingData.bannerImage[index]}
+          className="h-28 object-contain rounded border"
+        />
+      )}
+
+      {/* New Upload Preview */}
+      {img.file && (
+        <img
+          src={URL.createObjectURL(img.file)}
+          className="h-28 object-contain rounded border"
+        />
+      )}
+
+      {/* File Input */}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) =>
+          handleMultiImageChange(
+            subcat._id,
+            "bannerImage",
+            index,
+            "file",
+            e.target.files[0]
+          )
+        }
+        className="w-full p-2 border rounded"
+      />
+
+      {/* Redirect URL */}
+      <input
+        type="text"
+        placeholder="Redirect URL"
+        value={img.redirectUrl || ""}
+        onChange={(e) =>
+          handleMultiImageChange(
+            subcat._id,
+            "bannerImage",
+            index,
+            "redirectUrl",
+            e.target.value
+          )
+        }
+        className="w-full p-2 border rounded"
+      />
+
+      {/* Delete Button */}
+      <button
+        type="button"
+        onClick={() =>
+          handleDeleteImage(
+            subcat._id,
+            "bannerImage",
+            index,
+            existingData?.bannerImages?.[index]
+          )
+        }
+        className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 text-xs rounded hover:bg-red-700"
+      >
+        Delete
+      </button>
+    </div>
+  ))}
+</div>
+
 
                       {/* Category Image */}
                       <div>
