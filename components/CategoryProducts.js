@@ -1,16 +1,20 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import Slider from "react-slick";
 import Addtocart from "@/components/AddToCart";
 import ProductCard from "@/components/ProductCard";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Autoplay } from "swiper/modules";
+import { Navigation, Pagination, Autoplay } from "swiper/modules";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import "../styles/slick-custom.css";
 import 'swiper/css';
 import 'swiper/css/navigation';
-
+import "swiper/css/pagination";
 const CategoryProducts = () => {
   const [categoryProducts, setCategoryProducts] = useState([]);
   const [brandMap, setBrandMap] = useState({});
@@ -241,13 +245,12 @@ const getBannerImages = (bannerImage) => {
                       </div>
                     )} */}
 
-                    {(() => {
+                  {(() => {
   const bannerImages = getBannerImages(categoryProduct.bannerImage);
-
   if (!bannerImages.length) return null;
 
   return (
-    <div className="w-full my-6">
+    <div className="w-full my-6 relative">
 
       {/* ✅ Single Banner */}
       {bannerImages.length === 1 ? (
@@ -260,32 +263,73 @@ const getBannerImages = (bannerImage) => {
         </Link>
       ) : (
 
-        /* ✅ Multiple Banner Slider */
-        <Swiper
-          modules={[Navigation, Autoplay]}
-          slidesPerView={1}
-          loop={true}
-          navigation
-          autoplay={{ delay: 3000 }}
-          className="rounded-lg shadow-md"
-        >
-          {bannerImages.map((img, index) => (
-            <SwiperSlide key={index}>
-              <Link href={categoryProduct.bannerRedirectUrl || "#"}>
-                <img
-                  src={img}
-                  alt={`banner-${index}`}
-                  className="w-full h-auto rounded-lg"
-                />
-              </Link>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+<Swiper
+  modules={[Autoplay, Pagination]}
+  slidesPerView={1}
+  loop={true}
+  pagination={{
+    clickable: true,
+    renderBullet: (index, className) => {
+      return `
+        <span class="${className}" 
+        style="
+          width:8px;
+          height:8px;
+          background:white;
+          border-radius:50%;
+          display:inline-block;
+          margin:0 4px;
+          opacity:0.7;
+          transition:all .3s;
+        "></span>`;
+    },
+  }}
+
+  onSwiper={(swiper) => {
+    const styleDots = () => {
+      const pag = document.querySelector(".swiper-pagination");
+      if (pag) {
+        pag.style.background = "#00000059";   // ash background
+        // pag.style.padding = "6px 12px";
+         pag.style.padding = "0px 5px";
+        pag.style.borderRadius = "999px";
+        pag.style.width = "fit-content";
+        pag.style.left = "50%";
+        pag.style.transform = "translateX(-50%)";
+        pag.style.bottom = "12px";
+      }
+
+      document.querySelectorAll(".swiper-pagination-bullet").forEach((dot, i) => {
+        dot.style.width = "8px";
+        dot.style.height = "8px";
+        dot.style.background = "white";
+        dot.style.opacity = "0.7";
+
+        if (i === swiper.realIndex) {
+          dot.style.width = "12px";
+          dot.style.height = "12px";
+          dot.style.opacity = "1";
+        }
+      });
+    };
+
+    swiper.on("slideChange", styleDots);
+    setTimeout(styleDots, 100);
+  }}
+>
+  {bannerImages.map((img, i) => (
+    <SwiperSlide key={i}>
+      <img src={img} className="w-full h-auto rounded-lg" />
+    </SwiperSlide>
+  ))}
+</Swiper>
+
 
       )}
     </div>
   );
 })()}
+
 
 
                     {/* Category Products Section */}
