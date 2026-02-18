@@ -336,7 +336,7 @@ const getBannerImages = (bannerImage) => {
 
 
                     {/* Category Products Section */}
-                    <div className={`bg-white flex flex-col md:flex-row mb-8 space-y-6 max-w-7xl mx-auto ${alignment === "right" ? "md:flex-row-reverse" : ""}`} >
+                    <div className={`bg-white flex flex-col md:flex-row mb-8 max-w-7xl mx-auto ${alignment === "right" ? "md:flex-row-reverse" : ""}`} >
                       {/* Category Banner */}
                       <div className="flex-shrink-0 relative w-full md:w-[350px] h-48 sm:h-64 md:h-auto">
                         <div style={styleObj} className={`absolute inset-0 bg-cover bg-center    ${alignment === "right" ? "md:rounded-tr-lg md:rounded-br-lg" : "md:rounded-tl-lg md:rounded-bl-lg" }`}/>
