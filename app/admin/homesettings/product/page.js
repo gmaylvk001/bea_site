@@ -358,7 +358,26 @@ data.bannerImage?.forEach((img, index) => {
 });
 
 // MULTIPLE CATEGORY IMAGES
-data.categoryImage?.forEach((img, index) => {
+/* data.categoryImage?.forEach((img, index) => {
+  if (img.file instanceof File) {
+    const sanitizedCategory = new File(
+      [img.file],
+      img.file.name.replace(/\s+/g, "_"),
+      { type: img.file.type }
+    );
+
+    fd.append(`categoryImage[${index}]`, sanitizedCategory);
+    fd.append(`categoryRedirectUrl[${index}]`, img.redirectUrl || "");
+  }
+}); */
+
+const images = Array.isArray(data.categoryImage)
+  ? data.categoryImage
+  : data.categoryImage
+  ? [data.categoryImage]
+  : [];
+
+images.forEach((img, index) => {
   if (img.file instanceof File) {
     const sanitizedCategory = new File(
       [img.file],
@@ -370,6 +389,7 @@ data.categoryImage?.forEach((img, index) => {
     fd.append(`categoryRedirectUrl[${index}]`, img.redirectUrl || "");
   }
 });
+
 
 // OTHER FIELDS
 fd.append("borderColor", data.borderColor || "#000000");
@@ -685,13 +705,29 @@ fd.append("position", data.position || 0);
                       <div>
                         <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
                           <span>Category Image</span>
-                          {existingData?.categoryImage && (
+                          {/* {existingData?.categoryImage && (
                             <img
                               src={existingData.categoryImage}
                               alt="Category Preview"
                               className="w-full h-32 rounded object-contain"
                             />
-                          )}
+                          )} */}
+
+                          {existingData?.categoryImage?.length > 0 && (
+  <div className="flex gap-2 flex-wrap">
+    {existingData?.categoryImage?.map((img, index) =>
+  img ? (
+    <img
+      key={index}
+      src={img}
+      alt={`Category ${index}`}
+      className="w-32 h-32 rounded object-contain border"
+    />
+  ) : null
+)}
+
+  </div>
+)}
                         </label>
 
                         <input

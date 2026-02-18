@@ -208,12 +208,15 @@ const getBannerImages = (bannerImage) => {
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
         </div>
       )}
-      <motion.section id="category-products" initial="hidden" animate="visible" className="category-products px-4 sm:px-6 md:px-6 pt-7">
-        <div className="rounded-[23px] py-4">
-          <div className="space-y-6 max-w-10xl mx-auto">
-            <div className="flex justify-between items-center flex-wrap gap-4 mb-3 sm:mb-5">
+      <motion.section id="category-products" initial="hidden" animate="visible" className="category-products px-3 sm:px-6 pt-6 ">
+        {/* <div className="rounded-[23px] py-4"> */}
+          <div className="space-y-6 ">
+            <div className="space-y-6 max-w-7xl mx-auto">
+<div className="flex justify-between items-center flex-wrap gap-4 mb-3 sm:mb-5">
               <h5 className="text-lg sm:text-2xl font-bold">Shop by Category</h5>
             </div>
+            </div>
+            
               {categoryProducts.map((categoryProduct) => {
                 const category = categoryProduct.subcategoryId;
                 const products = categoryProduct.products || [];
@@ -333,7 +336,7 @@ const getBannerImages = (bannerImage) => {
 
 
                     {/* Category Products Section */}
-                    <div className={`bg-white flex flex-col md:flex-row mb-8 ${alignment === "right" ? "md:flex-row-reverse" : ""}`} >
+                    <div className={`bg-white flex flex-col md:flex-row mb-8 space-y-6 max-w-7xl mx-auto ${alignment === "right" ? "md:flex-row-reverse" : ""}`} >
                       {/* Category Banner */}
                       <div className="flex-shrink-0 relative w-full md:w-[350px] h-48 sm:h-64 md:h-auto">
                         <div style={styleObj} className={`absolute inset-0 bg-cover bg-center    ${alignment === "right" ? "md:rounded-tr-lg md:rounded-br-lg" : "md:rounded-tl-lg md:rounded-bl-lg" }`}/>
@@ -523,7 +526,7 @@ const getBannerImages = (bannerImage) => {
                 );
               })}
           </div>
-        </div>
+        {/* </div> */}
       </motion.section>
     </>
   );
