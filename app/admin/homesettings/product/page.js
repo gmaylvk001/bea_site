@@ -232,7 +232,7 @@ const handleMultiImageChange = (subcategoryId, type, index, field, value) => {
   });
 };
 
-// 🔁 IMAGE CHANGE: Delete image (UI + DB)
+/* // 🔁 IMAGE CHANGE: Delete image (UI + DB)
 const handleDeleteImage = async (subcategoryId, type, index, imageUrl) => {
   setFormData(prev => {
     const images = [...(prev[subcategoryId]?.[type] || [])];
@@ -245,6 +245,7 @@ const handleDeleteImage = async (subcategoryId, type, index, imageUrl) => {
       }
     };
   });
+  
 
   // optional DB delete
   if (imageUrl) {
@@ -254,6 +255,32 @@ const handleDeleteImage = async (subcategoryId, type, index, imageUrl) => {
       body: JSON.stringify({ subcategoryId, imageUrl })
     });
   }
+}; */
+
+const handleDeleteImage = async (id, field, index, imageUrl) => {
+
+  // 1️⃣ Remove from UI
+  setFormData((prev) => {
+    const updated = [...(prev[id]?.[field] || [])];
+    updated.splice(index, 1);
+    return {
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [field]: updated,
+      },
+    };
+  });
+
+  // 2️⃣ Remove from DB
+  await fetch("/api/categoryproduct", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      subcategoryId: id,   // ✅ FIXED
+      imageUrl: imageUrl,
+    }),
+  });
 };
 
 
@@ -636,19 +663,21 @@ fd.append("position", data.position || 0);
 
       {/* Delete Button */}
       <button
-        type="button"
-        onClick={() =>
-          handleDeleteImage(
-            subcat._id,
-            "bannerImage",
-            index,
-            existingData?.bannerImages?.[index]
-          )
-        }
-        className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 text-xs rounded hover:bg-red-700"
-      >
-        Delete
-      </button>
+  type="button"
+  onClick={() =>
+    handleDeleteImage(
+      subcat._id,              // id
+      "bannerImage",
+      index,
+      existingData?.bannerImage?.[index]
+    )
+  }
+  className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 text-xs rounded"
+>
+  Delete
+</button>
+
+
     </div>
   ))}
 </div>

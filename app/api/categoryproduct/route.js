@@ -326,7 +326,7 @@ export async function GET() {
 //   }
 // }
 
-export async function DELETE(req) {
+/* export async function DELETE(req) {
   try {
     await connectDB();
     
@@ -353,5 +353,40 @@ export async function DELETE(req) {
       { error: "Internal Server Error" },
       { status: 500 }
     );
+  }
+} */
+
+
+  export async function DELETE(req) {
+  try {
+    await connectDB();
+
+    const { subcategoryId, imageUrl } = await req.json();
+
+    if (!subcategoryId || !imageUrl) {
+      return NextResponse.json(
+        { error: "subcategoryId & imageUrl required" },
+        { status: 400 }
+      );
+    }
+
+    // Remove only one image from bannerImage array
+    const updated = await CategoryProduct.findOneAndUpdate(
+      { subcategoryId },
+      { $pull: { bannerImage: imageUrl } },   // 🔥 KEY LINE
+      { new: true }
+    );
+
+    if (!updated) {
+      return NextResponse.json(
+        { error: "Category product not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: updated });
+  } catch (err) {
+    console.error("Delete banner error:", err);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
