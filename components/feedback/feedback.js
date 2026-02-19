@@ -80,6 +80,27 @@ const handleSubmit = async (e) => {
     const data = await res.json();
 
     if (res.ok) {
+      const FeedBack = data.data;
+      const adminemailFormData = new FormData();
+      adminemailFormData.append("campaign_id", "bdd26532-7c0d-49d3-8715-369ab8f033bb");
+      adminemailFormData.append(
+        "params",
+        JSON.stringify([FeedBack.name,FeedBack.email_address,FeedBack.mobile_number,FeedBack.invoice_number,FeedBack.products, FeedBack.city,FeedBack.feedback])
+      );
+
+      const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in"];
+      emailadmin.forEach(async (emailadmin) => {
+        adminemailFormData.set("email", emailadmin);
+        let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L",
+          },
+          body: adminemailFormData, // Use the renamed variable
+        });
+
+        let adminData = await adminresponse.json();
+      });
       setResponseMsg("Message sent successfully!");
       setForm({ name: "", email_address: "", mobile_number: "",invoice_number:"",products:"", city: "", feedback: "" });
 

@@ -77,13 +77,38 @@ const [openSuccess, setOpenSuccess] = useState(false);
       const data = await res.json();
 
       if (res.ok) {
-        setResponseMsg("Message sent successfully!");
-        setForm({ name: "", email_address: "", mobile_number: "", city: "", product: "" });
+          const Promovideo = data.data;
+          const adminemailFormData = new FormData();
+          adminemailFormData.append("campaign_id", "0790ce5c-7017-4006-b3b7-9861ef84c8b8");
+          adminemailFormData.append(
+            "params",
+            JSON.stringify([Promovideo.name,Promovideo.mobile_number,Promovideo.email_address,Promovideo.city,Promovideo.product])
+          );
+  
+          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in"];
+          emailadmin.forEach(async (emailadmin) => {
+            adminemailFormData.set("email", emailadmin);
+          let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L",
+            },
+            body: adminemailFormData, // Use the renamed variable
+          });
+  
+          let adminData = await adminresponse.json();
+          });
+          setResponseMsg("Message sent successfully!");
+          setForm({ name: "", email_address: "", mobile_number: "", city: "", product: "" });
 
-        // Clear message after 2 seconds
-        setTimeout(() => {
-          setResponseMsg("");
-        }, 2000);
+          // Clear message after 2 seconds
+          setTimeout(() => {
+            setResponseMsg("");
+          }, 2000);
+
+
+        
+
       } else {
         setResponseMsg(data.message || "Something went wrong");
       }
