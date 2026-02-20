@@ -256,14 +256,15 @@ const updatedProduct = await Product.findByIdAndUpdate(
     // Ensure new fields are properly set
       model_number: productData.model_number || "",
       movement: productData.movement || "",
-      size: productData.size || "",
-     category: chain.root_id, // Parent category
+      size: productData.size || "",      
+    //  category: chain.root_id, Parent category
   sub_category: productData.sub_category, // Subcategory
   category_new: chain.root_md5,
   sub_category_new: chain.md5_chain,
   sub_category_new_name: chain.name_chain,
     images: finalImages,
     add_ons:productData.add_ons,
+    category: productData.category,
     // overview_image: savedOverviewImages.length > 0 
     //   ? savedOverviewImages 
     //   : productData.overview_image,
@@ -339,6 +340,7 @@ if (req.files && req.files.overviewImages) {
 
     updatedProduct.removalReason = "Outdated";
     updatedProduct.add_ons = productData.add_ons;
+    updatedProduct.category = productData.category;
 
 
     return NextResponse.json(
