@@ -209,20 +209,20 @@ console.log("..............................................................");
     let sub_cat_new = "";
     let sub_cat_name_new = "";
     
-    /*
+    
     if(category != ""){
       const main_cat = await Category.findOne({ _id: category });
       if(main_cat){
         main_Category = main_cat.parentid;
       }
     }
-    */
+   
     
     if(category != ""){
         
       const chain = await buildCategoryChain(category);
       if(chain){
-          main_Category = chain.root_id;
+          // main_Category = chain.root_id;
           cat_new = chain.root_md5;
           sub_cat_new = chain.md5_chain;
           sub_cat_name_new = chain.name_chain;
