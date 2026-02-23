@@ -72,6 +72,19 @@ const getBannerImages = (bannerImage) => {
   return [];
 };
 
+const getBannerRedirectUrls = (urls) => {
+  if (!urls) return [];
+
+  if (Array.isArray(urls)) {
+    return urls.filter(Boolean);
+  }
+
+  if (typeof urls === "string") {
+    return urls.split(",").map(u => u.trim()).filter(Boolean);
+  }
+
+  return [];
+};
   
     const categoryStyles = {
       "air-conditioner": {
@@ -250,6 +263,7 @@ const getBannerImages = (bannerImage) => {
 
                   {(() => {
   const bannerImages = getBannerImages(categoryProduct.bannerImage);
+  const bannerUrls = getBannerRedirectUrls(categoryProduct.bannerRedirectUrl);
   if (!bannerImages.length) return null;
 
   return (
@@ -322,7 +336,9 @@ const getBannerImages = (bannerImage) => {
 >
   {bannerImages.map((img, i) => (
     <SwiperSlide key={i}>
+      <Link href={bannerUrls[i] || "#"}>
       <img src={img} className="w-full h-auto rounded-lg" />
+      </Link>
     </SwiperSlide>
   ))}
 </Swiper>

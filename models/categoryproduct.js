@@ -21,11 +21,12 @@ const CategoryProductSchema = new mongoose.Schema(
     bannerImage: [{ type: String }],
 bannerRedirectUrl: [{ type: String }],
 
-    /* categoryImage: { type: String },
-    categoryRedirectUrl: { type: String }, */
-    
-    categoryImage: [{ type: String }],
-categoryRedirectUrl: [{ type: String }],
+    categoryImage: { type: String },
+    categoryRedirectUrl: { type: String },
+
+    /* categoryImage: [{ type: String }],
+categoryRedirectUrl: [{ type: String }], */
+
     borderColor: { type: String, default: "#000000" },
     alignment: { type: String, default: "left" },
     status: { type: String, default: "Active" },

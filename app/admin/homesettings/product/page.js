@@ -169,8 +169,11 @@ export default function AllCategoriesPage() {
             alignment: item.alignment || "left",
             status: item.status || "Active",
             position: item.position || 0,
-            bannerImage: null,
-            bannerRedirectUrl: item.bannerRedirectUrl || "",
+            bannerImage: (item.bannerImage || []).map((url, i) => ({
+              file: null,
+              redirectUrl: (item.bannerRedirectUrl || [])[i] || "",
+              existingUrl: url,
+            })),
             categoryImage: null,
             categoryRedirectUrl: item.categoryRedirectUrl || "",
           };
@@ -344,18 +347,31 @@ const handleSave = async (subcategoryId) => {
  */
 
 // MULTIPLE BANNER IMAGES
-data.bannerImage?.forEach((img, index) => {
-  if (img.file instanceof File) {
+// Split: keep existing URLs, upload new files
+const keepBannerUrls = [];
+const keepBannerRedirectUrls = [];
+let newBannerIdx = 0;
+
+data.bannerImage?.forEach((img) => {
+  if (img.existingUrl && !img.file) {
+    // Existing image — tell server to keep it
+    keepBannerUrls.push(img.existingUrl);
+    keepBannerRedirectUrls.push(img.redirectUrl || "");
+  } else if (img.file instanceof File) {
+    // New file — upload it
     const sanitizedBanner = new File(
       [img.file],
       img.file.name.replace(/\s+/g, "_"),
       { type: img.file.type }
     );
-
-    fd.append(`bannerImage[${index}]`, sanitizedBanner);
-    fd.append(`bannerRedirectUrl[${index}]`, img.redirectUrl || "");
+    fd.append(`bannerImage[${newBannerIdx}]`, sanitizedBanner);
+    fd.append(`bannerRedirectUrl[${newBannerIdx}]`, img.redirectUrl || "");
+    newBannerIdx++;
   }
 });
+
+fd.append("keepBannerImages", JSON.stringify(keepBannerUrls));
+fd.append("keepBannerRedirectUrls", JSON.stringify(keepBannerRedirectUrls));
 
 // MULTIPLE CATEGORY IMAGES
 /* data.categoryImage?.forEach((img, index) => {
@@ -371,7 +387,16 @@ data.bannerImage?.forEach((img, index) => {
   }
 }); */
 
-const images = Array.isArray(data.categoryImage)
+if (data.categoryImage instanceof File) {
+      const sanitizedCategory = new File(
+        [data.categoryImage],
+        data.categoryImage.name.replace(/\s+/g, "_"), // replace spaces with _
+        { type: data.categoryImage.type }
+      );
+      fd.append("categoryImage", sanitizedCategory);
+    }
+
+/* const images = Array.isArray(data.categoryImage)
   ? data.categoryImage
   : data.categoryImage
   ? [data.categoryImage]
@@ -388,7 +413,9 @@ images.forEach((img, index) => {
     fd.append(`categoryImage[${index}]`, sanitizedCategory);
     fd.append(`categoryRedirectUrl[${index}]`, img.redirectUrl || "");
   }
-});
+}); */
+
+
 
 
 // OTHER FIELDS
@@ -397,9 +424,7 @@ fd.append("alignment", data.alignment || "left");
 fd.append("status", data.status || "Active");
 fd.append("position", data.position || 0);
 
-    // fd.append("bannerRedirectUrl", data.bannerRedirectUrl || "");
-    // fd.append(`bannerRedirectUrl[${index}]`);
-    // fd.append("categoryRedirectUrl", data.categoryRedirectUrl || "");
+    fd.append("categoryRedirectUrl", data.categoryRedirectUrl || "");
     //console.log("FormData prepared:", Array.from(fd.entries()));
     // Determine if we're updating or creating
     const method = existingCategoryProducts[subcategoryId] ? "PUT" : "POST";
@@ -630,18 +655,10 @@ fd.append("position", data.position || 0);
   {(formData[subcat._id]?.bannerImage || []).map((img, index) => (
     <div key={index} className="border p-3 rounded relative bg-white space-y-2">
 
-      {/* Existing Image Preview */}
-      {existingData?.bannerImage?.[index] && !img.file && (
+      {/* Image Preview */}
+      {(img.existingUrl || img.file) && (
         <img
-          src={existingData.bannerImage[index]}
-          className="h-28 object-contain rounded border"
-        />
-      )}
-
-      {/* New Upload Preview */}
-      {img.file && (
-        <img
-          src={URL.createObjectURL(img.file)}
+          src={img.file ? URL.createObjectURL(img.file) : img.existingUrl}
           className="h-28 object-contain rounded border"
         />
       )}
@@ -684,10 +701,10 @@ fd.append("position", data.position || 0);
   type="button"
   onClick={() =>
     handleDeleteImage(
-      subcat._id,              // id
+      subcat._id,
       "bannerImage",
       index,
-      existingData?.bannerImage?.[index]
+      img.existingUrl
     )
   }
   className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 text-xs rounded"
@@ -705,29 +722,13 @@ fd.append("position", data.position || 0);
                       <div>
                         <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
                           <span>Category Image</span>
-                          {/* {existingData?.categoryImage && (
+                          {existingData?.categoryImage && (
                             <img
                               src={existingData.categoryImage}
                               alt="Category Preview"
                               className="w-full h-32 rounded object-contain"
                             />
-                          )} */}
-
-                          {existingData?.categoryImage?.length > 0 && (
-  <div className="flex gap-2 flex-wrap">
-    {existingData?.categoryImage?.map((img, index) =>
-  img ? (
-    <img
-      key={index}
-      src={img}
-      alt={`Category ${index}`}
-      className="w-32 h-32 rounded object-contain border"
-    />
-  ) : null
-)}
-
-  </div>
-)}
+                          )}
                         </label>
 
                         <input

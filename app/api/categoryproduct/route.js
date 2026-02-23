@@ -17,8 +17,6 @@ export async function POST(req) {
     const alignment = formData.get("alignment") || "left";
     const status = formData.get("status") || "Active";
     const position = parseInt(formData.get("position") || "0", 10);
-    const bannerRedirectUrl = formData.get("bannerRedirectUrl") || "";
-    const categoryRedirectUrl = formData.get("categoryRedirectUrl") || "";
 
     // ✅ Handle file uploads
     async function saveFile(file) {
@@ -35,7 +33,7 @@ export async function POST(req) {
     const categoryImage = await saveFile(formData.get("categoryImage")); */
 
     // MULTIPLE BANNER IMAGES
-    const categoryImage = await saveFile(formData.get("categoryImage"));
+    /* const categoryImage = await saveFile(formData.get("categoryImage"));
   const bannerFiles = formData.getAll("bannerImage[]");
   const bannerRedirectUrls = formData.getAll("bannerRedirectUrls[]");
 
@@ -47,7 +45,40 @@ export async function POST(req) {
       imageUrl,
       redirectUrl: bannerRedirectUrls[i] || "",
     });
+  } */
+
+/*     const bannerFiles = formData.getAll("bannerImage");
+const bannerUrls = formData.getAll("bannerRedirectUrl");
+
+const bannerImage = [];
+
+for (let i = 0; i < bannerFiles.length; i++) {
+  const url = await saveFile(bannerFiles[i]);
+  bannerImage.push({
+    imageUrl: url,
+    redirectUrl: bannerUrls[i] || "",
+  });
+} */
+
+  // MULTIPLE BANNER IMAGES (indexed keys: bannerImage[0], bannerImage[1], ...)
+const bannerImage = [];
+const bannerRedirectUrl = [];
+
+let bi = 0;
+while (formData.get(`bannerImage[${bi}]`)) {
+  const file = formData.get(`bannerImage[${bi}]`);
+  const url = await saveFile(file);
+  if (url) {
+    bannerImage.push(url);
+    bannerRedirectUrl.push(formData.get(`bannerRedirectUrl[${bi}]`) || "");
   }
+  bi++;
+}
+
+// SINGLE CATEGORY IMAGE
+const categoryImage = await saveFile(formData.get("categoryImage"));
+const categoryRedirectUrl = formData.get("categoryRedirectUrl") || "";
+
 
     const saved = await CategoryProduct.create({
       subcategoryId,
@@ -182,31 +213,37 @@ export async function POST(req) {
       return `/uploads/${filename}`;
     }
 
-    // ✅ MULTIPLE BANNER IMAGES
-    const bannerImages = [];
-    const bannerUrls = [];
+    // Existing images to keep (sent by frontend as JSON arrays)
+    const keepBannerImages = JSON.parse(formData.get("keepBannerImages") || "[]");
+    const keepBannerRedirectUrls = JSON.parse(formData.get("keepBannerRedirectUrls") || "[]");
+
+    // New banner image uploads (indexed: bannerImage[0], bannerImage[1], ...)
+    const newBannerImages = [];
+    const newBannerUrls = [];
 
     let i = 0;
     while (formData.get(`bannerImage[${i}]`)) {
       const file = formData.get(`bannerImage[${i}]`);
-      const url = formData.get(`bannerRedirectUrl[${i}]`) || "";
-      bannerImages.push(await saveFile(file));
-      bannerUrls.push(url);
+      const url = await saveFile(file);
+      if (url) {
+        newBannerImages.push(url);
+        newBannerUrls.push(formData.get(`bannerRedirectUrl[${i}]`) || "");
+      }
       i++;
     }
 
-    // ✅ MULTIPLE CATEGORY IMAGES
-    const categoryImages = [];
-    const categoryUrls = [];
+    // Final arrays = kept existing + newly uploaded
+    const finalBannerImages = [...keepBannerImages, ...newBannerImages];
+    const finalBannerUrls = [...keepBannerRedirectUrls, ...newBannerUrls];
 
-    i = 0;
-    while (formData.get(`categoryImage[${i}]`)) {
-      const file = formData.get(`categoryImage[${i}]`);
-      const url = formData.get(`categoryRedirectUrl[${i}]`) || "";
-      categoryImages.push(await saveFile(file));
-      categoryUrls.push(url);
-      i++;
-    }
+    // CATEGORY IMAGE — upload new file if provided, otherwise keep existing
+    const categoryImageFile = formData.get("categoryImage");
+    const categoryImage = categoryImageFile
+      ? await saveFile(categoryImageFile)
+      : existingRecord.categoryImage || null;
+
+    const categoryRedirectUrl =
+      formData.get("categoryRedirectUrl") ?? existingRecord.categoryRedirectUrl ?? "";
 
     const updated = await CategoryProduct.findOneAndUpdate(
       { subcategoryId },
@@ -217,10 +254,10 @@ export async function POST(req) {
         alignment,
         status,
         position,
-        bannerImage: bannerImages.length ? bannerImages : existingRecord.bannerImage,
-        bannerRedirectUrl: bannerUrls.length ? bannerUrls : existingRecord.bannerRedirectUrl,
-        categoryImage: categoryImages.length ? categoryImages : existingRecord.categoryImage,
-        categoryRedirectUrl: categoryUrls.length ? categoryUrls : existingRecord.categoryRedirectUrl,
+        bannerImage: finalBannerImages,
+        bannerRedirectUrl: finalBannerUrls,
+        categoryImage,
+        categoryRedirectUrl,
       },
       { new: true }
     );
@@ -363,30 +400,52 @@ export async function GET() {
 
     const { subcategoryId, imageUrl } = await req.json();
 
-    if (!subcategoryId || !imageUrl) {
+    if (!subcategoryId) {
       return NextResponse.json(
-        { error: "subcategoryId & imageUrl required" },
+        { error: "subcategoryId required" },
         { status: 400 }
       );
     }
 
-    // Remove only one image from bannerImage array
-    const updated = await CategoryProduct.findOneAndUpdate(
-      { subcategoryId },
-      { $pull: { bannerImage: imageUrl } },   // 🔥 KEY LINE
-      { new: true }
-    );
+    if (imageUrl) {
+      // Remove a specific banner image (and its paired redirect URL by index)
+      const record = await CategoryProduct.findOne({ subcategoryId });
+      if (!record) {
+        return NextResponse.json({ error: "Category product not found" }, { status: 404 });
+      }
 
-    if (!updated) {
-      return NextResponse.json(
-        { error: "Category product not found" },
-        { status: 404 }
+      const imgIndex = record.bannerImage?.indexOf(imageUrl);
+      const redirectUrlToRemove =
+        imgIndex >= 0 ? record.bannerRedirectUrl?.[imgIndex] : undefined;
+
+      const updateOp = { $pull: { bannerImage: imageUrl } };
+      if (redirectUrlToRemove !== undefined) {
+        updateOp.$pull.bannerRedirectUrl = redirectUrlToRemove;
+      }
+
+      const updated = await CategoryProduct.findOneAndUpdate(
+        { subcategoryId },
+        updateOp,
+        { new: true }
       );
-    }
 
-    return NextResponse.json({ success: true, data: updated });
+      return NextResponse.json({ success: true, data: updated });
+    } else {
+      // No imageUrl — set status to Inactive
+      const updated = await CategoryProduct.findOneAndUpdate(
+        { subcategoryId },
+        { status: "Inactive" },
+        { new: true }
+      );
+
+      if (!updated) {
+        return NextResponse.json({ error: "Category product not found" }, { status: 404 });
+      }
+
+      return NextResponse.json({ success: true, data: updated });
+    }
   } catch (err) {
-    console.error("Delete banner error:", err);
+    console.error("Delete error:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
