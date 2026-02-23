@@ -278,6 +278,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
         businessName: addr.businessName || "",
         additionalInfo: addr.additionalInfo || ""
       }));
+      setSelectedAddress(0); // auto-select first address so edits sync to the card
     }
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -289,7 +290,17 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Keep the selected saved address card in sync with form edits
+    if (selectedAddress !== null) {
+      setUseraddress(prev => {
+        const updated = [...prev];
+        updated[selectedAddress] = { ...updated[selectedAddress], [name]: value };
+        return updated;
+      });
+    }
   };
 
   const handlePaymentChange = (e) => {
@@ -1187,7 +1198,25 @@ const grandTotal = subtotal - totalDiscount;
                     <div 
                       key={`address-${index}`} 
                       className={`border p-4 rounded-lg cursor-pointer transition-all ${selectedAddress === index ? 'border-orange-500 bg-orange-50' : 'hover:border-gray-300'}`}
-                      onClick={() => setSelectedAddress(index)}
+                      onClick={() => {
+                        setSelectedAddress(index);
+                        const addr = useraddress[index];
+                        setFormData(prev => ({
+                          ...prev,
+                          firstName: addr.firstName || "",
+                          lastName: addr.lastName || "",
+                          businessName: addr.businessName || "",
+                          country: addr.country || "",
+                          address: addr.address || "",
+                          landmark: addr.landmark || "",
+                          city: addr.city || "",
+                          state: addr.state || "Tamilnadu",
+                          postCode: addr.postCode || "",
+                          phonenumber: addr.phonenumber || "",
+                          email: addr.email || "",
+                          additionalInfo: addr.additionalInfo || "",
+                        }));
+                      }}
                     >
                       <div className="flex justify-between items-start">
                         <div>
