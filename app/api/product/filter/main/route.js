@@ -14,7 +14,11 @@ export async function GET(req) {
     const brandIds = searchParams.get('brands')?.split(',') || [];
     const minPrice = parseFloat(searchParams.get('minPrice')) || 0;
     const maxPrice = parseFloat(searchParams.get('maxPrice')) || 1000000;
-    const filterIds = searchParams.get('filters')?.split(',') || [];
+    const filterGroupsParam = searchParams.get('filterGroups');
+    let filterGroupsMap = {};
+    if (filterGroupsParam) {
+      try { filterGroupsMap = JSON.parse(filterGroupsParam); } catch (e) { filterGroupsMap = {}; }
+    }
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 12;
     const sort = searchParams.get('sort') || 'featured';
@@ -115,41 +119,30 @@ if (sub_category_new && typeof sub_category_new === "string") {
         break;
     }
 
-    // Apply additional filters if any
-    if (filterIds.length > 0) {
-      //console.log('🔧 Applying additional filters:', filterIds);
-      
-      const productIds = await productsQuery.distinct('_id');
-     // console.log('📦 Products before filter application:', productIds.length);
-      
-      if (productIds.length > 0) {
-        const productFilters = await ProductFilter.find({
-          product_id: { $in: productIds },
-          filter_id: { $in: filterIds }
-        });
-        
-        console.log('🎛️ Product filters found:', productFilters.length);
-        
-        const filtersByProduct = productFilters.reduce((acc, pf) => {
-          const productId = pf.product_id.toString();
-          if (!acc[productId]) acc[productId] = new Set();
-          acc[productId].add(pf.filter_id.toString());
-          return acc;
-        }, {});
-        
-        // Get only product IDs that match ANY of the filters (using some instead of every)
-        const filteredProductIds = productIds.filter(id => {
-          const productId = id.toString();
-          const productFilterIds = filtersByProduct[productId] || new Set();
-          return filterIds.some(fid => productFilterIds.has(fid));
-        });
-        
-        console.log('✅ Products after filter application:', filteredProductIds.length);
-        
-        // Update the query to only include filtered products
-        query._id = { $in: filteredProductIds };
+    // Apply product attribute filters (AND between groups, OR within group)
+    if (Object.keys(filterGroupsMap).length > 0) {
+      // Start with all products matching the base query (category + brand + price)
+      let candidateIds = await productsQuery.distinct('_id');
+
+      if (candidateIds.length > 0) {
+        // Process each filter group — product must satisfy every group (AND)
+        for (const groupFilterIds of Object.values(filterGroupsMap)) {
+          // Within a group — product only needs to match one filter (OR)
+          const matchingProductIds = await ProductFilter.find({
+            product_id: { $in: candidateIds },
+            filter_id: { $in: groupFilterIds }
+          }).distinct('product_id');
+
+          const matchingSet = new Set(matchingProductIds.map(id => id.toString()));
+          // Intersect: keep only products that matched this group
+          candidateIds = candidateIds.filter(id => matchingSet.has(id.toString()));
+
+          if (candidateIds.length === 0) break; // no point checking further groups
+        }
+
+        query._id = { $in: candidateIds };
         productsQuery = Product.find(query).populate('brand', 'brand_name brand_slug');
-        
+
         // Re-apply sorting
         switch(sort) {
           case 'price-low-high':
@@ -205,7 +198,8 @@ if (sub_category_new && typeof sub_category_new === "string") {
         currentPage: page,
         totalPages,
         totalProducts,
-        hasMore: page < totalPages
+        hasNext: page < totalPages,
+        hasPrev: page > 1
       }
     });
     

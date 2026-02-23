@@ -259,7 +259,21 @@ Object.keys(groups).forEach(key => {
       query.set('maxPrice', selectedFilters.price.max);
       
       if (selectedFilters.filters.length > 0) {
-        query.set('filters', selectedFilters.filters.join(','));
+        // Group filter IDs by their filter group name
+        // This enables AND-between-groups, OR-within-group logic in the API
+        const filtersByGroup = {};
+        selectedFilters.filters.forEach(filterId => {
+          for (const group of Object.values(filterGroups)) {
+            if (group.filters.some(f => f._id === filterId)) {
+              if (!filtersByGroup[group.name]) filtersByGroup[group.name] = [];
+              filtersByGroup[group.name].push(filterId);
+              break;
+            }
+          }
+        });
+        if (Object.keys(filtersByGroup).length > 0) {
+          query.set('filterGroups', JSON.stringify(filtersByGroup));
+        }
       }
 
       const res = await fetch(`/api/product/filter/main?${query}`);
