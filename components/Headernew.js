@@ -259,6 +259,7 @@ const Header = () => {
         router.push(path);
     }, [router]);
     const dropdownRef = useRef(null);
+    const mobileDropdownRef = useRef(null);
     const [activeTab, setActiveTab] = useState('login');
     // const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -529,8 +530,10 @@ const Header = () => {
     // Close mobile menu when clicking outside
 
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-          setDropdownOpen(false);
+      const inDesktopDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
+      const inMobileDropdown = mobileDropdownRef.current && mobileDropdownRef.current.contains(event.target);
+      if (!inDesktopDropdown && !inMobileDropdown) {
+        setDropdownOpen(false);
       }
     };
 
@@ -567,6 +570,7 @@ const Header = () => {
             } else {
                 localStorage.removeItem('token');
                 setIsLoggedIn(false);
+                setShowAuthModal(true);
             }
         } catch (error) {
             console.error("Error checking auth status:", error);
@@ -1604,7 +1608,7 @@ const Header = () => {
                             </button>
                           )}
                           {dropdownOpen && isLoggedIn && (
-                            <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-50">
+                            <div ref={mobileDropdownRef} className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-50">
                               {isAdmin && (
                                 <Link href="/admin/dashboard" className="block px-3 py-2 text-xs hover:bg-blue-50">
                                   Admin Panel
