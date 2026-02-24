@@ -209,11 +209,19 @@ const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     const buyNowData = localStorage.getItem("buyNowData");
     const checkoutData = localStorage.getItem("checkoutData");
+    let skipCartFetch = false;
 
     if (buyNowData) {
       const parsedData = JSON.parse(buyNowData);
       setCartItems(parsedData.cart.items);
+      // also set orderSummary so payment amount is correct
+      setOrderSummary({
+        discount: 0,
+        subtotal: parsedData.total || 0,
+        total: parsedData.total || 0,
+      });
       localStorage.removeItem("buyNowData");
+      skipCartFetch = true;
     } else if (checkoutData) {
       const parsedData = JSON.parse(checkoutData);
       setCartItems(parsedData.cart.items);
@@ -224,13 +232,14 @@ const [isSubmitting, setIsSubmitting] = useState(false);
         subtotal: parsedData.subtotal || 0,
         total: parsedData.total || 0
       });
+      skipCartFetch = true;
     }
 
-    fetchData();
+    fetchData(skipCartFetch);
   }, []);
 
 
-  const fetchData = async () => {
+  const fetchData = async (skipCartFetch = false) => {
   const token = localStorage.getItem("token");
   if (!token) {
     setShowAuthModal(true);
@@ -242,8 +251,8 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     const decoded = jwtDecode(token);
     const userId = decoded.userId;
 
-    // ✅ Only fetch cart if no items already set
-    if (cartItems.length === 0) {
+    // skip cart fetch when items were already loaded from buyNowData or checkoutData
+    if (!skipCartFetch) {
       const cartResponse = await fetch("/api/cart", {
         headers: { Authorization: `Bearer ${token}` },
       });

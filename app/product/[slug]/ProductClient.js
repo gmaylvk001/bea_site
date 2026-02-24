@@ -259,42 +259,44 @@ const handleBuyNow = async () => {
     const cartData = await cartResponse.json();
     updateCartCount(cartData.cart.totalItems + additionalProducts.length);
 
-    // ✅ Build Buy Now items
-    const items = [
-  {
-    ...product,
-    quantity,
-    warranty: selectedWarranty || 0,             // ✅ add warranty
-    extendedWarranty: selectedExtendedWarranty || 0, // ✅ add extended warranty
-  },
-  ...selectedFrequentProducts.map((p) => ({ ...p, quantity: 1 })),
-  ...selectedRelatedProducts.map((p) => ({ ...p, quantity: 1 })),
-];
+    // ✅ Build Buy Now items — use actual selling price in the price field
+    const resolvePrice = (p) =>
+      p.special_price && Number(p.special_price) > 0
+        ? Number(p.special_price)
+        : Number(p.price);
 
+    const items = [
+      {
+        ...product,
+        price: resolvePrice(product),           // actual selling price for checkout subtotal
+        quantity,
+        warranty: selectedWarranty || 0,
+        extendedWarranty: selectedWarrantyAmount || 0, // use the warranty radio state
+      },
+      ...selectedFrequentProducts.map((p) => ({
+        ...p,
+        price: resolvePrice(p),
+        quantity: 1,
+      })),
+      ...selectedRelatedProducts.map((p) => ({
+        ...p,
+        price: resolvePrice(p),
+        quantity: 1,
+      })),
+    ];
 
     const total = items.reduce((sum, item) => {
-  const basePrice =
-    (item.special_price && item.special_price > 0
-      ? item.special_price
-      : item.price) * item.quantity;
+      const basePrice = item.price * item.quantity;
+      const warrantyCost = (item.warranty || 0) * item.quantity;
+      const extendedCost = (item.extendedWarranty || 0) * item.quantity;
+      return sum + basePrice + warrantyCost + extendedCost;
+    }, 0);
 
-  const warrantyCost = (item.warranty || 0) * item.quantity;
-  const extendedCost = (item.extendedWarranty || 0) * item.quantity;
-
-  return sum + basePrice + warrantyCost + extendedCost;
-}, 0);
-
-
-    // ✅ Save Buy Now state in localStorage
-    /*
+    // ✅ Save Buy Now state so checkout can read the correct price
     localStorage.setItem(
       "buyNowData",
-      JSON.stringify({
-        cart: { items },
-        total,
-      })
+      JSON.stringify({ cart: { items }, total })
     );
-    */
 
     // ✅ Redirect
     window.location.href = "/checkout";
