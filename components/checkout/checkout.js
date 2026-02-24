@@ -184,6 +184,7 @@ export default function CheckoutPage() {
   });
   console.log(cartItems);
 const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touched, setTouched] = useState({});
   useEffect(() => {
     const fetchStores = async () => {
       try {
@@ -314,6 +315,38 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlePaymentChange = (e) => {
     setPaymentMethod(e.target.value);
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+  };
+
+  const getFieldError = (name) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[0-9]{10}$/;
+    const postCodeRegex = /^[0-9]{4,6}$/;
+    if (!touched[name]) return null;
+    switch (name) {
+      case 'firstName': return !formData.firstName ? 'First name is required' : null;
+      case 'lastName': return !formData.lastName ? 'Last name is required' : null;
+      case 'email':
+        if (!formData.email) return 'Email is required';
+        if (!emailRegex.test(formData.email)) return 'Enter a valid email address';
+        return null;
+      case 'phonenumber':
+        if (!formData.phonenumber) return 'Phone number is required';
+        if (!phoneRegex.test(formData.phonenumber)) return 'Enter a valid 10-digit phone number';
+        return null;
+      case 'country': return !formData.country ? 'Country is required' : null;
+      case 'address': return !formData.address ? 'Address is required' : null;
+      case 'city': return !formData.city ? 'City is required' : null;
+      case 'postCode':
+        if (!formData.postCode) return 'Post code is required';
+        if (!postCodeRegex.test(formData.postCode)) return 'Enter a valid postal code (4-6 digits)';
+        return null;
+      default: return null;
+    }
   };
 
   const initializeRazorpay = async () => {
@@ -515,6 +548,7 @@ const grandTotal = subtotal - totalDiscount;
   
       // Validation Checks (only if not using saved address)
       if (!useSavedAddress || selectedAddress === null) {
+        setTouched({ firstName: true, lastName: true, email: true, phonenumber: true, country: true, address: true, city: true, postCode: true });
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phoneRegex = /^[0-9]{10}$/;
         const postCodeRegex = /^[0-9]{4,6}$/;
@@ -855,33 +889,37 @@ const grandTotal = subtotal - totalDiscount;
     name="phonenumber"
     value={formData.phonenumber}
     onChange={handleChange}
-    className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
+    onBlur={handleBlur}
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('phonenumber') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
     required
   />
   <span className={`absolute left-2 transition-all duration-200 ${
-    formData.phonenumber 
-      ? 'top-1 text-xs text-gray-500' 
+    formData.phonenumber
+      ? 'top-1 text-xs text-gray-500'
       : 'top-3 text-gray-400'
   }`}>
-    Phone Number
+    Phone Number*
   </span>
+  {getFieldError('phonenumber') && <p className="text-red-500 text-xs mt-1">{getFieldError('phonenumber')}</p>}
 </div>
     <div className="relative mt-3 ">
   <input
     type="email"
     onChange={handleChange}
+    onBlur={handleBlur}
     name="email"
-    value={formData.email }
-    className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
+    value={formData.email}
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('email') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
     required
   />
   <span className={`absolute left-2 transition-all duration-200 ${
-    formData.email 
-      ? 'top-1 text-xs text-gray-500' 
+    formData.email
+      ? 'top-1 text-xs text-gray-500'
       : 'top-3 text-gray-400'
   }`}>
-    Email Address
+    Email Address*
   </span>
+  {getFieldError('email') && <p className="text-red-500 text-xs mt-1">{getFieldError('email')}</p>}
 </div>
     </div>
   </div>
@@ -895,18 +933,20 @@ const grandTotal = subtotal - totalDiscount;
   <input
     type="text"
     onChange={handleChange}
+    onBlur={handleBlur}
     name="country"
     value={formData.country}
-    className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('country') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
     required
   />
   <span className={`absolute left-2 transition-all duration-200 ${
     formData.country
-      ? 'top-1 text-xs text-gray-500' 
+      ? 'top-1 text-xs text-gray-500'
       : 'top-3 text-gray-400'
   }`}>
-    Country
+    Country*
   </span>
+  {getFieldError('country') && <p className="text-red-500 text-xs mt-1">{getFieldError('country')}</p>}
 </div>
 
     <div className="grid grid-cols-2 gap-4 mt-3">
@@ -914,35 +954,39 @@ const grandTotal = subtotal - totalDiscount;
   <input
     type="text"
     onChange={handleChange}
+    onBlur={handleBlur}
     name="firstName"
     value={formData.firstName}
-    className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('firstName') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
     required
   />
   <span className={`absolute left-2 transition-all duration-200 ${
     formData.firstName
-      ? 'top-1 text-xs text-gray-500' 
+      ? 'top-1 text-xs text-gray-500'
       : 'top-3 text-gray-400'
   }`}>
-    First Name
+    First Name*
   </span>
+  {getFieldError('firstName') && <p className="text-red-500 text-xs mt-1">{getFieldError('firstName')}</p>}
 </div>
      <div className="relative mt-3">
   <input
     type="text"
     onChange={handleChange}
+    onBlur={handleBlur}
     name="lastName"
     value={formData.lastName}
-    className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('lastName') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
     required
   />
   <span className={`absolute left-2 transition-all duration-200 ${
     formData.lastName
-      ? 'top-1 text-xs text-gray-500' 
+      ? 'top-1 text-xs text-gray-500'
       : 'top-3 text-gray-400'
   }`}>
-    Last Name
+    Last Name*
   </span>
+  {getFieldError('lastName') && <p className="text-red-500 text-xs mt-1">{getFieldError('lastName')}</p>}
 </div>
     </div>
 
@@ -968,9 +1012,10 @@ const grandTotal = subtotal - totalDiscount;
   <input
     type="text"
     onChange={handleChange}
+    onBlur={handleBlur}
     name="address"
     value={formData.address}
-    className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('address') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
     required
   />
   <span
@@ -979,8 +1024,9 @@ const grandTotal = subtotal - totalDiscount;
         ? 'top-1 text-xs text-gray-500'
         : 'top-3 text-gray-400'
     }`}
-  >House number and street name
+  >House number and street name*
   </span>
+  {getFieldError('address') && <p className="text-red-500 text-xs mt-1">{getFieldError('address')}</p>}
 </div>
 
    
@@ -1036,7 +1082,7 @@ const grandTotal = subtotal - totalDiscount;
   <label
     className="absolute left-2 text-xs text-gray-500 top-1 pointer-events-none transition-all duration-200"
   >
-    State
+    State*
   </label>
 </div>
 
@@ -1048,16 +1094,17 @@ const grandTotal = subtotal - totalDiscount;
         name="city"
         value={formData.city}
         onChange={handleChange}
-        className="border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1 px-2"
+        onBlur={handleBlur}
+        className={`border rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 px-2 ${getFieldError('city') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
         required
       >
-        <option value="" disabled hidden></option> {/* empty default */}
+        <option value="" disabled hidden></option>
         {finalCities.map((city, index) => (
           <option key={index} value={city}>
             {city}
           </option>
         ))}
-      </select> 
+      </select>
       <span
         className={`absolute left-2 transition-all duration-200 pointer-events-none ${
           formData.city
@@ -1065,8 +1112,9 @@ const grandTotal = subtotal - totalDiscount;
             : 'top-3 text-gray-400'
         }`}
       >
-        City
+        City*
       </span>
+      {getFieldError('city') && <p className="text-red-500 text-xs mt-1">{getFieldError('city')}</p>}
     </div>
 
     </div>
@@ -1077,16 +1125,18 @@ const grandTotal = subtotal - totalDiscount;
       name="postCode"
       value={formData.postCode}
       onChange={handleChange}
-      className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
+      onBlur={handleBlur}
+      className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('postCode') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
       required
     />
     <span className={`absolute left-2 transition-all duration-200 ${
       formData.postCode
-        ? 'top-1 text-xs text-gray-500' 
+        ? 'top-1 text-xs text-gray-500'
         : 'top-3 text-gray-400'
     }`}>
-      Post Code
+      Post Code*
     </span>
+    {getFieldError('postCode') && <p className="text-red-500 text-xs mt-1">{getFieldError('postCode')}</p>}
   </div>
 
     <h2 className="text-xl font-semibold text-black mb-2 mt-6">
