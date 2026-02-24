@@ -1543,6 +1543,7 @@ const Header = () => {
       const ids = (Array.isArray(categories) ? categories : []).slice(0, 5).map(c => c._id);
       ids.forEach((id) => { ensureSubcategories(id); });
     }, [isMobileMenuOpen, categories, ensureSubcategories]);
+
     return (
       <>
         <header className="sticky top-0 z-50">
@@ -1598,7 +1599,7 @@ const Header = () => {
                           </span>
                         </Link>
                         <div className="relative">
-                          {isLoggedIn ? (
+                          {userData ? (
                             <button onClick={() => setDropdownOpen(!dropdownOpen)}>
                               <FiUser size={16} />
                             </button>
@@ -1607,7 +1608,7 @@ const Header = () => {
                               <FiUser size={16} />
                             </button>
                           )}
-                          {dropdownOpen && isLoggedIn && (
+                          {dropdownOpen && userData && (
                             <div ref={mobileDropdownRef} className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-50">
                               {isAdmin && (
                                 <Link href="/admin/dashboard" className="block px-3 py-2 text-xs hover:bg-blue-50">
@@ -1880,12 +1881,12 @@ const Header = () => {
 
                         {/* User Account */}
                         <div className="relative" >
-                            {isLoggedIn ? (
+                            {userData ? (
                                 <>
                                     <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center text-black focus:outline-none p-1 sm:p-0">
                                         <FiUser size={18} className="text-customBlue" />
                                         <span className="ml-1 font-bold text-xs sm:text-sm text-customBlue hidden lg:inline">
-                                            Hi, {userData?.name || userData?.username || "User"}
+                                            Hi, {userData.name || userData.username || "User"}
                                         </span>
                                     </button>
                                     {dropdownOpen && (
@@ -1916,7 +1917,7 @@ const Header = () => {
                                     )}
                                 </>
                             ) : (
-                                <button onClick={() => setShowAuthModal(true)} className="flex items-center text-black p-1 sm:p-0">
+                                <button onClick={() => setShowAuthModal(true)} className="flex items-center text-black p-1 sm:p-0" aria-label="Sign in">
                                     <FiUser size={18} className="text-customBlue" />
                                     {/* <span className="ml-1 font-bold text-xs sm:text-sm text-customBlue hidden lg:inline">Sign In</span> */}
                                 </button>
