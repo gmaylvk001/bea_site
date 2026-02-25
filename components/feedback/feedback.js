@@ -88,7 +88,7 @@ const handleSubmit = async (e) => {
         JSON.stringify([FeedBack.name,FeedBack.email_address,FeedBack.mobile_number,FeedBack.invoice_number,FeedBack.products, FeedBack.city,FeedBack.feedback])
       );
 
-      const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in"];
+      const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","Customercare@bharathelectronics.in"];
       emailadmin.forEach(async (emailadmin) => {
         adminemailFormData.set("email", emailadmin);
         let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
