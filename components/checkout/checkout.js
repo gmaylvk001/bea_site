@@ -221,6 +221,13 @@ const [isSubmitting, setIsSubmitting] = useState(false);
         subtotal: parsedData.total || 0,
         total: parsedData.total || 0,
       });
+      // Convert to checkoutData so the totals survive an auth modal reload
+      localStorage.setItem("checkoutData", JSON.stringify({
+        cart: parsedData.cart,
+        discount: 0,
+        subtotal: parsedData.total || 0,
+        total: parsedData.total || 0,
+      }));
       localStorage.removeItem("buyNowData");
       skipCartFetch = true;
     } else if (checkoutData) {
@@ -804,9 +811,9 @@ const grandTotal = subtotal - totalDiscount;
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"]; 
+          // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"]; 
 
-          // const emailadmin = ["sorambeeviuit@gmail.com"];
+          const emailadmin = ["sorambeeviuit@gmail.com"];
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -1301,7 +1308,7 @@ const grandTotal = subtotal - totalDiscount;
                       {/* Product Image */}
                       <div className="relative w-16 h-16 flex-shrink-0 border rounded overflow-hidden p-2">
                         <img
-                          src={`/uploads/products/${item.image}`}
+                          src={`/uploads/products/${item.image || item.images?.[0]}`}
                           alt={item.name}
                           className="w-full h-full object-contain"
                         />

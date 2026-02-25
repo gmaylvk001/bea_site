@@ -1270,6 +1270,12 @@ export default function CartComponent() {
               +
             </button>
           </div>
+          <button
+                className="text-gray-500 text-xs font-semibold hover:text-blue-600"
+                onClick={() => confirmRemoveItem(item.productId)}
+              >
+                Remove
+              </button>
           <div className="text-base font-semibold text-red-600">
             ₹{(((item.price > 0 ? item.price : item.actual_price) ?? 0) * (item.quantity ?? 1)).toFixed(2)}
           </div>

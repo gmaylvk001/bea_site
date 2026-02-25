@@ -211,6 +211,18 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     if (buyNowData) {
       const parsedData = JSON.parse(buyNowData);
       setCartItems(parsedData.cart.items);
+      setOrderSummary({
+        discount: 0,
+        subtotal: parsedData.total || 0,
+        total: parsedData.total || 0,
+      });
+      // Convert to checkoutData so the totals survive an auth modal reload
+      localStorage.setItem("checkoutData", JSON.stringify({
+        cart: parsedData.cart,
+        discount: 0,
+        subtotal: parsedData.total || 0,
+        total: parsedData.total || 0,
+      }));
       localStorage.removeItem("buyNowData");
     } else if (checkoutData) {
       const parsedData = JSON.parse(checkoutData);
@@ -1242,7 +1254,7 @@ const grandTotal = subtotal - totalDiscount;
                       {/* Product Image */}
                       <div className="relative w-16 h-16 flex-shrink-0 border rounded overflow-hidden p-2">
                         <img
-                          src={`/uploads/products/${item.image}`}
+                          src={`/uploads/products/${item.image || item.images?.[0]}`}
                           alt={item.name}
                           className="w-full h-full object-contain"
                         />
