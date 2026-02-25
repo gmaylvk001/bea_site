@@ -856,7 +856,9 @@ const grandTotal = subtotal - totalDiscount;
       {/* <div className="max-w-9xl mx-auto rounded-lg p-8 pt-0  container"> */}
         <div className="w-full  rounded-lg  pt-0">
 
-        <div className="flex flex-col lg:flex-row " style={{marginLeft: "100px"}}>
+        <div className="flex flex-col lg:flex-row ml-[9px] lg:ml-[100px] mx-auto">
+
+          {/* <div className="flex flex-col lg:flex-row ml-[9px] lg:ml-[100px] mx-auto"></div> */}
           {/* Left - Checkout Form */}
          <div className="w-full lg:w-2/4 bg-white p-0 pt-6">
 
@@ -1268,7 +1270,7 @@ const grandTotal = subtotal - totalDiscount;
   </div>
 
           {/* Right - Order Summary */}
-          <div className="w-full lg:w-2/4 p-6 sticky top-6 self-start" style={{backgroundColor: "#F7F4F2", height: "100vh"}}>
+          <div className="w-full lg:w-2/4 p-6 sticky top-6 self-start mb-5" style={{backgroundColor: "#F7F4F2", height: "auto"}}>
             <div className="mt-1" style={{marginRight: "100px"}}>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Orders</h3>
 
