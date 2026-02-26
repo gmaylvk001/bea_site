@@ -42,6 +42,8 @@ export default function ContactForm() {
  
     if (!form.mobile_number.trim()) {
       newErrors.mobile_number = "Phone number is required";
+    } else if (form.mobile_number.startsWith("0")) {
+      newErrors.mobile_number = "Phone number should not start with 0";
     } else if (!/^\d{10,15}$/.test(form.mobile_number)) {
       newErrors.mobile_number = "Enter a valid phone number";
     }
@@ -89,6 +91,7 @@ const handleSubmit = async (e) => {
       );
 
       const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","Customercare@bharathelectronics.in"];
+
       emailadmin.forEach(async (emailadmin) => {
         adminemailFormData.set("email", emailadmin);
         let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -166,7 +169,7 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
           <h2 className="text-3xl font-bold mb-4 pb-2 text-center border-b-2">Bharath Electronics – Feedback</h2>
           <form onSubmit={handleSubmit} className="px-8 mt-6 grid grid-cols-2 md:grid-cols-2 gap-4">
             {/* Name */}
-            <div >
+            <div>
               <label className="block font-medium mb-1">
                 Name<span className="text-red-600">*</span>
               </label>
@@ -175,12 +178,14 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                className={`${inputClass} ${errors.name && (touched.name || submitted) ? "border-red-500" : "border-gray-300"}`}
+                onBlur={handleBlur}
+                className={`${inputClass} ${errors.name && touched.name ? "border-red-500" : "border-gray-300"}`}
               />
+              {errors.name && touched.name && <p className="text-red-500 mt-1 text-sm">{errors.name}</p>}
             </div>
 
             {/* Email */}
-            <div >
+            <div>
               <label className="block font-medium mb-1">
                 Email<span className="text-red-600">*</span>
               </label>
@@ -189,12 +194,14 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 name="email_address"
                 value={form.email_address}
                 onChange={handleChange}
-               className={`${inputClass} ${errors.email_address && (touched.email_address || submitted) ? "border-red-500" : "border-gray-300"}`}
+                onBlur={handleBlur}
+                className={`${inputClass} ${errors.email_address && touched.email_address ? "border-red-500" : "border-gray-300"}`}
               />
+              {errors.email_address && touched.email_address && <p className="text-red-500 mt-1 text-sm">{errors.email_address}</p>}
             </div>
 
             {/* Phone */}
-            <div >
+            <div>
               <label className="block font-medium mb-1">
                 Phone <span className="text-red-600">*</span>
               </label>
@@ -203,12 +210,14 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 name="mobile_number"
                 value={form.mobile_number}
                 onChange={handleChange}
-                className={`${inputClass} ${errors.mobile_number && (touched.mobile_number || submitted) ? "border-red-500" : "border-gray-300"}`}
+                onBlur={handleBlur}
+                className={`${inputClass} ${errors.mobile_number && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
               />
+              {errors.mobile_number && touched.mobile_number && <p className="text-red-500 mt-1 text-sm">{errors.mobile_number}</p>}
             </div>
 
             {/* invoice_number */}
-            <div >
+            <div>
               <label className="block font-medium mb-1">
                 Invoice Number <span className="text-red-600">*</span>
               </label>
@@ -217,12 +226,14 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 name="invoice_number"
                 value={form.invoice_number}
                 onChange={handleChange}
-                className={`${inputClass} ${errors.invoice_number && (touched.invoice_number || submitted) ? "border-red-500" : "border-gray-300"}`}
+                onBlur={handleBlur}
+                className={`${inputClass} ${errors.invoice_number && touched.invoice_number ? "border-red-500" : "border-gray-300"}`}
               />
+              {errors.invoice_number && touched.invoice_number && <p className="text-red-500 mt-1 text-sm">{errors.invoice_number}</p>}
             </div>
 
             {/* product */}
-            <div >
+            <div>
               <label className="block font-medium mb-1">
                 Products <span className="text-red-600">*</span>
               </label>
@@ -231,12 +242,14 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 name="products"
                 value={form.products}
                 onChange={handleChange}
-                className={`${inputClass} ${errors.products && (touched.products || submitted) ? "border-red-500" : "border-gray-300"}`}
+                onBlur={handleBlur}
+                className={`${inputClass} ${errors.products && touched.products ? "border-red-500" : "border-gray-300"}`}
               />
+              {errors.products && touched.products && <p className="text-red-500 mt-1 text-sm">{errors.products}</p>}
             </div>
 
             {/* City */}
-            <div >
+            <div>
               <label className="block font-medium mb-1">
                 City <span className="text-red-600">*</span>
               </label>
@@ -245,11 +258,13 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 name="city"
                 value={form.city}
                 onChange={handleChange}
-                className={`${inputClass} ${errors.city && (touched.city || submitted) ? "border-red-500" : "border-gray-300"}`}
+                onBlur={handleBlur}
+                className={`${inputClass} ${errors.city && touched.city ? "border-red-500" : "border-gray-300"}`}
               />
+              {errors.city && touched.city && <p className="text-red-500 mt-1 text-sm">{errors.city}</p>}
             </div>
 
-            {/* Message - Full Width */}
+            {/* Feedback - Full Width */}
             <div className="col-span-full md:col-span-2">
               <label className="block font-medium mb-1">
                 Feedback<span className="text-red-600">*</span>
@@ -258,8 +273,10 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 name="feedback"
                 value={form.feedback}
                 onChange={handleChange}
-                className={`${inputClass} ${errors.feedback && (touched.feedback || submitted) ? "border-red-500" : "border-gray-300"}`}
+                onBlur={handleBlur}
+                className={`${inputClass} ${errors.feedback && touched.feedback ? "border-red-500" : "border-gray-300"}`}
               ></textarea>
+              {errors.feedback && touched.feedback && <p className="text-red-500 mt-1 text-sm">{errors.feedback}</p>}
             </div>
 
             {/* Submit Button - Full Width */}

@@ -27,14 +27,14 @@ export async function POST(request) {
       );
     }
 
-    // Prevent duplicate feedback
+    /* // Prevent duplicate feedback
     const existingFeedback = await FeedbackModel.findOne({ email_address });
     if (existingFeedback) {
       return NextResponse.json(
         { success: false, message: "Already you have submitted the feedback" },
         { status: 400 }
       );
-    }
+    } */
 
     // Save feedback
     const newFeedback = await FeedbackModel.create({
