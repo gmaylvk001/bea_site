@@ -1254,28 +1254,38 @@ export default function CartComponent() {
           <p className="text-xs text-gray-500 uppercase">{item.item_code}</p>
         </div>
         <div className="flex justify-between items-center mt-2">
-          <div className="flex items-center gap-2 border border-gray-300 rounded p-1">
+          {/* LEFT SIDE (Quantity + Remove) */}
+          <div className="flex flex-col gap-2">
+            {/* Quantity Box */}
+            <div className="flex items-center gap-2 border border-gray-300 rounded p-1">
+              <button
+                className="px-2 py-1 text-black hover:text-blue-600"
+                onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
+                disabled={item.quantity <= 1}
+              >
+                −
+              </button>
+              <span>{item.quantity}</span>
+              <button
+                className="px-2 py-1 text-black hover:text-blue-600"
+                onClick={() => updateQuantity(item.productId, item.quantity + 1, item.original_quantity)}
+              >
+                +
+              </button>
+            </div>
             <button
-              className="px-2 py-1 text-black hover:text-blue-600"
-              onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
-              disabled={item.quantity <= 1}
-            >
-              −
-            </button>
-            <span>{item.quantity}</span>
-            <button
-              className="px-2 py-1 text-black hover:text-blue-600"
-              onClick={() => updateQuantity(item.productId, item.quantity + 1, item.original_quantity)}
-            >
-              +
-            </button>
-          </div>
-          <button
                 className="text-gray-500 text-xs font-semibold hover:text-blue-600"
                 onClick={() => confirmRemoveItem(item.productId)}
               >
                 Remove
               </button>
+          </div>
+          {/* <button
+                className="text-gray-500 text-xs font-semibold hover:text-blue-600"
+                onClick={() => confirmRemoveItem(item.productId)}
+              >
+                Remove
+              </button> */}
           <div className="text-base font-semibold text-red-600">
             ₹{(((item.price > 0 ? item.price : item.actual_price) ?? 0) * (item.quantity ?? 1)).toFixed(2)}
           </div>
