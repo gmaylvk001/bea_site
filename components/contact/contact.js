@@ -40,6 +40,8 @@ export default function ContactForm() {
  
     if (!form.mobile_number.trim()) {
       newErrors.mobile_number = "Phone number is required";
+    } else if (form.mobile_number.startsWith("0")) {
+      newErrors.mobile_number = "Phone number should not start with 0";
     } else if (!/^\d{10,15}$/.test(form.mobile_number)) {
       newErrors.mobile_number = "Enter a valid phone number";
     }
@@ -85,7 +87,8 @@ export default function ContactForm() {
         );
 
         // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"]; 
-        const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","Customercare@bharathelectronics.in"];
+        // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","Customercare@bharathelectronics.in"];
+        const emailadmin = ["sorambeeviuit@gmail.com"];
         emailadmin.forEach(async (emailadmin) => {
           adminemailFormData.set("email", emailadmin);
           let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -240,9 +243,10 @@ export default function ContactForm() {
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  className={`${inputClass} ${errors.name && (touched.name || submitted) ? "border-red-500" : "border-gray-300"}`}
+                  onBlur={handleBlur}
+                  className={`${inputClass} ${errors.name && touched.name ? "border-red-500" : "border-gray-300"}`}
                 />
-                {/* {errors.name && <p className="text-red-500 mt-1 text-sm">{errors.name}</p>} */}
+                {errors.name && touched.name && <p className="text-red-500 mt-1 text-sm">{errors.name}</p>}
               </div>
 
               {/* Email */}
@@ -255,9 +259,10 @@ export default function ContactForm() {
                   name="email_address"
                   value={form.email_address}
                   onChange={handleChange}
-                  className={`${inputClass} ${errors.email_address && (touched.email_address || submitted) ? "border-red-500" : "border-gray-300"}`}
+                  onBlur={handleBlur}
+                  className={`${inputClass} ${errors.email_address && touched.email_address ? "border-red-500" : "border-gray-300"}`}
                 />
-                {/* {errors.email_address && <p className="text-red-500 mt-1 text-sm">{errors.email_address}</p>} */}
+                {errors.email_address && touched.email_address && <p className="text-red-500 mt-1 text-sm">{errors.email_address}</p>}
               </div>
 
               {/* Phone */}
@@ -270,9 +275,10 @@ export default function ContactForm() {
                   name="mobile_number"
                   value={form.mobile_number}
                   onChange={handleChange}
-                  className={`${inputClass} ${errors.mobile_number && (touched.mobile_number || submitted) ? "border-red-500" : "border-gray-300"}`}
+                  onBlur={handleBlur}
+                  className={`${inputClass} ${errors.mobile_number && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
                 />
-                {/* {errors.mobile_number && <p className="text-red-500 mt-1 text-sm">{errors.mobile_number}</p>} */}
+                {errors.mobile_number && touched.mobile_number && <p className="text-red-500 mt-1 text-sm">{errors.mobile_number}</p>}
               </div>
 
               {/* City */}
@@ -285,9 +291,10 @@ export default function ContactForm() {
                   name="city"
                   value={form.city}
                   onChange={handleChange}
-                  className={`${inputClass} ${errors.city && (touched.city || submitted) ? "border-red-500" : "border-gray-300"}`}
+                  onBlur={handleBlur}
+                  className={`${inputClass} ${errors.city && touched.city ? "border-red-500" : "border-gray-300"}`}
                 />
-                {/* {errors.mobile_number && <p className="text-red-500 mt-1 text-sm">{errors.mobile_number}</p>} */}
+                {errors.city && touched.city && <p className="text-red-500 mt-1 text-sm">{errors.city}</p>}
               </div>
 
               {/* Message - Full Width */}
@@ -299,9 +306,10 @@ export default function ContactForm() {
                   name="message"
                   value={form.message}
                   onChange={handleChange}
-                  className={`${inputClass} ${errors.message && (touched.message || submitted) ? "border-red-500" : "border-gray-300"} h-28`}
+                  onBlur={handleBlur}
+                  className={`${inputClass} ${errors.message && touched.message ? "border-red-500" : "border-gray-300"} h-28`}
                 ></textarea>
-                {/* {errors.message && <p className="text-red-500 mt-1 text-sm">{errors.message}</p>} */}
+                {errors.message && touched.message && <p className="text-red-500 mt-1 text-sm">{errors.message}</p>}
               </div>
 
               {/* Submit Button - Full Width */}

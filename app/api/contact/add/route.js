@@ -18,14 +18,14 @@ export async function POST(request) {
       );
     }
 
-    // Check for existing contact (optional — usually check email instead of name)
+    /* // Check for existing contact (optional — usually check email instead of name)
     const existingContact = await ContactModel.findOne({ email_address });
     if (existingContact) {
       return NextResponse.json(
         { success: false, message: "Contact already exists" },
         { status: 400 }
       );
-    }
+    } */
 
      // Create new contact
     const newContact = await ContactModel.create({
