@@ -212,7 +212,7 @@ const RecentlyViewedProducts = () => {
 
 
         {/* Right Side */}
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-4 overflow-hidden">
           {/* Title */}
                 <div className="flex justify-between items-center mb-6">
                   <h5 className="text-xl font-bold">Recently Visited</h5>
@@ -237,11 +237,11 @@ const RecentlyViewedProducts = () => {
                 </div>
 
                 {/* Products Row */}
-                <div className="flex grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-20 overflow-x-auto sm:overflow-visible px-0">
+                <div className="flex flex-row gap-4 overflow-x-auto pb-2 scrollbar-hide">
                   {visibleProducts.map((product) => (
                     <div
                       key={product._id}
-                      className="group border border-gray-200 hover:border-[#0069c1] hover:shadow-md transition-all duration-300 rounded-lg min-w-[230px]"
+                      className="group border border-gray-200 hover:border-[#0069c1] hover:shadow-md transition-all duration-300 rounded-lg flex-shrink-0 w-[180px] sm:w-[220px] md:w-[230px]"
 
                     >
                       
@@ -393,7 +393,7 @@ const RecentlyViewedProducts = () => {
                 </div>
 
                 {/* Fake Pagination Dots */}
-                <div className="flex justify-end mt-6 space-x-2">
+                {/* <div className="flex justify-end mt-6 space-x-2">
                   {clickElement === "next" ? (
                     <>
                       <span className="w-2.5 h-2.5 bg-gray-300 rounded-full"></span>
@@ -405,7 +405,7 @@ const RecentlyViewedProducts = () => {
                       <span className="w-2.5 h-2.5 bg-gray-300 rounded-full"></span>
                     </>
                   )}
-                </div>
+                </div> */}
 
         </div>
       </div>

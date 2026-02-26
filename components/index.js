@@ -1297,7 +1297,7 @@ export default function HomeComponent() {
                 initial="hidden"
                 animate="visible"
                 variants={containerVariants}
-                className="overflow-hidden pt-7 px-4 sm:px-6 md:px-6"
+                className="overflow-hidden pt-1 px-4 sm:px-6 md:px-6"
               >
                 <div className="relative">
                   {isSingleBannerNewLoading ? (
