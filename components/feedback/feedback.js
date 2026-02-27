@@ -42,10 +42,8 @@ export default function ContactForm() {
  
     if (!form.mobile_number.trim()) {
       newErrors.mobile_number = "Phone number is required";
-    } else if (form.mobile_number.startsWith("0")) {
-      newErrors.mobile_number = "Phone number should not start with 0";
-    } else if (!/^\d{10,15}$/.test(form.mobile_number)) {
-      newErrors.mobile_number = "Enter a valid phone number";
+    } else if (!/^[6-9]\d{9}$/.test(form.mobile_number)) {
+      newErrors.mobile_number = "Enter mobile number correctly";
     }
  
     if (!form.invoice_number.trim()) newErrors.invoice_number = "Invoice is required";
@@ -105,7 +103,9 @@ const handleSubmit = async (e) => {
         let adminData = await adminresponse.json();
       });
       setResponseMsg("Message sent successfully!");
-      setForm({ name: "", email_address: "", mobile_number: "",invoice_number:"",products:"", city: "", feedback: "" });
+      setForm({ name: "", email_address: "", mobile_number: "", invoice_number: "", products: "", city: "", feedback: "" });
+      setErrors({});
+      setTouched({});
 
       // Clear message after 2 seconds
       setTimeout(() => {
@@ -115,7 +115,7 @@ const handleSubmit = async (e) => {
       setResponseMsg(data.message || "Something went wrong");
     }
   } catch (error) {
-    setResponseMsg("Server error");
+    setResponseMsg("Something went wrong. Please check your details and try again.");
   } finally {
     setLoading(false);
   }
@@ -181,7 +181,6 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 onBlur={handleBlur}
                 className={`${inputClass} ${errors.name && touched.name ? "border-red-500" : "border-gray-300"}`}
               />
-              {errors.name && touched.name && <p className="text-red-500 mt-1 text-sm">{errors.name}</p>}
             </div>
 
             {/* Email */}
@@ -197,7 +196,6 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 onBlur={handleBlur}
                 className={`${inputClass} ${errors.email_address && touched.email_address ? "border-red-500" : "border-gray-300"}`}
               />
-              {errors.email_address && touched.email_address && <p className="text-red-500 mt-1 text-sm">{errors.email_address}</p>}
             </div>
 
             {/* Phone */}
@@ -213,7 +211,6 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 onBlur={handleBlur}
                 className={`${inputClass} ${errors.mobile_number && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
               />
-              {errors.mobile_number && touched.mobile_number && <p className="text-red-500 mt-1 text-sm">{errors.mobile_number}</p>}
             </div>
 
             {/* invoice_number */}
@@ -229,7 +226,6 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 onBlur={handleBlur}
                 className={`${inputClass} ${errors.invoice_number && touched.invoice_number ? "border-red-500" : "border-gray-300"}`}
               />
-              {errors.invoice_number && touched.invoice_number && <p className="text-red-500 mt-1 text-sm">{errors.invoice_number}</p>}
             </div>
 
             {/* product */}
@@ -245,7 +241,6 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 onBlur={handleBlur}
                 className={`${inputClass} ${errors.products && touched.products ? "border-red-500" : "border-gray-300"}`}
               />
-              {errors.products && touched.products && <p className="text-red-500 mt-1 text-sm">{errors.products}</p>}
             </div>
 
             {/* City */}
@@ -261,7 +256,6 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 onBlur={handleBlur}
                 className={`${inputClass} ${errors.city && touched.city ? "border-red-500" : "border-gray-300"}`}
               />
-              {errors.city && touched.city && <p className="text-red-500 mt-1 text-sm">{errors.city}</p>}
             </div>
 
             {/* Feedback - Full Width */}
@@ -276,7 +270,6 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 onBlur={handleBlur}
                 className={`${inputClass} ${errors.feedback && touched.feedback ? "border-red-500" : "border-gray-300"}`}
               ></textarea>
-              {errors.feedback && touched.feedback && <p className="text-red-500 mt-1 text-sm">{errors.feedback}</p>}
             </div>
 
             {/* Submit Button - Full Width */}

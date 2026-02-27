@@ -38,14 +38,20 @@ export default function ContactForm() {
       newErrors.email_address = "Email is invalid";
     }
  
-    if (!form.mobile_number.trim()) {
+    /* if (!form.mobile_number.trim()) {
       newErrors.mobile_number = "Phone number is required";
     } else if (form.mobile_number.startsWith("0")) {
       newErrors.mobile_number = "Phone number should not start with 0";
     } else if (!/^\d{10,15}$/.test(form.mobile_number)) {
       newErrors.mobile_number = "Enter a valid phone number";
-    }
+    } */
  
+    if (!form.mobile_number.trim()) {
+      newErrors.mobile_number = "Phone number is required";
+    } else if (!/^[6-9]\d{9}$/.test(form.mobile_number)) {
+      newErrors.mobile_number = "Enter mobile number correctly";
+    }
+
     if (!form.city.trim()) newErrors.city = "City is required";
     if (!form.message.trim()) newErrors.message = "Message is required";
  
@@ -87,7 +93,7 @@ export default function ContactForm() {
         );
 
         // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"]; 
-        const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","Customercare@bharathelectronics.in"];
+        const emailadmin = ["sorambeeviuit@gmail.com"];
         emailadmin.forEach(async (emailadmin) => {
           adminemailFormData.set("email", emailadmin);
           let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -102,6 +108,8 @@ export default function ContactForm() {
         });
         setResponseMsg("Message sent successfully!");
         setForm({ name: "", email_address: "", mobile_number: "", city: "", message: "" });
+        setErrors({});
+        setTouched({});
 
         // Clear message after 2 seconds
         setTimeout(() => {
@@ -111,7 +119,8 @@ export default function ContactForm() {
         setResponseMsg(data.message || "Something went wrong");
       }
     } catch (error) {
-      setResponseMsg("Server error");
+      // setResponseMsg("Server error");
+      setResponseMsg("Something went wrong. Please check your details and try again.");
     } finally {
       setLoading(false);
     }
@@ -245,7 +254,6 @@ export default function ContactForm() {
                   onBlur={handleBlur}
                   className={`${inputClass} ${errors.name && touched.name ? "border-red-500" : "border-gray-300"}`}
                 />
-                {errors.name && touched.name && <p className="text-red-500 mt-1 text-sm">{errors.name}</p>}
               </div>
 
               {/* Email */}
@@ -261,7 +269,6 @@ export default function ContactForm() {
                   onBlur={handleBlur}
                   className={`${inputClass} ${errors.email_address && touched.email_address ? "border-red-500" : "border-gray-300"}`}
                 />
-                {errors.email_address && touched.email_address && <p className="text-red-500 mt-1 text-sm">{errors.email_address}</p>}
               </div>
 
               {/* Phone */}
@@ -277,7 +284,6 @@ export default function ContactForm() {
                   onBlur={handleBlur}
                   className={`${inputClass} ${errors.mobile_number && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
                 />
-                {errors.mobile_number && touched.mobile_number && <p className="text-red-500 mt-1 text-sm">{errors.mobile_number}</p>}
               </div>
 
               {/* City */}
@@ -293,7 +299,6 @@ export default function ContactForm() {
                   onBlur={handleBlur}
                   className={`${inputClass} ${errors.city && touched.city ? "border-red-500" : "border-gray-300"}`}
                 />
-                {errors.city && touched.city && <p className="text-red-500 mt-1 text-sm">{errors.city}</p>}
               </div>
 
               {/* Message - Full Width */}
@@ -308,7 +313,6 @@ export default function ContactForm() {
                   onBlur={handleBlur}
                   className={`${inputClass} ${errors.message && touched.message ? "border-red-500" : "border-gray-300"} h-28`}
                 ></textarea>
-                {errors.message && touched.message && <p className="text-red-500 mt-1 text-sm">{errors.message}</p>}
               </div>
 
               {/* Submit Button - Full Width */}
