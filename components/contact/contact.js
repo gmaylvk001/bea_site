@@ -24,7 +24,22 @@ export default function ContactForm() {
  
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "mobile_number") {
+      const digits = value.replace(/\D/g, "").slice(0, 10);
+      setForm({ ...form, [name]: digits });
+      setTouched(prev => ({ ...prev, mobile_number: true }));
+      if (!digits) {
+        setErrors(prev => ({ ...prev, mobile_number: "" }));
+      } else if (!/^[6-9]\d{9}$/.test(digits)) {
+        setErrors(prev => ({ ...prev, mobile_number: "Invalid Mobile Number" }));
+      } else {
+        setErrors(prev => { const { mobile_number: _, ...rest } = prev; return rest; });
+      }
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const validate = () => {
@@ -47,9 +62,9 @@ export default function ContactForm() {
     } */
  
     if (!form.mobile_number.trim()) {
-      newErrors.mobile_number = "Phone number is required";
+      newErrors.mobile_number = "";
     } else if (!/^[6-9]\d{9}$/.test(form.mobile_number)) {
-      newErrors.mobile_number = "Enter mobile number correctly";
+      newErrors.mobile_number = "Invalid Mobile Number";
     }
 
     if (!form.city.trim()) newErrors.city = "City is required";
@@ -93,7 +108,7 @@ export default function ContactForm() {
         );
 
         // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"]; 
-        const emailadmin = ["sorambeeviuit@gmail.com"];
+        const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","Customercare@bharathelectronics.in"];
         emailadmin.forEach(async (emailadmin) => {
           adminemailFormData.set("email", emailadmin);
           let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -282,8 +297,12 @@ export default function ContactForm() {
                   value={form.mobile_number}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={`${inputClass} ${errors.mobile_number && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
+                  maxLength={10}
+                  className={`${inputClass} ${'mobile_number' in errors && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
                 />
+                {errors.mobile_number && touched.mobile_number && (
+                  <p className="text-red-500 text-sm mt-1">{errors.mobile_number}</p>
+                )}
               </div>
 
               {/* City */}

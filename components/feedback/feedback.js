@@ -25,8 +25,27 @@ export default function ContactForm() {
     setTouched({ ...touched, [e.target.name]: true });
   };
 
-  const handleChange = (e) => {
+  /* const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  }; */
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "mobile_number") {
+      const digits = value.replace(/\D/g, "").slice(0, 10);
+      setForm({ ...form, [name]: digits });
+      setTouched(prev => ({ ...prev, mobile_number: true }));
+      if (!digits) {
+        setErrors(prev => ({ ...prev, mobile_number: "" }));
+      } else if (!/^[6-9]\d{9}$/.test(digits)) {
+        setErrors(prev => ({ ...prev, mobile_number: "Invalid Mobile Number" }));
+      } else {
+        setErrors(prev => { const { mobile_number: _, ...rest } = prev; return rest; });
+      }
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const validate = () => {
@@ -41,9 +60,9 @@ export default function ContactForm() {
     }
  
     if (!form.mobile_number.trim()) {
-      newErrors.mobile_number = "Phone number is required";
+      newErrors.mobile_number = "";
     } else if (!/^[6-9]\d{9}$/.test(form.mobile_number)) {
-      newErrors.mobile_number = "Enter mobile number correctly";
+      newErrors.mobile_number = "Invalid Mobile Number";
     }
  
     if (!form.invoice_number.trim()) newErrors.invoice_number = "Invoice is required";
@@ -209,8 +228,13 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 value={form.mobile_number}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                className={`${inputClass} ${errors.mobile_number && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
+                maxLength={10}
+                className={`${inputClass} ${'mobile_number' in errors && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
+                // className={`${inputClass} ${errors.mobile_number && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
               />
+              {errors.mobile_number && touched.mobile_number && (
+                  <p className="text-red-500 text-sm mt-1">{errors.mobile_number}</p>
+                )}
             </div>
 
             {/* invoice_number */}
