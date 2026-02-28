@@ -25,6 +25,23 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
        <head>
+        <Script
+          id="adtarbo-script"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(dd, ss, idd) {
+                var js, ajs = dd.getElementsByTagName(ss)[0];
+                if (dd.getElementById(idd)) {return;}
+                js = dd.createElement(ss);
+                js.id = idd;
+                js.aun_id = "GXNFAIR40psC";
+                js.src = "https://pixel.adtarbo.com/pixelTrack1.js";
+                ajs.parentNode.insertBefore(js, ajs)
+              } (document, 'script', 'adtarbo-js-v2'));
+            `,
+          }}
+        />
 <Script async src="https://www.googletagmanager.com/gtag/js?id=G-15V9VS13Q7"></Script>
         <Script id="gtm-new" strategy="afterInteractive">
           {`

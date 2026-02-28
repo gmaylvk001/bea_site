@@ -6,7 +6,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/AuthModal';
-import { trackCheckout } from "@/utils/nextjs-event-tracking.js";
+import { ga4BeginCheckout, ga4Purchase } from "@/utils/nextjs-event-tracking.js";
 
 // Dynamically load Razorpay script
 const loadRazorpay = () => {
@@ -245,6 +245,13 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 
     fetchData(skipCartFetch);
   }, []);
+
+  // ✅ GA4 begin_checkout — fires once cart items are ready
+  useEffect(() => {
+    if (cartItems.length > 0 && orderSummary.total > 0) {
+      ga4BeginCheckout({ items: cartItems, value: orderSummary.total });
+    }
+  }, [cartItems, orderSummary.total]);
 
 
   const fetchData = async (skipCartFetch = false) => {
@@ -777,6 +784,13 @@ const grandTotal = subtotal - totalDiscount;
         localStorage.removeItem('checkoutData');
         localStorage.removeItem('appliedCoupon');
         const orderData = await orderRes.json();
+
+        // ✅ GA4 purchase event
+        ga4Purchase({
+          orderId: orderData.order.order_number,
+          value: orderSummary.total,
+          items: cartItems,
+        });
 
         // ✅ Order confirmed — show success and navigate immediately
         toast.success("Order placed successfully!");

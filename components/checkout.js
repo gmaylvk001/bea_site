@@ -756,7 +756,27 @@ const grandTotal = subtotal - totalDiscount;
           },
         });
        
-       
+       const trackCheckout = ({ user, product }) => {
+  if (typeof window !== "undefined" && window._em_event) {
+    window._em_event.track({
+      event: "btnClick",
+      action: "checkOut",
+      user_info: {
+        user_name: user?.name,
+        phone: user?.mobile,
+        email: user?.email,
+      },
+      product_info: {
+        product_id: product?.id,
+        product_name: product?.name,
+        price: product?.price,
+        image: product?.image,
+        qty: product?.qty,
+        currency: product?.currency || "INR",
+      },
+    });
+  }
+};
         // Send confirmation emails
         // const emailResponse = await fetch('/api/send-order-email', {
         //   method: 'POST',

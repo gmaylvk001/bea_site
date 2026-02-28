@@ -5,7 +5,7 @@ import { useCart } from '@/context/CartContext';
 import { useModal } from '@/context/ModalContext';
 import { ToastContainer, toast } from 'react-toastify';
 import { useHeaderdetails } from '@/context/HeaderContext';
-import { trackAddToCart } from "@/utils/nextjs-event-tracking.js";
+import { trackAddToCart, ga4AddToCart } from "@/utils/nextjs-event-tracking";
 
 import { v4 as uuidv4 } from "uuid";
 
@@ -149,29 +149,40 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
     }
 
     const responseData = await cartResponse.json();
+    console.log("📦 responseData:", responseData);
     updateCartCount(responseData.cart.totalItems + additionalProducts.length);
+    console.log("🔔 About to call ga4AddToCart");
 
-    // ✅ Track events (skip if guest)
-    /*
+    // ✅ GA4 add_to_cart (fires for all users, logged in or guest)
+    ga4AddToCart({
+      product: {
+        id: productId,
+        name: productData.data.name,
+        price: productData.data.special_price > 0 ? productData.data.special_price : productData.data.price,
+        qty: quantity,
+      },
+    });
+
+    // ✅ Email marketing track (logged-in only)
     if (isLoggedIn) {
       trackAddToCart({
-        user: {
-          name: userData?.name,
-          phone: userData?.phone,
+        user_info: {
+          user_name: userData?.name,
+          phone: userData?.mobile,
           email: userData?.email,
         },
-        product: {
-          id: productId,
-          name: responseData.cart.items[0].name,
+        product_info: {
+          product_id: productId,
+          product_link: `${apiUrl}/product/${productData.data.slug}`,
+          product_name: responseData.cart.items[0].name,
           price: responseData.cart.items[0].price,
-          link: `${apiUrl}/product/${productData.data.slug}`,
           image: `${apiUrl}/uploads/products/${responseData.cart.items[0].image}`,
           qty: responseData.cart.items[0].quantity,
           currency: "INR",
         },
       });
     }
-*/
+
     // ✅ Store frequently bought together
     if (selectedFrequentProducts?.length > 0) {
       const ids = selectedFrequentProducts.map((p) => p._id);
@@ -185,6 +196,23 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
     console.error("Add to cart error:", error);
   } finally {
     setIsLoading(false);
+  }
+};
+
+const trackAddToCart = ({ user_info, product_info }) => {
+  if (
+    typeof window !== "undefined" &&
+    window._em_event &&
+    typeof window._em_event.track === "function"
+  ) {
+    window._em_event.track({
+      event: "btnClick",
+      action: "addToCart",
+      user_info,
+      product_info,
+    });
+  } else {
+    console.warn("Adtarbo not loaded yet");
   }
 };
   return (
