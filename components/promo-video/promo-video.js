@@ -85,7 +85,7 @@ const [openSuccess, setOpenSuccess] = useState(false);
             JSON.stringify([Promovideo.name,Promovideo.mobile_number,Promovideo.email_address,Promovideo.city,Promovideo.product])
           );
   
-          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in"];
+          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","Customercare@bharathelectronics.in"];
           emailadmin.forEach(async (emailadmin) => {
             adminemailFormData.set("email", emailadmin);
           let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
