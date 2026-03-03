@@ -271,7 +271,7 @@ const getBannerRedirectUrls = (urls) => {
 
       {/* ✅ Single Banner */}
       {bannerImages.length === 1 ? (
-        <Link href={categoryProduct.bannerRedirectUrl || "#"}>
+        <Link href={bannerUrls[0] || "#"}>
           <img
             src={bannerImages[0]}
             alt={categoryProduct.category_name}
