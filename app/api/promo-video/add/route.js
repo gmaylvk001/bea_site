@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import ContactModel from "@/models/ecom_promo_video_info";
 import Notification from "@/models/Notification";
+import { appendToPromovideoFormSheet } from "@/lib/googleSheets";
 
 export async function POST(request) {
   try {
@@ -19,13 +20,13 @@ export async function POST(request) {
     }
 
     // Check for existing contact (optional — usually check email instead of name)
-    const existingContact = await ContactModel.findOne({ email_address });
+    /* const existingContact = await ContactModel.findOne({ email_address });
     if (existingContact) {
       return NextResponse.json(
         { success: false, message: "This already exists" },
         { status: 400 }
       );
-    }
+    } */
 
      // Create new contact
     const newContact = await ContactModel.create({
@@ -37,7 +38,7 @@ export async function POST(request) {
       status,
     });
 
-   // 🔔 CREATE NOTIFICATION (THIS IS THE KEY PART)
+   // 🔔 CREATE NOTIFICATION
     await Notification.create({
       type: "contact",
       contactId: newContact._id,
@@ -45,6 +46,10 @@ export async function POST(request) {
       read: false,
     });
 
+    // 📊 APPEND TO GOOGLE SHEET
+    appendToPromovideoFormSheet({ ...newContact.toObject(), products: newContact.product }).catch((err) =>
+      console.error("Google Sheets promo-video append failed:", err.message)
+    );
 
     return NextResponse.json(
       { success: true, message: "Added successfully", data: newContact },

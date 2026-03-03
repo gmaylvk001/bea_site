@@ -25,8 +25,27 @@ const [openSuccess, setOpenSuccess] = useState(false);
   };
  
 
-  const handleChange = (e) => {
+  /* const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  }; */
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "mobile_number") {
+      const digits = value.replace(/\D/g, "").slice(0, 10);
+      setForm({ ...form, [name]: digits });
+      setTouched(prev => ({ ...prev, mobile_number: true }));
+      if (!digits) {
+        setErrors(prev => ({ ...prev, mobile_number: "" }));
+      } else if (!/^[6-9]\d{9}$/.test(digits)) {
+        setErrors(prev => ({ ...prev, mobile_number: "Invalid Mobile Number" }));
+      } else {
+        setErrors(prev => { const { mobile_number: _, ...rest } = prev; return rest; });
+      }
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const validate = () => {
@@ -41,9 +60,9 @@ const [openSuccess, setOpenSuccess] = useState(false);
     }
  
     if (!form.mobile_number.trim()) {
-      newErrors.mobile_number = "Phone number is required";
+      newErrors.mobile_number = "";
     } else if (!/^\d{10,15}$/.test(form.mobile_number)) {
-      newErrors.mobile_number = "Enter a valid phone number";
+      newErrors.mobile_number = "Invalid Mobile Number";
     }
  
     if (!form.city.trim()) newErrors.city = "City is required";
@@ -100,6 +119,8 @@ const [openSuccess, setOpenSuccess] = useState(false);
           });
           setResponseMsg("Message sent successfully!");
           setForm({ name: "", email_address: "", mobile_number: "", city: "", product: "" });
+          setErrors({});
+          setTouched({});
 
           // Clear message after 2 seconds
           setTimeout(() => {
@@ -136,28 +157,34 @@ const [openSuccess, setOpenSuccess] = useState(false);
                     {/* Name */}
                     <div>
                         <label className="block font-medium mb-1">Name<span className="text-red-600">*</span></label>
-                        <input type="text" name="name" value={form.name} onChange={handleChange} className={`${inputClass} ${errors.name && (touched.name || submitted) ? "border-red-500" : "border-gray-300"}`}/>
+                        <input type="text" name="name" value={form.name} onChange={handleChange} onBlur={handleBlur} className={`${inputClass} ${errors.name && (touched.name || submitted) ? "border-red-500" : "border-gray-300"}`}/>
                     </div>
                     {/* Phone */}
                     <div>
                         <label className="block font-medium mb-1">Phone <span className="text-red-600">*</span></label>
-                        <input type="text" name="mobile_number" value={form.mobile_number} onChange={handleChange} className={`${inputClass} ${errors.mobile_number && (touched.mobile_number || submitted) ? "border-red-500" : "border-gray-300"}`}/>
+                        <input type="text" name="mobile_number" value={form.mobile_number} onChange={handleChange} onBlur={handleBlur} maxLength={10}
+                        // className={`${inputClass} ${errors.mobile_number && (touched.mobile_number || submitted) ? "border-red-500" : "border-gray-300"}`}
+                        className={`${inputClass} ${'mobile_number' in errors && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
+                        />
+                        {errors.mobile_number && touched.mobile_number && (
+                  <p className="text-red-500 text-sm mt-1">{errors.mobile_number}</p>
+                )}
                     </div>
                     
                     {/* Email */}
                     <div>
                         <label className="block font-medium mb-1">Email Address<span className="text-red-600">*</span></label>
-                        <input type="email" name="email_address" value={form.email_address} onChange={handleChange} className={`${inputClass} ${errors.email_address && (touched.email_address || submitted) ? "border-red-500" : "border-gray-300"}`}/>
+                        <input type="email" name="email_address" value={form.email_address} onChange={handleChange} onBlur={handleBlur} className={`${inputClass} ${errors.email_address && (touched.email_address || submitted) ? "border-red-500" : "border-gray-300"}`}/>
                     </div>
                     {/* City */}
                     <div>
                         <label className="block font-medium mb-1">City <span className="text-red-600">*</span></label>
-                        <input type="text" name="city" value={form.city} onChange={handleChange} className={`${inputClass} ${errors.city && (touched.city || submitted) ? "border-red-500" : "border-gray-300"}`}/>
+                        <input type="text" name="city" value={form.city} onChange={handleChange} onBlur={handleBlur} className={`${inputClass} ${errors.city && (touched.city || submitted) ? "border-red-500" : "border-gray-300"}`}/>
                     </div>
                     {/* product - Full Width */}
                     <div className="md:col-span-2">
                         <label className="block font-medium mb-1">Select Products<span className="text-red-600">*</span></label>
-                        <select name="product" value={form.product} onChange={handleChange} className={`${inputClass} ${errors.product && (touched.product || submitted) ? "border-red-500" : "border-gray-300"}`}>
+                        <select name="product" value={form.product} onChange={handleChange} onBlur={handleBlur}  className={`${inputClass} ${errors.product && (touched.product || submitted) ? "border-red-500" : "border-gray-300"}`}>
                             <option value="">-- Select Category --</option>
                             <option value="Television">Television</option>
                             <option value="Refrigerators">Refrigerators</option>
@@ -237,10 +264,10 @@ const [openSuccess, setOpenSuccess] = useState(false);
 
         {/* CLICK TO CALL */}
         <a
-          href="tel:9842434323"
+          href="tel:9842344323"
           className="font-bold text-blue-700 hover:underline"
         >
-          9842434323
+          9842344323
         </a>
       </p>
     </div>

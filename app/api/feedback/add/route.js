@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import FeedbackModel from "@/models/feedback_info";
 import Notification from "@/models/Notification";
+import { appendToFeedbackSheet } from "@/lib/googleSheets";
 
 export async function POST(request) {
   try {
@@ -48,13 +49,18 @@ export async function POST(request) {
       status,
     });
 
-    // 🔔 CREATE NOTIFICATION (THIS IS THE KEY PART)
+    // 🔔 CREATE NOTIFICATION
     await Notification.create({
       type: "feedback",
       feedbackId: newFeedback._id,
       message: `New feedback received from ${name}`,
       read: false,
     });
+
+    // 📊 APPEND TO GOOGLE SHEET
+    appendToFeedbackSheet(newFeedback).catch((err) =>
+      console.error("Google Sheets feedback append failed:", err.message)
+    );
 
     return NextResponse.json(
       {

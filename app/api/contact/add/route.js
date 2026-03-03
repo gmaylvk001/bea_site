@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import ContactModel from "@/models/ecom_contact_info";
 import Notification from "@/models/Notification";
+import { appendToContactSheet } from "@/lib/googleSheets";
 
 export async function POST(request) {
   try {
@@ -37,7 +38,7 @@ export async function POST(request) {
       status,
     });
 
-   // 🔔 CREATE NOTIFICATION (THIS IS THE KEY PART)
+   // 🔔 CREATE NOTIFICATION
     await Notification.create({
       type: "contact",
       contactId: newContact._id,
@@ -45,6 +46,10 @@ export async function POST(request) {
       read: false,
     });
 
+    // 📊 APPEND TO GOOGLE SHEET (non-blocking — don't fail the request if Sheets fails)
+    appendToContactSheet(newContact).catch((err) =>
+      console.error("Google Sheets append failed:", err.message)
+    );
 
     return NextResponse.json(
       { success: true, message: "Contact added successfully", data: newContact },
