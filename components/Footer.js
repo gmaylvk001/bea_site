@@ -396,7 +396,7 @@ const capitalizeFirstLetter = (str) =>
                   <a href="#" className="hover:underline text-[#677279]">
                     Bharath Electronics ©
                   </a>{" "}
-                  2025 All rights reserved.
+                  2026 All rights reserved.
                 </p>
               </div>
             </div>
