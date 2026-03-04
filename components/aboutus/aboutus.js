@@ -339,7 +339,7 @@ const AboutUs = () => {
 
       <div className="bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-2xl border border-white/20 shadow-xl">
         <div className="text-4xl md:text-5xl font-bold text-sky-400 mb-2">
-          38
+          46
         </div>
         <p className="uppercase tracking-widest text-gray-200 text-sm">
           Branches
