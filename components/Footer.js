@@ -270,13 +270,13 @@ const capitalizeFirstLetter = (str) =>
 
   return (
     <>
-      <footer className="bg-[#2e2a2a] text-gray-300 text-sm py-5 md:px-4 p-6">
-        <div className="bg-[#2e2a2a] text-gray-400  border-white ">
+      <footer className="bg-[#f3f5f6] text-gray-300 text-sm py-5 md:px-4 p-6">
+        <div className="bg-[#f3f5f6] text-gray-400  border-white ">
           <div className="w-full flex justify-center">
             <div className="w-full container mx-auto px-3  grid grid-cols-1 md:grid-cols-3 gap-16 justify-between">
               {/* Corporate Office */}
               <div className="space-y-3">
-                <h3 className="text-white font-semibold text-lg mb-4">Corporate Office</h3>
+                <h3 className="text-[#677279] font-semibold text-lg mb-4">Corporate Office</h3>
                 <p>
                   26/1 Dr. Alagappa Chettiyar Rd, Tatabad, Near Kovai Scan Centre,
                   Coimbatore-641012
@@ -306,7 +306,7 @@ const capitalizeFirstLetter = (str) =>
               {/* My Account & Policy */}
               <div className="flex flex-col space-y-6 md:mx-auto">
                 <div>
-                  <h3 className="text-white font-semibold text-lg mb-4">My Account</h3>
+                  <h3 className="text-[#677279] font-semibold text-lg mb-4">My Account</h3>
                   <ul className="space-y-2">
                     {isLoggedIn ? (
                       <>
@@ -337,7 +337,7 @@ const capitalizeFirstLetter = (str) =>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-lg mb-4">Policy</h3>
+                  <h3 className="text-[#677279] font-semibold text-lg mb-4">Policy</h3>
                   <ul className="space-y-2">
                     <li><Link href="/privacypolicy" className="hover:underline hover:text-white">Privacy Policy</Link></li>
                     <li><Link href="/shipping" className="hover:underline hover:text-white">Shipping Policy</Link></li>
@@ -349,7 +349,7 @@ const capitalizeFirstLetter = (str) =>
               {/* Company & Social Media  */}
               <div className="md:ml-12">
                 <div className="mb-8">
-                  <h3 className="text-white font-semibold text-lg mb-4">Company</h3>
+                  <h3 className="text-[#677279] font-semibold text-lg mb-4">Company</h3>
                   <ul className="space-y-2">
                     <li><Link href="/aboutus" className="hover:underline hover:text-white">About Us</Link></li>
                     <li><Link href="/blog" className="hover:underline hover:text-white">Blogs</Link></li>
@@ -359,7 +359,7 @@ const capitalizeFirstLetter = (str) =>
                   </ul>
                 </div>
               <div>
-                  <h3 className="text-white font-semibold text-lg mb-4">Connect With Us</h3>
+                  <h3 className="text-[#677279] font-semibold text-lg mb-4">Connect With Us</h3>
                   <div className="flex flex-wrap justify-center md:justify-start gap-4">
                     <Link href="https://web.whatsapp.com/send?phone=919842344323&amp;text=Hi">
                       <FaWhatsapp className="text-xl text-green-500" />
@@ -386,14 +386,14 @@ const capitalizeFirstLetter = (str) =>
           </div>
         </div>
       {/* Bottom Section */}
-      <div className="bg-[#2e2a2a] text-gray-400 mt-10 pt-5 border-t border-white">
+      <div className="bg-[#f3f5f6] text-gray-400 mt-10 pt-5 border-t border-black">
         <div className="container mx-auto px-2 grid grid-cols-1 md:grid-cols-[55%_45%] gap-8">
           {/* LEFT SECTION (Categories + Brands) */}
           <div>
             <div className="mb-2  flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="text-center md:text-left ml-1 mb-1">
                 <p>
-                  <a href="#" className="hover:underline text-white">
+                  <a href="#" className="hover:underline text-[#677279]">
                     Bharath Electronics ©
                   </a>{" "}
                   2025 All rights reserved.
@@ -410,7 +410,7 @@ const capitalizeFirstLetter = (str) =>
                       <span className="text-gray-400">
                         <Link
                           href={`/category/${main.category_slug}/${la.category_slug}`}
-                          className="text-white hover:underline"
+                          className="text-[#677279] hover:underline"
                         >
                           {capitalizeFirstLetter(la.category_name)} :
                         </Link>
@@ -421,7 +421,7 @@ const capitalizeFirstLetter = (str) =>
                                   <span key={child._id}>
                                     <Link
                                       href={`/category/${main.category_slug}/${la.category_slug}/${child.category_slug}`}
-                                      className="hover:text-white hover:underline"
+                                      className="hover:text-[#677279] hover:underline"
                                     >
                                       {capitalizeFirstLetter(child.category_name)}
                                     </Link>
@@ -434,13 +434,13 @@ const capitalizeFirstLetter = (str) =>
                         {brands.length > 0 && (
                           <>
                             <br />
-                            <span className="font-semibold text-white">Brands :</span>
+                            <span className="font-semibold text-[#677279]">Brands :</span>
                             <span className="ml-2 text-gray-500">
                               {brands.map((brand, i) => (
                                 <span key={brand._id || `${la._id}-brand-${i}`}>
                                   <Link
                                     href={`/category/brand/${main.category_slug}/${brand.brand_slug}`}
-                                    className="hover:text-white hover:underline"
+                                    className="hover:text-[#677279] hover:underline"
                                   >
                                     {brand.brand_name.charAt(0).toUpperCase() +
                                       brand.brand_name.slice(1).toLowerCase()}
@@ -465,7 +465,7 @@ const capitalizeFirstLetter = (str) =>
                         <span key={subcat._id}>
                           <Link
                             href={`/category/${main.category_slug}/${subcat.category_slug}`}
-                            className="text-white hover:underline"
+                            className="text-[#677279] hover:underline"
                           >
                             {capitalizeFirstLetter(subcat.category_name)} :
                           </Link>
@@ -476,7 +476,7 @@ const capitalizeFirstLetter = (str) =>
                                 <span key={child._id}>
                                   <Link
                                     href={`/category/${main.category_slug}/${subcat.category_slug}/${child.category_slug}`}
-                                    className="hover:text-white hover:underline"
+                                    className="hover:text-[#677279] hover:underline"
                                   >
                                     {capitalizeFirstLetter(child.category_name)}
                                   </Link>
@@ -493,13 +493,13 @@ const capitalizeFirstLetter = (str) =>
                             brands.length > 0 && (
                               <span>
                                 <br />
-                                <span className="font-semibold text-white">Brands :</span>
+                                <span className="font-semibold text-[#677279]">Brands :</span>
                                 <span className="ml-2 text-gray-500">
                                   {brands.map((brand, bi) => (
                                     <span key={brand._id || `${main._id}-brand-${bi}`}>
                                       <Link
                                         href={`/category/brand/${subcat.category_slug}/${brand.brand_slug}`}
-                                        className="hover:text-white hover:underline"
+                                        className="hover:text-[#677279] hover:underline"
                                       >
                                         {brand.brand_name.charAt(0).toUpperCase() +
                                           brand.brand_name.slice(1).toLowerCase()}
@@ -530,13 +530,13 @@ const capitalizeFirstLetter = (str) =>
                         ) && (
                           <>
                             <br />
-                            <span className="font-semibold text-white">Brands :</span>
+                            <span className="font-semibold text-[#677279]">Brands :</span>
                             <span className="ml-2 text-gray-500">
                               {brands.map((brand, i) => (
                                 <span key={brand._id || `${main._id}-brand-${i}`}>
                                   <Link
                                     href={`/category/brand/${main.category_slug}/${brand.brand_slug}`}
-                                    className="hover:text-white hover:underline"
+                                    className="hover:text-[#677279] hover:underline"
                                   >
                                     {brand.brand_name.charAt(0).toUpperCase() +
                                       brand.brand_name.slice(1).toLowerCase()}
@@ -557,7 +557,7 @@ const capitalizeFirstLetter = (str) =>
           {/* RIGHT SECTION (Our Location) */}
          <div className="space-y-4">
   {/* Corporate Office Direction */}
-  <h3 className="text-white font-semibold text-lg mb-2">
+  <h3 className="text-[#677279] font-semibold text-lg mb-2">
     Corporate Office Direction
   </h3>
 
@@ -592,7 +592,7 @@ const capitalizeFirstLetter = (str) =>
   </div>
 
   {/* Our Location */}
-  <h3 className="text-white font-semibold text-lg mt-6 mb-4">
+  <h3 className="text-[#677279] font-semibold text-lg mt-6 mb-4">
     Our Location
   </h3>
 
@@ -605,19 +605,19 @@ const capitalizeFirstLetter = (str) =>
 
         </div>
       </div>
-      <div className="bg-[#2e2a2a] text-gray-400 mt-10 pt-5">
+      <div className="bg-[#f3f5f6] text-gray-400 mt-10 pt-5">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-[70%_30%] gap-8">
           {/* LEFT SECTION */}
             <div className="space-y-8">
               {/* SEO Content */}
                 <div className="space-y-8">
                   <div>
-                    <h2 className="text-white font-semibold">
+                    <h2 className="text-[#677279] font-semibold">
                       Buy Best Laptops & Gadgets Online
                     </h2>
                     <p className="text-gray-400 py-2">
                       Unleash the Power of Technology with{" "}
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-[#677279]">
                         Bharath Electronics' Laptop & Computers Collection
                       </span>
                       . Find the Perfect Device for Your Computing Needs, including Gaming
@@ -632,7 +632,7 @@ const capitalizeFirstLetter = (str) =>
                   </div>
 
                   <div>
-                    <h2 className="text-white font-semibold">
+                    <h2 className="text-[#677279] font-semibold">
                       Buy Kitchen Appliances at Best Prices Online – Shop Now
                     </h2>
                     <p className="text-gray-400 py-2">
@@ -652,7 +652,7 @@ const capitalizeFirstLetter = (str) =>
       {/* Auth Modal */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 w-96 max-w-full relative">
+          <div className="bg-[#677279] rounded-lg p-8 w-96 max-w-full relative">
             <button 
                 onClick={() => {
                   setShowAuthModal(false);
@@ -732,7 +732,7 @@ const capitalizeFirstLetter = (str) =>
               <button
                 type="submit"
                 disabled={loadingAuth}
-                className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:bg-gray-400 transition-colors duration-200"
+                className="w-full bg-blue-500 text-[#677279] py-2 px-4 rounded hover:bg-blue-600 disabled:bg-gray-400 transition-colors duration-200"
               >
                 {loadingAuth ? 'Processing...' : activeTab === 'login' ? 'Login' : 'Register'}
               </button>
