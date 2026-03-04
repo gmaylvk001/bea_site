@@ -272,10 +272,14 @@ const getBannerRedirectUrls = (urls) => {
       {/* ✅ Single Banner */}
       {bannerImages.length === 1 ? (
         <Link href={bannerUrls[0] || "#"}>
-          <img
+          <Image
             src={bannerImages[0]}
-            alt={categoryProduct.category_name}
+            alt={categoryProduct.category_name || "Category Banner"}
+            width={1200}
+            height={400}
+            priority
             className="w-full h-auto rounded-lg shadow-md transition"
+            unoptimized
           />
         </Link>
       ) : (
@@ -337,7 +341,12 @@ const getBannerRedirectUrls = (urls) => {
   {bannerImages.map((img, i) => (
     <SwiperSlide key={i}>
       <Link href={bannerUrls[i] || "#"}>
-      <img src={img} className="w-full h-auto rounded-lg" />
+      <Image src={img} alt={categoryProduct?.category_name || "Category Banner"}
+      width={1200}
+      height={400}
+      priority
+      className="w-full h-auto rounded-lg"
+      unoptimized />
       </Link>
     </SwiperSlide>
   ))}
