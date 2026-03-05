@@ -397,7 +397,7 @@ Object.keys(groups).forEach(key => {
       case 'price-high-low':
         return sortedProducts.sort((a, b) => b.special_price - a.special_price);
       case 'name-a-z':
-        return sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+        return sortedProducts.sort((a, b) => { if (a.name.toLowerCase() === 'capacity') return -1; if (b.name.toLowerCase() === 'capacity') return 1; return a.name.localeCompare(b.name); });
       case 'name-z-a':
         return sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
       default:
@@ -577,6 +577,25 @@ Object.keys(groups).forEach(key => {
       price: { min: priceRange[0], max: priceRange[1] },
       filters: []
     });
+  };
+
+  const sortFilterValues = (a, b) => {
+    const extractNum = (str) => {
+      const match = str.match(/[\d.]+/);
+      if (!match) return null;
+      let num = parseFloat(match[0]);
+      if (/TB/i.test(str)) num *= 1024;
+      else if (/MB/i.test(str)) num /= 1024;
+      if (/^(below|up to|upto|less than|under)/i.test(str)) return num - 0.5;
+      if (/^(above|more than|over)/i.test(str)) return num + 0.5;
+      return num;
+    };
+    const numA = extractNum(a.filter_name);
+    const numB = extractNum(b.filter_name);
+    if (numA !== null && numB !== null) return numA - numB;
+    if (numA !== null) return -1;
+    if (numB !== null) return 1;
+    return a.filter_name.localeCompare(b.filter_name);
   };
 
   const handlePageChange = (page) => {
@@ -1160,7 +1179,7 @@ Object.keys(groups).forEach(key => {
                         </div>
                         {isBrandsExpanded && (
                           <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
-                            {categoryData.brands.map(brand => (
+                            {[...categoryData.brands].sort((a, b) => a.brand_name.localeCompare(b.brand_name)).map(brand => (
                               <li key={brand._id} className="flex items-center">
                                 <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
                                 <input
@@ -1199,13 +1218,9 @@ Object.keys(groups).forEach(key => {
                                          
                                              <div className="space-y-4">
                                                {Object.values(filterGroups)
-                                                 .sort((a, b) => {
-                                           const order = CUSTOM_FILTER_ORDER.map(i => i.toLowerCase());
-                                           const indexA = order.indexOf(a.name.toLowerCase());
-                                           const indexB = order.indexOf(b.name.toLowerCase());
-                                         
-                                           return indexA - indexB;
-                                         })
+                                                 .sort((a, b) =>
+                                           a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+                                         )
                                          
                                                  .map(group => (
                                                    <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
@@ -1223,7 +1238,7 @@ Object.keys(groups).forEach(key => {
                                          
                                                      {expandedFilters[group._id] && (
                                                        <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
-                                                         {group.filters.map(filter => (
+                                                         {[...group.filters].sort(sortFilterValues).map(filter => (
                                                            <li key={filter._id} className="flex items-center">
                                                              <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
                                                                <input
@@ -1422,7 +1437,7 @@ Object.keys(groups).forEach(key => {
                               </div>
                               {isBrandsExpanded && (
                                 <ul className="mt-2 space-y-2 max-h-48 overflow-y-auto">
-                                  {categoryData.brands.map(brand => (
+                                  {[...categoryData.brands].sort((a, b) => a.brand_name.localeCompare(b.brand_name)).map(brand => (
                                     <li key={brand._id} className="flex items-center">
                                       <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
                                         <input
@@ -1460,7 +1475,7 @@ Object.keys(groups).forEach(key => {
             
                                       {expandedFilters[group._id] && (
                                         <ul className="mt-2 space-y-2 max-h-48 overflow-y-auto">
-                                          {group.filters.map(filter => (
+                                          {[...group.filters].sort(sortFilterValues).map(filter => (
                                             <li key={filter._id} className="flex items-center">
                                               <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
                                                 <input
