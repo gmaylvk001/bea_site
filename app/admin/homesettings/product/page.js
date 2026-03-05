@@ -520,6 +520,116 @@ fd.append("position", data.position || 0);
     setDeleteModal({ isOpen: false, subcategoryId: null });
   };
 
+  // Renders the product settings form for any category node
+  const renderCategoryForm = (subcat) => {
+    const subcatProducts = products.filter(
+      (p) =>
+        p.category === subcat._id.toString() &&
+        p.status === "Active" &&
+        p.stock_status === "In Stock"
+    );
+    const productOptions = subcatProducts.map((p) => ({ value: p._id, label: p.name }));
+    const existingData = existingCategoryProducts[subcat._id];
+    const currentMode = mode[subcat._id] || "add";
+
+    return (
+      <div key={subcat._id} className="p-5 border rounded-lg shadow bg-white space-y-4">
+        <div className="flex justify-between items-center pb-3 border-b">
+          <h3 className="font-semibold text-lg">{subcat.category_name}</h3>
+          {existingData && (
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${existingData.status === "Active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+              {existingData.status}
+            </span>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Products</label>
+          <Select
+            options={productOptions}
+            value={selectedProducts[subcat._id] || []}
+            onChange={(options) => handleProductSelect(subcat._id, options)}
+            placeholder="Select products"
+            isMulti
+            closeMenuOnSelect={false}
+            hideSelectedOptions={false}
+            components={{ Option }}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3 border p-3 rounded bg-gray-50">
+            <div className="flex justify-between items-center">
+              <span className="font-medium">Banner Images</span>
+              <button type="button" onClick={() => handleAddImage(subcat._id, "bannerImage")} className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                + Add Image
+              </button>
+            </div>
+            {(formData[subcat._id]?.bannerImage || []).map((img, index) => (
+              <div key={index} className="border p-3 rounded relative bg-white space-y-2">
+                {(img.existingUrl || img.file) && (
+                  <img src={img.file ? URL.createObjectURL(img.file) : img.existingUrl} className="h-28 object-contain rounded border" />
+                )}
+                <input type="file" accept="image/*" onChange={(e) => handleMultiImageChange(subcat._id, "bannerImage", index, "file", e.target.files[0])} className="w-full p-2 border rounded" />
+                <input type="text" placeholder="Redirect URL" value={img.redirectUrl || ""} onChange={(e) => handleMultiImageChange(subcat._id, "bannerImage", index, "redirectUrl", e.target.value)} className="w-full p-2 border rounded" />
+                <button type="button" onClick={() => handleDeleteImage(subcat._id, "bannerImage", index, img.existingUrl)} className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 text-xs rounded">Delete</button>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
+              <span>Category Image</span>
+              {existingData?.categoryImage && <img src={existingData.categoryImage} alt="Category Preview" className="w-full h-32 rounded object-contain" />}
+            </label>
+            <input type="file" accept="image/*" onChange={(e) => handleInputChange(subcat._id, "categoryImage", e.target.files[0])} className="w-full p-2 border rounded mb-2" />
+            <input type="text" placeholder="Category Redirect URL" value={formData[subcat._id]?.categoryRedirectUrl || ""} onChange={(e) => handleInputChange(subcat._id, "categoryRedirectUrl", e.target.value)} className="w-full p-2 border rounded" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Border Color</label>
+            <div className="flex items-center">
+              <input type="color" value={formData[subcat._id]?.borderColor || "#000000"} onChange={(e) => handleInputChange(subcat._id, "borderColor", e.target.value)} className="w-10 h-10 p-1 border rounded mr-2" />
+              <span className="text-sm">{formData[subcat._id]?.borderColor || "#000000"}</span>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Alignment</label>
+            <select value={formData[subcat._id]?.alignment || "left"} onChange={(e) => handleInputChange(subcat._id, "alignment", e.target.value)} className="w-full p-2 border rounded">
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              <option value="center">Center</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Status</label>
+            <select value={formData[subcat._id]?.status || "Active"} onChange={(e) => handleInputChange(subcat._id, "status", e.target.value)} className="w-full p-2 border rounded">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Position</label>
+            <input type="number" value={formData[subcat._id]?.position || 0} onChange={(e) => handleInputChange(subcat._id, "position", parseInt(e.target.value))} className="w-full p-2 border rounded" />
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-4 border-t">
+          <button onClick={() => handleSave(subcat._id)} disabled={loading[subcat._id]} className="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 disabled:opacity-50 transition-colors">
+            {loading[subcat._id] ? "Saving..." : currentMode === "add" ? "Add" : "Update"}
+          </button>
+          {currentMode === "edit" && (
+            <button onClick={() => openDeleteModal(subcat._id)} disabled={loading[subcat._id]} className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 disabled:opacity-50 transition-colors">
+              {loading[subcat._id] ? "Processing..." : "Set to Inactive"}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-6">Categories & Products</h2>
@@ -564,10 +674,14 @@ fd.append("position", data.position || 0);
 
                 const existingData = existingCategoryProducts[subcat._id];
                 const currentMode = mode[subcat._id] || 'add';
+                const allowedChildren = ["Air Coolers", "Fan"];
+                const children = (subcategoriesByParent[subcat._id] || []).filter(
+                  (c) => allowedChildren.includes(c.category_name)
+                );
 
                 return (
+                  <div key={`wrapper-${subcat._id}`}>
                   <div
-                    key={subcat._id}
                     className="p-5 border rounded-lg shadow bg-white space-y-4"
                   >
                     {/* Category Header */}
@@ -844,6 +958,12 @@ fd.append("position", data.position || 0);
                         </button>
                       )}
                     </div>
+                  </div>
+                  {children.length > 0 && (
+                    <div className="space-y-4 ml-6 mt-4">
+                      {children.map((child) => renderCategoryForm(child))}
+                    </div>
+                  )}
                   </div>
                 );
               })}
