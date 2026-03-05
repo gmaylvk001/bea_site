@@ -579,7 +579,7 @@ fd.append("position", data.position || 0);
 
           <div>
             <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
-              <span>Category Image</span>
+              <span>Category Image (750 * 783)</span>
               {existingData?.categoryImage && <img src={existingData.categoryImage} alt="Category Preview" className="w-full h-32 rounded object-contain" />}
             </label>
             <input type="file" accept="image/*" onChange={(e) => handleInputChange(subcat._id, "categoryImage", e.target.files[0])} className="w-full p-2 border rounded mb-2" />
@@ -842,7 +842,7 @@ fd.append("position", data.position || 0);
                       {/* Category Image */}
                       <div>
                         <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
-                          <span>Category Image</span>
+                          <span>Category Image (750 * 783)</span>
                           {existingData?.categoryImage && (
                             <img
                               src={existingData.categoryImage}
