@@ -524,7 +524,7 @@ fd.append("position", data.position || 0);
   const renderCategoryForm = (subcat) => {
     const subcatProducts = products.filter(
       (p) =>
-        p.category === subcat._id.toString() &&
+        p.sub_category_new?.toLowerCase().includes(subcat.md5_cat_name?.toLowerCase()) &&
         p.status === "Active" &&
         p.stock_status === "In Stock"
     );
@@ -660,11 +660,22 @@ fd.append("position", data.position || 0);
             
             <div className="space-y-4 ml-6">
               {subcategoriesByParent[mainCategory._id]?.map((subcat) => {
+                const allowedChildren = ["Air Coolers", "Fan"];
+                const children = (subcategoriesByParent[subcat._id] || []).filter(
+                  (c) => allowedChildren.includes(c.category_name)
+                );
+
+                const childMd5Names = children.map((c) => c.md5_cat_name?.toLowerCase());
                 const subcatProducts = products.filter(
-                  (p) =>
-                    p.category === subcat._id.toString() &&
-                    p.status === "Active" &&
-                    p.stock_status === "In Stock"
+                  (p) => {
+                    const pCat = p.sub_category_new?.toLowerCase();
+                    return (
+                      (pCat?.includes(subcat.md5_cat_name?.toLowerCase()) ||
+                        childMd5Names.some((md5) => pCat?.includes(md5))) &&
+                      p.status === "Active" &&
+                      p.stock_status === "In Stock"
+                    );
+                  }
                 );
 
                 const productOptions = subcatProducts.map((p) => ({
@@ -674,10 +685,6 @@ fd.append("position", data.position || 0);
 
                 const existingData = existingCategoryProducts[subcat._id];
                 const currentMode = mode[subcat._id] || 'add';
-                const allowedChildren = ["Air Coolers", "Fan"];
-                const children = (subcategoriesByParent[subcat._id] || []).filter(
-                  (c) => allowedChildren.includes(c.category_name)
-                );
 
                 return (
                   <div key={`wrapper-${subcat._id}`}>
