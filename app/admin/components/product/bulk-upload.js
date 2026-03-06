@@ -738,14 +738,14 @@ export default function BulkUploadPage() {
   };
 
   const sections = [
-    { id: "section-product-overview",          label: "Product Overview Upload",       image: "/uploads/files/Product_all_upload_first_box.png" },
-    { id: "section-filter-upload",             label: "Filter Upload",                 image: "/uploads/files/Filter_Bulk_Upload_second_box.png" },
+    { id: "section-product-overview",          label: "Product - All Details Upload",       image: "/uploads/files/Product_all_upload_first_box.png" },
+    { id: "section-filter-upload",             label: "Filter Values Upload",                 image: "/uploads/files/Filter_Bulk_Upload_second_box.png" },
     { id: "section-filter-group-upload",       label: "Filter Group Upload",           image: "/uploads/files/Filter_Group_uplad_third_image.png" },
     { id: "section-movement-upload",           label: "Movement Type Upload",          image: "/uploads/files/Movement_upload_fourth_box_image.png" },
     { id: "section-filter-values-upload",      label: "Product Filter Values Upload",  image: "/uploads/files/Filter_values_bulk_upload_fifth_box_image.png" },
     { id: "section-category-filter-upload",    label: "Category Filter Upload",        image: "/uploads/files/Category_filter_upload_sixth_box_image.png" },
     { id: "section-new-category-upload",       label: "New Category Upload",           image: "/uploads/files/New_Category_bulk_upload_seventh_image.png" },
-    { id: "section-product-categories-upload", label: "Update Product Categories",     image: "/uploads/files/Product_updating_category_eighth_image.png" },
+    // { id: "section-product-categories-upload", label: "Update Product Categories",     image: "/uploads/files/Product_updating_category_eighth_image.png" },
     { id: "section-product-brands-upload",     label: "Update Product Brands",         image: "/uploads/files/Product_Brand_update_nineth_image.png" },
     { id: "section-status-bulk",               label: "Status Bulk Upload",            image: "/uploads/files/Status_bulk_upload_tenth_box_image.png" },
   ];
@@ -1200,7 +1200,7 @@ export default function BulkUploadPage() {
             )}
 
             {/* Section 8: Update Product Categories */}
-            {selectedSection === "section-product-categories-upload" && (
+            {/* {selectedSection === "section-product-categories-upload" && (
               <form id="section-product-categories-upload" ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "map_product_categories")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
                 <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
                   <div className="mb-4">
@@ -1243,7 +1243,7 @@ export default function BulkUploadPage() {
                   </button>
                 </div>
               </form>
-            )}
+            )} */}
 
             {/* Section 9: Update Product Brands */}
             {selectedSection === "section-product-brands-upload" && (
