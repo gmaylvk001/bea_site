@@ -60,8 +60,8 @@ export default function BulkUploadPage() {
 
    const handleDownload = () => {
   const link = document.createElement('a');
-  link.href = `/uploads/files/SampleFormat.xlsx?t=${Date.now()}`;
-  link.download = 'SampleFormat.xlsx';
+  link.href = `/uploads/files/SampleFormatStatus.xlsx?t=${Date.now()}`;
+  link.download = 'SampleFormatStatus.xlsx';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
