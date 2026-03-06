@@ -643,6 +643,26 @@ useEffect(() => {
   };
   
     
+  const sortedFilterGroups = (() => {
+    const groups = Object.values(filterGroups);
+    if (sub_slug && sub_slug.includes('washing-machine')) {
+      const priority = ['operation', 'washer capacity'];
+      return [...groups].sort((a, b) => {
+        const aIdx = priority.indexOf(a.name.toLowerCase());
+        const bIdx = priority.indexOf(b.name.toLowerCase());
+        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+        if (aIdx !== -1) return -1;
+        if (bIdx !== -1) return 1;
+        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      });
+    }
+    return [...groups].sort((a, b) => {
+      if (a.name.toLowerCase() === 'capacity') return -1;
+      if (b.name.toLowerCase() === 'capacity') return 1;
+      return a.name.localeCompare(b.name);
+    });
+  })();
+
   if ((loading || !categoryData.category) && page == 1) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -1076,9 +1096,7 @@ useEffect(() => {
              </div>
          
              <div className="space-y-4">
-               {Object.values(filterGroups)
-                 .sort((a, b) => { if (a.name.toLowerCase() === 'capacity') return -1; if (b.name.toLowerCase() === 'capacity') return 1; return a.name.localeCompare(b.name); })
-         
+               {sortedFilterGroups
                  .map(group => (
                    <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                      <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
@@ -1324,7 +1342,7 @@ useEffect(() => {
                 <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
               </div>
               <div className="space-y-4">
-                {Object.values(filterGroups).sort((a, b) => { if (a.name.toLowerCase() === 'capacity') return -1; if (b.name.toLowerCase() === 'capacity') return 1; return a.name.localeCompare(b.name); }).map(group => (
+                {sortedFilterGroups.map(group => (
                   <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                     {/* Filter Group Header */}
                     <button  onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
