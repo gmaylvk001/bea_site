@@ -9,7 +9,12 @@ export async function POST(request) {
     await dbConnect(); // Ensure DB connection
 
     const body = await request.json();
-    const { name, email_address, mobile_number, product, city, status } = body;
+    const { name, email_address, mobile_number, product, city, status, _hp } = body;
+
+    // Honeypot check — bots fill this hidden field, humans don't
+    if (_hp) {
+      return NextResponse.json({ success: false, message: "Spam detected" }, { status: 400 });
+    }
 
     // Validate fields
     if (!name || !email_address || !mobile_number || !product || !city) {
@@ -17,6 +22,20 @@ export async function POST(request) {
         { success: false, message: "All fields are required" },
         { status: 400 }
       );
+    }
+
+    // Validate name and city — only letters, spaces, dots, hyphens (blocks random bot strings)
+    const namePattern = /^[a-zA-Z\s.'\-]{2,60}$/;
+    if (!namePattern.test(name.trim())) {
+      return NextResponse.json({ success: false, message: "Invalid name format" }, { status: 400 });
+    }
+    if (!namePattern.test(city.trim())) {
+      return NextResponse.json({ success: false, message: "Invalid city format" }, { status: 400 });
+    }
+
+    // Validate phone — Indian mobile number format
+    if (!/^[6-9]\d{9}$/.test(mobile_number)) {
+      return NextResponse.json({ success: false, message: "Invalid phone number" }, { status: 400 });
     }
 
     // Check for existing contact (optional — usually check email instead of name)

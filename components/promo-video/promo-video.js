@@ -10,7 +10,9 @@ export default function ContactForm() {
     mobile_number: "",
     city: "",
     product: "",
+    _hp: "",
   });
+  const [formLoadTime] = useState(() => Date.now());
 
   const [openMission, setOpenMission] = useState(true);   // default OPEN
 const [openSuccess, setOpenSuccess] = useState(false);
@@ -83,6 +85,15 @@ const [openSuccess, setOpenSuccess] = useState(false);
       return;
     }
 
+    // Honeypot check — bots fill hidden fields, humans don't
+    if (form._hp) return;
+
+    // Timing check — bots submit too fast
+    if (Date.now() - formLoadTime < 3000) {
+      setResponseMsg("Please take a moment before submitting.");
+      return;
+    }
+
     setLoading(true);
     setResponseMsg("");
 
@@ -118,7 +129,7 @@ const [openSuccess, setOpenSuccess] = useState(false);
           let adminData = await adminresponse.json();
           });
           setResponseMsg("Message sent successfully!");
-          setForm({ name: "", email_address: "", mobile_number: "", city: "", product: "" });
+          setForm({ name: "", email_address: "", mobile_number: "", city: "", product: "", _hp: "" });
           setErrors({});
           setTouched({});
 
@@ -195,6 +206,11 @@ const [openSuccess, setOpenSuccess] = useState(false);
                             <option value="Mobiles">Mobiles</option>
                             <option value="Others">Others</option>
                         </select>
+                    </div>
+
+                    {/* Honeypot — hidden from humans, bots will fill this */}
+                    <div style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden" }} aria-hidden="true">
+                      <input type="text" name="_hp" value={form._hp} onChange={handleChange} tabIndex="-1" autoComplete="off" />
                     </div>
 
                     {/* Submit Button - Full Width */}

@@ -13,7 +13,9 @@ export default function ContactForm() {
     products:"",
     city: "",
     feedback: "",
+    _hp: "",
   });
+  const [formLoadTime] = useState(() => Date.now());
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -86,6 +88,15 @@ const handleSubmit = async (e) => {
     }
 
 
+  // Honeypot check — bots fill hidden fields, humans don't
+  if (form._hp) return;
+
+  // Timing check — bots submit too fast
+  if (Date.now() - formLoadTime < 3000) {
+    setResponseMsg("Please take a moment before submitting.");
+    return;
+  }
+
   setLoading(true);
   setResponseMsg("");
 
@@ -122,7 +133,7 @@ const handleSubmit = async (e) => {
         let adminData = await adminresponse.json();
       });
       setResponseMsg("Message sent successfully!");
-      setForm({ name: "", email_address: "", mobile_number: "", invoice_number: "", products: "", city: "", feedback: "" });
+      setForm({ name: "", email_address: "", mobile_number: "", invoice_number: "", products: "", city: "", feedback: "", _hp: "" });
       setErrors({});
       setTouched({});
 
@@ -294,6 +305,11 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
                 onBlur={handleBlur}
                 className={`${inputClass} ${errors.feedback && touched.feedback ? "border-red-500" : "border-gray-300"}`}
               ></textarea>
+            </div>
+
+            {/* Honeypot — hidden from humans, bots will fill this */}
+            <div style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden" }} aria-hidden="true">
+              <input type="text" name="_hp" value={form._hp} onChange={handleChange} tabIndex="-1" autoComplete="off" />
             </div>
 
             {/* Submit Button - Full Width */}
