@@ -21,6 +21,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from "swiper/modules";
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import CategoryProducts from '@/components/CategoryProducts';
+import OurLocations from '@/components/OurLocations';
 import { ChevronRight } from "lucide-react";
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -1704,7 +1705,8 @@ return (
                   )}
                 </div>
                 <ToastContainer />
-                <RecentlyViewedProducts /> 
+                <RecentlyViewedProducts />
+                <OurLocations />
             </div>
         </>
     ); 
