@@ -58,7 +58,8 @@ async function geocodeAddress(store) {
 
 function StoreDetail({ store, onBack }) {
   const img = store.store_images?.[0] || store.images?.[0];
-  const imgSrc = img ? (img.startsWith("http") ? img : `/uploads/${img}`) : null;
+  // const imgSrc = img ? (img.startsWith("http") ? img : `/uploads/${img}`) : null;
+  const imgSrc = img ? (img.startsWith("http") ? img : `${img}`) : null;
 
   const mapsQuery = store._coords
     ? `${store._coords.lat},${store._coords.lng}`
@@ -259,7 +260,8 @@ export default function OurLocations() {
     const img = store.store_images?.[0] || store.images?.[0];
     if (!img) return null;
     if (img.startsWith("http")) return img;
-    return `/uploads/${img}`;
+    return `${img}`;
+    // return `/uploads/${img}`;
   };
 
   return (
