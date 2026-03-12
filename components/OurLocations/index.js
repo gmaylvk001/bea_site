@@ -76,9 +76,10 @@ function StoreDetail({ store, onBack }) {
           <img src={imgSrc} alt={store.organisation_name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-200">
-            <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <img src="uploads/default_geocode-1x.png" alt={store.organisation_name} className="w-full h-full object-cover" />
+            {/* <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+            </svg> */}
           </div>
         )}
         <button
@@ -265,7 +266,7 @@ export default function OurLocations() {
   };
 
   return (
-    <section className="mb-14 px-4 sm:px-6 md:px-6">
+    <section className="mb-1 px-4 sm:px-6 md:px-1">
       <h5 className="text-lg font-semibold mb-4">Our Locations</h5>
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row border rounded-xl shadow-lg">
         {/* ── LEFT PANEL ── */}
@@ -333,9 +334,15 @@ export default function OurLocations() {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {/* <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
+                                </svg> */}
+                                <img
+                                src="/uploads/default_geocode-1x.png"
+                                alt={store.organisation_name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.style.display = "none"; }}
+                              />
                               </div>
                             )}
                           </div>

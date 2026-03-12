@@ -1188,6 +1188,7 @@ export default function HomeComponent() {
                               )}
                           </motion.div>
                       </div>
+                      <OurLocations />
                   </motion.section>
               );
           case 'topbanner':
@@ -1706,7 +1707,6 @@ return (
                 </div>
                 <ToastContainer />
                 <RecentlyViewedProducts />
-                <OurLocations />
             </div>
         </>
     ); 
