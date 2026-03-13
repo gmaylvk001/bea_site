@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db";
 import ContactModel from "@/models/ecom_contact_info";
 import fs from "fs";
 import path from "path";
+import { appendToJobsSheet } from "@/lib/googleSheets";
 
 export async function POST(request) {
   try {
@@ -94,6 +95,17 @@ export async function POST(request) {
     });
 
     await newEntry.save();*/
+
+    // 📊 APPEND TO GOOGLE SHEET
+    appendToJobsSheet({
+      name,
+      mobile_number,
+      email,
+      city,
+      job_post,
+      resume_url: `${process.env.NEXT_PUBLIC_API_URL}/uploads/resumes/${fileName}`,
+      createdAt: new Date(),
+    }).catch((err) => console.error("Google Sheets jobs append failed:", err.message));
 
     return NextResponse.json(
       { success: true, message: "Form submitted successfully" },
