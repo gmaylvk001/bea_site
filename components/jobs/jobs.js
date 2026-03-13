@@ -10,27 +10,48 @@ export default function ContactBEA() {
     city: "",
     job_post: "",
     resume: null,
+    _hp: "",
   });
+  const [formLoadTime] = useState(() => Date.now());
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [responseMsg, setResponseMsg] = useState("");
+  const [touched, setTouched] = useState({});
+  const [fileKey, setFileKey] = useState(0);
 
- const [jobPositions, setJobPositions] = useState([]);
+  const [jobPositions, setJobPositions] = useState([]);
 
-useEffect(() => {
-  const fetchJobPositions = async () => {
-    const res = await fetch("/api/job-position");
-    const data = await res.json();
-    setJobPositions(data.data || []); 
+  useEffect(() => {
+    const fetchJobPositions = async () => {
+      const res = await fetch("/api/job-position");
+      const data = await res.json();
+      setJobPositions(data.data || []);
+    };
+    fetchJobPositions();
+  }, []);
+
+  const handleBlur = (e) => {
+    setTouched({ ...touched, [e.target.name]: true });
   };
 
-  fetchJobPositions();
-}, []);
-
-
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "mobile_number") {
+      const digits = value.replace(/\D/g, "").slice(0, 10);
+      setForm({ ...form, mobile_number: digits });
+      setTouched((prev) => ({ ...prev, mobile_number: true }));
+      if (!digits) {
+        setErrors((prev) => ({ ...prev, mobile_number: "" }));
+      } else if (!/^[6-9]\d{9}$/.test(digits)) {
+        setErrors((prev) => ({ ...prev, mobile_number: "Invalid Mobile Number" }));
+      } else {
+        setErrors((prev) => { const { mobile_number: _, ...rest } = prev; return rest; });
+      }
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleFileChange = (e) => {
@@ -60,8 +81,8 @@ useEffect(() => {
 
     if (!form.mobile_number.trim()) {
       newErrors.mobile_number = "Contact number is required";
-    } else if (!/^\d{10,15}$/.test(form.mobile_number)) {
-      newErrors.mobile_number = "Enter a valid number";
+    } else if (!/^[6-9]\d{9}$/.test(form.mobile_number)) {
+      newErrors.mobile_number = "Invalid Mobile Number";
     }
 
     if (!form.email.trim()) {
@@ -81,10 +102,22 @@ useEffect(() => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validate();
 
+    const allTouched = Object.keys(form).reduce((acc, key) => ({ ...acc, [key]: true }), {});
+    setTouched(allTouched);
+
+    const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      return;
+    }
+
+    // Honeypot check — bots fill hidden fields, humans don't
+    if (form._hp) return;
+
+    // Timing check — bots submit too fast
+    if (Date.now() - formLoadTime < 3000) {
+      setResponseMsg("Please take a moment before submitting.");
       return;
     }
 
@@ -115,7 +148,10 @@ useEffect(() => {
           city: "",
           job_post: "",
           resume: null,
+          _hp: "",
         });
+        setTouched({});
+        setFileKey((k) => k + 1);
       } else {
         setResponseMsg(data.message || "Failed to submit");
       }
@@ -126,8 +162,10 @@ useEffect(() => {
     }
   };
 
-  const inputClass =
-    "w-full border rounded-md px-3 py-2 focus:outline-none border-gray-300";
+  const inputClass = (field) =>
+    `w-full border rounded-md px-3 py-2 focus:outline-none ${
+      errors[field] ? "border-red-500" : "border-gray-300"
+    }`;
 
   return (
     <>
@@ -158,6 +196,17 @@ useEffect(() => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
 
+          {/* Honeypot — hidden from humans, bots fill it */}
+          <input
+            type="text"
+            name="_hp"
+            value={form._hp}
+            onChange={handleChange}
+            style={{ display: "none" }}
+            tabIndex={-1}
+            autoComplete="off"
+          />
+
           {/* Name */}
           <div>
             <label className="block font-medium mb-1">
@@ -168,7 +217,8 @@ useEffect(() => {
               name="name"
               value={form.name}
               onChange={handleChange}
-              className={inputClass}
+              onBlur={handleBlur}
+              className={inputClass("name")}
             />
             {errors.name && (
               <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -185,7 +235,8 @@ useEffect(() => {
               name="mobile_number"
               value={form.mobile_number}
               onChange={handleChange}
-              className={inputClass}
+              onBlur={handleBlur}
+              className={inputClass("mobile_number")}
             />
             {errors.mobile_number && (
               <p className="text-red-500 text-sm mt-1">
@@ -204,7 +255,8 @@ useEffect(() => {
               name="email"
               value={form.email}
               onChange={handleChange}
-              className={inputClass}
+              onBlur={handleBlur}
+              className={inputClass("email")}
             />
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -221,7 +273,8 @@ useEffect(() => {
               name="city"
               value={form.city}
               onChange={handleChange}
-              className={inputClass}
+              onBlur={handleBlur}
+              className={inputClass("city")}
             />
             {errors.city && (
               <p className="text-red-500 text-sm mt-1">{errors.city}</p>
@@ -239,7 +292,7 @@ useEffect(() => {
     name="job_post"
     value={form.job_post}
     onChange={handleChange}
-    className={`${inputClass} bg-white`}
+    className={`${inputClass("job_post")} bg-white`}
   >
     <option value="">-- Select Job Position --</option>
 
@@ -268,10 +321,11 @@ useEffect(() => {
               Upload Resume (PDF/DOCX) <span className="text-red-600">*</span>
             </label>
             <input
+              key={fileKey}
               type="file"
               accept=".pdf,.docx"
               onChange={handleFileChange}
-              className="w-full"
+              className={`w-full rounded-md ${errors.resume ? "border border-red-500" : ""}`}
             />
 
             {errors.resume && (
