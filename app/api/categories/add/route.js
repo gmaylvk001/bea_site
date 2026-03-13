@@ -29,7 +29,7 @@ export async function POST(req) {
 
     if (parent_name !== "none") {
       const parentCategory = await Category.findOne({
-        category_name: parent_name
+        category_name: parent_name,
       });
 
       if (parentCategory) {
@@ -48,23 +48,23 @@ export async function POST(req) {
     const selectedFilters = formData.get("selectedFilters"); // Get selected filters
 
     if (!category_name) {
-      return NextResponse.json({ error: "Category name is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Category name is required" },
+        { status: 400 },
+      );
     }
 
     let category_slug = convertSlug(category_name);
     let md5_cat_name = md5(category_slug);
-    
+
     if (parentid === "none") {
-        parentid_new = "none";
+      parentid_new = "none";
+    } else {
+      const objectId = new mongoose.Types.ObjectId(parentid);
+      const getParentCategory = await Category.findOne({ _id: objectId });
+      parentid_new = getParentCategory.md5_cat_name;
     }
-    else
-    {
-        const objectId = new mongoose.Types.ObjectId(parentid);
-        const getParentCategory = await Category.findOne({ _id: objectId });
-        parentid_new = getParentCategory.md5_cat_name;
-    }
-    
-    
+
     /*
 
     if (parentid === "none") {
@@ -101,8 +101,7 @@ export async function POST(req) {
     }
     
     */
-    
-    
+
     /*
 
     if (parentid_new === "none") {
@@ -138,27 +137,23 @@ export async function POST(req) {
     }
     
     */
-    
-    
-    
 
     // Check if category already exists
     // let existingCategory = await Category.findOne({
     //   category_slug: category_slug,
     //   parentid: parentid,
-      //parentid_new: parentid_new
+    //parentid_new: parentid_new
     // });
 
     let existingCategory = await Category.findOne({
-  category_slug,
-  parentid_new
-});
-
+      category_slug,
+      parentid_new,
+    });
 
     if (existingCategory) {
       return NextResponse.json(
         { error: "Category with the same slug and parent already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -180,7 +175,12 @@ export async function POST(req) {
     // Handle navImage upload
     let nav_image_url = "";
     const navFile = formData.get("navImage");
-    if (navFile && typeof navFile !== "string" && navFile.name && navFile.size > 0) {
+    if (
+      navFile &&
+      typeof navFile !== "string" &&
+      navFile.name &&
+      navFile.size > 0
+    ) {
       try {
         const bytes = await navFile.arrayBuffer();
         const buffer = Buffer.from(bytes);
@@ -211,6 +211,7 @@ export async function POST(req) {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    console.log("newCat", newCategory);
 
     await newCategory.save();
 
@@ -219,17 +220,22 @@ export async function POST(req) {
     if (selectedFilters) {
       try {
         filterIds = JSON.parse(selectedFilters);
-        console.log(`Adding ${filterIds.length} filters for new category ${newCategory._id}:`, filterIds);
-        
+        console.log(
+          `Adding ${filterIds.length} filters for new category ${newCategory._id}:`,
+          filterIds,
+        );
+
         if (filterIds.length > 0) {
-          const filterPromises = filterIds.map(filterId => 
+          const filterPromises = filterIds.map((filterId) =>
             CategoryFilter.create({
               filter_id: filterId,
-              category_id: newCategory._id
-            })
+              category_id: newCategory._id,
+            }),
           );
           await Promise.all(filterPromises);
-          console.log(`Successfully added ${filterIds.length} filters for category ${newCategory._id}`);
+          console.log(
+            `Successfully added ${filterIds.length} filters for category ${newCategory._id}`,
+          );
         }
       } catch (error) {
         console.error("Error adding filters:", error);
@@ -239,17 +245,22 @@ export async function POST(req) {
       console.log("No filters selected for new category");
     }
 
-    return NextResponse.json({ 
-      message: "Category added successfully", 
-      category: newCategory,
-      filtersAdded: filterIds.length 
-    }, { status: 201 });
-
+    return NextResponse.json(
+      {
+        message: "Category added successfully",
+        category: newCategory,
+        filtersAdded: filterIds.length,
+      },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Error adding category:", error);
-    return NextResponse.json({ 
-      error: "Failed to add category", 
-      details: error.message 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Failed to add category",
+        details: error.message,
+      },
+      { status: 500 },
+    );
   }
 }
