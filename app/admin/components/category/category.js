@@ -206,6 +206,9 @@ const fetchCategoryFilters = async (categoryId) => {
 const handleEditClick = async (category) => {
   try {
     console.log("Opening edit modal for category:", category._id, category.category_name);
+    console.log("category object:", category);
+    console.log("navImage value:", category.navImage);
+    console.log("Full category data:", JSON.stringify(category, null, 2));
     
     // First set the basic category data
     setCategoryToUpdate({
@@ -344,6 +347,7 @@ if (!file) {
   formData.append("parentid", newCategory.parentid);
   formData.append("status", newCategory.status);
   formData.append("image", newCategory.image);
+  formData.append("navImage",newCategory.navImage);
   formData.append("meta_title", newCategory.meta_title);
   formData.append("meta_description", newCategory.meta_description);
   formData.append("meta_keyword", newCategory.meta_keyword);
@@ -1210,7 +1214,7 @@ const handleUpdateNavImageChange = async (e) => {
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-semibold text-gray-700">Upload Image (107px X 151px) - Optional</label>
+                <label className="block mb-1 text-sm font-semibold text-gray-700">Upload Image  (260px X 240px)  - Optional</label>
               <input
                   type="file"
                   onChange={handleImageChange}
@@ -1474,7 +1478,7 @@ const handleUpdateNavImageChange = async (e) => {
           {/* Image Upload */}
           <div>
             <label className="block mb-1 text-sm font-semibold text-gray-700">
-              Upload Image (107px X 151px)
+              Upload Image (260px X 240px)
             </label>
             <input
               type="file"

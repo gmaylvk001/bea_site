@@ -32,6 +32,8 @@ export async function PUT(req) {
     const content = formData.get("content") || ""; // ✅ Add content field
     const file = formData.get("image");
     const existingImage = formData.get("existingImage");
+     const navFile = formData.get("navImage");
+     const existingNavImage = formData.get("existingNavImage");
     const selectedFilters = formData.get("selectedFilters"); // Get selected filters
 
     if (!_id || !category_name) {
@@ -92,19 +94,17 @@ export async function PUT(req) {
       await writeFile(path.join(uploadDir, fileName), buffer);
       image_url = `/uploads/categories/${fileName}`;
     }
-
     // Handle navImage upload/update BEFORE updating category
-    const existingNavImage = formData.get("existingNavImage");
+    // const existingNavImage = formData.get("existingNavImage");
     let nav_image_url = existingNavImage;
-    const navFile = formData.get("navImage");
+    //  const navFile = formData.get("navImage");
     if (navFile) {
-      console.log('navFile:', navFile);
       if (nav_image_url) {
         try {
           const oldNavImagePath = path.join(
             process.cwd(),
             "public",
-            nav_image_url.replace("http://localhost:3000", "")
+            nav_image_url.replace("http://localhost:3000","")
           );
           await unlink(oldNavImagePath);
         } catch (err) {
@@ -115,8 +115,8 @@ export async function PUT(req) {
       const uploadDir = path.join(process.cwd(), "public/uploads/categories");
       const fileName = `category_nav_${Date.now()}${path.extname(navFile.name)}`;
       await writeFile(path.join(uploadDir, fileName), buffer);
-      nav_image_url = `http://localhost:3000/uploads/categories/${fileName}`;
-      console.log('nav_image_url:', nav_image_url);
+      nav_image_url = `/uploads/categories/${fileName}`;
+      console.log('nav_image_url:',nav_image_url);
     }
 
     // UPDATE FILTERS LOGIC - Same as product filters
