@@ -675,9 +675,31 @@ const grandTotal = subtotal - totalDiscount;
       const paymentData = res.paymentData;
       
       // Prepare delivery address string
-      const deliveryAddress = useSavedAddress && selectedAddress !== null
+      /* const deliveryAddress = useSavedAddress && selectedAddress !== null
         ? `${useraddress[selectedAddress].address}, ${useraddress[selectedAddress].city}, ${useraddress[selectedAddress].state}, ${useraddress[selectedAddress].country}, ${useraddress[selectedAddress].postCode}`
-        : `${addressData.address}, ${addressData.city}, ${addressData.state}, ${addressData.country}, ${addressData.postCode}`;
+        : `${addressData.address}, ${addressData.city}, ${addressData.state}, ${addressData.country}, ${addressData.postCode}`; */
+        // Prepare delivery address string
+const deliveryAddress = useSavedAddress && selectedAddress !== null
+  ? [
+      useraddress[selectedAddress].address,
+      useraddress[selectedAddress].landmark,
+      useraddress[selectedAddress].additionalInfo,
+      useraddress[selectedAddress].businessName,
+      useraddress[selectedAddress].city,
+      useraddress[selectedAddress].state,
+      useraddress[selectedAddress].country,
+      useraddress[selectedAddress].postCode
+    ].filter(Boolean).join(", ")
+  : [
+      addressData.address,
+      addressData.landmark,
+      addressData.additionalInfo,
+      addressData.businessName,
+      addressData.city,
+      addressData.state,
+      addressData.country,
+      addressData.postCode
+    ].filter(Boolean).join(", ");
   
         /* alert(
   `pickup_store: ${
@@ -825,7 +847,7 @@ const grandTotal = subtotal - totalDiscount;
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"]; 
+          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"];
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {

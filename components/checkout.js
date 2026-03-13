@@ -829,8 +829,6 @@ const grandTotal = subtotal - totalDiscount;
         );
 
         const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","siva96852@gmail.com"];
-
-        // const emailadmin = ["siva96852@gmail.com"];
         emailadmin.forEach(async (adminEmail) => {
           adminemailFormData.set("email", adminEmail);
         let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
