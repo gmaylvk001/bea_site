@@ -266,127 +266,141 @@ export default function OurLocations() {
   };
 
   return (
-    <section style={{ marginBottom: "4px" }}>
-      <h5 className="text-lg font-semibold mb-4">Our Locations</h5>
-      <div className="px-10">
-      <div style={{ display: "flex", flexDirection: "row", border: "1px solid #e5e7eb", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", overflow: "hidden", width: "100%", height: "520px" }}>
-          {/* ── LEFT PANEL ── */}
-          <div
-            style={{ width: "360px", minWidth: "360px", maxWidth: "360px", flexShrink: 0, display: "flex", flexDirection: "column", background: "#fff", borderRight: "1px solid #e5e7eb", overflow: "hidden", height: "520px" }}
-          >
-            {showDetail && selectedStore ? (
-              <StoreDetail store={selectedStore} onBack={handleBack} />
-            ) : (
-              <>
-                {/* Search */}
-                <div className="p-3 border-b flex-shrink-0">
-                  <div className="flex items-center border rounded-md px-3 py-2 bg-gray-50">
-                    <svg className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                    </svg>
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="w-full bg-transparent text-sm focus:outline-none"
-                    />
-                  </div>
-                </div>
+    // <section style={{ marginBottom: "4px" }}>
+      <section className="pt-5 mb-[4px]">
+  <div className="px-3 md:px-10 pt-5">
+    <div className="flex flex-col-reverse md:flex-row border border-gray-200 rounded-xl shadow-md overflow-hidden w-full md:h-[520px]">
 
-                {/* City filter */}
-                <div className="px-3 py-2 border-b flex-shrink-0">
-                  <select
-                    value={filterCity}
-                    onChange={(e) => setFilterCity(e.target.value)}
-                    className="w-full text-sm border rounded-md px-2 py-1.5 focus:outline-none text-gray-600"
-                  >
-                    {cities.map((c) => (
-                      <option key={c} value={c}>{c === "All" ? "Filter Locations" : c}</option>
-                    ))}
-                  </select>
-                </div>
+      {/* ── LEFT PANEL ── */}
+      <div className="w-full md:w-[360px] md:min-w-[360px] md:max-w-[360px] flex flex-col bg-white border-b md:border-b-0 md:border-r border-gray-200 overflow-hidden">
 
-                {/* Store grid */}
-                <div className="flex-1 overflow-y-auto">
-                  {filtered.length === 0 ? (
-                    <p className="text-center text-gray-400 text-sm mt-10">No stores found</p>
-                  ) : (
-                    <div className="grid grid-cols-2">
-                      {filtered.map((store) => {
-                        const img = getStoreImage(store);
-                        const isSelected = selectedStore?._id === store._id;
-                        return (
-                          <div
-                            key={store._id}
-                            onClick={() => handleSelect(store)}
-                            className={`cursor-pointer border-b border-r p-2 transition-colors ${
-                              isSelected ? "bg-blue-50 border-l-4 border-l-blue-600" : "hover:bg-gray-50"
-                            }`}
-                          >
-                            <div className="w-full h-20 bg-gray-100 rounded overflow-hidden mb-1.5">
-                              {img ? (
-                                <img
-                                  src={img}
-                                  alt={store.organisation_name}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => { e.target.style.display = "none"; }}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  {/* <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                  </svg> */}
-                                  <img
-                                  src="/uploads/default_geocode-1x.png"
-                                  alt={store.organisation_name}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => { e.target.style.display = "none"; }}
-                                />
-                                </div>
-                              )}
-                            </div>
-                            <p className={`text-xs font-semibold leading-tight ${isSelected ? "text-blue-700" : "text-blue-900"}`}>
-                              {store.organisation_name}
-                            </p>
-                            {(store.address || store.location) && (
-                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{store.address || store.location}</p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* ── RIGHT PANEL: MAP ── */}
-          <div
-            style={{ flex: 1, position: "relative", overflow: "hidden", height: "520px" }}
-          >
-            {geocoding && (
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[9999] bg-white shadow rounded-full px-3 py-1 text-xs text-gray-600 flex items-center gap-2">
-                <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-blue-600"></div>
-                Locating on map...
+        {showDetail && selectedStore ? (
+          <StoreDetail store={selectedStore} onBack={handleBack} />
+        ) : (
+          <>
+            {/* Search */}
+            <div className="p-3 border-b flex-shrink-0 bg-white sticky top-0 z-10">
+              <div className="flex items-center border rounded-md px-3 py-2 bg-gray-50">
+                <svg className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-transparent text-sm focus:outline-none"
+                />
               </div>
-            )}
-            <MapView
-              stores={filtered}
-              selectedStore={selectedStore}
-              onSelectStore={handleSelect}
-            />
-          </div>
-        </div>
+            </div>
+
+            {/* City filter */}
+            <div className="px-3 py-2 border-b flex-shrink-0 bg-white sticky top-[60px] z-10">
+              <select
+                value={filterCity}
+                onChange={(e) => setFilterCity(e.target.value)}
+                className="w-full text-sm border rounded-md px-2 py-1.5 focus:outline-none text-gray-600"
+              >
+                {cities.map((c) => (
+                  <option key={c} value={c}>
+                    {c === "All" ? "Filter Locations" : c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Store grid */}
+            <div className="flex-1 overflow-y-auto">
+              {filtered.length === 0 ? (
+                <p className="text-center text-gray-400 text-sm mt-10">
+                  No stores found
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2">
+                  {filtered.map((store) => {
+                    const img = getStoreImage(store);
+                    const isSelected = selectedStore?._id === store._id;
+
+                    return (
+                      <div
+                        key={store._id}
+                        onClick={() => handleSelect(store)}
+                        className={`cursor-pointer border-b border-r p-2 transition-colors ${
+                          isSelected
+                            ? "bg-blue-50 border-l-4 border-l-blue-600"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="w-full h-24 bg-gray-100 rounded overflow-hidden mb-1.5">
+                          {img ? (
+                            <img
+                              src={img}
+                              alt={store.organisation_name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src="/uploads/default_geocode-1x.png"
+                              alt={store.organisation_name}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                        </div>
+
+                        <p
+                          className={`text-xs font-semibold leading-tight ${
+                            isSelected
+                              ? "text-blue-700"
+                              : "text-blue-900"
+                          }`}
+                        >
+                          {store.organisation_name}
+                        </p>
+
+                        {(store.address || store.location) && (
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                            {store.address || store.location}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
-      {!showDetail && filtered.length > 0 && (
-        <p className="text-xs text-gray-400 mt-2 text-right">
-          {filtered.length} location{filtered.length !== 1 ? "s" : ""}
-          {filterCity !== "All" ? ` in ${filterCity}` : ""}
-        </p>
-      )}
-    </section>
+      {/* ── RIGHT PANEL: MAP ── */}
+      <div className="flex-1 relative overflow-hidden h-[55vh] md:h-auto">
+        {geocoding && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[9999] bg-white shadow rounded-full px-3 py-1 text-xs text-gray-600 flex items-center gap-2">
+            <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-blue-600"></div>
+            Locating on map...
+          </div>
+        )}
+
+        <MapView
+          stores={filtered}
+          selectedStore={selectedStore}
+          onSelectStore={handleSelect}
+        />
+      </div>
+    </div>
+  </div>
+
+  {/* Footer count */}
+  {!showDetail && filtered.length > 0 && (
+    <p className="text-xs text-gray-400 mt-2 text-right px-3 md:px-10">
+      {filtered.length} location
+      {filtered.length !== 1 ? "s" : ""}
+      {filterCity !== "All" ? ` in ${filterCity}` : ""}
+    </p>
+  )}
+</section>
   );
 }

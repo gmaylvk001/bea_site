@@ -10,6 +10,7 @@ import Image from "next/image";
 import { MdAccountCircle } from "react-icons/md";
 import { FaShoppingBag } from "react-icons/fa";
 import { IoLogOut } from "react-icons/io5";
+import OurLocations from '@/components/OurLocations';
 
 const Footer = () => {
   const [categories, setCategories] = useState([]);
@@ -385,6 +386,7 @@ const capitalizeFirstLetter = (str) =>
             </div>
           </div>
         </div>
+        <OurLocations />
       {/* Bottom Section */}
       <div className="bg-[#f3f5f6] text-gray-400 mt-10 pt-5 border-t border-black">
         <div className="container mx-auto px-2 grid grid-cols-1 md:grid-cols-[55%_45%] gap-8">
