@@ -152,10 +152,10 @@ export default function StoreComponent() {
     }
   };
 
-  const handleDateChange = ({ startDate, endDate }) => {
+  /* const handleDateChange = ({ startDate, endDate }) => {
     setDateFilter({ startDate, endDate });
     setCurrentPage(0);
-  };
+  }; */
 
   const filteredStores = useMemo(() => {
     if (!Array.isArray(stores)) {
@@ -333,7 +333,7 @@ const endEntry = Math.min(currentPage * itemsPerPage, totalEntries);
             </div>
 
             {/* Date Range Picker */}
-            <div className="w-full col-span-1 md:col-span-1">
+            {/* <div className="w-full col-span-1 md:col-span-1">
               
               <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
               <div className="flex items-center gap-2">
@@ -343,7 +343,7 @@ const endEntry = Math.min(currentPage * itemsPerPage, totalEntries);
                 </div>
              
               </div>
-            </div>
+            </div> */}
 
             <div>
               <Link href="/admin/store/create">
