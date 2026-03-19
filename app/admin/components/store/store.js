@@ -14,7 +14,7 @@ export default function StoreComponent() {
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFilter, setDateFilter] = useState({ startDate: null, endDate: null });
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const [newStore, setNewStore] = useState({
@@ -45,6 +45,10 @@ export default function StoreComponent() {
   useEffect(() => {
     fetchStores();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, dateFilter]);
 
   const fetchStores = async () => {
     try {
@@ -176,19 +180,32 @@ export default function StoreComponent() {
       }
 
       return matchesSearch && matchesStatus && matchesDate;
-    });
+    })
+     .sort((a, b) => a.organisation_name.localeCompare(b.organisation_name)); // ascending order;
   }, [stores, searchQuery, statusFilter, dateFilter]);
 
-  const paginatedStores = filteredStores.slice(
+ /*  const paginatedStores = filteredStores.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
-  );
+  ); */
+
+  const paginatedStores = filteredStores.slice(
+  (currentPage - 1) * itemsPerPage,
+  currentPage * itemsPerPage
+);
 
    const paginate = (pageNumber) => setCurrentPage(pageNumber);
      // Pagination variables
-  const totalEntries =filteredStores .length;
+/*   const totalEntries =filteredStores .length;
   const startEntry = (currentPage - 1) * itemsPerPage + 1;
-  const endEntry = Math.min(currentPage * itemsPerPage, totalEntries);
+  const endEntry = Math.min(currentPage * itemsPerPage, totalEntries); */
+
+  const totalEntries = filteredStores.length;
+
+const startEntry = totalEntries === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+
+const endEntry = Math.min(currentPage * itemsPerPage, totalEntries);
+
   const totalPages = Math.ceil(totalEntries / itemsPerPage);
 
   const renderPagination = () => {
@@ -232,7 +249,8 @@ export default function StoreComponent() {
           <li className="page-item">
             <button
               onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === pageNumbers.length}
+              // disabled={currentPage === pageNumbers.length}
+              disabled={currentPage === totalPages}
               className="px-3 py-1.5 border border-gray-300 rounded-md bg-white text-black hover:bg-gray-100"
               aria-label="Next page"
             >
