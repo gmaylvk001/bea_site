@@ -77,6 +77,7 @@ export default function AdminSider({ collapsed }) {
       { icon: 'mdi:category-outline', label: 'Category Settings', link: 'categorysettings', dotColor: 'bg-green-500' },
       { icon: 'mdi:category-outline', label: 'Brand Settings', link: 'brandsettings', dotColor: 'bg-green-500' },
       { icon: 'mdi:store-outline', label: 'Store Settings', link: 'store', dotColor: 'bg-yellow-500' },
+      { icon: 'mdi:map', label: 'Mapbox Settings', link: 'mapbox', dotColor: 'bg-yellow-500' },
     ]
   },
     //     {
