@@ -1305,7 +1305,7 @@ export default function CategoryComponent() {
                     </div>
                   </div>
                 </div>
-
+                {newCategory.parentid != "none" && (
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">
                     Upload Image (260px X 240px) - Optional
@@ -1331,7 +1331,8 @@ export default function CategoryComponent() {
                     />
                   )}
                 </div>
-
+                )}
+                {newCategory.parentid == "none" && (
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">
                     Upload Navigation Image (260px X 240px)
@@ -1347,6 +1348,7 @@ export default function CategoryComponent() {
                     hover:file:bg-red-100"
                   />
                 </div>
+                )}
                 {/* Filter Selection for Update - EXACTLY LIKE PRODUCT PAGE */}
                 <div className="border p-4 rounded">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1633,6 +1635,7 @@ export default function CategoryComponent() {
                 </div>
 
                 {/* Image Upload */}
+                {categoryToUpdate.parentid != "none" && (
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">
                     Upload Image (260px X 240px)
@@ -1671,8 +1674,10 @@ export default function CategoryComponent() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* Navigation Image Upload */}
+                {categoryToUpdate.parentid == "none" && (
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">
                     Upload Navigation Image (260px X 240px)
@@ -1711,6 +1716,7 @@ export default function CategoryComponent() {
                     </div>
                   )}
                 </div>
+                )}
                 {/* Filter Selection for Update - EXACTLY LIKE PRODUCT PAGE */}
                 <div className="border p-4 rounded">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
