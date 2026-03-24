@@ -182,7 +182,7 @@ export default function OurLocations() {
   const geocacheRef = useRef({});
 
   useEffect(() => {
-    fetch("/api/stores/locations")
+    fetch("/api/mapstores/location")
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
