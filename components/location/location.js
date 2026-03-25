@@ -47,8 +47,27 @@ const [branches, setBranches] = useState([]);
   <h2 className="text-md font-semibold text-gray-800 mb-2">
     {branch.title}
   </h2>
-  <p className="text-sm text-gray-700 mb-1">{branch.address}</p>
-  <p className="text-sm text-gray-700 mb-1">{branch.city}</p>
+  {/* <p className="text-sm text-gray-700 mb-1">{branch.address}</p> */}
+  <p className="text-sm text-gray-700 mb-1">
+  {branch.address
+    ? branch.address
+        .toLowerCase()
+        .split(" ")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+    : ""}
+</p>
+
+  {/* <p className="text-sm text-gray-700 mb-1">{branch.city}</p> */}
+  <p className="text-sm text-gray-700 mb-1">
+  {branch.city
+    ? branch.city
+        .toLowerCase()
+        .split(" ")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+    : ""}
+</p>
   <p className="text-sm text-gray-700 mb-1">Phone: {branch.phone}</p>
   
   <a
