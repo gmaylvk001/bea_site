@@ -309,6 +309,33 @@ if (product.filterDetails && product.filterDetails.length > 0) {
       sizeFilter = sizeFilters.join(', ');
     }
 
+    const plainText = product.description ? product.description.replace(/<[^>]*>/g, '') : '';
+const getSpecsForExcel = (specs) => {
+  if (!specs || !Array.isArray(specs)) return [];
+
+  // Step 1: take first string
+  const fullText = specs[0];
+
+  if (!fullText) return [];
+
+  // Step 2: split using newline (correct way)
+  return fullText
+    .split('\n')
+    .map(item => item.trim().replace(/,$/, '')) // remove ending comma
+    .filter(item => item.includes(':'))
+    .map(item => {
+      const [key, ...rest] = item.split(':');
+
+      return {
+        Key: key.trim(),
+        Value: rest.join(':').trim()
+      };
+    });
+};
+const specsArray = getSpecsForExcel(product.key_specifications);
+const formattedSpecs = specsArray
+  .map(item => `${item.Key}: ${item.Value}`)
+  .join('\n');
     return {
       'Item No.': product.item_code,
       'Product Name': product.name,
@@ -322,8 +349,10 @@ if (product.filterDetails && product.filterDetails.length > 0) {
       'Movement': product.movement || '',
       'MRP PRICE': product.price,
       'Special Price': product.special_price,
-      'Description': product.description || '',
-      'Key Features': product.key_specifications || '',
+      // 'Description': product.description || '',
+      'Description': plainText || '',
+      // 'Key Features': product.key_specifications || '',
+      'Key Features': formattedSpecs || '',
       'image1': product.images?.[0] || '',
       'image2': product.images?.[1] || '',
       'image3': product.images?.[2] || '',
