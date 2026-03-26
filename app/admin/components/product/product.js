@@ -238,15 +238,150 @@ const exportToExcel = () => {
 
   // Prepare data with names instead of IDs
   const dataForExport = filteredProducts.map(product => {
+    // console.log("Check for product category::",product);
     // Resolve category name
-    let categoryName = 'No Category';
-    if (product.category) {
+    // let categoryName = 'No Category';
+    /* if (product.category) {
       if (typeof product.category === 'object') {
         categoryName = product.category.category_name;
       } else if (categoryMap[product.category]) {
         categoryName = categoryMap[product.category];
       }
-    }
+    } */
+
+   /*    if (product.sub_category_new_name) {
+
+  const parts = product.sub_category_new_name
+    .split('##')
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 3) {
+    categoryName = parts[1]; // parent
+  } else if (parts.length === 2) {
+    categoryName = parts[0]; // main
+  } else if (parts.length === 1) {
+    categoryName = parts[0]; // only one
+  }
+
+} */
+
+
+/* if (product.sub_category_new_name) {
+
+  const parts = product.sub_category_new_name
+    .split('##')
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 3) {
+    categoryName = parts[1]; // ✅ parent
+  } else if (parts.length === 2) {
+    categoryName = parts[0]; // ✅ main
+  } else if (parts.length === 1) {
+    categoryName = parts[0]; // ✅ single
+  }
+
+} */
+
+/*     // ✅ CASE 2: fallback to category_new
+else if (product.category_new) {
+  if (categoryMap[product.category_new]) {
+    categoryName = categoryMap[product.category_new];
+  } else {
+    categoryName = product.category_new; // fallback if mapping missing
+  }
+} */
+
+
+
+  /* let categoryName = 'No Category';
+
+// ✅ CASE 1: sub_category_new_name (priority)
+if (typeof product.sub_category_new_name === 'string' && product.sub_category_new_name.trim()) {
+
+  const parts = product.sub_category_new_name
+    .split('##')
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 3) {
+    categoryName = parts[1]; // parent
+  } else if (parts.length === 2) {
+    categoryName = parts[0]; // main
+  } else if (parts.length === 1) {
+    categoryName = parts[0];
+  }
+}
+
+// ✅ CASE 2: fallback → category (object)
+else if (product.category && typeof product.category === 'object') {
+  categoryName = product.category.category_name || 'No Category';
+}
+
+// ✅ CASE 3: fallback → category ID map
+else if (product.category && categoryMap[product.category]) {
+  categoryName = categoryMap[product.category];
+}
+
+// ✅ CASE 4: fallback → category_new
+else if (product.category_new && categoryMap[product.category_new]) {
+  categoryName = categoryMap[product.category_new];
+}
+
+// ✅ LAST fallback (optional)
+else if (product.category_new) {
+  categoryName = product.category_new;
+}
+
+ */
+
+
+let categoryName = 'No Category';
+
+// ✅ STEP 1: take available hierarchy string
+let categorySource =
+  product.sub_category_new_name ||
+  product.sub_category_name ||   // ✅ THIS FIX
+  '';
+
+// ✅ STEP 2: extract required level
+if (typeof categorySource === 'string' && categorySource.trim()) {
+
+  const parts = categorySource
+    .split('##')
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 3) {
+    categoryName = parts[1]; // ✅ parent (your requirement)
+  } else if (parts.length === 2) {
+    categoryName = parts[0];
+  } else if (parts.length === 1) {
+    categoryName = parts[0];
+  }
+}
+
+// ✅ STEP 3: fallback → category object
+else if (product.category && typeof product.category === 'object') {
+  categoryName = product.category.category_name || 'No Category';
+}
+
+// ✅ STEP 4: fallback → category map
+else if (product.category && categoryMap[product.category]) {
+  categoryName = categoryMap[product.category];
+}
+
+// ✅ STEP 5: fallback → category_new map
+else if (product.category_new && categoryMap[product.category_new]) {
+  categoryName = categoryMap[product.category_new];
+}
+
+// ❌ DON'T SHOW ID
+// remove this:
+// else if (product.category_new) {
+//   categoryName = product.category_new;
+// }
 
     // Resolve subcategory name
     let subcategoryName = 'No Subcategory';
