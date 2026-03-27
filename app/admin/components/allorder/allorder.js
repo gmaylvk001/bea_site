@@ -624,7 +624,7 @@ const updateOrderStatusWithDeliveryDate = async () => {
                 type="date"
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
+                // min={sevenDaysAgo().toISOString().split('T')[0]}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
             </div>
