@@ -103,11 +103,12 @@ const sendCancellationEmail = async (order) => {
   try {
     const name = order.order_username || "Customer";
 
-    // List of emails: customer + admins
+   // List of emails: customer + admins
     const emailList = [
       order.email_address || "kbsiva1234@gmail.com",
        "arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in"
     ];
+    
 
     // Loop through each email and send
     const results = [];
@@ -157,8 +158,11 @@ const sendCancellationEmail = async (order) => {
       "arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in"
     ];
 
+    
+
     // loop through recipients and send individually
     for (const email of recipients) {
+      console.log("📧 Sending to:", email); 
       const emailFormData = new FormData();
       emailFormData.append("campaign_id", "e019b2bd-09e9-4369-8b04-1d80a0403bb9");
       emailFormData.append("email", email);
@@ -174,7 +178,8 @@ const sendCancellationEmail = async (order) => {
         },
         body: emailFormData,
       });
-
+        await response.json();
+      
       if (!response.ok) {
         console.error(`Failed to send email to ${email}`);
       } else {
@@ -515,8 +520,11 @@ const updateOrderStatusWithDeliveryDate = async () => {
                               }
 
                               // Send admin notification for any status change
-                              await sendAdminNotificationEmail(o, prevStatus, newStatus);
-
+                              try {
+                                   await sendAdminNotificationEmail(o, prevStatus, newStatus);
+                                       } catch (error) {
+                                    console.error("Admin notification failed:", error);
+                                 }
                             } catch (err) {
                               toast.error("Failed to update status");
                               e.target.value = prevStatus;
