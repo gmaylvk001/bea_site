@@ -72,7 +72,7 @@ useEffect(() => {
 }, []);
 
 
-  // Fetch products, categories and brands from API
+/*   // Fetch products, categories and brands from API
  const fetchProducts = async () => {
   try {
     setIsLoading(true); // ✅ start loader
@@ -83,6 +83,54 @@ useEffect(() => {
     console.error("Error fetching products:", error);
   } finally {
     setIsLoading(false); // ✅ stop loader
+  }
+};
+
+
+const fetchExtendedWarranties = async () => {
+  try {
+    setIsLoading(true);
+    const response = await fetch("/api/product/get-extended-warranties");
+    const data = await response.json();
+    console.log(data);
+    setProducts(data); // only extended warranty products
+  } catch (error) {
+    console.error("Error fetching extended warranty products:", error);
+  } finally {
+    setIsLoading(false);
+  }
+}; */
+
+const fetchProducts = async () => {
+  try {
+    setIsLoading(true);
+
+    // 1️⃣ fetch main products
+    const resProducts = await fetch("/api/product/get");
+    const products = await resProducts.json();
+
+    // 2️⃣ fetch extended warranty info
+    const resWarranty = await fetch("/api/product/get-extended-warranties");
+    const extendedProducts = await resWarranty.json();
+
+    // 3️⃣ Merge extended_warranty into main products by item_code or _id
+    const mergedProducts = products.map((prod) => {
+      // find matching warranty product
+      const warranty = extendedProducts.find(
+        (w) => w.item_code === prod.item_code
+      );
+      return {
+        ...prod,
+        extend_warranty: warranty ? warranty.extend_warranty : [], // add warranty array
+      };
+    });
+    // 4️⃣ Set state
+    setProducts(mergedProducts);
+  } catch (error) {
+    console.error("Error fetching products with warranty:", error);
+    setProducts([]); // reset
+  } finally {
+    setIsLoading(false);
   }
 };
 

@@ -116,6 +116,50 @@ export default function BulkUploadPage() {
   }
 };
 
+//NEED TO WORK FOR EXTENDED WARRENTY UPDATION...
+const handleExtendedWarrentySubmit = async (e) => {
+  e.preventDefault();
+
+  if (!excelFile || !validateFilterFile(excelFile)) {
+    showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("excel", excelFile);
+
+  setIsFilterUploadLoading(true);
+
+  try {
+    const res = await fetch("/api/extendedWarrenty/update_extended_warrenty", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    // Aggregate into one toast message
+    const hasDetails = Array.isArray(data.details) && data.details.length > 0;
+    if (res.ok || res.status === 207) {
+      const msg = data.message || (hasDetails ? `Upload completed with ${data.details.length} issues.` : "Upload completed successfully.");
+      const toastType = hasDetails ? "info" : "success";
+      showToast(toastType, msg);
+    } else {
+      const msg = data.error || "Upload failed";
+      showToast("error", msg);
+    }
+
+    // ensure form/inputs cleared
+    resetUploadForm();
+
+  } catch (err) {
+    console.error("Upload error:", err);
+    showToast("error", "Upload failed. Please try again.");
+    resetUploadForm();
+  } finally {
+    setIsFilterUploadLoading(false);
+  }
+};
 
 
   const validateFile = (file, allowedExtensions) => {
@@ -247,6 +291,15 @@ export default function BulkUploadPage() {
     const link = document.createElement("a");
     link.href = `/uploads/files/sample_filter_upload.xlsx?t=${Date.now()}`;
     link.download = "FilterUploadSample.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleSampleDownloadExtendedWarrenty = () => {
+    const link = document.createElement("a");
+    link.href = `/uploads/files/extended_warrenty_sample_file.xlsx?t=${Date.now()}`;
+    link.download = "ExtendedWarrentySample.xlsx";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -748,6 +801,7 @@ export default function BulkUploadPage() {
     // { id: "section-product-categories-upload", label: "Update Product Categories",     image: "/uploads/files/Product_updating_category_eighth_image.png" },
     { id: "section-product-brands-upload",     label: "Update Product Brands",         image: "/uploads/files/Product_Brand_update_nineth_image.png" },
     { id: "section-status-bulk",               label: "Status Bulk Upload",            image: "/uploads/files/Status_bulk_upload_tenth_box_image.png" },
+     { id: "extended-warrenty-upload",               label: "Extended Warrenty Upload",            image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
   ];
 
   return (
@@ -1319,6 +1373,64 @@ export default function BulkUploadPage() {
                   </div>
                 </div>
               </div>
+              </form>
+            )}
+
+            {/* Section 11: Extended warrenty Upload */}
+            {selectedSection === "extended-warrenty-upload" && (
+              <form id="extended-warrenty-upload" ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "map_product_brands")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
+              <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                  <div className="mb-4">
+                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
+                       Update Extended Warrenty for Product in Bulk
+                    </h2>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Excel/CSV File
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">Upload your Extended Warrenty data file</p>
+                  </div>
+                  <div className="space-y-4">
+                    <input
+                      type="file"
+                      accept=".xlsx,.csv"
+                      onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSampleDownloadExtendedWarrenty}
+                      className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download Sample Format
+                    </button>
+                    <div className="flex mt-5 justify-between">
+                      <button
+                        onClick={handleExtendedWarrentySubmit}
+                        disabled={isFilterUploadLoading}
+                        className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none disabled:opacity-50 transition-colors flex items-center"
+                      >
+                        {isFilterUploadLoading ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Uploading...
+                          </>
+                        ) : (
+                          "Upload Filter"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </form>
             )}
 
