@@ -55,6 +55,11 @@ export async function POST(req) {
     }
 
     let category_slug = convertSlug(category_name);
+
+    if (parentid !== "none") {
+      category_slug = `${category_slug}-${Date.now()}`;
+    }
+
     let md5_cat_name = md5(category_slug);
 
     if (parentid === "none") {
