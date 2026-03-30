@@ -744,7 +744,8 @@ const deliveryAddress = useSavedAddress && selectedAddress !== null
             coupondiscount: 0,
             created_at: new Date(),
             updated_at: new Date(),
-            quantity: 1,
+            // quantity: 1,
+            quantity: item.quantity,
             store_id: formData.deliveryType === "store" ? formData.selectedStore : "STORE01",
             orderNumber: "ORD" + Date.now(),
           })),
@@ -847,7 +848,8 @@ const deliveryAddress = useSavedAddress && selectedAddress !== null
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"];
+          // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"];
+          const emailadmin = ["sorambeeviuit@gmail.com"];
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {

@@ -641,7 +641,8 @@ const grandTotal = subtotal - totalDiscount;
             coupondiscount: 0,
             created_at: new Date(),
             updated_at: new Date(),
-            quantity: 1,
+            quantity: item.quantity,
+            // quantity: 1,
             //store_id: formData.deliveryType === "store" ? formData.selectedStore : "STORE01",
             orderNumber: "ORD" + Date.now(),
           })),
@@ -828,7 +829,8 @@ const grandTotal = subtotal - totalDiscount;
           JSON.stringify([name,addressData.email,addressData.phonenumber,deliveryAddress, adminItemsTableHtml])
         );
 
-        const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","siva96852@gmail.com"];
+        // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","siva96852@gmail.com"];
+        const emailadmin = ["sorambeeviuit@gmail.com"];
         emailadmin.forEach(async (adminEmail) => {
           adminemailFormData.set("email", adminEmail);
         let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
