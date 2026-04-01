@@ -33,6 +33,7 @@ export default function AdminSider({ collapsed }) {
     submenu: [
       { icon: 'mdi:truck-delivery', label: 'All Orders', link: 'Allorder', dotColor: 'bg-yellow-500' },
       { icon: 'mdi:home-import-outline', label: 'Home Delivery', link: 'homedelivery', dotColor: 'bg-yellow-500' },
+      { icon: 'mdi:cart-off', label: 'Abandant Order', link: 'abandantorder', dotColor: 'bg-yellow-500' },
       // { icon: 'mdi:clock-outline', label: 'Home Delivery', link: 'order/home-delivery', dotColor: 'bg-yellow-500' },
       // { icon: 'mdi:clock-outline', label: 'Pending Order', link: 'order/pending-order', dotColor: 'bg-yellow-500' },
       { icon: 'mdi:cancel', label: 'Cancel Order', link: 'order/cancel-order', dotColor: 'bg-blue-500' },
