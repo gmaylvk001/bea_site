@@ -35,13 +35,13 @@ export default function CategoryBannerPage() {
           featured_products: [],
         },
         subBanners: [
-          {
-            name: "",
-            image: null,
-            imagePreview: "",
-            url: "",
-            status: "active",
-          },
+          // {
+          //   name: "",
+          //   image: null,
+          //   imagePreview: "",
+          //   url: "",
+          //   status: "active",
+          // },
         ],
       },
     ],
@@ -142,13 +142,13 @@ export default function CategoryBannerPage() {
             featured_products: [], // ADD THIS
           },
           subBanners: [
-            {
-              name: "",
-              image: null,
-              url: "",
-              status: "active",
-              imagePreview: "",
-            },
+            // {
+            //   name: "",
+            //   image: null,
+            //   url: "",
+            //   status: "active",
+            //   imagePreview: "",
+            // },
           ],
         },
       ],

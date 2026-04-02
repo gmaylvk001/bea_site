@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
-import 'swiper/css';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+import "swiper/css";
 import Image from "next/image";
-import 'swiper/css/navigation';
+import "swiper/css/navigation";
 import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
 
@@ -33,9 +33,9 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
     const res = await fetch(`/api/product/by-ids?ids=${ids.join(",")}`);
     const data = await res.json();
 
-    setFeaturedProducts(prev => ({
+    setFeaturedProducts((prev) => ({
       ...prev,
-      [index]: data.products || []
+      [index]: data.products || [],
     }));
   };
 
@@ -52,7 +52,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
           setBanners(data.data);
 
           data.data.forEach((group, index) => {
-              console.log("group bgColor:", group.bgColor);
+            console.log("group bgColor:", group.bgColor);
             const ids = group.top?.featured_products || [];
             fetchFeaturedProducts(ids, index);
           });
@@ -93,7 +93,9 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
       query.set("page", page);
       query.set("limit", itemsPerPage);
 
-      const res = await fetch(`/api/product/filter/main-cat-two?${query.toString()}`);
+      const res = await fetch(
+        `/api/product/filter/main-cat-two?${query.toString()}`,
+      );
       const data = await res.json();
 
       setProducts(data.products || []);
@@ -116,7 +118,9 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
   useEffect(() => {
     const fetchSubcategories = async () => {
       try {
-        const res = await fetch(`/api/subcategories?parentSlug=${categorySlug}`);
+        const res = await fetch(
+          `/api/subcategories?parentSlug=${categorySlug}`,
+        );
         if (!res.ok) return;
         const data = await res.json();
         setSubcategories(data.subcategories || []);
@@ -139,7 +143,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
 
       if (!result.error) {
         const map = {};
-        result.data.forEach(b => {
+        result.data.forEach((b) => {
           map[b._id] = b.brand_name;
         });
         setBrandMap(map);
@@ -165,10 +169,13 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
     <div className="bg-white">
       {banners.map((group, idx) => (
         <div key={idx} className="mt-6">
- 
           {/* ── TOP BANNER ───────────────────────────────────────────── */}
           {group.top && (
-            <a href={group.top.url || "#"} target="_blank" rel="noopener noreferrer">
+            <a
+              href={group.top.url || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <img
                 src={group.top.image}
                 alt={group.top.name}
@@ -176,31 +183,29 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
               />
             </a>
           )}
- 
+
           {/* ── SUB BANNERS ──────────────────────────────────────────── */}
           {group.sub?.length > 0 && (
             // Full width color background wrapping all cards
             <div
-              className="w-full mt-3 rounded-xl py-4 px-4"
+              className="w-full mt-0 rounded-xl py-4 px-4"
               style={{ backgroundColor: group.bgColor || "#f0f0f0" }}
             >
               {group.sub.length < 5 ? (
                 // Flexbox for 1–4 cards
-                <div className="flex justify-center gap-4">
+                <div
+                  className="grid gap-3 w-full"
+                  style={{
+                    gridTemplateColumns: `repeat(${group.sub.length}, 1fr)`,
+                  }}
+                >
                   {group.sub.map((sb, i) => (
                     <a
                       key={i}
                       href={sb.url || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`
-                        flex-1 rounded-xl overflow-hidden
-                        transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg
-                        ${group.sub.length === 1 ? 'max-w-sm' :
-                          group.sub.length === 2 ? 'max-w-xs' :
-                          group.sub.length === 3 ? 'max-w-[220px]' :
-                          'max-w-[200px]'}
-                      `}
+                      className="block rounded-xl overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
                     >
                       <img
                         src={sb.image}
@@ -217,8 +222,8 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                   navigation
                   spaceBetween={16}
                   breakpoints={{
-                    0:    { slidesPerView: 2 },
-                    640:  { slidesPerView: 3 },
+                    0: { slidesPerView: 2 },
+                    640: { slidesPerView: 3 },
                     1024: { slidesPerView: 4 },
                   }}
                   className="pb-2 customSwiper"
@@ -243,7 +248,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
               )}
             </div>
           )}
- 
+
           {/* ── FEATURED PRODUCTS ────────────────────────────────────── */}
           {featuredProducts[idx] && featuredProducts[idx].length > 0 && (
             <div className="bg-white p-4 rounded-lg mt-6">
@@ -253,8 +258,8 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                 navigation
                 spaceBetween={16}
                 breakpoints={{
-                  0:    { slidesPerView: 2 },
-                  640:  { slidesPerView: 3 },
+                  0: { slidesPerView: 2 },
+                  640: { slidesPerView: 3 },
                   1024: { slidesPerView: 5 },
                 }}
                 className="customSwiper"
@@ -262,10 +267,12 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                 {featuredProducts[idx].map((product) => (
                   <SwiperSlide key={product._id}>
                     <div className="group relative bg-white rounded-lg border hover:border-blue-200 transition-all shadow-sm hover:shadow-md flex flex-col h-full">
- 
                       {/* Product Image */}
                       <div className="relative aspect-square bg-white">
-                        <Link href={`/product/${product.slug}`} className="block mb-2">
+                        <Link
+                          href={`/product/${product.slug}`}
+                          className="block mb-2"
+                        >
                           {product.images?.[0] && (
                             <Image
                               src={
@@ -281,79 +288,114 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                             />
                           )}
                         </Link>
- 
+
                         {/* Discount Badge */}
                         {Number(product.special_price) > 0 &&
-                          Number(product.special_price) < Number(product.price) && (
+                          Number(product.special_price) <
+                            Number(product.price) && (
                             <span className="absolute top-3 left-2 bg-orange-500 text-white tracking-wider text-xs font-bold px-2 py-0.5 rounded z-10">
-                              -{Math.round(100 - (Number(product.special_price) / Number(product.price)) * 100)}%
+                              -
+                              {Math.round(
+                                100 -
+                                  (Number(product.special_price) /
+                                    Number(product.price)) *
+                                    100,
+                              )}
+                              %
                             </span>
-                        )}
- 
+                          )}
+
                         {/* Wishlist */}
                         <div className="absolute top-2 right-2">
-                          <ProductCard productId={product._id} isOutOfStock={product.quantity === 0} />
+                          <ProductCard
+                            productId={product._id}
+                            isOutOfStock={product.quantity === 0}
+                          />
                         </div>
                       </div>
- 
+
                       {/* Product Info */}
                       <div className="p-2 md:p-4 flex flex-col h-full">
                         <h4 className="text-xs text-gray-500 mb-2 uppercase">
                           <Link
-                            href={`/brand/${brandMap[product.brand] ? brandMap[product.brand].toLowerCase().replace(/\s+/g, "-") : ""}`}
+                            href={`/brand/${
+                              brandMap[product.brand]
+                                ? brandMap[product.brand]
+                                    .toLowerCase()
+                                    .replace(/\s+/g, "-")
+                                : ""
+                            }`}
                             className="hover:text-blue-600"
                           >
                             {brandMap[product.brand] || ""}
                           </Link>
                         </h4>
- 
-                        <Link href={`/product/${product.slug}`} className="block mb-2 flex-1">
+
+                        <Link
+                          href={`/product/${product.slug}`}
+                          className="block mb-2 flex-1"
+                        >
                           <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
                             {(() => {
-                              const model = product.model_number ? `(${product.model_number.trim()})` : "";
-                              const name = product.name ? product.name.trim() : "";
+                              const model = product.model_number
+                                ? `(${product.model_number.trim()})`
+                                : "";
+                              const name = product.name
+                                ? product.name.trim()
+                                : "";
                               const maxLen = 40;
                               if (model) {
                                 const remaining = maxLen - model.length - 1;
                                 const truncatedName =
-                                  name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
+                                  name.length > remaining
+                                    ? name.slice(0, remaining - 3) +
+                                      `${model}...`
+                                    : name;
                                 return `${truncatedName} `;
                               } else {
-                                return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
+                                return name.length > maxLen
+                                  ? name.slice(0, maxLen - 3) + "..."
+                                  : name;
                               }
                             })()}
                           </h3>
                         </Link>
- 
+
                         {/* Price */}
                         <div className="mb-3">
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-base font-semibold text-red-600">
-                              ₹ {(
-                                product.special_price &&
-                                product.special_price > 0 &&
-                                product.special_price !== '0' &&
-                                product.special_price < product.price
-                                  ? Math.round(product.special_price)
-                                  : Math.round(product.price)
+                              ₹{" "}
+                              {(product.special_price &&
+                              product.special_price > 0 &&
+                              product.special_price !== "0" &&
+                              product.special_price < product.price
+                                ? Math.round(product.special_price)
+                                : Math.round(product.price)
                               ).toLocaleString()}
                             </span>
                             {product.special_price > 0 &&
-                              product.special_price !== '0' &&
+                              product.special_price !== "0" &&
                               product.special_price < product.price && (
                                 <span className="text-xs text-gray-500 line-through">
                                   ₹ {Math.round(product.price).toLocaleString()}
                                 </span>
-                            )}
+                              )}
                           </div>
                         </div>
- 
-                        <h4 className={`text-xs mb-3 ${product.quantity > 0 ? "text-green-600" : "text-red-600"}`}>
+
+                        <h4
+                          className={`text-xs mb-3 ${
+                            product.quantity > 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
                           {product.quantity > 0
                             ? `In Stock, ${product.quantity} units`
                             : "Out Of Stock"}
                         </h4>
- 
+
                         {/* Buttons */}
                         <div className="mt-auto flex items-center justify-between gap-2">
                           <Addtocart
@@ -363,12 +405,19 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                             className="w-full text-xs sm:text-sm py-1.5"
                           />
                           <a
-                            href={`https://wa.me/919865555000?text=${encodeURIComponent(`Check Out This Product: ${apiUrl}/product/${product.slug}`)}`}
+                            href={`https://wa.me/919865555000?text=${encodeURIComponent(
+                              `Check Out This Product: ${apiUrl}/product/${product.slug}`,
+                            )}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-green-500 hover:bg-green-600 text-white p-1 rounded-full transition-colors duration-300 flex items-center justify-center"
                           >
-                            <svg className="w-5 h-5" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <svg
+                              className="w-5 h-5"
+                              viewBox="0 0 32 32"
+                              fill="currentColor"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
                               <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
                             </svg>
                           </a>
@@ -380,7 +429,6 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
               </Swiper>
             </div>
           )}
- 
         </div>
       ))}
     </div>
