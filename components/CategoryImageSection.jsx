@@ -33,7 +33,7 @@ export default function CategoryImageSection({ categorySlug, index = 0 }) {
 
   if (!sections || sections.length === 0) return null;
 
-  // ── Image card — fixed 450x450 ───────────────────────────────────────────
+
   const ImageCard = ({ img, i }) => (
     <a
       href={img.url || "#"}
@@ -46,8 +46,8 @@ export default function CategoryImageSection({ categorySlug, index = 0 }) {
         src={img.image}
         alt={img.name || `Image ${i + 1}`}
         style={{
-          width: "100%",
-          height: "450px",
+          width: "350px",
+          height: "350px",
           objectFit: "cover",
           display: "block",
         }}
