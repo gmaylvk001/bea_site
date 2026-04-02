@@ -90,7 +90,8 @@ export async function GET(request, context) {
     const allBanners = activeBannerDocs.flatMap(doc => 
       doc.banners.map(b => ({
         top: b.topBanner,
-        sub: b.subBanners
+        sub: b.subBanners,
+        bgColor: b.bgColor || "#f0f0f0",
       }))
     );
 

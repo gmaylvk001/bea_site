@@ -12,7 +12,10 @@ import { Range as ReactRange } from "react-range";
 import FlashCategorySlider from "../FlashCategorySlider";
 import BannerSlider from "../main-cat-banner";
 import CategoryMainPage from "../main-cat-third";
+import ShopByBrand from "@/components/brand/ShopByBrand";
 import CategoryPage from "../Fallbackmain";
+import CategoryImageSection from "@/components/CategoryImageSection";
+
 
 export default function CategoryPrimaryPage(params) {
   const [categoryData, setCategoryData] = useState({
@@ -591,8 +594,8 @@ const fetchInitialData = async () => {
  
    // Determine if we should show the fallback
   const showFallback =
-  !hasBannerContent ||
-  !hasFlashContent ||
+  !hasBannerContent &&
+  !hasFlashContent &&
   !hasCategoryMainContent;
 
  
@@ -614,7 +617,16 @@ const fetchInitialData = async () => {
        </div>
      );
    }
-
+  console.log("🔍 Debug:", { 
+  hasBannerContent, 
+  hasFlashContent, 
+  hasCategoryMainContent, 
+  showFallback,
+  checkingContent,
+  loading,
+  initialLoadComplete
+});
+console.log("slug:", slug);
   return (
      <div className="px-3 sm:px-8" style={{ backgroundColor: showFallback ? "#FFFFFF" : "#EBEBEB" }}>
       <div className="max-w-7xl container mx-auto">
@@ -628,9 +640,15 @@ const fetchInitialData = async () => {
           <>
             <BannerSlider categorySlug={slug} />
             <FlashCategorySlider slug={params.slug} />
-            <CategoryMainPage categorySlug={slug} />
+            <CategoryImageSection categorySlug={slug} index={0}/>
+            <ShopByBrand categorySlug={slug} />
+            <CategoryImageSection categorySlug={slug} index={1} />
+           <CategoryMainPage categorySlug={slug} />
+           <CategoryImageSection categorySlug={slug} index={2} />
+
+            
           </>
-        )}
+        )} 
       </div>
     </div>
   );

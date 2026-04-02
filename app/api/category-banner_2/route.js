@@ -64,6 +64,7 @@ export async function POST(req) {
   const category_id = form.get("category_id");
   const category_status = form.get("category_status");
   let banners = JSON.parse(form.get("banners"));
+  console.log("API received banners:", JSON.stringify(banners.map(b => b.bgColor)));
 banners = JSON.parse(JSON.stringify(banners)); // deep clone so editable
 
 
@@ -114,6 +115,7 @@ banners = JSON.parse(JSON.stringify(banners)); // deep clone so editable
   // ------------------------------
   // Save to MongoDB
   // ------------------------------
+  console.log("saving to DB:", JSON.stringify(banners.map(b => b.bgColor)));
  const doc = await CategoryBanner.create({
   category_id,
   category_status,

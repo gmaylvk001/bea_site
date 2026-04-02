@@ -23,7 +23,7 @@ export default function AdminSider({ collapsed }) {
         { icon: 'mdi:tag-outline', label: 'Brand', link: 'brand', dotColor: 'bg-red-500' },
         { icon: 'mdi:upload', label: 'Bulk Upload', link: 'product/bulk_upload', dotColor: 'bg-yellow-500' },
         { icon: 'mdi:filter-variant', label: 'Filter Group', link: 'filter_group', dotColor: 'bg-yellow-500' },
-        { icon: 'mdi:filter-outline', label: 'Filter', link: 'filter', dotColor: 'bg-yellow-500' }
+        { icon: 'mdi:filter-outline', label: 'Filter', link: 'fil                                          ter', dotColor: 'bg-yellow-500' }
       ]
     },
     // { icon: 'mdi:image-outline', label: 'Banner', link: 'design' },
@@ -47,9 +47,7 @@ export default function AdminSider({ collapsed }) {
       { icon: 'mdi:truck-delivery', label: 'Banner', link: 'main-cat', dotColor: 'bg-yellow-500' },
       { icon: 'mdi:truck-delivery', label: 'Category Flash', link: 'main-cat-flash', dotColor: 'bg-yellow-500' },
       { icon: 'mdi:truck-delivery', label: 'Category banner', link: 'main_cat_prod', dotColor: 'bg-yellow-500' },
-    
-      
- 
+      { icon: 'mdi:truck-delivery', label: 'Category Image', link: 'category-image-section', dotColor: 'bg-yellow-500' },
     ]
   },
     { icon: 'mdi:tag-outline', label: 'Offer', link: 'offer' },
