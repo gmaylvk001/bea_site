@@ -241,8 +241,8 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
     } else if (product.description && product.description.trim() !== "") {
       setActiveTab("description");
     } else {
-      const next = findNextAvailableTab("overview");
-      setActiveTab(next);
+      // const next = findNextAvailableTab("overview");
+      setActiveTab("overview");
     }
     // run when product changes or cache becomes available
   }, [product?._id, flixLoaded]);

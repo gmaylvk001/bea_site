@@ -5,27 +5,31 @@ import Link from "next/link";
 import { ToastContainer, toast } from "react-toastify";
 
 export default function BulkUploadPage() {
-  const [excelFile, setExcelFile]                                   = useState(null);
-  const [excelFileMovement, setExcelFileMovement]                   = useState(null);
-  const [productFilterValue, setProductFilterValue]                 = useState(null);
-  const [categoryUpload, setCategoryUpload]                         = useState(null);
-  const [imageZip, setImageZip]                                     = useState(null);
-  const [overviewZip, setOverviewZip]                               = useState(null);
-  const [message, setMessage]                                       = useState("");
-  const [isLoading, setIsLoading]                                   = useState(false);
-  const [activeUploadType, setActiveUploadType]                     = useState(null);
-  const [isFilterUploadLoading, setIsFilterUploadLoading]           = useState(false);
+  const [excelFile, setExcelFile] = useState(null);
+  const [excelFileMovement, setExcelFileMovement] = useState(null);
+  const [productFilterValue, setProductFilterValue] = useState(null);
+  const [categoryUpload, setCategoryUpload] = useState(null);
+  const [imageZip, setImageZip] = useState(null);
+  const [overviewZip, setOverviewZip] = useState(null);
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeUploadType, setActiveUploadType] = useState(null);
+  const [isFilterUploadLoading, setIsFilterUploadLoading] = useState(false);
   const [isFilterGroupUploadLoading, setIsFilterGroupUploadLoading] = useState(false);
-  const overviewFormRef                                             = useRef(null);
-  const filterValueFormRef                                          = useRef(null);
-  const movementFormRef                                             = useRef(null);
-  const filterGroupFormRef                                          = useRef(null);
-  const filterFormRef                                               = useRef(null);
-  const categoryFormRef                                             = useRef(null);
-    const [file, setFile] = useState(null);
+  const overviewFormRef = useRef(null);
+  const filterValueFormRef = useRef(null);
+  const movementFormRef = useRef(null);
+  const filterGroupFormRef = useRef(null);
+  const filterFormRef = useRef(null);
+  const categoryFormRef = useRef(null);
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [selectedSection, setSelectedSection] = useState("section-product-overview");
+
+  const sap_featuresFormRef = useRef(null);
+  const [sap_features, setSap_features] = useState(null);
+
   const notifiedRef = useRef(false);
 
   const showToast = (type, message) => {
@@ -41,6 +45,7 @@ export default function BulkUploadPage() {
     setExcelFile(null);
     setExcelFileMovement(null);
     setProductFilterValue(null);
+    setSap_features(null);
     setCategoryUpload(null);
     setImageZip(null);
     setOverviewZip(null);
@@ -53,69 +58,113 @@ export default function BulkUploadPage() {
     setMessage("");
 
     // reset file input elements and forms if refs exist
-    try { overviewFormRef.current?.reset(); } catch(e){}
-    try { movementFormRef.current?.reset(); } catch(e){}
-    try { filterGroupFormRef.current?.reset(); } catch(e){}
-    try { filterFormRef.current?.reset(); } catch(e){}
-    try { categoryFormRef.current?.reset(); } catch(e){}
-    try { filterValueFormRef.current?.reset(); } catch(e){}
+    try { overviewFormRef.current?.reset(); } catch (e) { }
+    try { movementFormRef.current?.reset(); } catch (e) { }
+    try { filterGroupFormRef.current?.reset(); } catch (e) { }
+    try { filterFormRef.current?.reset(); } catch (e) { }
+    try { categoryFormRef.current?.reset(); } catch (e) { }
+    try { filterValueFormRef.current?.reset(); } catch (e) { }
 
     // allow next upload to show a toast
     notifiedRef.current = false;
   };
 
-  
 
-  
+
+
   /* ---------------- UPLOAD FILE ---------------- */
- const handleUpload = async () => {
-  if (!file) {
-    showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
-    return;
-  }
+  const handleUpload = async () => {
+    if (!file) {
+      showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+      return;
+    }
 
-  setLoading(true);
-  setResult(null);
+    setLoading(true);
+    setResult(null);
 
-  const formData = new FormData();
-  formData.append("file", file);
+    const formData = new FormData();
+    formData.append("file", file);
 
-  try {
-    const res = await fetch("/api/categories/bulk-export", {
-      method: "POST",
-      body: formData,
-    });
-
-    const text = await res.text();
-
-    let data;
     try {
-      data = text ? JSON.parse(text) : {};
-    } catch {
-      throw new Error("Invalid server response");
+      const res = await fetch("/api/categories/bulk-export", {
+        method: "POST",
+        body: formData,
+      });
+
+      const text = await res.text();
+
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error("Invalid server response");
+      }
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Upload failed");
+      }
+
+      // ✅ Show toast with upload result
+      showToast(
+        "success",
+        `Upload Completed! Updated: ${data.updated}, Skipped: ${data.skipped}`
+      );
+
+      // Reset file input
+      setFile(null);
+      document.getElementById("category-file-input").value = "";
+
+    } catch (err) {
+      showToast("error", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //NEED TO WORK FOR EXTENDED WARRENTY UPDATION...
+  const handleExtendedWarrentySubmit = async (e) => {
+    e.preventDefault();
+
+    if (!excelFile || !validateFilterFile(excelFile)) {
+      showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+      return;
     }
 
-    if (!res.ok || !data.success) {
-      throw new Error(data.message || "Upload failed");
+    const formData = new FormData();
+    formData.append("excel", excelFile);
+
+    setIsFilterUploadLoading(true);
+
+    try {
+      const res = await fetch("/api/extendedWarrenty/update_extended_warrenty", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      // Aggregate into one toast message
+      const hasDetails = Array.isArray(data.details) && data.details.length > 0;
+      if (res.ok || res.status === 207) {
+        const msg = data.message || (hasDetails ? `Upload completed with ${data.details.length} issues.` : "Upload completed successfully.");
+        const toastType = hasDetails ? "info" : "success";
+        showToast(toastType, msg);
+      } else {
+        const msg = data.error || "Upload failed";
+        showToast("error", msg);
+      }
+
+      // ensure form/inputs cleared
+      resetUploadForm();
+
+    } catch (err) {
+      console.error("Upload error:", err);
+      showToast("error", "Upload failed. Please try again.");
+      resetUploadForm();
+    } finally {
+      setIsFilterUploadLoading(false);
     }
-
-    // ✅ Show toast with upload result
-    showToast(
-      "success",
-      `Upload Completed! Updated: ${data.updated}, Skipped: ${data.skipped}`
-    );
-
-    // Reset file input
-    setFile(null);
-    document.getElementById("category-file-input").value = "";
-
-  } catch (err) {
-    showToast("error", err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
 
   const validateFile = (file, allowedExtensions) => {
@@ -123,7 +172,7 @@ export default function BulkUploadPage() {
     const fileName = file.name.toLowerCase();
     return allowedExtensions.some((ext) => fileName.endsWith(ext));
   };
-  
+
   useEffect(() => {
     import("react-toastify/dist/ReactToastify.css");
   }, []);
@@ -225,13 +274,13 @@ export default function BulkUploadPage() {
   };
 
   const handleCategoryFilterDownload = () => {
-  const link = document.createElement("a");
-  link.href = `/uploads/files/sample_category_filter_upload.xlsx?t=${Date.now()}`;
-  link.download = "sample_category_filter_upload.xlsx";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
+    const link = document.createElement("a");
+    link.href = `/uploads/files/sample_category_filter_upload.xlsx?t=${Date.now()}`;
+    link.download = "sample_category_filter_upload.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
 
   const handleFilterGroupSampleDownload = () => {
@@ -252,6 +301,15 @@ export default function BulkUploadPage() {
     document.body.removeChild(link);
   };
 
+  const handleSampleDownloadExtendedWarrenty = () => {
+    const link = document.createElement("a");
+    link.href = `/uploads/files/extended_warrenty_sample_file.xlsx?t=${Date.now()}`;
+    link.download = "ExtendedWarrentySample.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleDownloadSampleMovement = () => {
     const link = document.createElement("a");
     link.href = `/uploads/files/sample_bulk_upload.xlsx?t=${Date.now()}`;
@@ -262,8 +320,8 @@ export default function BulkUploadPage() {
   };
 
   const handleDownloadCategories = () => {
-    const link    = document.createElement("a");
-    link.href     = `/uploads/files/sampleCategory.xlsx?t=${Date.now()}`;
+    const link = document.createElement("a");
+    link.href = `/uploads/files/sampleCategory.xlsx?t=${Date.now()}`;
     link.download = "Category_Bulk_Upload_Sample.xlsx";
     document.body.appendChild(link);
     link.click();
@@ -272,9 +330,9 @@ export default function BulkUploadPage() {
 
   const handleSubmit = async (e, uploadType) => {
     e.preventDefault();
-    const form        = e.target;
-    const formData    = new FormData(form);
-    if(uploadType == "overview") {
+    const form = e.target;
+    const formData = new FormData(form);
+    if (uploadType == "overview") {
 
       // Validate required files - only Excel is required now
       if (!excelFile || !validateFile(excelFile, [".xlsx", ".csv"])) {
@@ -324,25 +382,25 @@ export default function BulkUploadPage() {
         setIsLoading(false);
       }
 
-    }else if (uploadType == "movement") {
-      if(!excelFileMovement || !validateFile(excelFileMovement, ['.xlsx', '.csv'])) {
+    } else if (uploadType == "movement") {
+      if (!excelFileMovement || !validateFile(excelFileMovement, ['.xlsx', '.csv'])) {
         showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
         return;
       }
-    
+
       setIsLoading(true);
       setActiveUploadType(uploadType);
       setMessage(null);
       formData.append("excel", excelFileMovement);
-  
+
       try {
         const response = await fetch('/api/product/bulk-upload', {
           method: "PATCH",
           body: formData,
         });
-  
+
         const data = await response.json();
-  
+
         if (response.ok) {
           showToast("success", data.message || "Movement upload completed.");
         } else {
@@ -350,16 +408,16 @@ export default function BulkUploadPage() {
         }
 
         resetUploadForm();
-      }catch (error){
+      } catch (error) {
         showToast("error", error?.message || String(error) || "Upload failed.");
         resetUploadForm();
-      }finally {
+      } finally {
         setIsLoading(false);
         setActiveUploadType(null);
       }
 
-    }else if (uploadType == "filter_values") {
-      if(!productFilterValue|| !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
+    } else if (uploadType == "filter_values") {
+      if (!productFilterValue || !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
         showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
         // Clear the file input element
         const fileInput = document.getElementById('filter-values-file-input');
@@ -379,11 +437,11 @@ export default function BulkUploadPage() {
           body: formData,
         });
 
-        const data    = await response.json();
+        const data = await response.json();
 
-        if(response.ok) {
+        if (response.ok) {
           showToast("success", data.message || "Filter values uploaded.");
-        }else {
+        } else {
           showToast("error", data.error || "Upload failed.");
         }
 
@@ -392,20 +450,20 @@ export default function BulkUploadPage() {
         const fileInput = document.getElementById('filter-values-file-input');
         if (fileInput) fileInput.value = "";
         setProductFilterValue(null);
-      }catch(error) {
+      } catch (error) {
         showToast("error", error?.message || String(error) || "Upload failed.");
         resetUploadForm();
         // Clear the file input element
         const fileInput = document.getElementById('filter-values-file-input');
         if (fileInput) fileInput.value = "";
         setProductFilterValue(null);
-      }finally {
+      } finally {
         setIsLoading(false);
         setActiveUploadType(null);
       }
 
-    }else if (uploadType == "category_product") {
-      if(!categoryUpload || !validateFile(categoryUpload, ['.xlsx', '.csv'])) {
+    } else if (uploadType == "category_product") {
+      if (!categoryUpload || !validateFile(categoryUpload, ['.xlsx', '.csv'])) {
         showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
         return;
       }
@@ -415,271 +473,318 @@ export default function BulkUploadPage() {
       setMessage(null);
       formData.append("excel", categoryUpload);
 
-      try{
+      try {
         const response = await fetch('/api/product/bulk-upload/category', {
           method: 'POST',
           body: formData,
         });
 
-        const data    = await response.json();
+        const data = await response.json();
 
-        if(response.ok) {
+        if (response.ok) {
           showToast("success", data.message || "Category product upload completed.");
-        }else {
+        } else {
           showToast("error", data.error || "Upload failed.");
         }
 
         resetUploadForm();
-      }catch(error){
+      } catch (error) {
         showToast("error", error?.message || String(error) || "Upload failed.");
         resetUploadForm();
-      }finally {
+      } finally {
         setIsLoading(false);
         setActiveUploadType(null);
       }
 
-    }else if (uploadType == "category"){
-        // Read and parse the uploaded Excel/CSV on the client,
-        // then call the single-category API per row.
-        if(!productFilterValue || !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
-          showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
-          return;
-        } 
+    } else if (uploadType == "category") {
+      // Read and parse the uploaded Excel/CSV on the client,
+      // then call the single-category API per row.
+      if (!productFilterValue || !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
+        showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+        return;
+      }
+
+      setIsLoading(true);
+      setActiveUploadType(uploadType);
+      setMessage(null);
+
+      try {
+        const file = productFilterValue;
+        const name = file.name.toLowerCase();
+        const arrayBuffer = await file.arrayBuffer();
+        const XLSX = await import('xlsx');
+        let rows = [];
+
+        if (name.endsWith('.csv')) {
+          const csvText = new TextDecoder('utf-8').decode(arrayBuffer);
+          const workbook = XLSX.read(csvText, { type: 'string' });
+          rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        } else {
+          const data = new Uint8Array(arrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        }
+
+        const results = { added: 0, skipped: 0, errors: [] };
+
+        for (const [idx, row] of rows.entries()) {
+          // Support common header name variations; adapt if your sheet headers differ.
+          const category_name = (row.SubCatgoryName || row.subcatgoryname || row.SubCatgoryName || '').toString().trim();
+          const parentid = (row.ParentName || row.parentname || row.parentname || 'none').toString().trim() || 'none';
+          /////alert(`Category: ${category_name}, Parent: ${parentid}`);
+          const status = (row.Status || row.status || 'Active').toString().trim() || 'Active';
+          const show_on_home = (row.ShowOnHome || row.show_on_home || 'No').toString().trim() || 'No';
+
+          if (!category_name) {
+            results.errors.push({ row: idx + 2, error: "Missing CategoryName" });
+            continue;
+          }
+
+          const fd = new FormData();
+          fd.append('category_name', category_name);
+          // fd.append('parentid_new', parentid);
+          fd.append('parent_name', parentid);
+          fd.append('status', status);
+          fd.append('show_on_home', show_on_home);
+
+          try {
+            const res = await fetch('/api/categories/add', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (res.ok) {
+              results.added++;
+            } else {
+              // If server says category exists, count as skipped, otherwise record error
+              const msg = (data && data.error) ? data.error.toString().toLowerCase() : '';
+              if (res.status === 400 && msg.includes('already exists')) {
+                results.skipped++;
+              } else {
+                results.errors.push({ row: idx + 2, error: data.error || 'Unknown error' });
+              }
+            }
+          } catch (err) {
+            results.errors.push({ row: idx + 2, error: err.message || 'Network error' });
+          }
+        }
+
+        // Final aggregated toast: only one toast per attempt
+        if (results.added > 0 && results.errors.length === 0) {
+          showToast("success", `${results.added} categories added.`);
+        } else if (results.added > 0 && results.errors.length > 0) {
+          showToast("info", `${results.added} categories added. ${results.errors.length} rows failed.`);
+        } else if (results.errors.length > 0) {
+          showToast("error", `${results.errors.length} rows failed to add categories.`);
+        } else {
+          showToast("success", "No categories processed.");
+        }
+
+        resetUploadForm();
+      } catch (err) {
+        console.error("Category bulk upload error:", err);
+        showToast("error", "Upload failed. " + (err.message || ""));
+        resetUploadForm();
+      } finally {
+        setIsLoading(false);
+        setActiveUploadType(null);
+      }
+    } else if (uploadType == "map_product_categories") {
+      if (!productFilterValue || !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
+        showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+        return;
+      }
+      setIsLoading(true);
+      setActiveUploadType(uploadType);
+      setMessage(null);
+      try {
+        const file = productFilterValue;
+        const name = file.name.toLowerCase();
+        const arrayBuffer = await file.arrayBuffer();
+        const XLSX = await import('xlsx');
+        let rows = [];
+        if (name.endsWith('.csv')) {
+          const csvText = new TextDecoder('utf-8').decode(arrayBuffer);
+          const workbook = XLSX.read(csvText, { type: 'string' });
+          rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        } else {
+          const data = new Uint8Array(arrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        }
+        const results = { added: 0, skipped: 0, errors: [] };
+        for (const [idx, row] of rows.entries()) {
+          const item_code = (row.ItemCode || row.itemno || row.item_no || '').toString().trim();
+          const MappingCategory = (row.MappingCategory || row.mappingcategory || row.mapping_category || '').toString().trim();
+          if (!item_code) {
+            results.errors.push({ row: idx + 2, error: "Missing ItemCode" });
+            continue;
+          }
+          // alert(item_code);
+          const fd = new FormData();
+          fd.append('item_code', item_code);
+          fd.append('MappingCategory', MappingCategory);
+          try {
+            const res = await fetch('/api/product/bulk-upload/product', {
+              method: 'POST',
+              body: fd,
+            });
+            const data = await res.json();
+            if (res.ok) {
+              results.added++;
+            } else {
+              // If server says category exists, count as skipped, otherwise record error
+              const msg = (data && data.error) ? data.error.toString().toLowerCase() : '';
+              if (res.status === 400 && msg.includes('already exists')) {
+                results.skipped++;
+              } else {
+                results.errors.push({ row: idx + 2, error: data.error || 'Unknown error' });
+              }
+            }
+          } catch (err) {
+            results.errors.push({ row: idx + 2, error: err.message || 'Network error' });
+          }
+        }
+        // Aggregate messages to a single toast
+        if (results.added > 0 && results.errors.length === 0) {
+          showToast("success", `${results.added} product(s) were mapped to categories.`);
+        } else if (results.added > 0 && results.errors.length > 0) {
+          showToast("info", `${results.added} mapped. ${results.errors.length} failed.`);
+        } else if (results.errors.length > 0) {
+          showToast("error", `${results.errors.length} rows failed to map.`);
+        } else {
+          showToast("info", "No rows processed.");
+        }
+
+        resetUploadForm();
+      } catch (err) {
+        console.error("Bulk upload error:", err);
+        showToast("error", "Upload failed. " + (err.message || ""));
+        resetUploadForm();
+      } finally {
+        setIsLoading(false);
+        setActiveUploadType(null);
+      }
+    } else if (uploadType == "map_product_brands") {
+      if (!productFilterValue || !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
+        showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+        return;
+      }
+      setIsLoading(true);
+      setActiveUploadType(uploadType);
+      setMessage(null);
+      try {
+        const file = productFilterValue;
+        const name = file.name.toLowerCase();
+        const arrayBuffer = await file.arrayBuffer();
+        const XLSX = await import('xlsx');
+        let rows = [];
+        if (name.endsWith('.csv')) {
+          const csvText = new TextDecoder('utf-8').decode(arrayBuffer);
+          const workbook = XLSX.read(csvText, { type: 'string' });
+          rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        } else {
+          const data = new Uint8Array(arrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        }
+        const results = { added: 0, skipped: 0, errors: [] };
+        for (const [idx, row] of rows.entries()) {
+          const item_code = (row.ItemCode || row.itemno || row.item_no || '').toString().trim();
+          const BrandCode = (row.BrandCode || row.brandcode || row.brand_code || '').toString().trim();
+          if (!item_code) {
+            results.errors.push({ row: idx + 2, error: "Missing ItemCode" });
+            continue;
+          }
+          // alert(item_code);
+          const fd = new FormData();
+          fd.append('item_code', item_code);
+          fd.append('BrandCode', BrandCode);
+          try {
+            const res = await fetch('/api/product/bulk-upload/brand', {
+              method: 'POST',
+              body: fd,
+            });
+            const data = await res.json();
+            if (res.ok) {
+              results.added++;
+            } else {
+              // If server says category exists, count as skipped, otherwise record error
+              const msg = (data && data.error) ? data.error.toString().toLowerCase() : '';
+              if (res.status === 400 && msg.includes('already exists')) {
+                results.skipped++;
+              } else {
+                results.errors.push({ row: idx + 2, error: data.error || 'Unknown error' });
+              }
+            }
+          } catch (err) {
+            results.errors.push({ row: idx + 2, error: err.message || 'Network error' });
+          }
+        }
+        // Aggregate messages to a single toast
+        if (results.added > 0 && results.errors.length === 0) {
+          showToast("success", `${results.added} product(s) were mapped to categories.`);
+        } else if (results.added > 0 && results.errors.length > 0) {
+          showToast("info", `${results.added} mapped. ${results.errors.length} failed.`);
+        } else if (results.errors.length > 0) {
+          showToast("error", `${results.errors.length} rows failed to map.`);
+        } else {
+          showToast("info", "No rows processed.");
+        }
+
+        resetUploadForm();
+      } catch (err) {
+        console.error("Bulk upload error:", err);
+        showToast("error", "Upload failed. " + (err.message || ""));
+        resetUploadForm();
+      } finally {
+        setIsLoading(false);
+        setActiveUploadType(null);
+      }
+    } else if (uploadType == "Key-Features") {
+      if (!sap_features || !validateFile(sap_features, ['.xlsx', '.csv'])) {
+        showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
         
-        setIsLoading(true);
-        setActiveUploadType(uploadType);
-        setMessage(null);
+        // Clear file input
+        const fileInput = document.getElementById('Key-Features');
+        if (fileInput) fileInput.value = "";
         
-        try {
-          const file = productFilterValue;
-          const name = file.name.toLowerCase();
-          const arrayBuffer = await file.arrayBuffer();
-          const XLSX = await import('xlsx');
-          let rows = [];
+        setSap_features(null);
+        return;
+      }
+      
+      setIsLoading(true);
+      setActiveUploadType(uploadType);
+      setMessage(null);
+      
+      const formData = new FormData();
+      formData.append("excel", sap_features);
+      
+      console.log("Handling Key Features upload...");
+      try {
+        const response = await fetch('/api/product/bulk-upload/features', {
+          method: "POST",
+          body: formData,
+        });
 
-          if (name.endsWith('.csv')) {
-            const csvText = new TextDecoder('utf-8').decode(arrayBuffer);
-            const workbook = XLSX.read(csvText, { type: 'string' });
-            rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-          } else {
-            const data = new Uint8Array(arrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array' });
-            rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-          }
-
-          const results = { added: 0, skipped: 0, errors: [] };
-
-          for (const [idx, row] of rows.entries()) {
-            // Support common header name variations; adapt if your sheet headers differ.
-            const category_name = (row.SubCatgoryName || row.subcatgoryname || row.SubCatgoryName || '').toString().trim();
-            const parentid = (row.ParentName || row.parentname || row.parentname || 'none').toString().trim() || 'none';
-            /////alert(`Category: ${category_name}, Parent: ${parentid}`);
-            const status = (row.Status || row.status || 'Active').toString().trim() || 'Active';
-            const show_on_home = (row.ShowOnHome || row.show_on_home || 'No').toString().trim() || 'No';
-
-            if (!category_name) {
-              results.errors.push({ row: idx + 2, error: "Missing CategoryName" });
-              continue;
-            }
-
-            const fd = new FormData();
-            fd.append('category_name', category_name);
-            // fd.append('parentid_new', parentid);
-            fd.append('parent_name', parentid);
-            fd.append('status', status);
-            fd.append('show_on_home', show_on_home);
-
-            try {
-              const res = await fetch('/api/categories/add', { method: 'POST', body: fd });
-              const data = await res.json();
-              if (res.ok) {
-                results.added++;
-              } else {
-                // If server says category exists, count as skipped, otherwise record error
-                const msg = (data && data.error) ? data.error.toString().toLowerCase() : '';
-                if (res.status === 400 && msg.includes('already exists')) {
-                  results.skipped++;
-                } else {
-                  results.errors.push({ row: idx + 2, error: data.error || 'Unknown error' });
-                }
-              }
-            } catch (err) {
-              results.errors.push({ row: idx + 2, error: err.message || 'Network error' });
-            }
-          }
-
-          // Final aggregated toast: only one toast per attempt
-          if (results.added > 0 && results.errors.length === 0) {
-            showToast("success", `${results.added} categories added.`);
-          } else if (results.added > 0 && results.errors.length > 0) {
-            showToast("info", `${results.added} categories added. ${results.errors.length} rows failed.`);
-          } else if (results.errors.length > 0) {
-            showToast("error", `${results.errors.length} rows failed to add categories.`);
-          } else {
-            showToast("success", "No categories processed.");
-          }
-
-          resetUploadForm();
-        } catch (err) {
-          console.error("Category bulk upload error:", err);
-          showToast("error", "Upload failed. " + (err.message || ""));
-          resetUploadForm();
-        } finally {
-          setIsLoading(false);
-          setActiveUploadType(null);
+        const data = await response.json();
+        resetUploadForm();
+        if (response.ok) {
+          showToast("success", data.message || "Key Features uploaded successfully ✅");
+        } else {
+          showToast("error", data.error || "Upload failed ❌");
         }
-    }else if (uploadType == "map_product_categories"){
-        if(!productFilterValue || !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
-          showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
-          return;
-        } 
-        setIsLoading(true);
-        setActiveUploadType(uploadType);
-        setMessage(null);
-        try {
-          const file = productFilterValue;
-          const name = file.name.toLowerCase();
-          const arrayBuffer = await file.arrayBuffer();
-          const XLSX = await import('xlsx');
-          let rows = [];
-          if (name.endsWith('.csv')) {
-            const csvText = new TextDecoder('utf-8').decode(arrayBuffer);
-            const workbook = XLSX.read(csvText, { type: 'string' });
-            rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-          } else {
-            const data = new Uint8Array(arrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array' });
-            rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-          }
-          const results = { added: 0, skipped: 0, errors: [] };
-          for (const [idx, row] of rows.entries()) {
-            const item_code = (row.ItemCode || row.itemno || row.item_no || '').toString().trim();
-            const MappingCategory = (row.MappingCategory || row.mappingcategory || row.mapping_category || '').toString().trim();
-            if (!item_code) {
-              results.errors.push({ row: idx + 2, error: "Missing ItemCode" });
-              continue;
-            }
-           // alert(item_code);
-            const fd = new FormData();
-            fd.append('item_code', item_code);
-            fd.append('MappingCategory', MappingCategory);
-            try {
-               const res = await fetch('/api/product/bulk-upload/product', {
-                method: 'POST',
-                body: fd,
-              });
-              const data = await res.json();
-              if (res.ok) {
-                results.added++;
-              } else {
-                // If server says category exists, count as skipped, otherwise record error
-                const msg = (data && data.error) ? data.error.toString().toLowerCase() : '';
-                if (res.status === 400 && msg.includes('already exists')) {
-                  results.skipped++;
-                } else {
-                  results.errors.push({ row: idx + 2, error: data.error || 'Unknown error' });
-                }
-              }
-            } catch (err) {
-              results.errors.push({ row: idx + 2, error: err.message || 'Network error' });
-            }
-          }
-          // Aggregate messages to a single toast
-          if (results.added > 0 && results.errors.length === 0) {
-            showToast("success", `${results.added} product(s) were mapped to categories.`);
-          } else if (results.added > 0 && results.errors.length > 0) {
-            showToast("info", `${results.added} mapped. ${results.errors.length} failed.`);
-          } else if (results.errors.length > 0) {
-            showToast("error", `${results.errors.length} rows failed to map.`);
-          } else {
-            showToast("info", "No rows processed.");
-          }
 
-          resetUploadForm();
-        } catch (err) {
-          console.error("Bulk upload error:", err);
-          showToast("error", "Upload failed. " + (err.message || ""));
-          resetUploadForm();
-        } finally {
-          setIsLoading(false);
-          setActiveUploadType(null);
-        }
-    }else if (uploadType == "map_product_brands"){
-        if(!productFilterValue || !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
-          showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
-          return;
-        } 
-        setIsLoading(true);
-        setActiveUploadType(uploadType);
-        setMessage(null);
-        try {
-          const file = productFilterValue;
-          const name = file.name.toLowerCase();
-          const arrayBuffer = await file.arrayBuffer();
-          const XLSX = await import('xlsx');
-          let rows = [];
-          if (name.endsWith('.csv')) {
-            const csvText = new TextDecoder('utf-8').decode(arrayBuffer);
-            const workbook = XLSX.read(csvText, { type: 'string' });
-            rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-          } else {
-            const data = new Uint8Array(arrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array' });
-            rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-          }
-          const results = { added: 0, skipped: 0, errors: [] };
-          for (const [idx, row] of rows.entries()) {
-            const item_code = (row.ItemCode || row.itemno || row.item_no || '').toString().trim();
-            const BrandCode = (row.BrandCode || row.brandcode || row.brand_code || '').toString().trim();
-            if (!item_code) {
-              results.errors.push({ row: idx + 2, error: "Missing ItemCode" });
-              continue;
-            }
-           // alert(item_code);
-            const fd = new FormData();
-            fd.append('item_code', item_code);
-            fd.append('BrandCode', BrandCode);
-            try {
-               const res = await fetch('/api/product/bulk-upload/brand', {
-                method: 'POST',
-                body: fd,
-              });
-              const data = await res.json();
-              if (res.ok) {
-                results.added++;
-              } else {
-                // If server says category exists, count as skipped, otherwise record error
-                const msg = (data && data.error) ? data.error.toString().toLowerCase() : '';
-                if (res.status === 400 && msg.includes('already exists')) {
-                  results.skipped++;
-                } else {
-                  results.errors.push({ row: idx + 2, error: data.error || 'Unknown error' });
-                }
-              }
-            } catch (err) {
-              results.errors.push({ row: idx + 2, error: err.message || 'Network error' });
-            }
-          }
-          // Aggregate messages to a single toast
-          if (results.added > 0 && results.errors.length === 0) {
-            showToast("success", `${results.added} product(s) were mapped to categories.`);
-          } else if (results.added > 0 && results.errors.length > 0) {
-            showToast("info", `${results.added} mapped. ${results.errors.length} failed.`);
-          } else if (results.errors.length > 0) {
-            showToast("error", `${results.errors.length} rows failed to map.`);
-          } else {
-            showToast("info", "No rows processed.");
-          }
+      } catch (error) {
+        showToast("error", error?.message || "Upload failed ❌");
+      } finally {
+        // ✅ ALWAYS clear file after request (success or error)
+        const fileInput = document.getElementById('Key-Features');
+        if (fileInput) fileInput.value = "";
 
-          resetUploadForm();
-        } catch (err) {
-          console.error("Bulk upload error:", err);
-          showToast("error", "Upload failed. " + (err.message || ""));
-          resetUploadForm();
-        } finally {
-          setIsLoading(false);
-          setActiveUploadType(null);
-        }
+        setSap_features(null);
+        resetUploadForm();
+
+        setIsLoading(false);
+        setActiveUploadType(null);
+      }
     }
   };
 
@@ -710,6 +815,17 @@ export default function BulkUploadPage() {
     document.body.removeChild(link);
   };
 
+
+  const handleDownloadSap_featuresFile = () => {
+    const link = document.createElement('a');
+    link.href = `/uploads/files/key_features_new_test.xlsx?t=${Date.now()}`;
+    link.download = 'key_features_new_test.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
   const handleDownloadCategoryValues = () => {
     const link = document.createElement('a');
     link.href = `/uploads/files/NewCategoryBulkUploadSample.xlsx?t=${Date.now()}`;
@@ -718,7 +834,7 @@ export default function BulkUploadPage() {
     link.click();
     document.body.removeChild(link);
   };
-  
+
   const handleDownloadProductCategoryValues = () => {
     const link = document.createElement('a');
     link.href = `/uploads/files/UpdatingProductCategoriesSample.xlsx?t=${Date.now()}`;
@@ -727,7 +843,7 @@ export default function BulkUploadPage() {
     link.click();
     document.body.removeChild(link);
   };
-  
+
   const handleDownloadProductBrandsValues = () => {
     const link = document.createElement('a');
     link.href = `/uploads/files/UpdatingProductBrandsSample.xlsx?t=${Date.now()}`;
@@ -738,16 +854,18 @@ export default function BulkUploadPage() {
   };
 
   const sections = [
-    { id: "section-product-overview",          label: "Product - All Details Upload",       image: "/uploads/files/Product_all_upload_first_box.png" },
-    { id: "section-filter-upload",             label: "Filter Values Upload",                 image: "/uploads/files/Filter_Bulk_Upload_second_box.png" },
-    { id: "section-filter-group-upload",       label: "Filter Group Upload",           image: "/uploads/files/Filter_Group_uplad_third_image.png" },
-    { id: "section-movement-upload",           label: "Movement Type Upload",          image: "/uploads/files/Movement_upload_fourth_box_image.png" },
-    { id: "section-filter-values-upload",      label: "Product Filter Values Upload",  image: "/uploads/files/Filter_values_bulk_upload_fifth_box_image.png" },
-    { id: "section-category-filter-upload",    label: "Category Filter Upload",        image: "/uploads/files/Category_filter_upload_sixth_box_image.png" },
-    { id: "section-new-category-upload",       label: "New Category Upload",           image: "/uploads/files/New_Category_bulk_upload_seventh_image.png" },
+    { id: "section-product-overview", label: "Product - All Details Upload", image: "/uploads/files/Product_all_upload_first_box.png" },
+    { id: "section-filter-upload", label: "Filter Values Upload", image: "/uploads/files/Filter_Bulk_Upload_second_box.png" },
+    { id: "section-filter-group-upload", label: "Filter Group Upload", image: "/uploads/files/Filter_Group_uplad_third_image.png" },
+    { id: "section-movement-upload", label: "Movement Type Upload", image: "/uploads/files/Movement_upload_fourth_box_image.png" },
+    { id: "section-filter-values-upload", label: "Product Filter Values Upload", image: "/uploads/files/Filter_values_bulk_upload_fifth_box_image.png" },
+    { id: "section-category-filter-upload", label: "Category Filter Upload", image: "/uploads/files/Category_filter_upload_sixth_box_image.png" },
+    { id: "section-new-category-upload", label: "New Category Upload", image: "/uploads/files/New_Category_bulk_upload_seventh_image.png" },
     // { id: "section-product-categories-upload", label: "Update Product Categories",     image: "/uploads/files/Product_updating_category_eighth_image.png" },
-    { id: "section-product-brands-upload",     label: "Update Product Brands",         image: "/uploads/files/Product_Brand_update_nineth_image.png" },
-    { id: "section-status-bulk",               label: "Status Bulk Upload",            image: "/uploads/files/Status_bulk_upload_tenth_box_image.png" },
+    { id: "section-product-brands-upload", label: "Update Product Brands", image: "/uploads/files/Product_Brand_update_nineth_image.png" },
+    { id: "section-status-bulk", label: "Status Bulk Upload", image: "/uploads/files/Status_bulk_upload_tenth_box_image.png" },
+    { id: "extended-warrenty-upload", label: "Extended Warrenty Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
+    { id: "Key-Features", label: "Key Features", image: "/uploads/files/Key features.jpg" },
   ];
 
   return (
@@ -783,7 +901,7 @@ export default function BulkUploadPage() {
             {/* Section 1: Product Overview Upload */}
             {selectedSection === "section-product-overview" && (
               <form id="section-product-overview" ref={overviewFormRef} onSubmit={(e) => handleSubmit(e, "overview")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
-                
+
                 {/* Excel File Section */}
                 <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
                   <div className="mb-4">
@@ -1294,31 +1412,135 @@ export default function BulkUploadPage() {
             {/* Section 10: Status Bulk Upload */}
             {selectedSection === "section-status-bulk" && (
               <form id="section-status-bulk" ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "map_product_brands")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-6">
+                <div className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-6">
+                  <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                    <div className="mb-4">
+                      <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Status Bulk Upload</h2>
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Update Product Status in Bulk
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">This will update only the status field for each product. Use this to activate or deactivate products in bulk.</p>
+                    </div>
+                    <div className="mt-6">
+                      <Link
+                        href="/admin/product/status_bulk"
+                        className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium shadow-sm transition duration-150"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Go to Status Bulk Upload
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {/* Section 11: Extended warrenty Upload */}
+            {selectedSection === "extended-warrenty-upload" && (
+              <form id="extended-warrenty-upload" ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "map_product_brands")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
                 <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
                   <div className="mb-4">
-                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Status Bulk Upload</h2>
+                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
+                      Update Extended Warrenty for Product in Bulk
+                    </h2>
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                       <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      Update Product Status in Bulk
+                      Excel/CSV File
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">This will update only the status field for each product. Use this to activate or deactivate products in bulk.</p>
+                    <p className="text-sm text-gray-500 mt-1">Upload your Extended Warrenty data file</p>
                   </div>
-                  <div className="mt-6">
-                    <Link
-                      href="/admin/product/status_bulk"
-                      className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium shadow-sm transition duration-150"
+                  <div className="space-y-4">
+                    <input
+                      type="file"
+                      accept=".xlsx,.csv"
+                      onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSampleDownloadExtendedWarrenty}
+                      className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
-                      Go to Status Bulk Upload
-                    </Link>
+                      Download Sample Format
+                    </button>
+                    <div className="flex mt-5 justify-between">
+                      <button
+                        onClick={handleExtendedWarrentySubmit}
+                        disabled={isFilterUploadLoading}
+                        className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none disabled:opacity-50 transition-colors flex items-center"
+                      >
+                        {isFilterUploadLoading ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Uploading...
+                          </>
+                        ) : (
+                          "Upload Filter"
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </form>
+            )}
+
+
+            {selectedSection === "Key-Features" && (
+              <form id="Key-Features" ref={sap_featuresFormRef} onSubmit={(e) => handleSubmit(e, "Key-Features")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
+                <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                  <div className="mb-4">
+                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Product's Key Features Bulk Upload  </h2>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Excel/CSV File
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">Upload your Product Key Features values file</p>
+                  </div>
+                  <div className="space-y-4">
+                    <input id="Key-Features" type="file" accept=".xlsx,.csv" onChange={(e) => setSap_features(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100" required />
+                  </div>
+                  <button type="button" onClick={handleDownloadSap_featuresFile} className="inline-flex items-center pt-5 text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download Sample Format
+                  </button>
+                </div>
+                <div className="flex mt-5 justify-between">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-[#3B82F6] hover:bg-[#3B82F6] text-white px-3 py-2 rounded-md flex items-center gap-2"
+                  >
+                    {isLoading && activeUploadType == "Key-Features" ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
+                      </span>
+                    ) : (
+                      'Upload Product Key Features Values'
+                    )}
+                  </button>
+                </div>
               </form>
             )}
 

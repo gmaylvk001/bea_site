@@ -597,6 +597,25 @@ const grandTotal = subtotal - totalDiscount;
   
            const totalAmount = orderSummary.total;
 
+           // ✅ STEP 1: Save abandoned order BEFORE payment starts
+const abandonedRes = await fetch('/api/abandoned/create', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    user_id: userId,
+    cart_items: cartItems,
+    total_amount: totalAmount,
+    address: addressData,
+    payment_mode: paymentMethod,
+    payment_id: "",
+    order_username:"",
+    orderNumber: "ORD" + Date.now()
+  })
+});
+
+const abandonedData = await abandonedRes.json();
+const abandonedId = abandonedData.data._id;
+
       let paymentId = "";
       let paymentStatus = "";
       let paymentMode = "";
@@ -804,6 +823,21 @@ const deliveryAddress = useSavedAddress && selectedAddress !== null
       }
 
       if (cartdelte.status === 200) {
+
+        // ✅ UPDATE abandoned → SUCCESS
+  await fetch('/api/abandoned/update', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: abandonedId,
+      payment_status: "paid",
+      order_status: "pending",
+      payment_id: paymentId || null,
+      orderNumber: "ORD" + Date.now()
+    })
+  });
+
+
         localStorage.removeItem('checkoutData');
         localStorage.removeItem('appliedCoupon');
         const orderData = await orderRes.json();
@@ -848,8 +882,8 @@ const deliveryAddress = useSavedAddress && selectedAddress !== null
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-          // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"];
-          const emailadmin = ["sorambeeviuit@gmail.com"];
+          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"];
+       
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -864,6 +898,17 @@ const deliveryAddress = useSavedAddress && selectedAddress !== null
 
       }
     } catch (error) {
+       await fetch('/api/abandoned/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: abandonedId,
+          payment_status: "failed",
+          order_status: "abandoned"
+        })
+      });
+
+  toast.error("Payment failed");
       console.error("Error submitting order:", error);
       toast.error("Failed to place order. Please try again.");
       setIsSubmitting(false);
