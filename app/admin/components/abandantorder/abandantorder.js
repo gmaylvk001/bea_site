@@ -203,7 +203,7 @@ const sendCancellationEmail = async (order) => {
 };
 
   const handleVerifyRazorpay = async () => {
-    alert("Hi");
+    //alert("Hi");
   if (!razorpayId) {
     toast.error("Please enter Razorpay Payment ID");
     return;
@@ -213,7 +213,7 @@ const sendCancellationEmail = async (order) => {
 
   try {
     // 🔥 Call your backend to verify payment
-    const res = await fetch(`/api/verify-payment`, {
+    const res = await fetch(`/api/verify-abandoned-payment`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -227,7 +227,7 @@ const sendCancellationEmail = async (order) => {
     const data = await res.json();
 console.log("Testing",data);
 console.log("sajkhfdsahfdisd",orderToUpdate);
-alert(orderToUpdate._id);
+//alert(orderToUpdate._id);
     if (!res.ok || !data.success) {
       throw new Error(data.message || "Invalid payment");
     }
