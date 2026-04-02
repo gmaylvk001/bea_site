@@ -13,6 +13,7 @@ const schema = new mongoose.Schema(
     },
     banners: [
       {
+        bgColor: { type: String, default: "#f0f0f0" },
         topBanner: {
           name: String,
           image: String,
