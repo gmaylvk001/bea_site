@@ -5,15 +5,19 @@ export async function POST(req) {
   await dbConnect();
 
   try {
-    const { order_id, order_status } = await req.json();
+    const { order_id, order_status, payment_status, payment_id } = await req.json();
 
     if (!order_id || !order_status) {
       return Response.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
 
+    const updateFields = { order_status };
+    if (payment_status) updateFields.payment_status = payment_status;
+    if (payment_id) updateFields.payment_id = payment_id;
+
     const updatedOrder = await EcomOrderInfo.findOneAndUpdate(
       { _id: order_id },
-      { order_status },
+      { $set: updateFields },
       { new: true }
     );
 

@@ -5,7 +5,7 @@ import { ToastContainer, toast } from "react-toastify";
 import DateRangePicker from "@/components/DateRangePicker";
 import "react-toastify/dist/ReactToastify.css";
 
-const OrdersTable = () => {
+const OrdersTable_abon = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState("");
@@ -30,15 +30,20 @@ const OrdersTable = () => {
   const [orderToUpdate, setOrderToUpdate] = useState(null);
   const [oldStatus, setOldStatus] = useState("");
 
+
+  const [showRazorpayModal, setShowRazorpayModal] = useState(false);
+  const [razorpayId, setRazorpayId] = useState("");
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+
+  const fetchOrders = async () => {
+    const res = await fetch("/api/allorders");
+    const data = await res.json();
+    const filtered = data.filter(order => order.payment_status == "payment_initialized");
+    setOrders(filtered);
+    setFiltered(filtered);
+    setIsLoading(false);
+  };
   useEffect(() => {
-    const fetchOrders = async () => {
-      const res = await fetch("/api/allorders");
-      const data = await res.json();
-      const filtered = data.filter(order => order.payment_status !== "payment_initialized");
-      setOrders(filtered);
-      setFiltered(filtered);
-      setIsLoading(false);
-    };
     fetchOrders();
   }, []);
 
@@ -141,7 +146,73 @@ const OrdersTable = () => {
       throw error;
     }
   };
+  const handleVerifyRazorpay = async () => {
+    //alert("Hi");
+    if (!razorpayId) {
+      toast.error("Please enter Razorpay Payment ID");
+      return;
+    }
 
+    setIsCheckingPayment(true);
+
+    try {
+      // 🔥 Call your backend to verify payment
+      const res = await fetch(`/api/verify-abandoned-payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          payment_id: razorpayId,
+          order_id: orderToUpdate._id,
+          order_amount : orderToUpdate.order_amount,
+        }),
+      });
+
+      const data = await res.json();
+      console.log("Testing", data);
+      console.log("sajkhfdsahfdisd", orderToUpdate);
+      //alert(orderToUpdate._id);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Invalid payment");
+      }
+
+      // ✅ If valid → update order status
+      await fetch(`/api/orders/update/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: orderToUpdate._id,
+          order_status: "pending",
+          payment_status: "paid",
+          payment_id: razorpayId,
+        }),
+      });
+
+      toast.success("Payment verified & status updated");
+
+      // update UI
+      setOrders((prev) =>
+        prev.map((ord) =>
+          ord._id === orderToUpdate._id
+            ? { ...ord, order_status: "pending" }
+            : ord
+        )
+      );
+
+      // reset modal
+      setShowRazorpayModal(false);
+      setRazorpayId("");
+      setOrderToUpdate(null);
+      setOldStatus("");
+      fetchOrders()
+    } catch (error) {
+      console.error(error);
+      toast.error("Invalid Razorpay Payment ID");
+    } finally {
+      setIsCheckingPayment(false);
+    }
+  };
 
   // 📧 Send delivery confirmation email to user
   const sendDeliveryEmailToUser = async (order, deliveryDate) => {
@@ -355,7 +426,7 @@ const OrdersTable = () => {
       <ToastContainer position="top-right" autoClose={5000} />
 
       <div className="flex justify-between items-center mb-5">
-        <h2 className="text-2xl font-bold">All Orders</h2>
+        <h2 className="text-2xl font-bold">Abandoned Order</h2>
       </div>
 
       {isLoading ? (
@@ -389,13 +460,15 @@ const OrdersTable = () => {
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 text-sm"
               >
                 <option value="">All</option>
-                <option value="pending">Pending</option>
+                {/* <option value="pending">Pending</option>
                 <option value="order placed">Order Placed</option>
                 <option value="invoiced">Invoiced</option>
                 <option value="cancelled">Cancelled</option>
                 <option value="rejected">Rejected</option>
                 <option value="completed">Completed</option>
-                <option value="shipped">Shipped</option>
+                <option value="shipped">Shipped</option> */}
+                <option value="payment_initialized">payment_initialized</option>
+
               </select>
             </div>
 
@@ -427,7 +500,7 @@ const OrdersTable = () => {
               >
                 <option value="">All</option>
                 <option value="online">Online</option>
-                <option value="cash">COD</option>
+                {/* <option value="cash">COD</option> */}
               </select>
             </div>
 
@@ -461,7 +534,7 @@ const OrdersTable = () => {
                       <td className="p-2 border text-center">
                         <button
                           onClick={() =>
-                            router.push(`/admin/Allorder/${o._id}`)
+                            router.push(`/admin/abandonedorder/${o._id}`)
                           }
                           className="text-sm text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-md"
                         >
@@ -480,11 +553,12 @@ const OrdersTable = () => {
                             const prevStatus = o.order_status;
 
                             // If changing from pending to shipped, show delivery date modal
-                            if (prevStatus.toLowerCase() === "pending" &&
-                              newStatus.toLowerCase() === "shipped") {
+                            if (prevStatus.toLowerCase() === "payment_initialized" &&
+                              newStatus.toLowerCase() === "pending") {
                               setOrderToUpdate(o);
                               setOldStatus(prevStatus);
-                              setShowDeliveryDateModal(true);
+                              // setShowDeliveryDateModal(true);
+                              setShowRazorpayModal(true);
                               e.target.value = prevStatus; // Reset dropdown until confirmed
                               console.log("hai");
                               return;
@@ -510,16 +584,6 @@ const OrdersTable = () => {
                                 )
                               );
 
-                              // Send cancellation email if status changed to cancelled
-                              if (newStatus.toLowerCase() === "cancelled") {
-                                try {
-                                  await sendCancellationEmail(o);
-                                  toast.success("Cancellation email sent successfully!");
-                                } catch (error) {
-                                  toast.error("Failed to send cancellation email");
-                                }
-                              }
-
                               // Send admin notification for any status change
                               try {
                                 await sendAdminNotificationEmail(o, prevStatus, newStatus);
@@ -534,8 +598,7 @@ const OrdersTable = () => {
                           className="border px-2 py-1 rounded-md text-sm"
                         >
                           <option value="pending">Pending</option>
-                          <option value="shipped">Shipped</option>
-                          <option value="cancelled">Cancelled</option>
+                          <option value="payment_initialized">payment_initialized</option>
                         </select>
                       </td>
 
@@ -595,8 +658,8 @@ const OrdersTable = () => {
                   key={i}
                   onClick={() => paginate(i)}
                   className={`px-3 py-1.5 border rounded-md ${currentPage === i
-                      ? "bg-red-500 text-white"
-                      : "bg-white"
+                    ? "bg-red-500 text-white"
+                    : "bg-white"
                     }`}
                 >
                   {i + 1}
@@ -653,8 +716,8 @@ const OrdersTable = () => {
                 onClick={updateOrderStatusWithDeliveryDate}
                 disabled={!deliveryDate || isProcessing}
                 className={`px-4 py-2 rounded-md text-white ${isProcessing
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-red-600 hover:bg-red-700"
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-red-600 hover:bg-red-700"
                   }`}
               >
                 {isProcessing ? "Processing..." : "Confirm & Send Emails"}
@@ -664,8 +727,59 @@ const OrdersTable = () => {
           </div>
         </div>
       )}
+
+
+      {/* 💳 Razorpay Verification Modal */}
+      {showRazorpayModal && orderToUpdate && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h3 className="text-lg font-semibold mb-4">
+              Enter Razorpay Payment ID
+            </h3>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Order <b>{orderToUpdate.order_number}</b> for{" "}
+              <b>{orderToUpdate.order_username}</b>
+            </p>
+
+            <input
+              type="text"
+              placeholder="Enter Razorpay Payment ID"
+              value={razorpayId}
+              onChange={(e) => setRazorpayId(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md mb-4"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowRazorpayModal(false);
+                  setRazorpayId("");
+                  setOrderToUpdate(null);
+                  setOldStatus("");
+                }}
+                className="px-4 py-2 bg-gray-300 rounded-md"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleVerifyRazorpay}
+                disabled={!razorpayId || isCheckingPayment}
+                className={`px-4 py-2 rounded-md text-white ${isCheckingPayment
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
+                  }`}
+              >
+                {isCheckingPayment ? "Verifying..." : "Verify & Update"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
 
-export default OrdersTable;
+export default OrdersTable_abon;

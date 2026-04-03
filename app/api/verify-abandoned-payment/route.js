@@ -9,7 +9,7 @@ const razorpay = new Razorpay({
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { payment_id } = body;
+    const { payment_id,order_amount } = body;
 
     if (!payment_id) {
       return NextResponse.json(
@@ -24,7 +24,7 @@ export async function POST(req) {
     console.log("Razorpay Payment:", payment);
 
     // ✅ Check payment status
-    if (payment.status !== "captured") {
+    if (payment.status !== "captured" ||  payment.amount / 100 !== Number(order_amount)) {
       return NextResponse.json(
         { success: false, message: "Payment not completed" },
         { status: 400 }

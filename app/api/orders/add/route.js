@@ -31,11 +31,11 @@ export async function POST(req) {
     } = body;
 
     // Validate required fields
-    if (!user_id || !email_address || !order_phonenumber || (order_item.length == 0) || !order_amount) {
+    if (!user_id || !email_address || !order_phonenumber || !order_item?.length || !order_amount) {
       return Response.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
 
-    const newOrder = new EcomOrderInfo({
+    const orderFields = {
       user_id,
       order_username,
       order_phonenumber,
@@ -51,53 +51,78 @@ export async function POST(req) {
       user_adddeliveryid,
       email_address,
       order_status: order_status || "pending",
-      payment_status: payment_status || "unpaid"
-    });
+      payment_status: payment_status || "unpaid",
+    };
 
-    await newOrder.save();
-    if(newOrder){
-        for(const item of  order_item){
-          if(item.productId){
-            const productId = item.productId;
-              const product = await Product.findById(item.productId);
-              const coupon  = item.discount;
-              if(coupon > 0){
-                const userObjectId = new mongoose.Types.ObjectId(user_id);
-                const couponid = new mongoose.Types.ObjectId(item.coupondetails[0]._id);
-                const coupon_track = new Usedcoupon({coupon_id:couponid,user_id:userObjectId})
-                await coupon_track.save();
-                if(couponid){
-                  const updatecoupon = await Coupon.findOne({couponid});
-                  console.log(updatecoupon);
-                  if(updatecoupon){
-                    updatecoupon.used_by +=1;
-                    updatecoupon.save();
-                  }
-                }
+    // Check if order already exists (match by order_number if provided, else user + pending order)
+    const existingOrder = order_number
+      ? await EcomOrderInfo.findOne({ order_number })
+      : null;
 
-              }
-              console.log(product);
-              if (product && product.quantity > 0) {
-                product.quantity = product.quantity - item.quantity;
-                await product.save();
-              }
+    let savedOrder;
+    let isNew = false;
+
+    if (existingOrder) {
+      // Update existing order fields
+      Object.assign(existingOrder, orderFields);
+      savedOrder = await existingOrder.save();
+    } else {
+      // Create new order
+      const newOrder = new EcomOrderInfo(orderFields);
+      savedOrder = await newOrder.save();
+      isNew = true;
+    }
+
+    // Only run side-effects (stock deduction, coupon tracking) for new orders
+    if (isNew) {
+      for (const item of order_item) {
+        if (item.productId) {
+          const product = await Product.findById(item.productId);
+          const discount = item.discount;
+
+          if (discount > 0) {
+            const userObjectId = new mongoose.Types.ObjectId(user_id);
+            const couponid = new mongoose.Types.ObjectId(item.coupondetails[0]._id);
+
+            const coupon_track = new Usedcoupon({ coupon_id: couponid, user_id: userObjectId });
+            await coupon_track.save();
+
+            const updatecoupon = await Coupon.findById(couponid);
+            if (updatecoupon) {
+              updatecoupon.used_by += 1;
+              await updatecoupon.save();
+            }
+          }
+
+          if (product && product.quantity > 0) {
+            product.quantity = product.quantity - item.quantity;
+            await product.save();
           }
         }
+      }
+
+      // Create notification only for new orders
+      try {
+        const Notification = require("@/models/Notification.js");
+        const notification = new Notification({
+          userId: user_id,
+          message: `Order #${savedOrder.order_number || savedOrder._id} placed successfully!`,
+          orderId: savedOrder._id,
+        });
+        await notification.save();
+      } catch (notifErr) {
+        console.error("Notification creation failed:", notifErr);
+      }
     }
-    // Create notification after order is placed
-    try {
-      const Notification = require("@/models/Notification.js");
-      const notification = new Notification({
-        userId: user_id,
-        message: `Order #${newOrder.order_number || newOrder._id} placed successfully!`,
-        orderId: newOrder._id,
-      });
-      await notification.save();
-    } catch (notifErr) {
-      // Optionally log notification error, but don't block order creation
-      console.error("Notification creation failed:", notifErr);
-    }
-    return Response.json({ success: true, message: "Order added successfully", order: newOrder }, { status: 201 });
+
+    return Response.json(
+      {
+        success: true,
+        message: isNew ? "Order created successfully" : "Order updated successfully",
+        order: savedOrder,
+      },
+      { status: isNew ? 201 : 200 }
+    );
 
   } catch (error) {
     return Response.json({ success: false, message: "Server error", error: error.message }, { status: 500 });

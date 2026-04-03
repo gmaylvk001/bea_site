@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const MAPS_MID = "1vsvXMLc5zU4Aoks8fq6rNSBTauwsMYtz";
 
 export default function MapView({ selectedStore }) {
   const [showCard, setShowCard] = useState(false);
+  const overlayRef = useRef(null);
 
   useEffect(() => {
     if (selectedStore?._coords?.lat) {
@@ -14,28 +15,43 @@ export default function MapView({ selectedStore }) {
     }
   }, [selectedStore]);
 
-  // Always use My Maps (no "Place info couldn't load" popup)
-  // Just shift center to selected store when one is picked
+  // Forward wheel events to the page on the wrapper, not the overlay
+  useEffect(() => {
+    const el = overlayRef.current;
+    if (!el) return;
+
+    const forwardScroll = (e) => {
+      window.scrollBy({ top: e.deltaY, left: e.deltaX });
+    };
+
+    el.addEventListener("wheel", forwardScroll, { passive: true });
+
+    return () => {
+      el.removeEventListener("wheel", forwardScroll);
+    };
+  }, []);
+
   const src = selectedStore?._coords?.lat
     ? `https://www.google.com/maps/d/embed?mid=${MAPS_MID}&ll=${selectedStore._coords.lat},${selectedStore._coords.lng}&z=14`
     : `https://www.google.com/maps/d/embed?mid=${MAPS_MID}&ll=11.636463743060151,77.66049321182919&z=9`;
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div ref={overlayRef} style={{ width: "100%", height: "100%", position: "relative" }}>
       <iframe
         key={src}
         src={src}
         width="100%"
         height="100%"
-        style={{ border: 0 }}
+        style={{ border: 0, touchAction: "none" }}
         allowFullScreen
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
       />
 
+
+
       {showCard && selectedStore && (
         <>
-          {/* Info card above the pin */}
           <div
             style={{
               position: "absolute",
@@ -77,7 +93,6 @@ export default function MapView({ selectedStore }) {
                 </a>
               )}
             </div>
-            {/* Arrow down from card */}
             <div
               style={{
                 width: 0,
@@ -91,7 +106,6 @@ export default function MapView({ selectedStore }) {
             />
           </div>
 
-          {/* Red location pin at map center */}
           <div
             style={{
               position: "absolute",
