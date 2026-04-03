@@ -45,9 +45,10 @@ export default function Order() {
         if (!response.ok) {
           throw new Error('Failed to fetch orders data');
         }
-
         const data = await response.json();
-        setFilteredOrders(data.orders || []);
+        console.log('datareta n my',data?.orders);
+        const filtered = data?.orders.filter(order => order.payment_status !== "payment_initialized");
+        setFilteredOrders(filtered || []);
       } catch (error) {
         toast.error("Failed to load orders data");
         console.error(error);
