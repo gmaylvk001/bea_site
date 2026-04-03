@@ -166,7 +166,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-white mt-6">
       {banners.map((group, idx) => (
         <div key={idx} className="mt-6">
           {/* ── TOP BANNER ───────────────────────────────────────────── */}
@@ -179,7 +179,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
               <img
                 src={group.top.image}
                 alt={group.top.name}
-                className="w-full rounded-xl"
+                className="w-full"
               />
             </a>
           )}
@@ -188,7 +188,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
           {group.sub?.length > 0 && (
             // Full width color background wrapping all cards
             <div
-              className="w-full mt-0 rounded-xl py-4 px-4"
+              className="w-full mt-0  py-4 px-4"
               style={{ backgroundColor: group.bgColor || "#f0f0f0" }}
             >
               {group.sub.length < 5 ? (
@@ -205,7 +205,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                       href={sb.url || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block rounded-xl overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
+                      className="block  overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
                     >
                       <img
                         src={sb.image}
@@ -234,7 +234,7 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                         href={sb.url || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block rounded-xl overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
+                        className="block overflow-hidden transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
                       >
                         <img
                           src={sb.image}

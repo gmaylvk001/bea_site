@@ -62,7 +62,7 @@ export default function ShopByBrand({ categorySlug }) {
   if (error || brands.length === 0) return null;
 
   return (
-    <section className="bg-white px-5 sm:px-8 py-6 rounded-2xl">
+    <section className="bg-white px-5 sm:px-8 py-6 mt-6 mb-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-5">
         <span className="inline-block w-1 h-6 rounded-full bg-blue-500" />

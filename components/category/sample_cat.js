@@ -640,13 +640,11 @@ console.log("slug:", slug);
           <>
             <BannerSlider categorySlug={slug} />
             <FlashCategorySlider slug={params.slug} />
-            <CategoryImageSection categorySlug={slug} index={0}/>
             <ShopByBrand categorySlug={slug} />
+            <CategoryImageSection categorySlug={slug} index={0}/>
             <CategoryImageSection categorySlug={slug} index={1} />
            <CategoryMainPage categorySlug={slug} />
            <CategoryImageSection categorySlug={slug} index={2} />
-
-            
           </>
         )} 
       </div>
