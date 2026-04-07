@@ -37,7 +37,7 @@ const DeliveryOptions = ({ formData, handleChange, isDeliverySaved, setIsDeliver
         console.error("Failed to fetch stores", error);
       }
     };
-
+    
     if (!stores || stores.length === 0) {
       fetchStores();
     }
@@ -183,7 +183,7 @@ export default function CheckoutPage() {
     total: 0
   });
   console.log(cartItems);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const [isSubmitting, setIsSubmitting] = useState(false);
   const [touched, setTouched] = useState({});
   useEffect(() => {
     const fetchStores = async () => {
@@ -203,7 +203,7 @@ export default function CheckoutPage() {
   }, []);
 
   const uniqueCities = [...new Set(stores.map(store => store.city))];
-  const extraCities = ["Ariyalur", "Chennai", "Coimbatore", "Cuddalore", "Dharmapuri", "Dindigul", "Erode", "Kanchipuram", "Kanyakumari", "Karur", "Krishnagiri", "Madurai", "Nagapattinam", "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Salem", "Sivaganga", "Thanjavur", "Theni", "Thoothukudi", "Tirunelveli", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar", "Singanallur", "Sivananthapuram", "Vadavalli", "Annur", "Mettupalayam", "Thennur", "Ariyamangalam", "Komarapalayam", "Kattur"];
+  const extraCities = ["Ariyalur","Chennai","Coimbatore","Cuddalore","Dharmapuri","Dindigul","Erode","Kanchipuram","Kanyakumari","Karur","Krishnagiri","Madurai","Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram","Salem","Sivaganga","Thanjavur","Theni","Thoothukudi","Tirunelveli","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore","Viluppuram","Virudhunagar", "Singanallur", "Sivananthapuram", "Vadavalli", "Annur", "Mettupalayam", "Thennur", "Ariyamangalam", "Komarapalayam", "Kattur"];
 
   const finalCities = [...new Set([...uniqueCities, ...extraCities])];
 
@@ -255,62 +255,62 @@ export default function CheckoutPage() {
 
 
   const fetchData = async (skipCartFetch = false) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setShowAuthModal(true);
-      setLoading(false);
-      return;
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setShowAuthModal(true);
+    setLoading(false);
+    return;
+  }
+
+  try {
+    const decoded = jwtDecode(token);
+    const userId = decoded.userId;
+
+    // skip cart fetch when items were already loaded from buyNowData or checkoutData
+    if (!skipCartFetch) {
+      const cartResponse = await fetch("/api/cart", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!cartResponse.ok) throw new Error("Failed to fetch cart data");
+
+      const cartData = await cartResponse.json();
+      setCartItems(cartData.cart.items);
     }
 
-    try {
-      const decoded = jwtDecode(token);
-      const userId = decoded.userId;
+    // Fetch user address
+    const addressResponse = await fetch(`/api/useraddress?user_id=${userId}`);
+    if (!addressResponse.ok) throw new Error("Failed to fetch address data");
 
-      // skip cart fetch when items were already loaded from buyNowData or checkoutData
-      if (!skipCartFetch) {
-        const cartResponse = await fetch("/api/cart", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    const addressData = await addressResponse.json();
+    setUseraddress(addressData.userAddress);
 
-        if (!cartResponse.ok) throw new Error("Failed to fetch cart data");
-
-        const cartData = await cartResponse.json();
-        setCartItems(cartData.cart.items);
-      }
-
-      // Fetch user address
-      const addressResponse = await fetch(`/api/useraddress?user_id=${userId}`);
-      if (!addressResponse.ok) throw new Error("Failed to fetch address data");
-
-      const addressData = await addressResponse.json();
-      setUseraddress(addressData.userAddress);
-
-      if (addressData.userAddress.length > 0) {
-        const addr = addressData.userAddress[0];
-        setFormData(prev => ({
-          ...prev,
-          firstName: addr.firstName || "",
-          lastName: addr.lastName || "",
-          country: addr.country || "",
-          address: addr.address || "",
-          city: addr.city || "",
-          state: addr.state || "Tamilnadu",
-          postCode: addr.postCode || "",
-          phonenumber: addr.phonenumber || "",
-          landmark: addr.landmark || "",
-          email: addr.email || "",
-          businessName: addr.businessName || "",
-          additionalInfo: addr.additionalInfo || ""
-        }));
-        setSelectedAddress(0); // auto-select first address so edits sync to the card
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Failed to load checkout data");
-    } finally {
-      setLoading(false);
+    if (addressData.userAddress.length > 0) {
+      const addr = addressData.userAddress[0];
+      setFormData(prev => ({
+        ...prev,
+        firstName: addr.firstName || "",
+        lastName: addr.lastName || "",
+        country: addr.country || "",
+        address: addr.address || "",
+        city: addr.city || "",
+        state: addr.state || "Tamilnadu",
+        postCode: addr.postCode || "",
+        phonenumber: addr.phonenumber || "",
+        landmark: addr.landmark || "",
+        email: addr.email || "",
+        businessName: addr.businessName || "",
+        additionalInfo: addr.additionalInfo || ""
+      }));
+      setSelectedAddress(0); // auto-select first address so edits sync to the card
     }
-  };
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    toast.error("Failed to load checkout data");
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   const handleChange = (e) => {
@@ -379,83 +379,82 @@ export default function CheckoutPage() {
       throw new Error('Failed to create Razorpay order');
     }
   };
-  const handleOnlinePayment = async (totalAmount) => {
-    try {
-
-      const razorpayLoaded = await initializeRazorpay();
-      if (!razorpayLoaded) {
-        toast.error('Razorpay SDK failed to load');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const orderResponse = await createRazorpayOrder(totalAmount);
-      const { order } = orderResponse;
-
-      return new Promise((resolve, reject) => {
-        const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY,
-          amount: order.amount,
-          currency: "INR",
-          name: "BEA",
-          description: "Product Purchase",
-          order_id: order.id,
-          handler: async function (response) {
-            try {
-              const verificationRes = await fetch('/api/verify-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature
-                })
-              });
-
-              if (verificationRes.ok) {
-                resolve({
-                  paymentId: response.razorpay_payment_id,
-                  status: "paid",
-                  mode: "online"
-                });
-              } else {
-                reject(new Error('Payment verification failed'));
-              }
-            } catch (err) {
-              reject(err);
-            }
-          },
-          prefill: {
-            name: `${formData.firstName} ${formData.lastName}`,
-            email: formData.email,
-            contact: formData.phonenumber
-          },
-          theme: {
-            color: "#F37254"
-          },
-          modal: {
-            ondismiss: () => {
-              setIsSubmitting(false);
-              reject(new Error('Payment window closed'));
-            }
-          }
-        };
-
-        const razorpay = new window.Razorpay(options);
-        razorpay.open();
-
-        razorpay.on('payment.failed', function (response) {
-          setIsSubmitting(false);
-          reject(new Error(response.error.description));
-        });
-      });
-    } catch (error) {
-      console.error('Razorpay error:', error);
-      toast.error('Payment processing failed');
+const handleOnlinePayment = async (totalAmount) => {
+  try {
+    const razorpayLoaded = await initializeRazorpay();
+    if (!razorpayLoaded) {
+      toast.error('Razorpay SDK failed to load');
       setIsSubmitting(false);
-      throw error;
+      return;
     }
-  };
+
+    const orderResponse = await createRazorpayOrder(totalAmount);
+    const { order } = orderResponse;
+
+    return new Promise((resolve, reject) => {
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY,
+        amount: order.amount,
+        currency: "INR",
+        name: "BEA",
+        description: "Product Purchase",
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            const verificationRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            if (verificationRes.ok) {
+              resolve({
+                paymentId: response.razorpay_payment_id,
+                status: "paid",
+                mode: "online"
+              });
+            } else {
+              reject(new Error('Payment verification failed'));
+            }
+          } catch (err) {
+            reject(err);
+          }
+        },
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          contact: formData.phonenumber
+        },
+        theme: {
+          color: "#F37254"
+        },
+        modal: {
+          ondismiss: () => {
+            setIsSubmitting(false);
+            reject(new Error('Payment window closed'));
+          }
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+
+      razorpay.on('payment.failed', function (response) {
+        setIsSubmitting(false);
+        reject(new Error(response.error.description));
+      });
+    });
+  } catch (error) {
+    console.error('Razorpay error:', error);
+    toast.error('Payment processing failed');
+    setIsSubmitting(false);
+    throw error;
+  }
+};
   // const handleOnlinePayment = async (totalAmount) => {
   //   try {
   //     const razorpayLoaded = await initializeRazorpay();
@@ -464,10 +463,10 @@ export default function CheckoutPage() {
   //       setIsSubmitting(false);
   //       return;
   //     }
-
+  
   //     const orderResponse = await createRazorpayOrder(totalAmount);
   //     const { order } = orderResponse;
-
+  
   //     return new Promise((resolve, reject) => {
   //       const options = {
   //         key: process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY,
@@ -487,7 +486,7 @@ export default function CheckoutPage() {
   //                 razorpay_signature: response.razorpay_signature
   //               })
   //             });
-
+  
   //             if (verificationRes.ok) {
   //               resolve({
   //                 paymentId: response.razorpay_payment_id,
@@ -510,10 +509,10 @@ export default function CheckoutPage() {
   //           color: "#F37254"
   //         }
   //       };
-
+  
   //       const razorpay = new window.Razorpay(options);
   //       razorpay.open();
-
+  
   //       razorpay.on('payment.failed', function (response) {
   //          setIsSubmitting(false);
   //         reject(new Error(response.error.description));
@@ -528,16 +527,16 @@ export default function CheckoutPage() {
   //     throw error;
   //   }
   // };
-  // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const totalDiscount = cartItems.reduce((sum, item) => sum + (item.discount || 0), 0);
-  const grandTotal = subtotal - totalDiscount;
+// Calculate totals
+const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+const totalDiscount = cartItems.reduce((sum, item) => sum + (item.discount || 0), 0);
+const grandTotal = subtotal - totalDiscount;
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
+  
 
-
-    setError("");
+  setError("");
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -547,38 +546,38 @@ export default function CheckoutPage() {
       }
       const decoded = jwtDecode(token);
       const userId = decoded.userId;
-
+  
       // Use saved address data if selected, otherwise use form data
-      const addressData = useSavedAddress && selectedAddress !== null
-        ? {
-          ...useraddress[selectedAddress],
-          state: useraddress[selectedAddress].state || "Tamilnadu",
-          country: useraddress[selectedAddress].country || "India",
-        }
-        : {
-          ...formData,
-          state: formData.state || "Tamilnadu",
-          country: formData.country || "India",
-        };
-
+        const addressData = useSavedAddress && selectedAddress !== null
+  ? {
+      ...useraddress[selectedAddress],
+      state: useraddress[selectedAddress].state || "Tamilnadu",
+      country: useraddress[selectedAddress].country || "India",
+    }
+  : {
+      ...formData,
+      state: formData.state || "Tamilnadu",
+      country: formData.country || "India",
+    };
+  
       // Validation Checks (only if not using saved address)
       if (!useSavedAddress || selectedAddress === null) {
         setTouched({ firstName: true, lastName: true, email: true, phonenumber: true, country: true, address: true, city: true, postCode: true });
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phoneRegex = /^[0-9]{10}$/;
         const postCodeRegex = /^[0-9]{4,6}$/;
-
-        if (
-          !addressData.firstName ||
-          !addressData.lastName ||
-          !addressData.email ||
-          !addressData.phonenumber ||
-          !addressData.postCode ||
-          !addressData.state
-        ) {
-          toast.error("Please fill in all required fields.");
-          return;
-        }
+  
+            if (
+        !addressData.firstName ||
+        !addressData.lastName ||
+        !addressData.email ||
+        !addressData.phonenumber ||
+        !addressData.postCode ||
+        !addressData.state
+      ) {
+        toast.error("Please fill in all required fields.");
+        return;
+      }
 
         if (!emailRegex.test(addressData.email)) {
           toast.error("Please enter a valid email address.");
@@ -593,144 +592,41 @@ export default function CheckoutPage() {
           return;
         }
       }
-      setIsSubmitting(true);
+    setIsSubmitting(true);
       setError("");
+  
+           const totalAmount = orderSummary.total;
 
-      const totalAmount = orderSummary.total;
+           // ✅ STEP 1: Save abandoned order BEFORE payment starts
+const abandonedRes = await fetch('/api/abandoned/create', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    user_id: userId,
+    cart_items: cartItems,
+    total_amount: totalAmount,
+    address: addressData,
+    payment_mode: paymentMethod,
+    payment_id: "",
+    order_username:"",
+    orderNumber: "ORD" + Date.now()
+  })
+});
 
-      // ✅ STEP 1: Save abandoned order BEFORE payment starts
-      // const abandonedRes = await fetch('/api/abandoned/create', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     user_id: userId,
-      //     cart_items: cartItems,
-      //     total_amount: totalAmount,
-      //     address: addressData,
-      //     payment_mode: paymentMethod,
-      //     payment_id: "",
-      //     order_username: "",
-      //     orderNumber: "ORD" + Date.now()
-      //   })
-      // });
+const abandonedData = await abandonedRes.json();
+const abandonedId = abandonedData.data._id;
 
-      // const abandonedData = await abandonedRes.json();
-      // const abandonedId = abandonedData.data._id;
-
-      if (!useSavedAddress || selectedAddress === null) {
-        const formDataToSend = new FormData();
-        formDataToSend.append('userId', userId);
-        formDataToSend.append('firstname', addressData.firstName);
-        formDataToSend.append('lastName', addressData.lastName);
-        formDataToSend.append('businessName', addressData.businessName || '');
-        formDataToSend.append('country', addressData.country);
-        formDataToSend.append('email', addressData.email);
-        formDataToSend.append('address', addressData.address);
-        formDataToSend.append('postCode', addressData.postCode);
-        formDataToSend.append('city', addressData.city);
-        formDataToSend.append('state', addressData.state);
-        formDataToSend.append('landmark', addressData.landmark || '');
-        formDataToSend.append('phonenumber', addressData.phonenumber);
-        formDataToSend.append('altnumber', addressData.altnumber || '');
-        formDataToSend.append('gst_name', addressData.gst_name || '');
-        formDataToSend.append('gst_number', addressData.gst_number || '');
-        formDataToSend.append('additionalInfo', addressData.additionalInfo || '');
-
-        const addressRes = await fetch('/api/useraddress/add', {
-          method: 'POST',
-          body: formDataToSend,
-        });
-
-        if (!addressRes.ok) {
-          throw new Error('Failed to save address');
-        }
-        const newAddressData = await addressRes.json();
-        setUseraddress(prev => [...prev, newAddressData.userAddress]);
-      }
-
-            const deliveryAddress = useSavedAddress && selectedAddress !== null
-        ? [
-          useraddress[selectedAddress].address,
-          useraddress[selectedAddress].landmark,
-          useraddress[selectedAddress].additionalInfo,
-          useraddress[selectedAddress].businessName,
-          useraddress[selectedAddress].city,
-          useraddress[selectedAddress].state,
-          useraddress[selectedAddress].country,
-          useraddress[selectedAddress].postCode
-        ].filter(Boolean).join(", ")
-        : [
-          addressData.address,
-          addressData.landmark,
-          addressData.additionalInfo,
-          addressData.businessName,
-          addressData.city,
-          addressData.state,
-          addressData.country,
-          addressData.postCode
-        ].filter(Boolean).join(", ");
-
-      let order_number ="ORD" + Date.now();
       let paymentId = "";
       let paymentStatus = "";
       let paymentMode = "";
-      let order_status = "payment_initialized"
+  
       if (paymentMethod === 'Cash on Delivery') {
         paymentId = "COD_" + Date.now();
         paymentStatus = "pending";
         paymentMode = "Cash on Delivery";
       } else if (paymentMethod === 'online') {
         try {
-
-          const orderRes = await fetch('/api/orders/add', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: userId,
-              user_adddeliveryid: useSavedAddress && selectedAddress !== null
-                ? useraddress[selectedAddress]._id
-                : useraddress[0]?._id,
-              order_username: `${addressData.firstName} ${addressData.lastName}`,
-              order_phonenumber: addressData.phonenumber,
-              email_address: addressData.email,
-              order_item: cartItems,
-              order_amount: totalAmount,
-              order_deliveryaddress: deliveryAddress,
-              payment_method: paymentMethod,
-              payment_type:  "online",
-              order_status: order_status,
-              delivery_type: formData.deliveryType === "store" ? "store_pickup" : "home",
-              pickup_store: formData.deliveryType === "store"
-                ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
-                : undefined,
-              payment_id: paymentId || '',
-              payment_status: "payment_initialized",
-              order_number:"ORD" + Date.now() || "ORD" + Date.now(),
-              order_details: cartItems.map((item) => ({
-                item_code: `ITEM${item.item_code}`,
-                product_id: item.id,
-                product_name: item.name,
-                product_price: item.price,
-                model: "N/A",
-                user_id: userId,
-                coupondiscount: 0,
-                created_at: new Date(),
-                updated_at: new Date(),
-                // quantity: 1,
-                quantity: item.quantity,
-                store_id: formData.deliveryType === "store" ? formData.selectedStore : "STORE01",
-                orderNumber: "ORD" + Date.now(),
-              })),
-            }),
-          });
-
-          const orderData = await orderRes.json()
-          console.log("order data",orderData)
-          order_number = orderData?.order?.order_number
-          console.log(order_number,'testing')
-
-          let result = await handleOnlinePayment(totalAmount);
-          console.log(result,'razer pay result dfoidfnalkdsfoignldfoiafn;ldksafnhoi')
+          const result = await handleOnlinePayment(totalAmount);
           paymentId = result.paymentId;
           paymentStatus = result.status;
           paymentMode = result.mode;
@@ -743,10 +639,39 @@ export default function CheckoutPage() {
         console.log("Invalid Payment Method");
         return;
       }
-
+ 
       // Only save new address if not using saved address
-
-
+      if (!useSavedAddress || selectedAddress === null) {
+        const formDataToSend = new FormData();
+        formDataToSend.append('userId', userId);
+        formDataToSend.append('firstname', addressData.firstName);
+        formDataToSend.append('lastName', addressData.lastName);
+        formDataToSend.append('businessName', addressData.businessName || '');
+        formDataToSend.append('country', addressData.country);
+        formDataToSend.append('email', addressData.email);
+        formDataToSend.append('address', addressData.address);
+        formDataToSend.append('postCode', addressData.postCode);
+        formDataToSend.append('city', addressData.city);
+        formDataToSend.append('state', addressData.state); 
+        formDataToSend.append('landmark', addressData.landmark || '');
+        formDataToSend.append('phonenumber', addressData.phonenumber);
+        formDataToSend.append('altnumber', addressData.altnumber || '');
+        formDataToSend.append('gst_name', addressData.gst_name || '');
+        formDataToSend.append('gst_number', addressData.gst_number || '');
+        formDataToSend.append('additionalInfo', addressData.additionalInfo || '');
+  
+        const addressRes = await fetch('/api/useraddress/add', {
+          method: 'POST',
+          body: formDataToSend,
+        });
+  
+        if (!addressRes.ok) {
+          throw new Error('Failed to save address');
+        }
+        const newAddressData = await addressRes.json();
+        setUseraddress(prev => [...prev, newAddressData.userAddress]);
+      }
+  
       // Save Payment
       const paymentRes = await fetch('/api/payment', {
         method: 'POST',
@@ -760,28 +685,47 @@ export default function CheckoutPage() {
           payment_Date: new Date(),
         }),
       });
-
+  
       if (!paymentRes.ok) {
         throw new Error('Payment processing failed');
       }
-
+  
       const res = await paymentRes.json();
       const paymentData = res.paymentData;
-
-      console.log(paymentData,"'''''''''''''''''''''''''''''''''payment dat''''''''''")
+      
       // Prepare delivery address string
       /* const deliveryAddress = useSavedAddress && selectedAddress !== null
         ? `${useraddress[selectedAddress].address}, ${useraddress[selectedAddress].city}, ${useraddress[selectedAddress].state}, ${useraddress[selectedAddress].country}, ${useraddress[selectedAddress].postCode}`
         : `${addressData.address}, ${addressData.city}, ${addressData.state}, ${addressData.country}, ${addressData.postCode}`; */
-      // Prepare delivery address string
-
-
-      /* alert(
-`pickup_store: ${
-  formData.deliveryType === "store"
-    ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
-    : "undefined"
-}`
+        // Prepare delivery address string
+const deliveryAddress = useSavedAddress && selectedAddress !== null
+  ? [
+      useraddress[selectedAddress].address,
+      useraddress[selectedAddress].landmark,
+      useraddress[selectedAddress].additionalInfo,
+      useraddress[selectedAddress].businessName,
+      useraddress[selectedAddress].city,
+      useraddress[selectedAddress].state,
+      useraddress[selectedAddress].country,
+      useraddress[selectedAddress].postCode
+    ].filter(Boolean).join(", ")
+  : [
+      addressData.address,
+      addressData.landmark,
+      addressData.additionalInfo,
+      addressData.businessName,
+      addressData.city,
+      addressData.state,
+      addressData.country,
+      addressData.postCode
+    ].filter(Boolean).join(", ");
+  
+        /* alert(
+  `pickup_store: ${
+    formData.deliveryType === "store"
+      ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
+      : "undefined"
+  }`
 ); */
 
       // Save Order
@@ -790,8 +734,8 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: userId,
-          user_adddeliveryid: useSavedAddress && selectedAddress !== null
-            ? useraddress[selectedAddress]._id
+          user_adddeliveryid: useSavedAddress && selectedAddress !== null 
+            ? useraddress[selectedAddress]._id 
             : useraddress[0]?._id,
           order_username: `${addressData.firstName} ${addressData.lastName}`,
           order_phonenumber: addressData.phonenumber,
@@ -802,13 +746,13 @@ export default function CheckoutPage() {
           payment_method: paymentMethod,
           payment_type: paymentMode,
           order_status: "pending",
-          delivery_type: formData.deliveryType === "store" ? "store_pickup" : "home",
-          pickup_store: formData.deliveryType === "store"
-            ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
-            : undefined,
-          payment_id: paymentData.payment_id,
+         delivery_type: formData.deliveryType === "store" ? "store_pickup" : "home",
+         pickup_store: formData.deliveryType === "store" 
+      ? stores.find(s => s._id === formData.selectedStore)?.organisation_name 
+      : undefined,
+          payment_id: paymentData._id,
           payment_status: paymentData.status,
-          order_number: order_number|| "ORD" + Date.now(),
+          order_number: "ORD" + Date.now(),
           order_details: cartItems.map((item) => ({
             item_code: `ITEM${item.item_code}`,
             product_id: item.id,
@@ -833,32 +777,32 @@ export default function CheckoutPage() {
 
 
       // if(orderRes.ok){
-      // const responsedata = await orderRes.json();
-      // const order_id = responsedata.order._id.toString();
-      // const orderhistory1 = await fetch('/api/orderhistory',{
-      //   method:'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({orderId : order_id})
-      // });
+        // const responsedata = await orderRes.json();
+        // const order_id = responsedata.order._id.toString();
+        // const orderhistory1 = await fetch('/api/orderhistory',{
+        //   method:'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({orderId : order_id})
+        // });
 
-      // if(formData.deliveryType == 'store'){
-      //  const storeorderid = await fetch('/api/sender_orderid',{
-      //   method:'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({orderId : order_id})
-      //  });
+        // if(formData.deliveryType == 'store'){
+        //  const storeorderid = await fetch('/api/sender_orderid',{
+        //   method:'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({orderId : order_id})
+        //  });
 
-      //  if(storeorderid.ok){
-      //     const storeresponsedata = await storeorderid.json();
-      //   const storeorderid_status = storeresponsedata.status;
-      //     const orderhistory = await fetch('/api/orderhistory',{
-      //       method:'PUT',
-      //       headers: { 'Content-Type': 'application/json' },
-      //       body: JSON.stringify({orderId : order_id,status:storeorderid_status})
-      //     });
-      //  }
+        //  if(storeorderid.ok){
+        //     const storeresponsedata = await storeorderid.json();
+        //   const storeorderid_status = storeresponsedata.status;
+        //     const orderhistory = await fetch('/api/orderhistory',{
+        //       method:'PUT',
+        //       headers: { 'Content-Type': 'application/json' },
+        //       body: JSON.stringify({orderId : order_id,status:storeorderid_status})
+        //     });
+        //  }
 
-      // }
+        // }
       // }
 
       // Clear cart after successful order
@@ -881,17 +825,17 @@ export default function CheckoutPage() {
       if (cartdelte.status === 200) {
 
         // ✅ UPDATE abandoned → SUCCESS
-        // await fetch('/api/abandoned/update', {
-        //   method: 'PUT',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({
-        //     id: abandonedId,
-        //     payment_status: "paid",
-        //     order_status: "pending",
-        //     payment_id: paymentId || null,
-        //     orderNumber: "ORD" + Date.now()
-        //   })
-        // });
+  await fetch('/api/abandoned/update', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: abandonedId,
+      payment_status: "paid",
+      order_status: "pending",
+      payment_id: paymentId || null,
+      orderNumber: "ORD" + Date.now()
+    })
+  });
 
 
         localStorage.removeItem('checkoutData');
@@ -921,7 +865,6 @@ export default function CheckoutPage() {
           const emailFormData = new FormData();
           emailFormData.append("campaign_id", "0800f221-7805-4b76-988c-bbecd66e7500");
           emailFormData.append("email", addressData.email);
-          // emailFormData.append("email", "balabalaji9345065011@gmail.com");
           emailFormData.append("params", JSON.stringify([name, orderData.order.order_number, order_amount, orderData.order.payment_method, itemHtml]));
 
           await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -939,8 +882,8 @@ export default function CheckoutPage() {
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in"];
-          // const emailadmin = ['balabalaji9345065011@gmail.com']
+          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
+       
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -955,23 +898,23 @@ export default function CheckoutPage() {
 
       }
     } catch (error) {
-      // await fetch('/api/abandoned/update', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     id: abandonedId,
-      //     payment_status: "failed",
-      //     order_status: "abandoned"
-      //   })
-      // });
+       await fetch('/api/abandoned/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: abandonedId,
+          payment_status: "failed",
+          order_status: "abandoned"
+        })
+      });
 
-      toast.error("Payment failed");
+  toast.error("Payment failed");
       console.error("Error submitting order:", error);
       toast.error("Failed to place order. Please try again.");
       setIsSubmitting(false);
     }
   };
-
+   
 
   if (loading) {
     return (
@@ -987,10 +930,10 @@ export default function CheckoutPage() {
   return (
     <div className="bg-white min-h-screen">
       <ToastContainer position="top-right" autoClose={5000} />
-
+      
       {/* Checkout Header Bar */}
       <div className="bg-white py-6 px-8 flex border-b justify-between items-center">
-        <h2 className="text-2xl font-bold text-orange-500 " style={{ marginLeft: "64px" }}>Checkout</h2>
+        <h2 className="text-2xl font-bold text-orange-500 " style={{marginLeft: "64px"}}>Checkout</h2>
         {/* <div className="flex items-center space-x-2" style={{marginRight: "100px"}}>
           <span className="text-2xl text-gray-600">🏠 Home</span>
           <span className="text-gray-500">›</span>
@@ -999,196 +942,204 @@ export default function CheckoutPage() {
       </div>
 
       {/* <div className="max-w-9xl mx-auto rounded-lg p-8 pt-0  container"> */}
-      <div className="w-full  rounded-lg  pt-0">
+        <div className="w-full  rounded-lg  pt-0">
 
         <div className="flex flex-col lg:flex-row ml-[9px] lg:ml-[100px] mx-auto">
 
           {/* <div className="flex flex-col lg:flex-row ml-[9px] lg:ml-[100px] mx-auto"></div> */}
           {/* Left - Checkout Form */}
-          <div className="w-full lg:w-2/4 bg-white p-0 pt-6">
+         <div className="w-full lg:w-2/4 bg-white p-0 pt-6">
 
-            {error && <p className="text-red-500 text-bold-sm mb-4">{error}</p>}
+    {error && <p className="text-red-500 text-bold-sm mb-4">{error}</p>}
 
-            {useSavedAddress && selectedAddress !== null ? (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="grid grid-cols-2 gap-4">
-                  <p><span className="font-medium">Name:</span> {useraddress[selectedAddress].firstName} {useraddress[selectedAddress].lastName}</p>
-                  <p><span className="font-medium">Phone:</span> {useraddress[selectedAddress].phonenumber}</p>
-                  <p><span className="font-medium">Address:</span> {useraddress[selectedAddress].address}</p>
-                  <p><span className="font-medium">City:</span> {useraddress[selectedAddress].city}</p>
-                  <p><span className="font-medium">State:</span> {useraddress[selectedAddress].state}</p>
-                  <p><span className="font-medium">Country:</span> {useraddress[selectedAddress].country}</p>
-                  <p><span className="font-medium">Postal Code:</span> {useraddress[selectedAddress].postCode}</p>
-                </div>
-              </div>
-            ) : (
+    {useSavedAddress && selectedAddress !== null ? (
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="grid grid-cols-2 gap-4">
+          <p><span className="font-medium">Name:</span> {useraddress[selectedAddress].firstName} {useraddress[selectedAddress].lastName}</p>
+          <p><span className="font-medium">Phone:</span> {useraddress[selectedAddress].phonenumber}</p>
+          <p><span className="font-medium">Address:</span> {useraddress[selectedAddress].address}</p>
+          <p><span className="font-medium">City:</span> {useraddress[selectedAddress].city}</p>
+          <p><span className="font-medium">State:</span> {useraddress[selectedAddress].state}</p>
+          <p><span className="font-medium">Country:</span> {useraddress[selectedAddress].country}</p>
+          <p><span className="font-medium">Postal Code:</span> {useraddress[selectedAddress].postCode}</p>
+        </div>
+      </div>
+    ) : (
+      
+      <form onSubmit={handleSubmit} className="mr-2">
+  {/* Contact Section */}
+  <div className="mb-8">
+    <h2 className="text-xl font-semibold text-black mb-3">
+      Contact
+    </h2>
+   <div className="grid grid-cols-2 gap-4 mt-3">
+      <div className="relative mt-3">
+  <input
+    type="text"
+    name="phonenumber"
+    value={formData.phonenumber}
+    onChange={handleChange}
+    onBlur={handleBlur}
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('phonenumber') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
+    required
+  />
+  <span className={`absolute left-2 transition-all duration-200 ${
+    formData.phonenumber
+      ? 'top-1 text-xs text-gray-500'
+      : 'top-3 text-gray-400'
+  }`}>
+    Phone Number*
+  </span>
+  {getFieldError('phonenumber') && <p className="text-red-500 text-xs mt-1">{getFieldError('phonenumber')}</p>}
+</div>
+    <div className="relative mt-3 ">
+  <input
+    type="email"
+    onChange={handleChange}
+    onBlur={handleBlur}
+    name="email"
+    value={formData.email}
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('email') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
+    required
+  />
+  <span className={`absolute left-2 transition-all duration-200 ${
+    formData.email
+      ? 'top-1 text-xs text-gray-500'
+      : 'top-3 text-gray-400'
+  }`}>
+    Email Address*
+  </span>
+  {getFieldError('email') && <p className="text-red-500 text-xs mt-1">{getFieldError('email')}</p>}
+</div>
+    </div>
+  </div>
 
-              <form onSubmit={handleSubmit} className="mr-2">
-                {/* Contact Section */}
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-black mb-3">
-                    Contact
-                  </h2>
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    <div className="relative mt-3">
-                      <input
-                        type="text"
-                        name="phonenumber"
-                        value={formData.phonenumber}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('phonenumber') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
-                      />
-                      <span className={`absolute left-2 transition-all duration-200 ${formData.phonenumber
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}>
-                        Phone Number*
-                      </span>
-                      {getFieldError('phonenumber') && <p className="text-red-500 text-xs mt-1">{getFieldError('phonenumber')}</p>}
-                    </div>
-                    <div className="relative mt-3 ">
-                      <input
-                        type="email"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        name="email"
-                        value={formData.email}
-                        className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('email') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
-                      />
-                      <span className={`absolute left-2 transition-all duration-200 ${formData.email
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}>
-                        Email Address*
-                      </span>
-                      {getFieldError('email') && <p className="text-red-500 text-xs mt-1">{getFieldError('email')}</p>}
-                    </div>
-                  </div>
-                </div>
+  {/* Delivery Section */}
+  <div className="mb-8">
+    <h2 className="text-xl font-semibold text-black mb-3">
+      Delivery
+    </h2>
+    <div className="relative mt-6">
+  <input
+    type="text"
+    onChange={handleChange}
+    onBlur={handleBlur}
+    name="country"
+    value={formData.country}
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('country') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
+    required
+  />
+  <span className={`absolute left-2 transition-all duration-200 ${
+    formData.country
+      ? 'top-1 text-xs text-gray-500'
+      : 'top-3 text-gray-400'
+  }`}>
+    Country*
+  </span>
+  {getFieldError('country') && <p className="text-red-500 text-xs mt-1">{getFieldError('country')}</p>}
+</div>
 
-                {/* Delivery Section */}
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-black mb-3">
-                    Delivery
-                  </h2>
-                  <div className="relative mt-6">
-                    <input
-                      type="text"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      name="country"
-                      value={formData.country}
-                      className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('country') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                      required
-                    />
-                    <span className={`absolute left-2 transition-all duration-200 ${formData.country
-                      ? 'top-1 text-xs text-gray-500'
-                      : 'top-3 text-gray-400'
-                      }`}>
-                      Country*
-                    </span>
-                    {getFieldError('country') && <p className="text-red-500 text-xs mt-1">{getFieldError('country')}</p>}
-                  </div>
+    <div className="grid grid-cols-2 gap-4 mt-3">
+      <div className="relative mt-3">
+  <input
+    type="text"
+    onChange={handleChange}
+    onBlur={handleBlur}
+    name="firstName"
+    value={formData.firstName}
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('firstName') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
+    required
+  />
+  <span className={`absolute left-2 transition-all duration-200 ${
+    formData.firstName
+      ? 'top-1 text-xs text-gray-500'
+      : 'top-3 text-gray-400'
+  }`}>
+    First Name*
+  </span>
+  {getFieldError('firstName') && <p className="text-red-500 text-xs mt-1">{getFieldError('firstName')}</p>}
+</div>
+     <div className="relative mt-3">
+  <input
+    type="text"
+    onChange={handleChange}
+    onBlur={handleBlur}
+    name="lastName"
+    value={formData.lastName}
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('lastName') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
+    required
+  />
+  <span className={`absolute left-2 transition-all duration-200 ${
+    formData.lastName
+      ? 'top-1 text-xs text-gray-500'
+      : 'top-3 text-gray-400'
+  }`}>
+    Last Name*
+  </span>
+  {getFieldError('lastName') && <p className="text-red-500 text-xs mt-1">{getFieldError('lastName')}</p>}
+</div>
+    </div>
 
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    <div className="relative mt-3">
-                      <input
-                        type="text"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        name="firstName"
-                        value={formData.firstName}
-                        className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('firstName') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
-                      />
-                      <span className={`absolute left-2 transition-all duration-200 ${formData.firstName
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}>
-                        First Name*
-                      </span>
-                      {getFieldError('firstName') && <p className="text-red-500 text-xs mt-1">{getFieldError('firstName')}</p>}
-                    </div>
-                    <div className="relative mt-3">
-                      <input
-                        type="text"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        name="lastName"
-                        value={formData.lastName}
-                        className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('lastName') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
-                      />
-                      <span className={`absolute left-2 transition-all duration-200 ${formData.lastName
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}>
-                        Last Name*
-                      </span>
-                      {getFieldError('lastName') && <p className="text-red-500 text-xs mt-1">{getFieldError('lastName')}</p>}
-                    </div>
-                  </div>
+    <div className="relative mt-6">
+  <input
+    type="text"
+    onChange={handleChange}
+    name="businessName"
+    value={formData.businessName}
+    className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
+    required
+  />
+  <span className={`absolute left-2 transition-all duration-200 ${
+    formData.businessName
+      ? 'top-1 text-xs text-gray-500' 
+      : 'top-3 text-gray-400'
+  }`}>
+    Company Name (Optional)
+  </span>
+</div>
+    
+   <div className="relative mt-6 w-full">
+  <input
+    type="text"
+    onChange={handleChange}
+    onBlur={handleBlur}
+    name="address"
+    value={formData.address}
+    className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('address') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
+    required
+  />
+  <span
+    className={`absolute left-2 transition-all duration-200 pointer-events-none ${
+      formData.address
+        ? 'top-1 text-xs text-gray-500'
+        : 'top-3 text-gray-400'
+    }`}
+  >House number and street name*
+  </span>
+  {getFieldError('address') && <p className="text-red-500 text-xs mt-1">{getFieldError('address')}</p>}
+</div>
 
-                  <div className="relative mt-6">
-                    <input
-                      type="text"
-                      onChange={handleChange}
-                      name="businessName"
-                      value={formData.businessName}
-                      className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
-                      required
-                    />
-                    <span className={`absolute left-2 transition-all duration-200 ${formData.businessName
-                      ? 'top-1 text-xs text-gray-500'
-                      : 'top-3 text-gray-400'
-                      }`}>
-                      Company Name (Optional)
-                    </span>
-                  </div>
+   
+   <div className="relative mt-6">
+  <input
+    type="text"
+    onChange={handleChange}
+    name="landmark"
+    value={formData.landmark}
+    className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
+    required
+  />
+  <span className={`absolute left-2 transition-all duration-200 ${
+    formData.landmark
+      ? 'top-1 text-xs text-gray-500' 
+      : 'top-3 text-gray-400'
+  }`}>
+   Landmark, suite, unit, etc. (Optional)
+  </span>
+</div>
 
-                  <div className="relative mt-6 w-full">
-                    <input
-                      type="text"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      name="address"
-                      value={formData.address}
-                      className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('address') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                      required
-                    />
-                    <span
-                      className={`absolute left-2 transition-all duration-200 pointer-events-none ${formData.address
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}
-                    >House number and street name*
-                    </span>
-                    {getFieldError('address') && <p className="text-red-500 text-xs mt-1">{getFieldError('address')}</p>}
-                  </div>
-
-
-                  <div className="relative mt-6">
-                    <input
-                      type="text"
-                      onChange={handleChange}
-                      name="landmark"
-                      value={formData.landmark}
-                      className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
-                      required
-                    />
-                    <span className={`absolute left-2 transition-all duration-200 ${formData.landmark
-                      ? 'top-1 text-xs text-gray-500'
-                      : 'top-3 text-gray-400'
-                      }`}>
-                      Landmark, suite, unit, etc. (Optional)
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    {/* <div className="relative mt-3 w-full">
+    <div className="grid grid-cols-2 gap-4 mt-3">
+     {/* <div className="relative mt-3 w-full">
       <select
         name="state"
         value={formData.state}
@@ -1210,203 +1161,205 @@ export default function CheckoutPage() {
         </span>
       </div> */}
 
-                    <div className="relative mt-3 w-full">
-                      <input
-                        type="text"
-                        name="state"
-                        value={formData.state}
-                        readOnly
-                        className="border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1 px-2 text-gray-700 cursor-not-allowed"
-                      />
-                      <label
-                        className="absolute left-2 text-xs text-gray-500 top-1 pointer-events-none transition-all duration-200"
-                      >
-                        State*
-                      </label>
-                    </div>
+    <div className="relative mt-3 w-full">
+  <input
+    type="text"
+    name="state"
+    value={formData.state}
+    readOnly
+    className="border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1 px-2 text-gray-700 cursor-not-allowed"
+  />
+  <label
+    className="absolute left-2 text-xs text-gray-500 top-1 pointer-events-none transition-all duration-200"
+  >
+    State*
+  </label>
+</div>
 
 
 
 
-                    <div className="relative mt-3 w-full">
-                      <select
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={`border rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 px-2 ${getFieldError('city') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
-                      >
-                        <option value="" disabled hidden></option>
-                        {finalCities.map((city, index) => (
-                          <option key={index} value={city}>
-                            {city}
-                          </option>
-                        ))}
-                      </select>
-                      <span
-                        className={`absolute left-2 transition-all duration-200 pointer-events-none ${formData.city
-                          ? 'top-1 text-xs text-gray-500'
-                          : 'top-3 text-gray-400'
-                          }`}
-                      >
-                        City*
-                      </span>
-                      {getFieldError('city') && <p className="text-red-500 text-xs mt-1">{getFieldError('city')}</p>}
-                    </div>
+     <div className="relative mt-3 w-full">
+      <select
+        name="city"
+        value={formData.city}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        className={`border rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 px-2 ${getFieldError('city') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
+        required
+      >
+        <option value="" disabled hidden></option>
+        {finalCities.map((city, index) => (
+          <option key={index} value={city}>
+            {city}
+          </option>
+        ))}
+      </select>
+      <span
+        className={`absolute left-2 transition-all duration-200 pointer-events-none ${
+          formData.city
+            ? 'top-1 text-xs text-gray-500'
+            : 'top-3 text-gray-400'
+        }`}
+      >
+        City*
+      </span>
+      {getFieldError('city') && <p className="text-red-500 text-xs mt-1">{getFieldError('city')}</p>}
+    </div>
 
-                  </div>
+    </div>
 
-                  <div className="relative mt-6">
-                    <input
-                      type="text"
-                      name="postCode"
-                      value={formData.postCode}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('postCode') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                      required
-                    />
-                    <span className={`absolute left-2 transition-all duration-200 ${formData.postCode
-                      ? 'top-1 text-xs text-gray-500'
-                      : 'top-3 text-gray-400'
-                      }`}>
-                      Post Code*
-                    </span>
-                    {getFieldError('postCode') && <p className="text-red-500 text-xs mt-1">{getFieldError('postCode')}</p>}
-                  </div>
+   <div className="relative mt-6">
+    <input
+      type="text"
+      name="postCode"
+      value={formData.postCode}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('postCode') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
+      required
+    />
+    <span className={`absolute left-2 transition-all duration-200 ${
+      formData.postCode
+        ? 'top-1 text-xs text-gray-500'
+        : 'top-3 text-gray-400'
+    }`}>
+      Post Code*
+    </span>
+    {getFieldError('postCode') && <p className="text-red-500 text-xs mt-1">{getFieldError('postCode')}</p>}
+  </div>
 
-                  <h2 className="text-xl font-semibold text-black mb-2 mt-6">
-                    Shipping Method
-                  </h2>
+    <h2 className="text-xl font-semibold text-black mb-2 mt-6">
+      Shipping Method
+    </h2>
 
-                  <DeliveryOptions
-                    formData={formData}
-                    handleChange={handleChange}
-                    isDeliverySaved={isDeliverySaved}
-                    setIsDeliverySaved={setIsDeliverySaved}
-                    stores={stores}
-                  />
-                </div>
+    <DeliveryOptions
+      formData={formData}
+      handleChange={handleChange}
+      isDeliverySaved={isDeliverySaved}
+      setIsDeliverySaved={setIsDeliverySaved}
+      stores={stores}
+    />
+  </div>
 
-                <h2 className="text-xl font-semibold text-black mb-2 mt-6">
-                  Billing Address
-                </h2>
-                {/* <h2 className="text-xl font-semibold text-gray-800 mb-4">
+   <h2 className="text-xl font-semibold text-black mb-2 mt-6">
+      Billing Address
+    </h2>
+     {/* <h2 className="text-xl font-semibold text-gray-800 mb-4">
               {useSavedAddress && selectedAddress !== null ? 'Selected Address' : 'Billing Details'}
             </h2> */}
-                {useraddress && useraddress.length > 0 && (
-                  <div className="mb-6">
-                    <h2 className="text-sm font-semibold text-gray-800 mb-4">Saved Addresses</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {useraddress.map((item, index) => (
-                        <div
-                          key={`address-${index}`}
-                          className={`border p-4 rounded-lg cursor-pointer transition-all ${selectedAddress === index ? 'border-orange-500 bg-orange-50' : 'hover:border-gray-300'}`}
-                          onClick={() => {
-                            setSelectedAddress(index);
-                            const addr = useraddress[index];
-                            setFormData(prev => ({
-                              ...prev,
-                              firstName: addr.firstName || "",
-                              lastName: addr.lastName || "",
-                              businessName: addr.businessName || "",
-                              country: addr.country || "",
-                              address: addr.address || "",
-                              landmark: addr.landmark || "",
-                              city: addr.city || "",
-                              state: addr.state || "Tamilnadu",
-                              postCode: addr.postCode || "",
-                              phonenumber: addr.phonenumber || "",
-                              email: addr.email || "",
-                              additionalInfo: addr.additionalInfo || "",
-                            }));
-                          }}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium">{item.firstName} {item.lastName}</p>
-                              <p className="text-sm text-gray-600">{item.address}</p>
-                              <p className="text-sm text-gray-600">{item.city}, {item.state}, {item.postCode}</p>
-                              <p className="text-sm text-gray-600">{item.country}</p>
-                              <p className="text-sm text-gray-600">Phone: {item.phonenumber}</p>
-                            </div>
-                            {selectedAddress === index && (
-                              <span className="text-orange-500">✓ Selected</span>
-                            )}
-                          </div>
+            {useraddress && useraddress.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-sm font-semibold text-gray-800 mb-4">Saved Addresses</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {useraddress.map((item, index) => (
+                    <div 
+                      key={`address-${index}`} 
+                      className={`border p-4 rounded-lg cursor-pointer transition-all ${selectedAddress === index ? 'border-orange-500 bg-orange-50' : 'hover:border-gray-300'}`}
+                      onClick={() => {
+                        setSelectedAddress(index);
+                        const addr = useraddress[index];
+                        setFormData(prev => ({
+                          ...prev,
+                          firstName: addr.firstName || "",
+                          lastName: addr.lastName || "",
+                          businessName: addr.businessName || "",
+                          country: addr.country || "",
+                          address: addr.address || "",
+                          landmark: addr.landmark || "",
+                          city: addr.city || "",
+                          state: addr.state || "Tamilnadu",
+                          postCode: addr.postCode || "",
+                          phonenumber: addr.phonenumber || "",
+                          email: addr.email || "",
+                          additionalInfo: addr.additionalInfo || "",
+                        }));
+                      }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">{item.firstName} {item.lastName}</p>
+                          <p className="text-sm text-gray-600">{item.address}</p>
+                          <p className="text-sm text-gray-600">{item.city}, {item.state}, {item.postCode}</p>
+                          <p className="text-sm text-gray-600">{item.country}</p>
+                          <p className="text-sm text-gray-600">Phone: {item.phonenumber}</p>
                         </div>
-                      ))}
+                        {selectedAddress === index && (
+                          <span className="text-orange-500">✓ Selected</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="mt-4">
-                      <button
-                        onClick={() => setUseSavedAddress(!useSavedAddress)}
-                        className="text-orange-500 hover:text-orange-700 text-sm font-medium"
-                      >
-                        {useSavedAddress ? 'Use new address instead' : 'Use saved address'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Additional Info Section */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Additional Information
-                  </h3>
-                  <textarea
-                    name="additionalInfo"
-                    placeholder="Notes about your order"
-                    value={formData.additionalInfo}
-                    onChange={handleChange}
-                    className="border p-2 rounded-md w-full h-20 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200"
-                  ></textarea>
+                  ))}
                 </div>
-                <div className="mt-3 mb-4 text-sm">
-                  <a
-                    href="/privacypolicy"
-                    className="text-orange-500 hover:underline mr-4 underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <div className="mt-4">
+                  <button 
+                    onClick={() => setUseSavedAddress(!useSavedAddress)}
+                    className="text-orange-500 hover:text-orange-700 text-sm font-medium"
                   >
-                    Privacy Policy
-                  </a>
-                  <a
-                    href="/terms-and-condition"
-                    className="text-orange-500 hover:underline mr-4 underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Terms & Conditions
-                  </a>
-                  <a
-                    href="/shipping"
-                    className="text-orange-500 hover:underline mr-4 underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Shipping Policy
-                  </a>
-                  <a
-                    href="/cancellation-refund-policy"
-                    className="text-orange-500 hover:underline underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Cancellation & Refund Policy
-                  </a>
+                    {useSavedAddress ? 'Use new address instead' : 'Use saved address'}
+                  </button>
                 </div>
-
-              </form>
-
-
-
+              </div>
             )}
-          </div>
+
+  {/* Additional Info Section */}
+  <div className="mb-6">
+    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+      Additional Information
+    </h3>
+    <textarea
+      name="additionalInfo"
+      placeholder="Notes about your order"
+      value={formData.additionalInfo}
+      onChange={handleChange}
+      className="border p-2 rounded-md w-full h-20 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200"
+    ></textarea>
+  </div>
+ <div className="mt-3 mb-4 text-sm">
+  <a
+    href="/privacypolicy"
+    className="text-orange-500 hover:underline mr-4 underline"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Privacy Policy
+  </a>
+  <a
+    href="/terms-and-condition"
+    className="text-orange-500 hover:underline mr-4 underline"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Terms & Conditions
+  </a>
+  <a
+    href="/shipping"
+    className="text-orange-500 hover:underline mr-4 underline"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Shipping Policy
+  </a>
+  <a
+    href="/cancellation-refund-policy"
+    className="text-orange-500 hover:underline underline"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Cancellation & Refund Policy
+  </a>
+</div>
+
+</form>
+
+
+
+    )}
+  </div>
 
           {/* Right - Order Summary */}
-          <div className="w-full lg:w-2/4 p-6 sticky top-6 self-start mb-5" style={{ backgroundColor: "#F7F4F2", height: "auto" }}>
-            <div className="mt-1" style={{ marginRight: "100px" }}>
+          <div className="w-full lg:w-2/4 p-6 sticky top-6 self-start mb-5" style={{backgroundColor: "#F7F4F2", height: "auto"}}>
+            <div className="mt-1" style={{marginRight: "100px"}}>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Orders</h3>
 
               {/* <div className="border-b pb-3 mb-3">
@@ -1457,7 +1410,7 @@ export default function CheckoutPage() {
                         {/* <div className="text-xs mt-1 text-gray-600">
                           Qty: <span className="text-red-600">{item.quantity}</span>
                         </div> */}
-
+                        
                       </div>
 
                       {/* Price */}
@@ -1532,63 +1485,64 @@ export default function CheckoutPage() {
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">Payment Method</h3>
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="online"
-                      checked={paymentMethod === "online"}
-                      onChange={handlePaymentChange}
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      value="online" 
+                      checked={paymentMethod === "online"} 
+                      onChange={handlePaymentChange} 
                       className="w-4 h-4 text-orange-500"
                     />
                     <span>Online Payment</span>
                   </label>
                   <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="Cash on Delivery"
-                      checked={paymentMethod === "Cash on Delivery"}
-                      onChange={handlePaymentChange}
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      value="Cash on Delivery" 
+                      checked={paymentMethod === "Cash on Delivery"} 
+                      onChange={handlePaymentChange} 
                       className="w-4 h-4 text-orange-500"
                     />
                     <span>Cash on Delivery</span>
                   </label>
                 </div>
               </div>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved}
-                className={`mt-6 w-1/2 md:w-1/3 text-white font-semibold py-2 rounded-lg transition ${isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-red-500 hover:bg-red-600'
-                  }`}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center justify-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Processing...
-                  </span>
-                ) : 'Place Order'}
-              </button>
+             <button 
+  onClick={handleSubmit} 
+  disabled={isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved}
+  className={`mt-6 w-1/2 md:w-1/3 text-white font-semibold py-2 rounded-lg transition ${
+    isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved
+      ? 'bg-gray-400 cursor-not-allowed' 
+      : 'bg-red-500 hover:bg-red-600'
+  }`}
+>
+  {isSubmitting ? (
+    <span className="flex items-center justify-center">
+      <svg
+        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        ></circle>
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        ></path>
+      </svg>
+      Processing...
+    </span>
+  ) : 'Place Order'}
+</button>
 
               {/* <button 
                 onClick={handleSubmit} 
@@ -1607,7 +1561,7 @@ export default function CheckoutPage() {
       </div>
 
       {showAuthModal && (
-        <AuthModal
+        <AuthModal 
           onClose={() => setShowAuthModal(false)}
           onSuccess={() => {
             setShowAuthModal(false);
@@ -1616,16 +1570,16 @@ export default function CheckoutPage() {
           error={authError}
         />
       )}
-
-      {isSubmitting && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <h3 className="text-lg font-medium text-gray-900">Processing Your Order</h3>
-            <p className="mt-2 text-sm text-gray-500">Please wait while we process your payment and order details.</p>
-          </div>
-        </div>
-      )}
+      
+{isSubmitting && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
+      <h3 className="text-lg font-medium text-gray-900">Processing Your Order</h3>
+      <p className="mt-2 text-sm text-gray-500">Please wait while we process your payment and order details.</p>
+    </div>
+  </div>
+)}
     </div>
   );
 }

@@ -107,7 +107,7 @@ const OrdersTable = () => {
       // List of emails: customer + admins
       const emailList = [
         order.email_address || "kbsiva1234@gmail.com",
-        "arunkarthik@bharathelectronics.in", "ecom@bharathelectronics.in", "itadmin@bharathelectronics.in", "telemarketing@bharathelectronics.in", "sekarcorp@bharathelectronics.in"
+        "arunkarthik@bharathelectronics.in", "ecom@bharathelectronics.in", "itadmin@bharathelectronics.in", "telemarketing@bharathelectronics.in", "sekarcorp@bharathelectronics.in", "customercare@bharathelectronics.in"
       ];
 
 
@@ -156,7 +156,7 @@ const OrdersTable = () => {
       // multiple recipients
       const recipients = [
         order.email_address, // original order user
-        "arunkarthik@bharathelectronics.in", "ecom@bharathelectronics.in", "itadmin@bharathelectronics.in", "telemarketing@bharathelectronics.in", "sekarcorp@bharathelectronics.in"
+        "arunkarthik@bharathelectronics.in", "ecom@bharathelectronics.in", "itadmin@bharathelectronics.in", "telemarketing@bharathelectronics.in", "sekarcorp@bharathelectronics.in", "customercare@bharathelectronics.in"
       ];
 
 
