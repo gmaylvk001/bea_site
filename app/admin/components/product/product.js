@@ -30,6 +30,7 @@ export default function CategoryComponent() {
   // Filters
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [subCategoryFilter, setSubCategoryFilter] = useState("");
   const [brandFilter, setBrandFilter] = useState("");
   const [dateFilter, setDateFilter] = useState({
     startDate: null,
@@ -172,7 +173,8 @@ const fetchProducts = async () => {
     fetchProducts();
     fetchCategories();
     fetchBrands();
-    fetchSubcategories
+    // fetchSubcategories
+    fetchSubcategories();
   }, []);
 
   // Debounce search input
@@ -752,6 +754,67 @@ const exportFilterDataToExcel = () => {
     return options;
   };
 
+/* const renderSubCategoryOptions = () => {
+  let filteredSubCats = categories;
+
+  // 👉 Category selectedனா மட்டும் filter
+  if (categoryFilter) {
+    filteredSubCats = categories.filter(
+      (cat) => cat.parentid === categoryFilter
+    );
+  }
+
+  // 👉 இல்லனா ALL subcategories (parent இல்லாததை skip)
+  else {
+    filteredSubCats = categories.filter(
+      (cat) => cat.parentid !== "none"
+    );
+  }
+
+  return [
+    <option key="all" value="">
+      All Sub Categories
+    </option>,
+    ...filteredSubCats.map((sub) => (
+      <option key={sub._id} value={sub._id}>
+        {sub.category_name}
+      </option>
+    )),
+  ];
+}; */
+
+const renderSubCategoryOptions = () => {
+  let filteredSubCats = [];
+
+  // Category Filter (Main) இருந்தால் மட்டும்
+  if (categoryFilter) {
+    // 1. அந்த மெயின் கேட்டகிரியின் நேரடி சப்-கேட்டகிரிகள்
+    // 2. மற்றும் அந்த மெயின் கேட்டகிரியின் கீழ் வரும் அனைத்து குழந்தைகளும் (Recursive)
+    const allChildIds = getAllChildIds(categoryFilter, categories);
+    
+    filteredSubCats = categories.filter(cat => 
+      cat.parentid === categoryFilter || allChildIds.includes(cat._id.toString())
+    );
+  } else {
+    // மெயின் கேட்டகிரியே இல்லை என்றால், 'none' இல்லாத அனைத்தையும் காட்டலாம்
+    filteredSubCats = categories.filter(cat => cat.parentid !== "none");
+  }
+
+  // பெயர்கள் குழப்பமில்லாமல் இருக்க A-Z வரிசைப்படுத்துகிறோம்
+  const sortedSubCats = [...filteredSubCats].sort((a, b) => 
+    a.category_name.localeCompare(b.category_name)
+  );
+
+  return [
+    <option key="all" value="">All Sub Categories</option>,
+    ...sortedSubCats.map((sub) => (
+      <option key={sub._id} value={sub._id}>
+        {sub.category_name}
+      </option>
+    )),
+  ];
+};
+
   const renderBrandOptions = () => {
     return [
       <option key="all" value="">
@@ -858,10 +921,108 @@ if (stockFilter) {
     });
   }; */
 
+
+  // 1. இந்த helper function-ஐ getFilteredProducts-க்கு வெளியே (Component-க்குள்) சேர்க்கவும்
+/* const getAllChildIds = (parentId, allCategories) => {
+  let childIds = [];
+  const children = allCategories.filter(cat => cat.parentid === parentId);
+  children.forEach(child => {
+    childIds.push(child._id.toString());
+    // அடுத்த நிலையில் உள்ள Child-களையும் தேடும் (Recursion)
+    childIds = [...childIds, ...getAllChildIds(child._id.toString(), allCategories)];
+  });
+  return childIds;
+}; */
+
+const getAllChildIds = (parentId, allCategories) => {
+  let childIds = [];
+  const children = allCategories.filter(cat => cat.parentid === parentId);
+  children.forEach(child => {
+    childIds.push(child._id.toString());
+    childIds = [...childIds, ...getAllChildIds(child._id.toString(), allCategories)];
+  });
+  return childIds;
+};
+
   const getFilteredProducts = () => {
   const flattenedProducts = flattenProducts(products);
 
-  const filteredProducts = flattenedProducts.filter((product) => {
+
+  return flattenedProducts.filter((product) => {
+    // Search Filter
+    const matchesSearch =
+      debouncedSearchQuery === "" ||
+      product.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      product.item_code?.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+
+    // Status Filter
+    const matchesStatus =
+      statusFilter === "" ||
+      product.status?.toLowerCase() === statusFilter.toLowerCase();
+
+    // Main Category Filter
+    let matchesCategory = true;
+    if (categoryFilter) {
+      const prodCatId = product.category?._id?.toString() || product.category?.toString();
+      const childCategoryIds = [categoryFilter, ...getAllChildIds(categoryFilter, categories)];
+      matchesCategory = childCategoryIds.includes(prodCatId);
+    }
+
+    // Sub & Child Category Filter (FIXED)
+    /* let matchesSubCategory = true;
+    if (subCategoryFilter) {
+      const prodCatId = product.category?._id?.toString() || product.category?.toString();
+      const prodSubCatId = product.sub_category?._id?.toString() || product.sub_category?.toString();
+      const prodNewCatId = product.category_new?.toString();
+
+      // நாம் தேர்ந்தெடுத்த Sub-category-ன் கீழ் உள்ள அனைத்து Child ID-களையும் எடுக்கிறோம்
+      const allRelatedIds = [subCategoryFilter, ...getAllChildIds(subCategoryFilter, categories)];
+
+      // Product-ல் இருக்கும் ஏதோ ஒரு ID, நாம் தேடும் ID list-ல் இருக்கிறதா என்று பார்க்கிறோம்
+      matchesSubCategory = 
+        allRelatedIds.includes(prodCatId) || 
+        allRelatedIds.includes(prodSubCatId) || 
+        allRelatedIds.includes(prodNewCatId);
+    } */
+   // Sub & Child Category Filter
+    // ... getFilteredProducts உள்ளே ...
+
+let matchesSubCategory = true;
+if (subCategoryFilter && subCategoryFilter !== "") {
+    const prodCatId = product.category?._id?.toString() || product.category?.toString();
+    const prodSubCatId = product.sub_category?._id?.toString() || product.sub_category?.toString();
+    const prodNewCatId = product.category_new?.toString();
+
+    // குறிப்பிட்ட சப்-கேட்டகிரி மற்றும் அதன் கிளைகளை எடுக்கிறோம்
+    const allRelatedIds = [subCategoryFilter, ...getAllChildIds(subCategoryFilter, categories)];
+
+    matchesSubCategory = 
+      allRelatedIds.includes(prodCatId) || 
+      allRelatedIds.includes(prodSubCatId) || 
+      allRelatedIds.includes(prodNewCatId);
+} else {
+    // subCategoryFilter காலியாக இருந்தால் (All Sub Categories), 
+    // இந்த பில்டர் 'true' ஆகிவிடும். இதனால் CategoryFilter மட்டும் வேலை செய்யும்.
+    matchesSubCategory = true;
+}
+
+    // Brand Filter
+    let matchesBrand = true;
+    if (brandFilter) {
+      const prodBrandId = product.brand?._id?.toString() || product.brand?.toString();
+      matchesBrand = prodBrandId === brandFilter;
+    }
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesCategory &&
+      matchesSubCategory && // இது இப்போது Sub மற்றும் Child இரண்டிற்கும் வேலை செய்யும்
+      matchesBrand
+    );
+  });
+
+/*   const filteredProducts = flattenedProducts.filter((product) => {
     const matchesSearch =
       debouncedSearchQuery === "" ||
       product.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
@@ -925,6 +1086,20 @@ if (stockFilter) {
       }
     }
 
+    let matchesSubCategory = true;
+
+if (subCategoryFilter) {
+  if (product.category && typeof product.category === "object") {
+    matchesSubCategory =
+      product.category._id.toString() === subCategoryFilter;
+  } else if (product.category) {
+    matchesSubCategory =
+      product.category.toString() === subCategoryFilter;
+  } else {
+    matchesSubCategory = false;
+  }
+}
+
     let matchesBrand = true;
     if (brandFilter) {
       if (product.brand && typeof product.brand === "object") {
@@ -947,10 +1122,11 @@ if (stockFilter) {
       matchesStatus &&
       matchesDate &&
       matchesCategory &&
+      matchesSubCategory && // ✅ ADD THIS
       matchesBrand &&
       matchesStock
     );
-  });
+  }); */
 
   // ✅ STOCK SORTING
   if (stockFilter === "stock_low_high") {
@@ -1204,6 +1380,7 @@ if (stockFilter) {
                 value={categoryFilter}
                 onChange={(e) => {
                   setCategoryFilter(e.target.value);
+                  setSubCategoryFilter(""); // ✅ reset subcategory
                   setCurrentPage(0);
                 }}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
@@ -1211,6 +1388,34 @@ if (stockFilter) {
                 {renderCategoryOptions()}
               </select>
             </div>
+
+            {/* Sub Category Filter */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Sub Category
+  </label>
+  <select
+    value={subCategoryFilter}
+   onChange={(e) => {
+  const selectedSub = e.target.value;
+  setSubCategoryFilter(selectedSub);
+
+  // 👉 find parent category
+  const selectedSubCat = categories.find(
+    (cat) => cat._id === selectedSub
+  );
+
+  if (selectedSubCat) {
+    setCategoryFilter(selectedSubCat.parentid); // ✅ auto set main category
+  }
+
+  setCurrentPage(0);
+}}
+    className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+  >
+    {renderSubCategoryOptions()}
+  </select>
+</div>
 
             {/* Brand Filter */}
             <div>
