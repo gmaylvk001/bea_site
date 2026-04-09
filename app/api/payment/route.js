@@ -6,7 +6,6 @@ export async function POST(req) {
   try {
     // Parse JSON body instead of formData
     const body = await req.json();
-    console.log("sdafsd",body);
     
     const userId = body.user_id;
     if (!userId) {
