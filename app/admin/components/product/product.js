@@ -806,7 +806,7 @@ const renderSubCategoryOptions = () => {
   );
 
   return [
-    <option key="all" value="">All Sub Categories</option>,
+    <option key="all" value="">All Property</option>,
     ...sortedSubCats.map((sub) => (
       <option key={sub._id} value={sub._id}>
         {sub.category_name}
@@ -1392,7 +1392,7 @@ if (subCategoryFilter) {
             {/* Sub Category Filter */}
 <div>
   <label className="block text-sm font-medium text-gray-700 mb-1">
-    Sub Category
+    Property
   </label>
   <select
     value={subCategoryFilter}
