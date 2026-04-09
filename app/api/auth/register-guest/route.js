@@ -21,7 +21,7 @@ export async function POST(req) {
     await connectDB();
 
     // ✅ Check if email exists
-    if (email) {
+    /* if (email) {
       const existingEmail = await GuestUser.findOne({ email });
       if (existingEmail) {
         return NextResponse.json(
@@ -29,7 +29,7 @@ export async function POST(req) {
           { status: 400 }
         );
       }
-    }
+    } */
 
     // ✅ Check if mobile exists
     /* const existingMobile = await GuestUser.findOne({ mobile });
@@ -65,7 +65,7 @@ export async function POST(req) {
     const newUser = new GuestUser({
       name: name || guestName,
       mobile,
-      email: email || "",
+      email: "",
       password: hashedPassword,
     });
 
