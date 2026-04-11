@@ -28,7 +28,11 @@ export default function BulkUploadPage() {
   const [selectedSection, setSelectedSection] = useState("section-product-overview");
 
   const sap_featuresFormRef = useRef(null);
+  const product_nameRef = useRef(null);
+  const product_descriptionRef = useRef(null);
   const [sap_features, setSap_features] = useState(null);
+  const [product_name, setProduct_name] = useState(null);
+  const [product_description, setProduct_description] = useState(null);
 
   const notifiedRef = useRef(false);
 
@@ -46,6 +50,8 @@ export default function BulkUploadPage() {
     setExcelFileMovement(null);
     setProductFilterValue(null);
     setSap_features(null);
+    setProduct_name(null);
+    setProduct_description(null);
     setCategoryUpload(null);
     setImageZip(null);
     setOverviewZip(null);
@@ -329,6 +335,7 @@ export default function BulkUploadPage() {
   }
 
   const handleSubmit = async (e, uploadType) => {
+    console.log(uploadType, 'teid')
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
@@ -741,22 +748,22 @@ export default function BulkUploadPage() {
     } else if (uploadType == "Key-Features") {
       if (!sap_features || !validateFile(sap_features, ['.xlsx', '.csv'])) {
         showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
-        
+
         // Clear file input
         const fileInput = document.getElementById('Key-Features');
         if (fileInput) fileInput.value = "";
-        
+
         setSap_features(null);
         return;
       }
-      
+
       setIsLoading(true);
       setActiveUploadType(uploadType);
       setMessage(null);
-      
+
       const formData = new FormData();
       formData.append("excel", sap_features);
-      
+
       console.log("Handling Key Features upload...");
       try {
         const response = await fetch('/api/product/bulk-upload/features', {
@@ -782,6 +789,106 @@ export default function BulkUploadPage() {
         setSap_features(null);
         resetUploadForm();
 
+        setIsLoading(false);
+        setActiveUploadType(null);
+      }
+    }
+    else if (uploadType == "product_name") {
+      console.log('Processing product_name upload...');
+
+      // ✅ Use product_name state variable
+      if (!product_name || !validateFile(product_name, ['.xlsx', '.csv'])) {
+        showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+
+        // Clear file input
+        const fileInput = document.getElementById('product_name');
+        if (fileInput) fileInput.value = "";
+
+        setProduct_name(null);
+        return;
+      }
+
+      setIsLoading(true);
+      setActiveUploadType(uploadType);
+      setMessage(null);
+
+      const formData = new FormData();
+      formData.append("excel", product_name);  // ✅ Use product_name
+
+      console.log("Handling Product Name upload...");
+      try {
+        const response = await fetch('/api/product/bulk-upload/product_name', {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        resetUploadForm();
+
+        if (response.ok) {
+          showToast("success", data.message || "Product names uploaded successfully ✅");
+        } else {
+          showToast("error", data.error || "Upload failed ❌");
+        }
+
+      } catch (error) {
+        console.error("Upload error:", error);
+        showToast("error", error?.message || "Upload failed ❌");
+      } finally {
+        // ✅ Clear the correct file input
+        const fileInput = document.getElementById('product_name');
+        if (fileInput) fileInput.value = "";
+
+        setProduct_name(null);
+        resetUploadForm();
+        setIsLoading(false);
+        setActiveUploadType(null);
+      }
+    } else if (uploadType == "product_description") {
+      console.log('Processing product_description upload...');
+
+      if (!product_description || !validateFile(product_description, ['.xlsx', '.csv'])) {
+        showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+
+        const fileInput = document.getElementById('product_description');
+        if (fileInput) fileInput.value = "";
+
+        setProduct_description(null);
+        return;
+      }
+
+      setIsLoading(true);
+      setActiveUploadType(uploadType);
+      setMessage(null);
+
+      const formData = new FormData();
+      formData.append("excel", product_description);
+
+      console.log("Handling Product Description upload...");
+      try {
+        const response = await fetch('/api/product/bulk-upload/description', {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        resetUploadForm();
+
+        if (response.ok) {
+          showToast("success", data.message || "Product descriptions uploaded successfully ✅");
+        } else {
+          showToast("error", data.error || "Upload failed ❌");
+        }
+
+      } catch (error) {
+        console.error("Upload error:", error);
+        showToast("error", error?.message || "Upload failed ❌");
+      } finally {
+        const fileInput = document.getElementById('product_description');
+        if (fileInput) fileInput.value = "";
+
+        setProduct_description(null);
+        resetUploadForm();
         setIsLoading(false);
         setActiveUploadType(null);
       }
@@ -824,7 +931,23 @@ export default function BulkUploadPage() {
     link.click();
     document.body.removeChild(link);
   };
+  const handleDownloadProduct_name_File = () => {
+    const link = document.createElement('a');
+    link.href = `/uploads/files/item_code_product_name.xlsx?t=${Date.now()}`;
+    link.download = 'item_code_product_name.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
+  const handleDownloadProduct_description_File = () => {
+    const link = document.createElement('a');
+    link.href = `/uploads/files/item_code_description.xlsx?t=${Date.now()}`;
+    link.download = 'item_code_description.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleDownloadCategoryValues = () => {
     const link = document.createElement('a');
@@ -866,6 +989,9 @@ export default function BulkUploadPage() {
     { id: "section-status-bulk", label: "Status Bulk Upload", image: "/uploads/files/Status_bulk_upload_tenth_box_image.png" },
     { id: "extended-warrenty-upload", label: "Extended Warrenty Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
     { id: "Key-Features", label: "Key Features", image: "/uploads/files/Key features.jpg" },
+    { id: "product_name", label: "Product name only", image: "/uploads/files/Product Name.png" },
+    { id: "product_description", label: "Product Description", image: "/uploads/files/product_description.png" },
+
   ];
 
   return (
@@ -1538,6 +1664,96 @@ export default function BulkUploadPage() {
                       </span>
                     ) : (
                       'Upload Product Key Features Values'
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {selectedSection === "product_name" && (
+              <form id="product_name" ref={product_nameRef} onSubmit={(e) => { console.log('teston'), handleSubmit(e, "product_name") }} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
+                <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                  <div className="mb-4">
+                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Product's Name Bulk Upload  </h2>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Excel/CSV File
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">Upload your Product Name values file</p>
+                  </div>
+                  <div className="space-y-4">
+                    <input id="product_name" type="file" accept=".xlsx,.csv" onChange={(e) => setProduct_name(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100" required />
+                  </div>
+                  <button type="button" onClick={handleDownloadProduct_name_File} className="inline-flex items-center pt-5 text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download Sample Format
+                  </button>
+                </div>
+                <div className="flex mt-5 justify-between">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-[#3B82F6] hover:bg-[#3B82F6] text-white px-3 py-2 rounded-md flex items-center gap-2"
+                  >
+                    {isLoading && activeUploadType == "product_name" ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
+                      </span>
+                    ) : (
+                      'Upload Product Name Values'
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {selectedSection === "product_description" && (
+              <form id="product_description" ref={product_descriptionRef} onSubmit={(e) => handleSubmit(e, "product_description")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
+                <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                  <div className="mb-4">
+                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Product Description Bulk Upload</h2>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Excel/CSV File
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">Upload your Product Description values file (columns: item_code, description)</p>
+                  </div>
+                  <div className="space-y-4">
+                    <input id="product_description" type="file" accept=".xlsx,.csv" onChange={(e) => setProduct_description(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100" required />
+                  </div>
+                  <button type="button" onClick={handleDownloadProduct_description_File} className="inline-flex items-center pt-5 text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download Sample Format
+                  </button>
+                </div>
+                <div className="flex mt-5 justify-between">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-[#3B82F6] hover:bg-[#3B82F6] text-white px-3 py-2 rounded-md flex items-center gap-2"
+                  >
+                    {isLoading && activeUploadType == "product_description" ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
+                      </span>
+                    ) : (
+                      'Upload Product Descriptions'
                     )}
                   </button>
                 </div>
