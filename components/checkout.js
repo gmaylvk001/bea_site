@@ -829,9 +829,7 @@ const grandTotal = subtotal - totalDiscount;
           JSON.stringify([name,addressData.email,addressData.phonenumber,deliveryAddress, adminItemsTableHtml])
         );
 
-        // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","siva96852@gmail.com","customercare@bharathelectronics.in"];
-
-        const emailadmin = ["sorambeeviuit@gmail.com"];
+        const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","siva96852@gmail.com","customercare@bharathelectronics.in"];
         
         emailadmin.forEach(async (adminEmail) => {
           adminemailFormData.set("email", adminEmail);

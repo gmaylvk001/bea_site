@@ -254,55 +254,6 @@ export default function CheckoutPage() {
   }, [cartItems, orderSummary.total]);
 
 
-  // ✅ GET MOBILE FROM TOKEN
-    const getMobileFromToken = () => {
-      const token = localStorage.getItem("token");
-      if (!token) return null;
-  
-      try {
-        const decoded = jwtDecode(token);
-        return decoded.mobile;
-      } catch {
-        return null;
-      }
-    };
-
-
-  const [FetchGuestUserIds, setFetchGuestUserIds] = useState([]);
-
-// ✅ STEP 1: FETCH USER ID USING MOBILE
-  const fetchidGuestUserIds = async () => {
-    try {
-      const mobile = getMobileFromToken();
-      if (!mobile) return;
-
-      const res = await fetch("/api/GuestUserId/get", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ mobile }),
-      });
-
-      if (!res.ok) throw new Error("API failed");
-
-      const result = await res.json();
-
-      if (result.success) {
-        console.log("✅ USER ID FROM API:", result.userId);
-        setFetchGuestUserIds(result.userId);
-      }
-    } catch (err) {
-      console.error("Fetch error:", err);
-    }
-  };
-
-// ✅ Correct place
-useEffect(() => {
-  fetchidGuestUserIds();
-}, []);
-
-
   const fetchData = async (skipCartFetch = false) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -313,18 +264,7 @@ useEffect(() => {
 
     try {
       const decoded = jwtDecode(token);
-      /* const userId = decoded.userId;
-      alert(userId); */
-
-      const userId = decoded.isGuest
-    ? FetchGuestUserIds
-    : decoded.userId;
-
-  // ⚠️ important check
-  if (!userId) {
-    console.log("⏳ Waiting for Guest User ID...");
-    return;
-  }
+      const userId = decoded.userId;
 
       // skip cart fetch when items were already loaded from buyNowData or checkoutData
       if (!skipCartFetch) {
@@ -371,17 +311,7 @@ useEffect(() => {
       setLoading(false);
     }
   };
-// ✅ STEP 1 CALL
-  useEffect(() => {
-    fetchidGuestUserIds();
-  }, []);
 
-  // ✅ STEP 2 CALL (VERY IMPORTANT 🔥)
-  useEffect(() => {
-    if (FetchGuestUserIds) {
-      fetchData(FetchGuestUserIds);
-    }
-  }, [FetchGuestUserIds]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -616,16 +546,8 @@ useEffect(() => {
         return;
       }
       const decoded = jwtDecode(token);
-      // const userId = decoded.userId;
-      const userId = decoded.isGuest
-    ? FetchGuestUserIds
-    : decoded.userId;
+      const userId = decoded.userId;
 
-  // ⚠️ important check
-  if (!userId) {
-    console.log("⏳ Waiting for Guest User ID...");
-    return;
-  }
       // Use saved address data if selected, otherwise use form data
       const addressData = useSavedAddress && selectedAddress !== null
         ? {
@@ -1017,8 +939,8 @@ useEffect(() => {
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-          // const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
-          const emailadmin = ['sorambeeviuit@gmail.com'];
+          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
+          //const emailadmin = ['gmaylvk001@gmail.com']"
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {

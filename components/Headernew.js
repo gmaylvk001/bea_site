@@ -752,16 +752,6 @@ const Header = () => {
     const [loginData, setLoginData] = useState({ email: "", password: "" });
     const [registerData, setRegisterData] = useState({ name: "", email: "", mobile: "", password: "" });
 
-    // OTP / Guest flow state
-    const [showOtpFlow, setShowOtpFlow] = useState(false);
-    const [guestStep, setGuestStep] = useState(1);
-    const [guestMobile, setGuestMobile] = useState('');
-    const [guestOtp, setGuestOtp] = useState(['', '', '', '']);
-    const [guestError, setGuestError] = useState('');
-    const [resendTimer, setResendTimer] = useState(0);
-    const otpInputRefs = useRef([]);
-    const otpTimerRef = useRef(null);
-
     const handleAuthSubmit = async (e) => {
       e.preventDefault();
       setLoadingAuth(false);
@@ -895,157 +885,6 @@ const Header = () => {
         return;
       }
     };
-    // OTP / Guest handler functions
-    const startResendTimer = () => {
-      setResendTimer(30);
-      otpTimerRef.current = setInterval(() => {
-        setResendTimer((prev) => {
-          if (prev <= 1) { clearInterval(otpTimerRef.current); return 0; }
-          return prev - 1;
-        });
-      }, 1000);
-    };
-    /* const handleSendOtp = async () => {
-      alert("First_step=1");
-      setGuestError('');
-      const mobileRegex = /^[6-9]\d{9}$/;
-      if (!mobileRegex.test(guestMobile)) { setGuestError('Enter a valid 10-digit mobile number.'); return; }
-      setLoadingAuth(true);
-      try {
-        const res = await fetch('/api/auth/send-sms-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: guestMobile }) });
-        const data = await res.json();
-        if (!res.ok) { setGuestError(data.error || 'Failed to send OTP.'); return; }
-        setGuestStep(2);
-        startResendTimer();
-        setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
-      } catch { setGuestError('Failed to send OTP. Please try again.'); }
-      finally { setLoadingAuth(false); }
-    }; */
-
-    const handleSendOtp = async () => {
-      setGuestError('');
-
-      const mobileRegex = /^[6-9]\d{9}$/;
-      if (!mobileRegex.test(guestMobile)) {
-        setGuestError('Enter a valid 10-digit mobile number.');
-        return;
-      }
-
-      setLoadingAuth(true);
-
-      try {
-        const res = await fetch('/api/auth/send-sms-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mobile: guestMobile })
-        });
-        console.log("dsafasdf",res);
-        const data = await res.json();
-
-        if (!res.ok) {
-          setGuestError(data.error || 'Failed to send OTP.');
-          return;
-        }
-
-        setGuestStep(2);
-        startResendTimer();
-
-      } catch {
-        setGuestError('Failed to send OTP.');
-      } finally {
-        setLoadingAuth(false);
-      }
-    };
-    const handleOtpChange = (index, value) => {
-      if (!/^\d?$/.test(value)) return;
-      const updated = [...guestOtp]; updated[index] = value; setGuestOtp(updated);
-      if (value && index < 5) otpInputRefs.current[index + 1]?.focus();
-    };
-    const handleOtpKeyDown = (index, e) => {
-      if (e.key === 'Backspace' && !guestOtp[index] && index > 0) otpInputRefs.current[index - 1]?.focus();
-    };
-    const handleOtpPaste = (e) => {
-      const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
-      if (pasted.length === 4) { setGuestOtp(pasted.split('')); otpInputRefs.current[3]?.focus(); }
-    };
-    const handleVerifyOtp = async () => {
-      setGuestError('');
-      const otpValue = guestOtp.join('');
-      if (otpValue.length !== 4) { setGuestError('Enter the 4-digit OTP.'); return; }
-      setLoadingAuth(true);
-      /* try {
-        const res = await fetch('/api/auth/verify-sms-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: guestMobile, otp: otpValue }) });
-        const data = await res.json();
-        if (!res.ok) { setGuestError(data.error || 'Invalid OTP.'); return; }
-
-        // ✅ Step 2: Save Guest User in DB (ONLY MOBILE)
-        await fetch('/api/auth/register-guest', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mobile: guestMobile
-          }),
-        });
-        localStorage.setItem('token', data.token);
-        updateHeaderdetails({ user: data.user });
-        setIsLoggedIn(true);
-        setShowAuthModal(false);
-        location.reload();
-      } */ 
-     
-     try {
-  const res = await fetch('/api/auth/verify-sms-otp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mobile: guestMobile, otp: otpValue })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    setGuestError(data.error || 'Invalid OTP.');
-    return;
-  }
-  // ✅ Step 2: Register Guest (SAFE)
-  const guestRes = await fetch('/api/auth/register-guest', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mobile: guestMobile })
-  });
-  const guestData = await guestRes.json();
-  console.log("data_check:",guestData);
-  if (!guestRes.ok) {
-    console.error('Guest API Error:', guestData);
-    setGuestError(guestData.error || 'Guest registration failed');
-    return;
-  }
-
-  // ✅ Continue login flow
-  localStorage.setItem('token', data.token);
-  updateHeaderdetails({ user: data.user });
-  setIsLoggedIn(true);
-  setShowAuthModal(false);
-
-  location.reload();
-
-}catch { setGuestError('Verification failed. Please try again.'); }
-      finally { setLoadingAuth(false); }
-    };
-    const handleResendOtp = async () => {
-      if (resendTimer > 0) return;
-      setGuestOtp(['', '', '', '']);
-      setGuestError('');
-      setLoadingAuth(true);
-      try {
-        const res = await fetch('/api/auth/send-sms-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: guestMobile }) });
-        const data = await res.json();
-        if (!res.ok) { setGuestError(data.error || 'Failed to resend OTP.'); return; }
-        startResendTimer();
-        setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
-      } catch { setGuestError('Failed to resend OTP.'); }
-      finally { setLoadingAuth(false); }
-    };
-
     useEffect(() => {
         setHasMounted(true);
     }, []);
@@ -2126,10 +1965,9 @@ const Header = () => {
                 {showAuthModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white rounded-lg p-8 w-96 max-w-full relative">
-                            <button onClick={() => { setShowAuthModal(false); setFormError(''); setError(''); setErrors({ login: {}, register: {} }); setLoginData({ email: "", password: "" }); setRegisterData({ name: "", email: "", mobile: "", password: "" }); setShowOtpFlow(false); setGuestStep(1); setGuestMobile(''); setGuestOtp(['','','','']); setGuestError(''); clearInterval(otpTimerRef.current); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">
+                            <button onClick={() => { setShowAuthModal(false); setFormError(''); setError(''); setErrors({ login: {}, register: {} }); setLoginData({ email: "", password: "" }); setRegisterData({ name: "", email: "", mobile: "", password: "" }); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">
                                 &times;
                             </button>
-                            {!showOtpFlow && (
                             <div className="flex gap-4 mb-6 border-b">
                                 <button className={`pb-2 px-1 ${activeTab === 'login' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('login')}>
                                     Login
@@ -2138,9 +1976,6 @@ const Header = () => {
                                     Register
                                 </button>
                             </div>
-                             )}
-
-                             {!showOtpFlow && (
                             <form onSubmit={handleAuthSubmit} className="space-y-4">
                               {/* Register Name Field */}
                               {activeTab === "register" && (
@@ -2264,98 +2099,6 @@ const Header = () => {
                                 </div>
                               )}
                             </form>
- )}
-                            {/* OTP / Guest flow */}
-                            {!showOtpFlow ? (
-                              <>
-                                <div className="flex items-center my-4">
-                                  <div className="flex-1 border-t border-gray-200" />
-                                  <span className="mx-3 text-sm font-semibold text-black-500">or</span>
-                                  <div className="flex-1 border-t border-gray-200" />
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setShowOtpFlow(true)}
-                                  className="w-full border border-gray-300 py-2 px-4 rounded text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors duration-200 uppercase tracking-wide"
-                                >
-                                  Login with OTP / Guest
-                                </button>
-                              </>
-                            ) : (
-                              <div className="mt-4">
-                                {guestStep === 1 ? (
-                                  <>
-                                    <div className="mb-3">
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Please enter your Mobile number <span className="text-red-500">*</span>
-                                      </label>
-                                      <input
-                                        type="tel"
-                                        placeholder="Enter Your Mobile Number"
-                                        maxLength={10}
-                                        value={guestMobile}
-                                        onChange={(e) => { setGuestMobile(e.target.value.replace(/\D/g, '')); setGuestError(''); }}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()}
-                                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                        autoFocus
-                                      />
-                                      {guestError && <p className="mt-1 text-sm text-red-500">{guestError}</p>}
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={handleSendOtp}
-                                      disabled={loadingAuth}
-                                      className="w-full bg-customBlue text-white py-2 px-4 rounded hover:bg-customBlue disabled:bg-gray-400 transition-colors duration-200 font-medium"
-                                    >
-                                      {loadingAuth ? 'Sending OTP...' : 'Submit'}
-                                    </button>
-                                    <button type="button" onClick={() => { setShowOtpFlow(false); setGuestError(''); setGuestMobile(''); }} className="mt-2 text-xs text-gray-400 hover:text-gray-600 w-full text-center">
-                                      Back to Login
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div className="text-center mb-3">
-                                      <p className="text-sm text-gray-600">OTP sent to <span className="font-semibold">+91 {guestMobile}</span></p>
-                                      <button type="button" onClick={() => { setGuestStep(1); setGuestOtp(['','','','']); setGuestError(''); }} className="text-xs text-blue-500 hover:underline mt-1">Change number</button>
-                                    </div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Enter OTP</label>
-                                    <div className="flex justify-center gap-2 mb-3" onPaste={handleOtpPaste}>
-                                      {guestOtp.map((digit, i) => (
-                                        <input
-                                          key={i}
-                                          ref={(el) => (otpInputRefs.current[i] = el)}
-                                          type="text"
-                                          inputMode="numeric"
-                                          maxLength={1}
-                                          value={digit}
-                                          onChange={(e) => handleOtpChange(i, e.target.value)}
-                                          onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                                          className="w-10 h-12 text-center text-lg font-semibold border-2 rounded focus:outline-none focus:border-customBlue"
-                                        />
-                                      ))}
-                                    </div>
-                                    {guestError && <p className="mb-2 text-sm text-red-500 text-center">{guestError}</p>}
-                                    <button
-                                      type="button"
-                                      onClick={handleVerifyOtp}
-                                      disabled={loadingAuth || guestOtp.join('').length !== 4}
-                                      className="w-full bg-customBlue text-white py-2 px-4 rounded hover:bg-customBlue disabled:bg-gray-400 transition-colors duration-200 font-medium"
-                                    >
-                                      {loadingAuth ? 'Verifying...' : 'Verify OTP & Continue'}
-                                    </button>
-                                    <div className="text-center text-sm text-gray-500 mt-2">
-                                      Didn't receive OTP?{' '}
-                                      {resendTimer > 0 ? (
-                                        <span className="text-gray-400">Resend in {resendTimer}s</span>
-                                      ) : (
-                                        <button type="button" onClick={handleResendOtp} disabled={loadingAuth} className="text-blue-500 hover:underline">Resend OTP</button>
-                                      )}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            )}
                         </div>
                     </div>
                 )}
