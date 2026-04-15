@@ -342,7 +342,7 @@ const fileInputRef = useRef(null);
   const handleCategoryBulkItemCodeCatSubcatDownload = () => {
     const link = document.createElement("a");
     link.href = `/uploads/files/sample_category_Bulk_upload.xlsx?t=${Date.now()}`;
-    link.download = "sample_category_Bulk_uploads.xlsx";
+    link.download = "item_code_category_bulk_upload.xlsx";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1044,7 +1044,7 @@ const fileInputRef = useRef(null);
     { id: "section-filter-values-upload", label: "Product Filter Values Upload", image: "/uploads/files/Filter_values_bulk_upload_fifth_box_image.png" },
     { id: "section-category-filter-upload", label: "Category Filter Upload", image: "/uploads/files/Category_filter_upload_sixth_box_image.png" },
 
-    { id: "section-category-filter-upload-item-category-subcategory", label: "Category Filter Upload Bulk Upload", image: "/uploads/files/Category_bulk_upload_bulk_category_image_New.png" },
+    { id: "section-category-filter-upload-item-category-subcategory", label: "Item Code Category Bulk Upload", image: "/uploads/files/Category_bulk_upload_bulk_category_image_New.png" },
 
     { id: "section-new-category-upload", label: "New Category Upload", image: "/uploads/files/New_Category_bulk_upload_seventh_image.png" },
     // { id: "section-product-categories-upload", label: "Update Product Categories",     image: "/uploads/files/Product_updating_category_eighth_image.png" },
@@ -1467,7 +1467,7 @@ const fileInputRef = useRef(null);
                 <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
                   <div className="mb-4">
                     <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
-                      Category Filter Bulk Upload(Item code, Catgory and Sub Category)
+                      Item Code category Bulk Upload
                     </h2>
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                       <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
