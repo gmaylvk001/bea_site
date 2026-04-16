@@ -56,34 +56,45 @@ for (const row of rows) {
     continue;
   }
 
-  /* ---------- FIND SUB CATEGORY ---------- */
-  const subCategory = await Category.findOne({
-    category_name: { $regex: `^${subCategoryName}$`, $options: "i" },
-  });
+/* ---------- FIND CHILD CATEGORY ---------- */
+const childCategory = await Category.findOne({
+  category_name: { $regex: `^${childName}$`, $options: "i" },
+});
 
-  if (!subCategory) {
-    skipped++;
-    continue;
-  }
+if (!childCategory) {
+  skipped++;
+  continue;
+}
 
-  /* ---------- FIND CHILD CATEGORY (UNDER SUB) ---------- */
-  const childCategory = await Category.findOne({
-    category_name: { $regex: `^${childName}$`, $options: "i" },
-    parentid: subCategory._id, // ✅ MUST belong to sub
-  });
+/* ---------- GET SUB CATEGORY FROM CHILD ---------- */
+const subCategory = await Category.findById(childCategory.parentid);
 
-  if (!childCategory) {
-    skipped++;
-    continue;
-  }
+if (!subCategory) {
+  skipped++;
+  continue;
+}
 
-  /* ---------- FIND MAIN CATEGORY ---------- */
-  const mainCategory = await Category.findById(subCategory.parentid);
+/* ---------- GET MAIN CATEGORY FROM SUB ---------- */
+const mainCategory = await Category.findById(subCategory.parentid);
 
-  if (!mainCategory) {
-    skipped++;
-    continue;
-  }
+if (!mainCategory) {
+  skipped++;
+  continue;
+}
+
+/* ---------- MATCH INPUT CATEGORY ---------- */
+const inputCategory = subCategoryName.toLowerCase();
+
+const isSubMatch =
+  subCategory.category_name.toLowerCase() === inputCategory;
+
+const isMainMatch =
+  mainCategory.category_name.toLowerCase() === inputCategory;
+
+if (!isSubMatch && !isMainMatch) {
+  skipped++;
+  continue;
+}
 
   /* ---------- BUILD MD5 CHAIN ---------- */
   const subCategoryNew = [
