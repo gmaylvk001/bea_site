@@ -271,13 +271,329 @@ const fetchProducts = async () => {
   //   XLSX.writeFile(workbook, `products_export_${new Date().toISOString().slice(0,10)}.xlsx`);
   // };
   
+// const exportToExcel = () => {
+//   // Create mapping objects for faster lookup
+//   const categoryMap = {};
+//   categories.forEach(cat => {
+//     categoryMap[cat._id] = cat.category_name;
+//   });
+
+//   const brandMap = {};
+//   brands.forEach(brand => {
+//     const brandId = brand._id || brand.id;
+//     if (brandId) {
+//       brandMap[brandId] = brand.brand_name || brand.name;
+//     }
+//   });
+
+//   // Prepare data with names instead of IDs
+//   const dataForExport = filteredProducts.map(product => {
+//     // console.log("Check for product category::",product);
+//     // Resolve category name
+//     // let categoryName = 'No Category';
+//     /* if (product.category) {
+//       if (typeof product.category === 'object') {
+//         categoryName = product.category.category_name;
+//       } else if (categoryMap[product.category]) {
+//         categoryName = categoryMap[product.category];
+//       }
+//     } */
+
+//    /*    if (product.sub_category_new_name) {
+
+//   const parts = product.sub_category_new_name
+//     .split('##')
+//     .map(p => p.trim())
+//     .filter(Boolean);
+
+//   if (parts.length >= 3) {
+//     categoryName = parts[1]; // parent
+//   } else if (parts.length === 2) {
+//     categoryName = parts[0]; // main
+//   } else if (parts.length === 1) {
+//     categoryName = parts[0]; // only one
+//   }
+
+// } */
+
+
+// /* if (product.sub_category_new_name) {
+
+//   const parts = product.sub_category_new_name
+//     .split('##')
+//     .map(p => p.trim())
+//     .filter(Boolean);
+
+//   if (parts.length >= 3) {
+//     categoryName = parts[1]; // ✅ parent
+//   } else if (parts.length === 2) {
+//     categoryName = parts[0]; // ✅ main
+//   } else if (parts.length === 1) {
+//     categoryName = parts[0]; // ✅ single
+//   }
+
+// } */
+
+// /*     // ✅ CASE 2: fallback to category_new
+// else if (product.category_new) {
+//   if (categoryMap[product.category_new]) {
+//     categoryName = categoryMap[product.category_new];
+//   } else {
+//     categoryName = product.category_new; // fallback if mapping missing
+//   }
+// } */
+
+
+
+//   /* let categoryName = 'No Category';
+
+// // ✅ CASE 1: sub_category_new_name (priority)
+// if (typeof product.sub_category_new_name === 'string' && product.sub_category_new_name.trim()) {
+
+//   const parts = product.sub_category_new_name
+//     .split('##')
+//     .map(p => p.trim())
+//     .filter(Boolean);
+
+//   if (parts.length >= 3) {
+//     categoryName = parts[1]; // parent
+//   } else if (parts.length === 2) {
+//     categoryName = parts[0]; // main
+//   } else if (parts.length === 1) {
+//     categoryName = parts[0];
+//   }
+// }
+
+// // ✅ CASE 2: fallback → category (object)
+// else if (product.category && typeof product.category === 'object') {
+//   categoryName = product.category.category_name || 'No Category';
+// }
+
+// // ✅ CASE 3: fallback → category ID map
+// else if (product.category && categoryMap[product.category]) {
+//   categoryName = categoryMap[product.category];
+// }
+
+// // ✅ CASE 4: fallback → category_new
+// else if (product.category_new && categoryMap[product.category_new]) {
+//   categoryName = categoryMap[product.category_new];
+// }
+
+// // ✅ LAST fallback (optional)
+// else if (product.category_new) {
+//   categoryName = product.category_new;
+// }
+
+//  */
+
+
+// let categoryName = 'No Category';
+
+// // ✅ STEP 1: take available hierarchy string
+// let categorySource =
+//   product.sub_category_new_name ||
+//   product.sub_category_name ||   // ✅ THIS FIX
+//   '';
+
+// // ✅ STEP 2: extract required level
+// if (typeof categorySource === 'string' && categorySource.trim()) {
+
+//   const parts = categorySource
+//     .split('##')
+//     .map(p => p.trim())
+//     .filter(Boolean);
+
+//   if (parts.length >= 3) {
+//     categoryName = parts[1]; // ✅ parent (your requirement)
+//   } else if (parts.length === 2) {
+//     categoryName = parts[0];
+//   } else if (parts.length === 1) {
+//     categoryName = parts[0];
+//   }
+// }
+
+// // ✅ STEP 3: fallback → category object
+// else if (product.category && typeof product.category === 'object') {
+//   categoryName = product.category.category_name || 'No Category';
+// }
+
+// // ✅ STEP 4: fallback → category map
+// else if (product.category && categoryMap[product.category]) {
+//   categoryName = categoryMap[product.category];
+// }
+
+// // ✅ STEP 5: fallback → category_new map
+// else if (product.category_new && categoryMap[product.category_new]) {
+//   categoryName = categoryMap[product.category_new];
+// }
+
+// // ❌ DON'T SHOW ID
+// // remove this:
+// // else if (product.category_new) {
+// //   categoryName = product.category_new;
+// // }
+
+//     // Resolve subcategory name
+//     let subcategoryName = 'No Subcategory';
+//     if (product.sub_category) {
+//       if (typeof product.sub_category === 'object') {
+//         subcategoryName = product.sub_category.category_name;
+//       } else if (categoryMap[product.sub_category]) {
+//         subcategoryName = categoryMap[product.sub_category];
+//       }
+//     }
+
+//     // Resolve brand name
+//     let brandName = 'No Brand';
+//     if (product.brand) {
+//       if (typeof product.brand === 'object') {
+//         brandName = product.brand.brand_name || product.brand.name || 'No Brand Namee';
+//       } else {
+//         brandName = brandMap[product.brand] || 'Brand not found';
+//       }
+//     }
+
+//     // Process filters with group names
+//   let filterString = '';
+
+// if (product.filterDetails && product.filterDetails.length > 0) {
+//   const formattedFilters = product.filterDetails.map(filter => {
+//     let groupName = 'Other';
+
+//     // CASE 1: filter_group is populated object
+//     if (filter.filter_group && typeof filter.filter_group === 'object') {
+//       groupName = filter.filter_group.filtergroup_name || 'Other';
+//     }
+
+//     // CASE 2: filter_group is ID → lookup from filterGroups map
+//     else if (filter.filter_group && typeof filter.filter_group === 'string') {
+//       groupName = filterGroups[filter.filter_group] || 'Other';
+//     }
+
+//     // CASE 3: backend already sends group name
+//     else if (filter.filter_group_name) {
+//       groupName = filter.filter_group_name;
+//     }
+
+//     return `${groupName}: ${filter.filter_name}`;
+//   });
+
+//   filterString = formattedFilters.join(', ');
+// }
+
+//     // Separate size filters if you want them in their own column
+//     let sizeFilter = '';
+//     if (product.sizeFilterDetails && product.sizeFilterDetails.length > 0) {
+//       const sizeFilters = product.sizeFilterDetails.map(filter => {
+//         let groupName = 'Size';
+//         if (filter.filter_group && typeof filter.filter_group === 'object') {
+//           groupName = filter.filter_group.filtergroup_name || 'Size';
+//         }
+//         return `${groupName}: ${filter.filter_name}`;
+//       });
+//       sizeFilter = sizeFilters.join(', ');
+//     }
+
+//     const plainText = product.description ? product.description.replace(/<[^>]*>/g, '') : '';
+// const getSpecsForExcel = (specs) => {
+//   if (!specs || !Array.isArray(specs)) return [];
+
+//   // Step 1: take first string
+//   const fullText = specs[0];
+
+//   if (!fullText) return [];
+
+//   // Step 2: split using newline (correct way)
+//   return fullText
+//     .split('\n')
+//     .map(item => item.trim().replace(/,$/, '')) // remove ending comma
+//     .filter(item => item.includes(':'))
+//     .map(item => {
+//       const [key, ...rest] = item.split(':');
+
+//       return {
+//         Key: key.trim(),
+//         Value: rest.join(':').trim()
+//       };
+//     });
+// };
+// const specsArray = getSpecsForExcel(product.key_specifications);
+// const formattedSpecs = specsArray
+//   .map(item => `${item.Key}: ${item.Value}`)
+//   .join('\n');
+//     return {
+//       'Item No.': product.item_code,
+//       'Product Name': product.name,
+//       'StockQty': product.quantity,
+//       'Category': categoryName.toUpperCase(),
+//       'Subcategory': subcategoryName.toUpperCase(),
+//       'Brand': brandName,
+//       'Size': sizeFilter, // Size with group name
+//       'Filters': filterString, // All filters with group names
+//       'Star': product.star || '',
+//       'Movement': product.movement || '',
+//       'MRP PRICE': product.price,
+//       'Special Price': product.special_price,
+//       // 'Description': product.description || '',
+//       'Description': plainText || '',
+//       // 'Key Features': product.key_specifications || '',
+//       'Key Features': formattedSpecs || '',
+//       'image1': product.images?.[0] || '',
+//       'image2': product.images?.[1] || '',
+//       'image3': product.images?.[2] || '',
+//       'overview images': product.overview_image?.join(", ") || '',
+//       'overview_description': product.overviewdescription || '',
+//       'variants': product.hasVariants ? JSON.stringify(product.variants) : '',
+//       'Status': product.status
+//     };
+//   });
+
+//   // Create worksheet with the exact column order
+//   const worksheet = XLSX.utils.json_to_sheet(dataForExport, {
+//     header: [
+//       'Item No.',
+//       'Product Name',
+//       'StockQty',
+//       'Category',
+//       'Subcategory',
+//       'Brand',
+//       'Size',
+//       'Filters',
+//       'Star',
+//       'Movement',
+//       'MRP PRICE',
+//       'Special Price',
+//       'Description',
+//       'Key Features',
+//       'image1',
+//       'image2',
+//       'image3',
+//       'overview images',
+//       'overview_description',
+//       'variants',
+//       'Status'
+//     ]
+//   });
+  
+//   // Create workbook
+//   const workbook = XLSX.utils.book_new();
+//   XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+  
+//   // Generate file and trigger download
+//   XLSX.writeFile(workbook, `products_export_${new Date().toISOString().slice(0,10)}.xlsx`);
+// };
+
+
+//NEW EXPORT EXCEL WITH CHILD CATEGORY
 const exportToExcel = () => {
-  // Create mapping objects for faster lookup
+
+  /* ---------- CATEGORY MAP ---------- */
   const categoryMap = {};
   categories.forEach(cat => {
     categoryMap[cat._id] = cat.category_name;
   });
 
+  /* ---------- BRAND MAP ---------- */
   const brandMap = {};
   brands.forEach(brand => {
     const brandId = brand._id || brand.id;
@@ -286,202 +602,83 @@ const exportToExcel = () => {
     }
   });
 
-  // Prepare data with names instead of IDs
+  /* ---------- MAIN EXPORT ---------- */
   const dataForExport = filteredProducts.map(product => {
-    // console.log("Check for product category::",product);
-    // Resolve category name
-    // let categoryName = 'No Category';
-    /* if (product.category) {
-      if (typeof product.category === 'object') {
-        categoryName = product.category.category_name;
-      } else if (categoryMap[product.category]) {
-        categoryName = categoryMap[product.category];
-      }
-    } */
 
-   /*    if (product.sub_category_new_name) {
+    /* =========================================================
+       🔥 CHANGE START HERE (CATEGORY SPLIT LOGIC)
+    ========================================================== */
 
-  const parts = product.sub_category_new_name
-    .split('##')
-    .map(p => p.trim())
-    .filter(Boolean);
+    let mainCategory = 'No Category';
+    let subCategory = 'No Subcategory';
+    let childCategory = 'No Childcategory';
 
-  if (parts.length >= 3) {
-    categoryName = parts[1]; // parent
-  } else if (parts.length === 2) {
-    categoryName = parts[0]; // main
-  } else if (parts.length === 1) {
-    categoryName = parts[0]; // only one
-  }
+    // ✅ STEP 1: take hierarchy string
+    let categorySource =
+      product.sub_category_new_name ||
+      product.sub_category_name ||
+      '';
 
-} */
+    // ✅ STEP 2: split using ##
+    if (typeof categorySource === 'string' && categorySource.trim()) {
+      const parts = categorySource
+        .split('##')
+        .map(p => p.trim())
+        .filter(Boolean);
 
-
-/* if (product.sub_category_new_name) {
-
-  const parts = product.sub_category_new_name
-    .split('##')
-    .map(p => p.trim())
-    .filter(Boolean);
-
-  if (parts.length >= 3) {
-    categoryName = parts[1]; // ✅ parent
-  } else if (parts.length === 2) {
-    categoryName = parts[0]; // ✅ main
-  } else if (parts.length === 1) {
-    categoryName = parts[0]; // ✅ single
-  }
-
-} */
-
-/*     // ✅ CASE 2: fallback to category_new
-else if (product.category_new) {
-  if (categoryMap[product.category_new]) {
-    categoryName = categoryMap[product.category_new];
-  } else {
-    categoryName = product.category_new; // fallback if mapping missing
-  }
-} */
-
-
-
-  /* let categoryName = 'No Category';
-
-// ✅ CASE 1: sub_category_new_name (priority)
-if (typeof product.sub_category_new_name === 'string' && product.sub_category_new_name.trim()) {
-
-  const parts = product.sub_category_new_name
-    .split('##')
-    .map(p => p.trim())
-    .filter(Boolean);
-
-  if (parts.length >= 3) {
-    categoryName = parts[1]; // parent
-  } else if (parts.length === 2) {
-    categoryName = parts[0]; // main
-  } else if (parts.length === 1) {
-    categoryName = parts[0];
-  }
-}
-
-// ✅ CASE 2: fallback → category (object)
-else if (product.category && typeof product.category === 'object') {
-  categoryName = product.category.category_name || 'No Category';
-}
-
-// ✅ CASE 3: fallback → category ID map
-else if (product.category && categoryMap[product.category]) {
-  categoryName = categoryMap[product.category];
-}
-
-// ✅ CASE 4: fallback → category_new
-else if (product.category_new && categoryMap[product.category_new]) {
-  categoryName = categoryMap[product.category_new];
-}
-
-// ✅ LAST fallback (optional)
-else if (product.category_new) {
-  categoryName = product.category_new;
-}
-
- */
-
-
-let categoryName = 'No Category';
-
-// ✅ STEP 1: take available hierarchy string
-let categorySource =
-  product.sub_category_new_name ||
-  product.sub_category_name ||   // ✅ THIS FIX
-  '';
-
-// ✅ STEP 2: extract required level
-if (typeof categorySource === 'string' && categorySource.trim()) {
-
-  const parts = categorySource
-    .split('##')
-    .map(p => p.trim())
-    .filter(Boolean);
-
-  if (parts.length >= 3) {
-    categoryName = parts[1]; // ✅ parent (your requirement)
-  } else if (parts.length === 2) {
-    categoryName = parts[0];
-  } else if (parts.length === 1) {
-    categoryName = parts[0];
-  }
-}
-
-// ✅ STEP 3: fallback → category object
-else if (product.category && typeof product.category === 'object') {
-  categoryName = product.category.category_name || 'No Category';
-}
-
-// ✅ STEP 4: fallback → category map
-else if (product.category && categoryMap[product.category]) {
-  categoryName = categoryMap[product.category];
-}
-
-// ✅ STEP 5: fallback → category_new map
-else if (product.category_new && categoryMap[product.category_new]) {
-  categoryName = categoryMap[product.category_new];
-}
-
-// ❌ DON'T SHOW ID
-// remove this:
-// else if (product.category_new) {
-//   categoryName = product.category_new;
-// }
-
-    // Resolve subcategory name
-    let subcategoryName = 'No Subcategory';
-    if (product.sub_category) {
-      if (typeof product.sub_category === 'object') {
-        subcategoryName = product.sub_category.category_name;
-      } else if (categoryMap[product.sub_category]) {
-        subcategoryName = categoryMap[product.sub_category];
+      // ✅ IMPORTANT CHANGE
+      if (parts.length >= 3) {
+        mainCategory = parts[0];   // 👈 MAIN
+        subCategory = parts[1];    // 👈 SUB
+        childCategory = parts[2];  // 👈 CHILD
+      } else if (parts.length === 2) {
+        mainCategory = parts[0];
+        subCategory = parts[1];
+      } else if (parts.length === 1) {
+        mainCategory = parts[0];
       }
     }
 
-    // Resolve brand name
+    /* =========================================================
+       🔥 CHANGE END HERE
+    ========================================================== */
+
+
+    /* ---------- BRAND ---------- */
     let brandName = 'No Brand';
     if (product.brand) {
       if (typeof product.brand === 'object') {
-        brandName = product.brand.brand_name || product.brand.name || 'No Brand Namee';
+        brandName =
+          product.brand.brand_name ||
+          product.brand.name ||
+          'No Brand';
       } else {
         brandName = brandMap[product.brand] || 'Brand not found';
       }
     }
 
-    // Process filters with group names
-  let filterString = '';
+    /* ---------- FILTERS ---------- */
+    let filterString = '';
 
-if (product.filterDetails && product.filterDetails.length > 0) {
-  const formattedFilters = product.filterDetails.map(filter => {
-    let groupName = 'Other';
+    if (product.filterDetails && product.filterDetails.length > 0) {
+      const formattedFilters = product.filterDetails.map(filter => {
+        let groupName = 'Other';
 
-    // CASE 1: filter_group is populated object
-    if (filter.filter_group && typeof filter.filter_group === 'object') {
-      groupName = filter.filter_group.filtergroup_name || 'Other';
+        if (filter.filter_group && typeof filter.filter_group === 'object') {
+          groupName = filter.filter_group.filtergroup_name || 'Other';
+        } else if (filter.filter_group && typeof filter.filter_group === 'string') {
+          groupName = filterGroups[filter.filter_group] || 'Other';
+        } else if (filter.filter_group_name) {
+          groupName = filter.filter_group_name;
+        }
+
+        return `${groupName}: ${filter.filter_name}`;
+      });
+
+      filterString = formattedFilters.join(', ');
     }
 
-    // CASE 2: filter_group is ID → lookup from filterGroups map
-    else if (filter.filter_group && typeof filter.filter_group === 'string') {
-      groupName = filterGroups[filter.filter_group] || 'Other';
-    }
-
-    // CASE 3: backend already sends group name
-    else if (filter.filter_group_name) {
-      groupName = filter.filter_group_name;
-    }
-
-    return `${groupName}: ${filter.filter_name}`;
-  });
-
-  filterString = formattedFilters.join(', ');
-}
-
-    // Separate size filters if you want them in their own column
+    /* ---------- SIZE ---------- */
     let sizeFilter = '';
     if (product.sizeFilterDetails && product.sizeFilterDetails.length > 0) {
       const sizeFilters = product.sizeFilterDetails.map(filter => {
@@ -494,61 +691,78 @@ if (product.filterDetails && product.filterDetails.length > 0) {
       sizeFilter = sizeFilters.join(', ');
     }
 
-    const plainText = product.description ? product.description.replace(/<[^>]*>/g, '') : '';
-const getSpecsForExcel = (specs) => {
-  if (!specs || !Array.isArray(specs)) return [];
+    /* ---------- DESCRIPTION CLEAN ---------- */
+    const plainText = product.description
+      ? product.description.replace(/<[^>]*>/g, '')
+      : '';
 
-  // Step 1: take first string
-  const fullText = specs[0];
+    /* ---------- KEY FEATURES ---------- */
+    const getSpecsForExcel = (specs) => {
+      if (!specs || !Array.isArray(specs)) return [];
 
-  if (!fullText) return [];
+      const fullText = specs[0];
+      if (!fullText) return [];
 
-  // Step 2: split using newline (correct way)
-  return fullText
-    .split('\n')
-    .map(item => item.trim().replace(/,$/, '')) // remove ending comma
-    .filter(item => item.includes(':'))
-    .map(item => {
-      const [key, ...rest] = item.split(':');
+      return fullText
+        .split('\n')
+        .map(item => item.trim().replace(/,$/, ''))
+        .filter(item => item.includes(':'))
+        .map(item => {
+          const [key, ...rest] = item.split(':');
+          return {
+            Key: key.trim(),
+            Value: rest.join(':').trim()
+          };
+        });
+    };
 
-      return {
-        Key: key.trim(),
-        Value: rest.join(':').trim()
-      };
-    });
-};
-const specsArray = getSpecsForExcel(product.key_specifications);
-const formattedSpecs = specsArray
-  .map(item => `${item.Key}: ${item.Value}`)
-  .join('\n');
+    const specsArray = getSpecsForExcel(product.key_specifications);
+
+    const formattedSpecs = specsArray
+      .map(item => `${item.Key}: ${item.Value}`)
+      .join('\n');
+
+    /* ---------- FINAL RETURN ---------- */
     return {
       'Item No.': product.item_code,
       'Product Name': product.name,
       'StockQty': product.quantity,
-      'Category': categoryName.toUpperCase(),
-      'Subcategory': subcategoryName.toUpperCase(),
+
+      // ✅ UPDATED CATEGORY OUTPUT
+      'Category': mainCategory.toUpperCase(),
+      'Subcategory': subCategory.toUpperCase(),
+      'Childcategory': childCategory.toUpperCase(),
+
       'Brand': brandName,
-      'Size': sizeFilter, // Size with group name
-      'Filters': filterString, // All filters with group names
+      'Size': sizeFilter,
+      'Filters': filterString,
+
       'Star': product.star || '',
       'Movement': product.movement || '',
       'MRP PRICE': product.price,
       'Special Price': product.special_price,
-      // 'Description': product.description || '',
+
       'Description': plainText || '',
-      // 'Key Features': product.key_specifications || '',
       'Key Features': formattedSpecs || '',
+
       'image1': product.images?.[0] || '',
       'image2': product.images?.[1] || '',
       'image3': product.images?.[2] || '',
-      'overview images': product.overview_image?.join(", ") || '',
+
+      // 🔥 FIX HERE (important)
+      'overview images': product.overview_images?.join(", ") || '',
+
       'overview_description': product.overviewdescription || '',
-      'variants': product.hasVariants ? JSON.stringify(product.variants) : '',
+
+      'variants': product.hasVariants
+        ? JSON.stringify(product.variants)
+        : '',
+
       'Status': product.status
     };
   });
 
-  // Create worksheet with the exact column order
+  /* ---------- SHEET ---------- */
   const worksheet = XLSX.utils.json_to_sheet(dataForExport, {
     header: [
       'Item No.',
@@ -556,6 +770,7 @@ const formattedSpecs = specsArray
       'StockQty',
       'Category',
       'Subcategory',
+      'Childcategory', // ✅ ADDED
       'Brand',
       'Size',
       'Filters',
@@ -574,14 +789,17 @@ const formattedSpecs = specsArray
       'Status'
     ]
   });
-  
-  // Create workbook
+
+  /* ---------- EXPORT ---------- */
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
-  
-  // Generate file and trigger download
-  XLSX.writeFile(workbook, `products_export_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+  XLSX.writeFile(
+    workbook,
+    `products_export_${new Date().toISOString().slice(0,10)}.xlsx`
+  );
 };
+
 
 const exportFilterDataToExcel = () => {
   const exportRows = [];
