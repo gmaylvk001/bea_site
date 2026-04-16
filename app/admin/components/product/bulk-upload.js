@@ -16,6 +16,7 @@ export default function BulkUploadPage() {
   const [activeUploadType, setActiveUploadType] = useState(null);
   const [isFilterUploadLoading, setIsFilterUploadLoading] = useState(false);
   const [isBulkUploadLoading, setIsBulkUploadLoading] = useState(false);
+  const [isParticularDataBulkUploadLoading, setIsParticularDataBulkUploadLoading] = useState(false);
   const [isFilterGroupUploadLoading, setIsFilterGroupUploadLoading] = useState(false);
   const overviewFormRef = useRef(null);
   const filterValueFormRef = useRef(null);
@@ -37,6 +38,7 @@ export default function BulkUploadPage() {
 
   const notifiedRef = useRef(false);
 const fileInputRef = useRef(null);
+const fileBulkParticularInputRef = useRef(null);
   const showToast = (type, message) => {
     if (notifiedRef.current) return;
     notifiedRef.current = true;
@@ -62,6 +64,7 @@ const fileInputRef = useRef(null);
     setActiveUploadType(null);
     setIsFilterUploadLoading(false);
     setIsBulkUploadLoading(false);
+    setIsParticularDataBulkUploadLoading(false);
     setIsFilterGroupUploadLoading(false);
     setMessage("");
 
@@ -224,6 +227,55 @@ const fileInputRef = useRef(null);
   }
 };
 
+
+    //BULK UPDATION...
+  const handleBulkParticularDetailsSubcatSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!excelFile) {
+    showToast("error", "Please upload a file");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", excelFile); // ✅ MUST BE "file"
+
+  setIsParticularDataBulkUploadLoading(true);
+
+  try {
+    const res = await fetch("/api/categories/particularDataBulkupload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast(
+        "success",
+        `Updated: ${data.updated}, Skipped: ${data.skipped}`
+      );
+
+      // ✅ RESET STATE
+        setExcelFile(null);
+
+        // ✅ RESET INPUT UI (VERY IMPORTANT)
+        if (fileBulkParticularInputRef.current) {
+          fileBulkParticularInputRef.current.value = "";
+        }
+
+    } else {
+      showToast("error", data.message || "Upload failed");
+    }
+
+    setExcelFile(null);
+  } catch (err) {
+    console.error(err);
+    showToast("error", "Upload failed");
+  } finally {
+    setIsParticularDataBulkUploadLoading(false);
+  }
+};
   const validateFile = (file, allowedExtensions) => {
     if (!file) return false;
     const fileName = file.name.toLowerCase();
@@ -343,6 +395,15 @@ const fileInputRef = useRef(null);
     const link = document.createElement("a");
     link.href = `/uploads/files/sample_category_Bulk_upload.xlsx?t=${Date.now()}`;
     link.download = "item_code_category_bulk_upload.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleParticularDataBulkUploadDownload = () => {
+    const link = document.createElement("a");
+    link.href = `/uploads/files/sample_item_code_particular_data.xlsx?t=${Date.now()}`;
+    link.download = "item_particular_bulk_upload_part_one_without_image.xlsx";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1046,6 +1107,10 @@ const fileInputRef = useRef(null);
 
     { id: "section-category-filter-upload-item-category-subcategory", label: "Item Code Category Bulk Upload", image: "/uploads/files/Category_bulk_upload_bulk_category_image_New.png" },
 
+    { id: "item-category-particular-product-bulk-upload", label: "Item Particular Bulk Upload part one (without image)", image: "/uploads/files/item_category_particular_bulk_upload.png" },
+
+    // { id: "item_code_image_bulk_upload", label: "Item Code Image Bulk Upload", image: "/uploads/files/item_code_image_bulk_upload.png" },
+
     { id: "section-new-category-upload", label: "New Category Upload", image: "/uploads/files/New_Category_bulk_upload_seventh_image.png" },
     // { id: "section-product-categories-upload", label: "Update Product Categories",     image: "/uploads/files/Product_updating_category_eighth_image.png" },
     { id: "section-product-brands-upload", label: "Update Product Brands", image: "/uploads/files/Product_Brand_update_nineth_image.png" },
@@ -1519,6 +1584,66 @@ const fileInputRef = useRef(null);
                 </div>
               </form>
             )}
+
+            {/* Section 13: Category Filter Upload Item code With Particular Details */}
+            {selectedSection === "item-category-particular-product-bulk-upload" && (
+              <form id="item-category-particular-product-bulk-upload" onSubmit={handleUpload} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
+                <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                  <div className="mb-4">
+                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
+                      Item Particular Bulk Upload part one (without image)
+                    </h2>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Excel/CSV File
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">Upload your Particular Bulk Upload Part One Data</p>
+                  </div>
+                  <div className="space-y-4">
+                   <input
+                      type="file"
+                      accept=".xlsx,.csv"
+                      ref={fileBulkParticularInputRef}
+                      onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={handleParticularDataBulkUploadDownload}
+                      className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download Sample Format
+                    </button>
+                  </div>
+                  <div className="flex mt-5 justify-between">
+                    <button
+                      onClick={handleBulkParticularDetailsSubcatSubmit}
+                        disabled={isParticularDataBulkUploadLoading}
+                      className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none disabled:opacity-50 transition-colors flex items-center"
+                    >
+                      {isParticularDataBulkUploadLoading ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Uploading...
+                        </>
+                      ) : (
+                        'Particular Bulk Upload One'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+
 
             {/* Section 7: New Category Upload */}
             {selectedSection === "section-new-category-upload" && (

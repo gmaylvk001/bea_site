@@ -111,7 +111,7 @@ if (!isSubMatch && !isMainMatch) {
   ].join("##");
 
   /* ---------- UPDATE ---------- */
-  await Product.updateOne(
+  await Product.updateMany(
     { _id: product._id },
     {
       category_new: mainCategory.md5_cat_name,     // ✅ MAIN
