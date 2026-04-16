@@ -72,31 +72,31 @@ export async function POST(req) {
       const row = validProducts[i];
 
       const item_code = row[0];
-      const quantity = Number(row[1]) || 0;  // ✅ Column 2 = Quantity
+      //const quantity = Number(row[1]) || 0;  // ✅ Column 2 = Quantity
       
       // ✅ Handle status conversion: 0 = Inactive, 1 = Active
       let status = "Inactive";
-      if (row[2] === 1 || row[2] === "1") {
+      if (String(row[1]).toLowerCase() == 'active') {
         status = "Active";
       }
       
-      const name = row[3] || "";             // Optional name if present
+      //const name = row[3] || "";             // Optional name if present
 
       const existingProduct = await Product.findOne({ item_code });
 
       if (existingProduct) {
         // ✅ Update quantity + status always
         const updateData = {
-          quantity,
+          //quantity,
           status,
-          stock_status: quantity > 0 ? "In Stock" : "Out of Stock",
+          //stock_status: quantity > 0 ? "In Stock" : "Out of Stock",
         };
 
         await Product.updateOne({ _id: existingProduct._id }, { $set: updateData });
         updatedCount++;
       } else {
         // ✅ Create new product if not exists
-        const productSlug = (name || item_code).toLowerCase()
+        /* const productSlug = (name || item_code).toLowerCase()
           .replace(/[^\w\s-]/g, '')
           .replace(/\s+/g, '-')
           .replace(/--+/g, '-')
@@ -112,7 +112,7 @@ export async function POST(req) {
           md5_name: md5(productSlug),
         });
 
-        insertedCount++;
+        insertedCount++; */
       }
     }
 
