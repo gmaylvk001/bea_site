@@ -85,11 +85,13 @@ export async function POST(req) {
       const existingProduct = await Product.findOne({ item_code });
 
       if (existingProduct) {
+        const currentQty = existingProduct.quantity || 0;
         // ✅ Update quantity + status always
         const updateData = {
           //quantity,
           status,
-          //stock_status: quantity > 0 ? "In Stock" : "Out of Stock",
+          // stock_status: quantity > 0 ? "In Stock" : "Out of Stock",
+          stock_status: currentQty > 0 ? "In Stock" : "Out of Stock",
         };
 
         await Product.updateOne({ _id: existingProduct._id }, { $set: updateData });
