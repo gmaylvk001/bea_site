@@ -697,7 +697,7 @@ const exportToExcel = () => {
       : '';
 
     /* ---------- KEY FEATURES ---------- */
-    const getSpecsForExcel = (specs) => {
+    /* const getSpecsForExcel = (specs) => {
       if (!specs || !Array.isArray(specs)) return [];
 
       const fullText = specs[0];
@@ -714,13 +714,37 @@ const exportToExcel = () => {
             Value: rest.join(':').trim()
           };
         });
+    }; */
+    /* ---------- KEY FEATURES ---------- */
+    const getSpecsForExcel = (specs) => {
+      if (!specs || !Array.isArray(specs)) return [];
+
+      const firstItem = specs[0];
+      if (!firstItem) return [];
+
+      // ✅ CASE: Comma separated string
+      if (typeof firstItem === "string") {
+        return firstItem
+          .split(',') // split by comma
+          .map(item => item.trim())
+          .filter(item => item.length > 0)
+          .map(item => ({
+            Key: item,   // no separate key/value
+            Value: ""
+          }));
+      }
+
+      return [];
     };
-
+    // const specsArray = getSpecsForExcel(product.key_specifications);
     const specsArray = getSpecsForExcel(product.key_specifications);
-
     const formattedSpecs = specsArray
-      .map(item => `${item.Key}: ${item.Value}`)
+      .map(item => item.Key) // only Key since no Value
       .join('\n');
+
+  /*   const formattedSpecs = specsArray
+      .map(item => `${item.Key}: ${item.Value}`)
+      .join('\n'); */
 
     /* ---------- FINAL RETURN ---------- */
     return {
