@@ -33,9 +33,11 @@ export default function BulkUploadPage() {
   const sap_featuresFormRef = useRef(null);
   const product_nameRef = useRef(null);
   const product_descriptionRef = useRef(null);
+  const dynamic_filter_uploadRef = useRef(null);
   const [sap_features, setSap_features] = useState(null);
   const [product_name, setProduct_name] = useState(null);
   const [product_description, setProduct_description] = useState(null);
+  const [dynamic_filter_upload, setDynamic_filter_upload] = useState(null);
 
   const notifiedRef = useRef(false);
 const fileInputRef = useRef(null);
@@ -57,6 +59,7 @@ const fileImageBulkParticularInputRef = useRef(null);
     setSap_features(null);
     setProduct_name(null);
     setProduct_description(null);
+    setDynamic_filter_upload(null);
     setCategoryUpload(null);
     setImageZip(null);
     setOverviewZip(null);
@@ -1075,6 +1078,54 @@ const fileImageBulkParticularInputRef = useRef(null);
         setIsLoading(false);
         setActiveUploadType(null);
       }
+    } else if (uploadType == "dynamic_filter_upload") {
+      console.log('Processing dynamic_filter_upload...');
+
+      if (!dynamic_filter_upload || !validateFile(dynamic_filter_upload, ['.xlsx', '.csv'])) {
+        showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+
+        const fileInput = document.getElementById('dynamic_filter_upload');
+        if (fileInput) fileInput.value = "";
+
+        setDynamic_filter_upload(null);
+        return;
+      }
+
+      setIsLoading(true);
+      setActiveUploadType(uploadType);
+      setMessage(null);
+
+      const formData = new FormData();
+      formData.append("excel", dynamic_filter_upload);
+
+      console.log("Handling Dynamic Filter upload...");
+      try {
+        const response = await fetch('/api/product/bulk-upload/dynamic_filter', {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        resetUploadForm();
+
+        if (response.ok) {
+          showToast("success", data.message || "Dynamic filter uploaded successfully ✅");
+        } else {
+          showToast("error", data.error || "Upload failed ❌");
+        }
+
+      } catch (error) {
+        console.error("Upload error:", error);
+        showToast("error", error?.message || "Upload failed ❌");
+      } finally {
+        const fileInput = document.getElementById('dynamic_filter_upload');
+        if (fileInput) fileInput.value = "";
+
+        setDynamic_filter_upload(null);
+        resetUploadForm();
+        setIsLoading(false);
+        setActiveUploadType(null);
+      }
     }
   };
 
@@ -1132,6 +1183,15 @@ const fileImageBulkParticularInputRef = useRef(null);
     document.body.removeChild(link);
   };
 
+  const handleDownloadDynamicFilterFile = () => {
+    const link = document.createElement('a');
+    link.href = `/uploads/files/dynamic_filter_sample.xlsx?t=${Date.now()}`;
+    link.download = 'dynamic_filter_sample.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleDownloadCategoryValues = () => {
     const link = document.createElement('a');
     link.href = `/uploads/files/NewCategoryBulkUploadSample.xlsx?t=${Date.now()}`;
@@ -1181,6 +1241,7 @@ const fileImageBulkParticularInputRef = useRef(null);
     { id: "Key-Features", label: "Key Features", image: "/uploads/files/Key features.jpg" },
     { id: "product_name", label: "Product name only", image: "/uploads/files/Product Name.png" },
     { id: "product_description", label: "Product Description", image: "/uploads/files/product_description.png" },
+    { id: "dynamic_filter_upload", label: "Dynamic Filter Upload", image: "/uploads/files/dynamic_filter.png" },
 
   ];
 
@@ -2123,6 +2184,51 @@ const fileImageBulkParticularInputRef = useRef(null);
                       </span>
                     ) : (
                       'Upload Product Descriptions'
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {selectedSection === "dynamic_filter_upload" && (
+              <form id="dynamic_filter_upload" ref={dynamic_filter_uploadRef} onSubmit={(e) => handleSubmit(e, "dynamic_filter_upload")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
+                <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                  <div className="mb-4">
+                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Dynamic Filter Bulk Upload</h2>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Excel/CSV File
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">Upload your Dynamic Filter values file</p>
+                  </div>
+                  <div className="space-y-4">
+                    <input id="dynamic_filter_upload" type="file" accept=".xlsx,.csv" onChange={(e) => setDynamic_filter_upload(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100" required />
+                  </div>
+                  <button type="button" onClick={handleDownloadDynamicFilterFile} className="inline-flex items-center pt-5 text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download Sample Format
+                  </button>
+                </div>
+                <div className="flex mt-5 justify-between">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-[#3B82F6] hover:bg-[#3B82F6] text-white px-3 py-2 rounded-md flex items-center gap-2"
+                  >
+                    {isLoading && activeUploadType == "dynamic_filter_upload" ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
+                      </span>
+                    ) : (
+                      'Upload Dynamic Filter'
                     )}
                   </button>
                 </div>
