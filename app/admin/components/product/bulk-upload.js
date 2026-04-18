@@ -1237,6 +1237,7 @@ const fileImageBulkParticularInputRef = useRef(null);
     // { id: "section-product-categories-upload", label: "Update Product Categories",     image: "/uploads/files/Product_updating_category_eighth_image.png" },
     { id: "section-product-brands-upload", label: "Update Product Brands", image: "/uploads/files/Product_Brand_update_nineth_image.png" },
     { id: "section-status-bulk", label: "Status Bulk Upload", image: "/uploads/files/Status_bulk_upload_tenth_box_image.png" },
+     { id: "section-stock-status-bulk-upload", label: "Stock Status Upload", image: "/uploads/files/Stock_status_bulk_upload.png" },
     { id: "extended-warrenty-upload", label: "Extended Warrenty Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
     { id: "Key-Features", label: "Key Features", image: "/uploads/files/Key features.jpg" },
     { id: "product_name", label: "Product name only", image: "/uploads/files/Product Name.png" },
@@ -1989,6 +1990,38 @@ const fileImageBulkParticularInputRef = useRef(null);
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                         Go to Status Bulk Upload
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            )}
+
+
+            {/* Section 10: Stock Status Upload */}
+            {selectedSection === "section-stock-status-bulk-upload" && (
+              <form id="section-stock-status-bulk-upload" ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "map_product_brands")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
+                <div className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-6">
+                  <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                    <div className="mb-4">
+                      <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Stock Status Bulk Upload</h2>
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Update Product Stock Status in Bulk
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">This will update only the stock status field for each product. Use this to activate or deactivate products in bulk.</p>
+                    </div>
+                    <div className="mt-6">
+                      <Link
+                        href="/admin/product/stock_status_bulk_upload"
+                        className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium shadow-sm transition duration-150"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Go to Stock Status Bulk Upload
                       </Link>
                     </div>
                   </div>
