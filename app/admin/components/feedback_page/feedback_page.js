@@ -118,6 +118,7 @@ export default function FeedbackComponent() {
             <table className="w-full border border-gray-300 text-sm">
               <thead>
                 <tr className="bg-gray-200 text-center">
+                  <th className="p-2">Date</th>
                   <th className="p-2">Name</th>
                   <th className="p-2">Email</th>
                   <th className="p-2">Mobile</th>
@@ -130,6 +131,7 @@ export default function FeedbackComponent() {
               <tbody>
                 {feedbacks.map((f) => (
                   <tr key={f._id} className="border-b text-center">
+                    <td className="p-2 whitespace-nowrap">{f.createdAt.split("T")[0] || "-"}</td>
                     <td className="p-2">{f.name || "-"}</td>
                     <td className="p-2">{f.email_address || "-"}</td>
                     <td className="p-2">{f.mobile_number || "-"}</td>
