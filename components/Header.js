@@ -16,7 +16,7 @@ import { sortCategories } from '../utils/categoryUtils';
 
 export default function Header() {
   const scrollRef = useRef(null);
-  const [, setCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
   const [formData, setFormData] = useState({
@@ -200,7 +200,6 @@ export default function Header() {
 
   return (
     <header className="w-full sticky top-0 z-40 bg-white">
-     
       {/* Mobile Top Bar */}
       <div className="lg:hidden bg-white text-black border-b border-gray-200">
         <div className="container mx-auto px-2 py-2 flex items-center justify-between">
