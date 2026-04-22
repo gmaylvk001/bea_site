@@ -96,7 +96,7 @@ if (needsPriceSort) {
 
     // Brands list for filter sidebar
     const allEOLProducts = await Product.find(
-      { movement: "EOL" },
+       { movement: "EOL", status: "Active", quantity: { $gt: 0 } }, 
       { brand: 1 }
     ).lean();
 
