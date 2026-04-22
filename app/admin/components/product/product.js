@@ -593,6 +593,15 @@ const exportToExcel = () => {
     categoryMap[cat._id] = cat.category_name;
   });
 
+   const categoryMd5Map = {};
+
+  categories.forEach(cat => {
+    if (cat.md5_cat_name) {
+      categoryMd5Map[cat.md5_cat_name] = cat.category_name;
+    }
+  });
+
+  
   /* ---------- BRAND MAP ---------- */
   const brandMap = {};
   brands.forEach(brand => {
@@ -604,12 +613,7 @@ const exportToExcel = () => {
 
   /* ---------- MAIN EXPORT ---------- */
   const dataForExport = filteredProducts.map(product => {
-
-    /* =========================================================
-       🔥 CHANGE START HERE (CATEGORY SPLIT LOGIC)
-    ========================================================== */
-
-    let mainCategory = 'No Category';
+    /* let mainCategory = 'No Category';
     let subCategory = 'No Subcategory';
     let childCategory = 'No Childcategory';
 
@@ -636,6 +640,42 @@ const exportToExcel = () => {
         subCategory = parts[1];
       } else if (parts.length === 1) {
         mainCategory = parts[0];
+      }
+    } */
+
+    /* =========================================================
+       🔥 CHANGE START HERE (CATEGORY SPLIT LOGIC)
+    ========================================================== */
+
+    let mainCategory = 'No Category';
+    let subCategory = 'No Subcategory';
+    let childCategory = 'No Childcategory';
+
+    let categorySource =
+      product.sub_category_new ||
+      // product.sub_category_new_name ||
+      // product.sub_category_name ||
+      '';
+
+    if (typeof categorySource === 'string' && categorySource.trim()) {
+      const parts = categorySource
+        .split('##')
+        .map(p => p.trim())
+        .filter(Boolean);
+
+      // ✅ MAIN
+      if (parts[0] && categoryMd5Map[parts[0]]) {
+        mainCategory = categoryMd5Map[parts[0]];
+      }
+
+      // ✅ SUB
+      if (parts[1] && categoryMd5Map[parts[1]]) {
+        subCategory = categoryMd5Map[parts[1]];
+      }
+
+      // ✅ CHILD
+      if (parts[2] && categoryMd5Map[parts[2]]) {
+        childCategory = categoryMd5Map[parts[2]];
       }
     }
 
