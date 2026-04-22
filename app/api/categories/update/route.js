@@ -155,7 +155,7 @@ export async function PUT(req) {
       {
         category_name,
         category_slug,
-        md5_cat_name,
+        // md5_cat_name,
         meta_title,
       meta_description,
       meta_keyword,
