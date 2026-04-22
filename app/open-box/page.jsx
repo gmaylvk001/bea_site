@@ -2,7 +2,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "react-feather";
+import {
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+} from "react-feather";
 import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from "react-toastify";
@@ -35,17 +40,17 @@ export default function OpenBoxPage() {
 
   const isInitialLoad = useRef(true);
 
-useEffect(() => {
-  fetchProducts(1, true);
-}, []);
+  useEffect(() => {
+    fetchProducts(1, true);
+  }, []);
 
-useEffect(() => {
-  if (isInitialLoad.current) {
-    isInitialLoad.current = false;
-    return; // initial load skip பண்ணும்
-  }
-  fetchProducts(1);
-}, [selectedFilters]);
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return; // initial load skip பண்ணும்
+    }
+    fetchProducts(1);
+  }, [selectedFilters]);
   // Sync slider values
   useEffect(() => {
     setValues([selectedFilters.price.min, selectedFilters.price.max]);
@@ -85,7 +90,10 @@ useEffect(() => {
         const { minPrice, maxPrice } = data.priceRange;
         let min = minPrice;
         let max = maxPrice;
-        if (min === max) { min -= 1; max += 1; }
+        if (min === max) {
+          min -= 1;
+          max += 1;
+        }
         setPriceRange([min, max]);
         setSelectedFilters((prev) => ({
           ...prev,
@@ -103,9 +111,11 @@ useEffect(() => {
   };
 
   // Sort change
-  useEffect(() => {
+ useEffect(() => {
+  if (!isInitialLoad.current) {
     fetchProducts(1);
-  }, [sortOption]);
+  }
+}, [sortOption]);
 
   const handleFilterChange = (type, value) => {
     setSelectedFilters((prev) => {
@@ -149,7 +159,10 @@ useEffect(() => {
       ? stored.filter((p) => p._id !== product._id)
       : stored;
     updated.unshift(product);
-    localStorage.setItem("recentlyViewed", JSON.stringify(updated.slice(0, 10)));
+    localStorage.setItem(
+      "recentlyViewed",
+      JSON.stringify(updated.slice(0, 10)),
+    );
   };
 
   const renderPagination = () => {
@@ -158,8 +171,14 @@ useEffect(() => {
     const maxVisiblePages = 5;
     const hasPrev = pagination.currentPage > 1;
     const hasNext = pagination.currentPage < pagination.totalPages;
-    let startPage = Math.max(1, pagination.currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1);
+    let startPage = Math.max(
+      1,
+      pagination.currentPage - Math.floor(maxVisiblePages / 2),
+    );
+    let endPage = Math.min(
+      pagination.totalPages,
+      startPage + maxVisiblePages - 1,
+    );
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
@@ -175,7 +194,7 @@ useEffect(() => {
           }`}
         >
           {i}
-        </button>
+        </button>,
       );
     }
     return (
@@ -183,21 +202,35 @@ useEffect(() => {
         <button
           onClick={() => handlePageChange(pagination.currentPage - 1)}
           disabled={!hasPrev}
-          className={`p-2 rounded-md ${!hasPrev ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-white text-gray-700 hover:bg-gray-100"}`}
+          className={`p-2 rounded-md ${
+            !hasPrev
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+          }`}
         >
           <ChevronLeft size={16} />
         </button>
         {startPage > 1 && (
           <>
-            <button onClick={() => handlePageChange(1)} className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100">1</button>
+            <button
+              onClick={() => handlePageChange(1)}
+              className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100"
+            >
+              1
+            </button>
             {startPage > 2 && <span className="px-2">...</span>}
           </>
         )}
         {pages}
         {endPage < pagination.totalPages && (
           <>
-            {endPage < pagination.totalPages - 1 && <span className="px-2">...</span>}
-            <button onClick={() => handlePageChange(pagination.totalPages)} className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100">
+            {endPage < pagination.totalPages - 1 && (
+              <span className="px-2">...</span>
+            )}
+            <button
+              onClick={() => handlePageChange(pagination.totalPages)}
+              className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100"
+            >
               {pagination.totalPages}
             </button>
           </>
@@ -205,7 +238,11 @@ useEffect(() => {
         <button
           onClick={() => handlePageChange(pagination.currentPage + 1)}
           disabled={!hasNext}
-          className={`p-2 rounded-md ${!hasNext ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-white text-gray-700 hover:bg-gray-100"}`}
+          className={`p-2 rounded-md ${
+            !hasNext
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+          }`}
         >
           <ChevronRight size={16} />
         </button>
@@ -213,18 +250,185 @@ useEffect(() => {
     );
   };
 
-  if (loading && pagination.currentPage === 1) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+//   if (loading && pagination.currentPage === 1) {
+//     return (
+//       <div className="container mx-auto px-4 py-8">
+//         <div className="flex justify-center items-center h-64">
+//           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+//         </div>
+//       </div>
+//     );
+//   }
+{/* Product Grid */}
+{/* Product Grid */}
+{loading ? (
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+    {[...Array(20)].map((_, i) => (
+      <div key={i} className="bg-white rounded-lg border shadow-sm flex flex-col animate-pulse">
+        <div className="aspect-square bg-gray-200 rounded-t-lg" />
+        <div className="p-3 flex flex-col gap-2">
+          <div className="h-3 bg-gray-200 rounded w-full" />
+          <div className="h-3 bg-gray-200 rounded w-3/4" />
+          <div className="h-4 bg-gray-200 rounded w-1/2 mt-1" />
+          <div className="h-3 bg-gray-200 rounded w-1/3" />
+          <div className="h-8 bg-gray-200 rounded w-full mt-1" />
         </div>
       </div>
-    );
-  }
+    ))}
+  </div>
+) : !nofound ? (
+  <>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+      {products.map((product) => (
+        <div
+          key={product._id}
+          className="group relative bg-white rounded-lg border hover:border-blue-200 transition-all shadow-sm hover:shadow-md flex flex-col h-full"
+        >
+          {/* Image */}
+          <div className="relative aspect-square bg-white">
+            {product.images?.[0] && (
+              <Image
+                src={product.images[0].startsWith("http") ? product.images[0] : `/uploads/products/${product.images[0]}`}
+                alt={product.name}
+                fill
+                className="object-contain p-2 md:p-4 transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 640px) 50vw, 33vw, 25vw"
+                unoptimized
+              />
+            )}
+            {/* Discount Badge */}
+            {product.special_price &&
+              product.special_price !== product.price &&
+              100 - (product.special_price / product.price) * 100 > 0 && (
+                <span className="absolute top-2 left-2 bg-orange-500 tracking-wider text-white text-xs font-bold px-2 py-1 rounded z-10">
+                  -{Math.round(100 - (product.special_price / product.price) * 100)}%
+                </span>
+              )}
+            {/* Wishlist */}
+            <div className="absolute top-2 right-2">
+              <ProductCard productId={product._id} />
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="p-2 md:p-4 flex flex-col h-full">
+            <Link
+              href={`/product/${product.slug}`}
+              className="block mb-2"
+              onClick={() => handleProductClick(product)}
+            >
+              <h3 className="text-xs sm:text-sm font-medium text-gray-800 hover:text-blue-600 line-clamp-2 min-h-[40px]">
+                {product.name}
+              </h3>
+            </Link>
+
+            {/* Price */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base font-semibold text-red-600">
+                ₹{(
+                  product.special_price &&
+                  product.special_price > 0 &&
+                  product.special_price < product.price
+                    ? Math.round(product.special_price)
+                    : Math.round(product.price)
+                ).toLocaleString()}
+              </span>
+              {product.special_price > 0 &&
+                product.special_price < product.price && (
+                  <span className="text-xs text-gray-500 line-through">
+                    ₹{Math.round(product.price).toLocaleString()}
+                  </span>
+                )}
+            </div>
+
+            {/* Stock */}
+            <div className="mb-2">
+              {product.quantity > 0 ? (
+                <span className="text-xs text-green-600 font-medium">
+                  In Stock, {product.quantity} units
+                </span>
+              ) : (
+                <span className="text-xs text-red-500 font-medium">
+                  Out of Stock
+                </span>
+              )}
+            </div>
+
+            {/* Buttons */}
+            <div className="mt-auto flex items-center justify-between gap-2">
+              <Addtocart
+                productId={product._id}
+                stockQuantity={product.quantity}
+                special_price={product.special_price}
+                className="w-full text-xs sm:text-sm py-1.5"
+              />
+              <a
+                href={`https://wa.me/?text=Check this out: ${product.name}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-green-500 hover:bg-green-600 text-white p-1 rounded-full transition-colors duration-300 flex items-center justify-center"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    {renderPagination()}
+  </>
+) : (
+  <div className="text-center py-10 mx-auto">
+    <img
+      src="/images/no-productbox.png"
+      alt="No Products"
+      className="mx-auto mb-4 w-32 h-32 md:w-40 md:h-40 object-contain"
+    />
+    <p className="text-gray-500">No Open Box products found</p>
+  </div>
+)}
 
   if (values[0] < MIN) values[0] = MIN;
   if (values[1] > MAX) values[1] = MAX;
+
+  const getSortedProducts = () => {
+    const sortedProducts = [...products];
+
+    switch (sortOption) {
+      case "price-low-high":
+        return sortedProducts.sort((a, b) => a.special_price - b.special_price);
+
+      case "price-high-low":
+        return sortedProducts.sort((a, b) => b.special_price - a.special_price);
+
+      case "name-a-z":
+        return sortedProducts.sort((a, b) => {
+          if (a.name.toLowerCase() === "capacity") return -1;
+          if (b.name.toLowerCase() === "capacity") return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+      case "name-z-a":
+        return sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+
+      // ✅ NEW: Quantity Low → High
+      case "quantity-low-to-high":
+        return sortedProducts.sort(
+          (a, b) => (a.quantity || 0) - (b.quantity || 0),
+        );
+
+      // ✅ NEW: Quantity High → Low
+      case "quantity-high-to-low":
+        return sortedProducts.sort(
+          (a, b) => (b.quantity || 0) - (a.quantity || 0),
+        );
+
+      default:
+        return sortedProducts;
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
@@ -241,7 +445,6 @@ useEffect(() => {
       <div className="flex flex-col md:flex-row gap-4 md:gap-6">
         {/* Sidebar */}
         <div className="w-full md:w-[250px] shrink-0">
-
           {/* Active Filters */}
           {(selectedFilters.brands.length > 0 ||
             selectedFilters.price.min !== priceRange[0] ||
@@ -249,7 +452,10 @@ useEffect(() => {
             <div className="bg-white p-4 rounded shadow mb-3">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold">Active Filters</h3>
-                <button onClick={clearAllFilters} className="text-blue-600 text-sm hover:underline">
+                <button
+                  onClick={clearAllFilters}
+                  className="text-blue-600 text-sm hover:underline"
+                >
                   Clear all
                 </button>
               </div>
@@ -257,9 +463,17 @@ useEffect(() => {
                 {selectedFilters.brands.map((brandId) => {
                   const brand = brands.find((b) => b._id === brandId);
                   return brand ? (
-                    <span key={brandId} className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center">
+                    <span
+                      key={brandId}
+                      className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center"
+                    >
                       {brand.brand_name}
-                      <button onClick={() => handleFilterChange("brands", brandId)} className="ml-1 text-gray-500 hover:text-gray-700">×</button>
+                      <button
+                        onClick={() => handleFilterChange("brands", brandId)}
+                        className="ml-1 text-gray-500 hover:text-gray-700"
+                      >
+                        ×
+                      </button>
                     </span>
                   ) : null;
                 })}
@@ -268,9 +482,16 @@ useEffect(() => {
                   <span className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center">
                     ₹{selectedFilters.price.min} - ₹{selectedFilters.price.max}
                     <button
-                      onClick={() => setSelectedFilters((prev) => ({ ...prev, price: { min: priceRange[0], max: priceRange[1] } }))}
+                      onClick={() =>
+                        setSelectedFilters((prev) => ({
+                          ...prev,
+                          price: { min: priceRange[0], max: priceRange[1] },
+                        }))
+                      }
                       className="ml-1 text-gray-500 hover:text-gray-700"
-                    >×</button>
+                    >
+                      ×
+                    </button>
                   </span>
                 )}
               </div>
@@ -279,7 +500,9 @@ useEffect(() => {
 
           {/* Price Range */}
           <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
-            <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
+            <h3 className="text-base font-semibold mb-4 text-gray-700">
+              Price Range
+            </h3>
             <ReactRange
               values={values}
               step={STEP}
@@ -288,12 +511,17 @@ useEffect(() => {
               onChange={(newValues) => setValues(newValues)}
               onFinalChange={(newValues) => handlePriceChange(newValues)}
               renderTrack={({ props, children }) => (
-                <div {...props} className="w-full h-2 rounded-lg bg-gray-200 relative">
+                <div
+                  {...props}
+                  className="w-full h-2 rounded-lg bg-gray-200 relative"
+                >
                   <div
                     className="absolute h-2 bg-gray-500 rounded-lg"
                     style={{
                       left: `${((values[0] - MIN) / (MAX - MIN)) * 100}%`,
-                      width: `${((values[1] - values[0]) / (MAX - MIN)) * 100}%`,
+                      width: `${
+                        ((values[1] - values[0]) / (MAX - MIN)) * 100
+                      }%`,
                     }}
                   />
                   {children}
@@ -322,8 +550,15 @@ useEffect(() => {
           <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
             <div className="flex items-center justify-between pb-2 bg-gray-300 p-2">
               <h3 className="text-base font-semibold text-gray-700">Brands</h3>
-              <button onClick={() => setIsBrandsExpanded(!isBrandsExpanded)} className="text-gray-500 hover:text-gray-700">
-                {isBrandsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              <button
+                onClick={() => setIsBrandsExpanded(!isBrandsExpanded)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                {isBrandsExpanded ? (
+                  <ChevronUp size={18} />
+                ) : (
+                  <ChevronDown size={18} />
+                )}
               </button>
             </div>
             {isBrandsExpanded && (
@@ -352,7 +587,9 @@ useEffect(() => {
         <div className="flex-1">
           {/* Sort Bar */}
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <p className="text-sm text-gray-600">{pagination.totalProducts} products found</p>
+            <p className="text-sm text-gray-600">
+              {pagination.totalProducts} products found
+            </p>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-600">Sort by:</span>
               <select
@@ -365,6 +602,12 @@ useEffect(() => {
                 <option value="price-high-low">Price: High to Low</option>
                 <option value="name-a-z">Name: A-Z</option>
                 <option value="name-z-a">Name: Z-A</option>
+                <option value="quantity-low-to-high">
+                  Quantity: Low to High
+                </option>
+                <option value="quantity-high-to-low">
+                  Quantity: High to Low
+                </option>
               </select>
             </div>
           </div>
@@ -373,13 +616,20 @@ useEffect(() => {
           {!nofound ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
-                {products.map((product) => (
-                  <div key={product._id} className="group relative bg-white rounded-lg border hover:border-blue-200 transition-all shadow-sm hover:shadow-md flex flex-col h-full">
+                {getSortedProducts().map((product) => (
+                  <div
+                    key={product._id}
+                    className="group relative bg-white rounded-lg border hover:border-blue-200 transition-all shadow-sm hover:shadow-md flex flex-col h-full"
+                  >
                     {/* Image */}
                     <div className="relative aspect-square bg-white">
                       {product.images?.[0] && (
                         <Image
-                          src={product.images[0].startsWith("http") ? product.images[0] : `/uploads/products/${product.images[0]}`}
+                          src={
+                            product.images[0].startsWith("http")
+                              ? product.images[0]
+                              : `/uploads/products/${product.images[0]}`
+                          }
                           alt={product.name}
                           fill
                           className="object-contain p-2 md:p-4 transition-transform duration-300 group-hover:scale-105"
@@ -390,12 +640,18 @@ useEffect(() => {
                       {/* Discount Badge */}
                       {product.special_price &&
                         product.special_price !== product.price &&
-                        100 - (product.special_price / product.price) * 100 > 0 && (
+                        100 - (product.special_price / product.price) * 100 >
+                          0 && (
                           <span className="absolute top-2 left-2 bg-orange-500 tracking-wider text-white text-xs font-bold px-2 py-1 rounded z-10">
-                            -{Math.round(100 - (product.special_price / product.price) * 100)}%
+                            -
+                            {Math.round(
+                              100 -
+                                (product.special_price / product.price) * 100,
+                            )}
+                            %
                           </span>
                         )}
-                
+
                       {/* Wishlist */}
                       <div className="absolute top-2 right-2">
                         <ProductCard productId={product._id} />
@@ -404,7 +660,11 @@ useEffect(() => {
 
                     {/* Info */}
                     <div className="p-2 md:p-4 flex flex-col h-full">
-                      <Link href={`/product/${product.slug}`} className="block mb-2" onClick={() => handleProductClick(product)}>
+                      <Link
+                        href={`/product/${product.slug}`}
+                        className="block mb-2"
+                        onClick={() => handleProductClick(product)}
+                      >
                         <h3 className="text-xs sm:text-sm font-medium text-gray-800 hover:text-blue-600 line-clamp-2 min-h-[40px]">
                           {product.name}
                         </h3>
@@ -413,12 +673,12 @@ useEffect(() => {
                       {/* Price */}
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-base font-semibold text-red-600">
-                          ₹{(
-                            product.special_price &&
-                            product.special_price > 0 &&
-                            product.special_price < product.price
-                              ? Math.round(product.special_price)
-                              : Math.round(product.price)
+                          ₹
+                          {(product.special_price &&
+                          product.special_price > 0 &&
+                          product.special_price < product.price
+                            ? Math.round(product.special_price)
+                            : Math.round(product.price)
                           ).toLocaleString()}
                         </span>
                         {product.special_price > 0 &&
@@ -428,7 +688,17 @@ useEffect(() => {
                             </span>
                           )}
                       </div>
-
+                      <div className="mb-2">
+                        {product.quantity > 0 ? (
+                          <span className="text-xs text-green-600 font-medium">
+                            In Stock, {product.quantity} units
+                          </span>
+                        ) : (
+                          <span className="text-xs text-red-500 font-medium">
+                            Out of Stock
+                          </span>
+                        )}
+                      </div>
                       {/* Buttons */}
                       <div className="mt-auto flex items-center justify-between gap-2">
                         <Addtocart
@@ -437,13 +707,18 @@ useEffect(() => {
                           special_price={product.special_price}
                           className="w-full text-xs sm:text-sm py-1.5"
                         />
-                         <a
+                        <a
                           href={`https://wa.me/?text=Check this out: ${product.name}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="bg-green-500 hover:bg-green-600 text-white p-1 rounded-full transition-colors duration-300 flex items-center justify-center"
                         >
-                          <svg className="w-5 h-5" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                          <svg
+                            className="w-5 h-5"
+                            viewBox="0 0 32 32"
+                            fill="currentColor"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
                             <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
                           </svg>
                         </a>

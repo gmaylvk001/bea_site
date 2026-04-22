@@ -19,6 +19,7 @@ export async function GET(req) {
     const query = {
       movement: "EOL",
       status: "Active", 
+       quantity: { $gt: 0 },
       special_price: { $gte: minPrice, $lte: maxPrice },
     };
 
@@ -30,32 +31,68 @@ export async function GET(req) {
 
     // Sort
     let sortQuery = {};
-    switch (sortBy) {
-      case "price-low-high":
-        sortQuery = { special_price: 1 };
-        break;
-      case "price-high-low":
-        sortQuery = { special_price: -1 };
-        break;
-      case "name-a-z":
-        sortQuery = { name: 1 };
-        break;
-      case "name-z-a":
-        sortQuery = { name: -1 };
-        break;
-      default:
-        sortQuery = { createdAt: -1 };
-    }
+  switch (sortBy) {
+  case "price-low-high":
+    sortQuery = { special_price: 1, price: 1 };
+    break;
+  case "price-high-low":
+     sortQuery = { special_price: -1, price: -1 }
+    break;
+  case "name-a-z":
+    sortQuery = { name: 1 };
+    break;
+  case "name-z-a":
+    sortQuery = { name: -1 };
+    break;
+  case "quantity-low-to-high":   
+    sortQuery = { quantity: 1 };
+    break;
+  case "quantity-high-to-low":   
+    sortQuery = { quantity: -1 };
+    break;
+  default:
+    sortQuery = { createdAt: -1 };
+}
 
     const skip = (page - 1) * limit;
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
 
-    const products = await Product.find(query)
-      .sort(sortQuery)
-      .skip(skip)
-      .limit(limit)
-      .lean();
+   const needsPriceSort = sortBy === "price-low-high" || sortBy === "price-high-low";
+
+let products;
+
+if (needsPriceSort) {
+  products = await Product.aggregate([
+    { $match: query },
+    {
+      $addFields: {
+        effectivePrice: {
+          $cond: {
+            if: {
+              $and: [
+                { $gt: ["$special_price", 0] },
+                { $lt: ["$special_price", "$price"] }
+              ]
+            },
+            then: "$special_price",
+            else: "$price"
+          }
+        }
+      }
+    },
+    { $sort: sortQuery },
+    { $skip: skip },
+    { $limit: limit }
+  ]);
+
+} else {
+  products = await Product.find(query)
+    .sort(sortQuery)
+    .skip(skip)
+    .limit(limit)
+    .lean();
+}
 
     // Brands list for filter sidebar
     const allEOLProducts = await Product.find(
