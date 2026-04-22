@@ -1645,8 +1645,11 @@ const Header = () => {
                         {categories.map((cat) => (
                           <option key={cat._id} value={cat.category_name} title={cat.category_name}>
                             {cat.category_name}
+                               
                           </option>
+                       
                         ))}
+                      
                       </select>
                       <div className="flex-1 relative h-full flex items-center">
                         <input
@@ -1764,6 +1767,7 @@ const Header = () => {
                               </option>
                             ))}
                           </select>
+                         
                         </div>
                         {/* input wrapper with absolute overlay */}
                         <div className="relative flex-1">
@@ -2267,12 +2271,20 @@ const Header = () => {
                                     <SwiperSlide key={category._id} className="!w-auto">
                                         <div ref={(el) => (slideRefs.current[category._id] = el)} onMouseEnter={() => handleMouseEnter(category._id)} onMouseLeave={() => startHide(120)} className="px-5 py-2 flex flex-col items-center text-center" >
                                             <Link href={`/category/${category.category_slug}`} className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap" >
-                                                {category.category_name}
+                                                {category.category_name} 
                                             </Link>
+                                            
                                         </div>
                                     </SwiperSlide>
                                 ))}
                             </Swiper>
+                      <SwiperSlide className="!w-auto">
+                    <div className="px-5 py-2 pr-14 flex flex-col items-center text-center">
+                      <Link href="/open-box" className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap">
+                      Open Box Sale
+                         </Link>
+                      </div>
+               </SwiperSlide>
                         </div>
                     </div>
                 </div>
