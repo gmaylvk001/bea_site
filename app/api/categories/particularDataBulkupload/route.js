@@ -16,7 +16,7 @@ export async function POST(req) {
     if (!file) {
       return NextResponse.json(
         { success: false, message: "No file uploaded" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,20 +29,18 @@ export async function POST(req) {
     let skipped = 0;
 
     /* ---------- HELPERS ---------- */
-    const normalize = (val) =>
-      val?.toString().trim().replace(/\s+/g, " ");
+    const normalize = (val) => val?.toString().trim().replace(/\s+/g, " ");
 
-    const escapeRegex = (str) =>
-      str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     /* ---------- LOOP ---------- */
     for (const row of rows) {
       const itemCode = normalize(
         row["Item No."] ||
-        row["Item No"] ||
-        row["ITEM NO."] ||
-        row["Item Code"] ||
-        row["item_code"]
+          row["Item No"] ||
+          row["ITEM NO."] ||
+          row["Item Code"] ||
+          row["item_code"],
       );
 
       const childName = normalize(row["Subcategory"]);
@@ -60,25 +58,16 @@ export async function POST(req) {
 
       console.log("➡ Processing:", itemCode, childName);
 
-      /* ---------- FIND PRODUCT ---------- */
-      const product = await Product.findOne({ item_code: itemCode });
-
-      if (!product) {
-        console.log("❌ Product not found:", itemCode);
-        skipped++;
-        continue;
-      }
-
       /* ---------- FIND CATEGORY ---------- */
       const childCategory = await Category.findOne({
         category_name: {
-          $regex: `^${escapeRegex(childName)}$`,
+          $regex: escapeRegex(childName),
           $options: "i",
         },
       });
 
       if (!childCategory) {
-        console.log("❌ Child category not found:", childName);
+          console.log("⚠️ SKIPPED - itemCode:", itemCode, "| childName:", childName); 
         skipped++;
         continue;
       }
@@ -115,23 +104,22 @@ export async function POST(req) {
         ? keyFeatures.split(",").map((x) => x.trim())
         : [];
 
+      let brandId = null;
 
-        let brandId = null;
+      if (brand) {
+        const brandDoc = await Brand.findOne({
+          brand_name: {
+            $regex: `^${escapeRegex(brand)}$`,
+            $options: "i",
+          },
+        });
 
-if (brand) {
-  const brandDoc = await Brand.findOne({
-    brand_name: {
-      $regex: `^${escapeRegex(brand)}$`,
-      $options: "i",
-    },
-  });
-
-  if (!brandDoc) {
-    console.log("❌ Brand not found:", brand);
-  } else {
-    brandId = brandDoc._id;
-  }
-}
+        if (!brandDoc) {
+          console.log("❌ Brand not found:", brand);
+        } else {
+          brandId = brandDoc._id;
+        }
+      }
 
       /* ---------- UPDATE DATA ---------- */
       const updateData = {
@@ -155,14 +143,16 @@ if (brand) {
       if (keySpecsArray.length > 0) {
         updateData.key_specifications = keySpecsArray;
       }
-
-      /* ---------- UPDATE ---------- */
       const result = await Product.updateOne(
         { item_code: itemCode },
-        { $set: updateData }
+        { $set: { ...updateData, item_code: itemCode } },
+        { upsert: true },
       );
-
-      if (result.matchedCount > 0) {
+      if (result.upsertedCount > 0) {
+        console.log("✅ Created new product:", itemCode);
+        updated++;
+      } else if (result.matchedCount > 0) {
+        console.log("✅ Updated product:", itemCode);
         updated++;
       } else {
         skipped++;
@@ -175,12 +165,11 @@ if (brand) {
       updated,
       skipped,
     });
-
   } catch (error) {
     console.error("❌ Upload error:", error);
     return NextResponse.json(
       { success: false, message: "Server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
