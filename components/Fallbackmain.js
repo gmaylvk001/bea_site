@@ -1572,28 +1572,28 @@ const fetchInitialData = async () => {
                   {window.innerWidth < 540 && product.name.length > 140 ? product.name.slice(0, 100) + "..." : product.name}
                 </h3>
               </Link> */}
-<Link
-  href={`/product/${product.slug}`}
-  className="block mb-2 flex-1"
-  onClick={() => handleProductClick(product)}
->
-  <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
-                                            {(() => {
-                                              const model = product.model_number ? `(${product.model_number.trim()})` : "";
-                                              const name = product.name ? product.name.trim() : "";
-                                              const maxLen = 40;
+              <Link href={`/product/${product.slug}`} className="block mb-2 flex-1" onClick={() => handleProductClick(product)}>
+                <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] min-h-[32px] sm:min-h-[40px]">
+                  {(() => {
+                    const model = product.model_number ? `(${product.model_number.trim()})` : "";
+                    const name = product.name ? product.name.trim() : "";
+                    const maxLen = 40;
 
-                                              if (model) {
-                                                const remaining = maxLen - model.length - 1; // 1 for space before model
-                                                const truncatedName =
-                                                  name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
-                                                return `${truncatedName} `;
-                                              } else {
-                                                return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
-                                              }
-                                            })()}
-                                          </h3>
-</Link>
+                    if (model) {
+                      const remaining = maxLen - model.length - 1; // 1 for space before model
+                      const truncatedName =
+                        name.length > remaining ? name.slice(0, remaining - 3) + `${model}...` : name;
+                      return `${truncatedName} `;
+                    } else {
+                      return name.length > maxLen ? name.slice(0, maxLen - 3) + "..." : name;
+                    }
+                  })()}
+                </h3>
+                {/* Tooltip */}
+                  <div className="absolute hidden group-hover:block left-3 -translate-y-full translate-y-[-1px] bg-[#0069c6] text-white text-xs rounded px-2 py-1 max-w-[200px] whitespace-normal break-words shadow-md z-50">
+                    {product.name}
+                  </div>
+              </Link>
 
 
               {/* Price Row */}

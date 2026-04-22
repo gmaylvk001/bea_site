@@ -359,6 +359,10 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                               }
                             })()}
                           </h3>
+                          {/* Tooltip */}
+                  <div className="absolute hidden group-hover:block left-3 -translate-y-full translate-y-[-1px] bg-[#0069c6] text-white text-xs rounded px-2 py-1 max-w-[200px] whitespace-normal break-words shadow-md z-50">
+                    {product.name}
+                  </div>
                         </Link>
 
                         {/* Price */}
