@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import * as XLSX from "xlsx";
+import AdmZip from "adm-zip"; // ✅ NEW
+import fs from "fs";
+import path from "path";
 
 import Product from "@/models/product";
 
@@ -10,6 +13,7 @@ export async function POST(req) {
 
     const formData = await req.formData();
     const file = formData.get("file");
+    const zipFile = formData.get("zip"); // ✅ NEW
 
     if (!file) {
       return NextResponse.json(
@@ -24,10 +28,35 @@ export async function POST(req) {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet);
 
+    /* ---------- ZIP EXTRACT (NEW 🔥) ---------- */
+    if (zipFile) {
+      const zipBuffer = Buffer.from(await zipFile.arrayBuffer());
+      const zip = new AdmZip(zipBuffer);
+
+      const uploadPath = path.join(process.cwd(), "public/uploads/products");
+
+      // folder இல்லனா create பண்ணும்
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+
+      zip.getEntries().forEach((entry) => {
+        if (!entry.isDirectory) {
+          const fileName = entry.entryName.split("/").pop().trim();
+
+          const filePath = path.join(uploadPath, fileName);
+
+          // file save
+          fs.writeFileSync(filePath, entry.getData());
+        }
+      });
+
+      console.log("✅ ZIP Extracted to /public/uploads/product");
+    }
+
     let updated = 0;
     let skipped = 0;
 
-    /* ---------- HELPER ---------- */
     const normalize = (val) =>
       val ? val.toString().trim().replace(/\s+/g, " ") : "";
 
@@ -58,16 +87,19 @@ export async function POST(req) {
 
         /* ---------- IMAGES ARRAY ---------- */
         const imagesArray = [];
-        if (image1) imagesArray.push(image1);
-        if (image2) imagesArray.push(image2);
-        if (image3) imagesArray.push(image3);
+
+        // 👉 இங்க path மட்டும் change பண்ணலாம் (optional)
+        if (image1) imagesArray.push(`${image1}`);
+        if (image2) imagesArray.push(`${image2}`);
+        if (image3) imagesArray.push(`${image3}`);
 
         /* ---------- OVERVIEW IMAGES ARRAY ---------- */
         let overviewImagesArray = [];
+
         if (overviewImages) {
           overviewImagesArray = overviewImages
             .split(",")
-            .map((x) => x.trim())
+            .map((x) => `${x.trim()}`)
             .filter(Boolean);
         }
 
@@ -77,15 +109,19 @@ export async function POST(req) {
         if (productName) updateData.name = productName;
 
         if (imagesArray.length > 0) {
-          updateData.images = imagesArray; // ✅ image1,2,3 → array
+          updateData.images = imagesArray;
         }
 
         if (overviewImagesArray.length > 0) {
-          updateData.overview_images = overviewImagesArray; // ✅ array
+          updateData.overview_image = overviewImagesArray; // ✅ FIXED HERE
         }
 
         if (overviewDescription) {
-          updateData.overviewdescription = overviewDescription; // ✅ correct field name
+          updateData.overviewdescription = overviewDescription;
+        }
+
+        if (overviewDescription) {
+          updateData.overviewdescription = overviewDescription;
         }
 
         /* ---------- UPDATE ---------- */

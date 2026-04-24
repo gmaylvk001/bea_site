@@ -7,6 +7,10 @@ import { ToastContainer, toast } from "react-toastify";
 export default function BulkUploadPage() {
   const [excelFile, setExcelFile] = useState(null);
   const [excelFileMovement, setExcelFileMovement] = useState(null);
+
+  const [excelFiles, setExcelFiles] = useState(null);
+  const [imageZips, setImageZips] = useState(null);
+
   const [productFilterValue, setProductFilterValue] = useState(null);
   const [categoryUpload, setCategoryUpload] = useState(null);
   const [imageZip, setImageZip] = useState(null);
@@ -20,6 +24,7 @@ export default function BulkUploadPage() {
   const [isParticularImageWithDataBulkUploadLoading, setIsParticularImageWithDataBulkUploadLoading] = useState(false);
   const [isFilterGroupUploadLoading, setIsFilterGroupUploadLoading] = useState(false);
   const overviewFormRef = useRef(null);
+  const itemparticularwithimageref = useRef(null);
   const filterValueFormRef = useRef(null);
   const movementFormRef = useRef(null);
   const filterGroupFormRef = useRef(null);
@@ -54,6 +59,7 @@ const fileImageBulkParticularInputRef = useRef(null);
   const resetUploadForm = (opts = {}) => {
     // clear file states
     setExcelFile(null);
+    setExcelFiles(null);
     setExcelFileMovement(null);
     setProductFilterValue(null);
     setSap_features(null);
@@ -62,6 +68,7 @@ const fileImageBulkParticularInputRef = useRef(null);
     setDynamic_filter_upload(null);
     setCategoryUpload(null);
     setImageZip(null);
+    setImageZips(null);
     setOverviewZip(null);
 
     // clear flags and messages
@@ -76,6 +83,7 @@ const fileImageBulkParticularInputRef = useRef(null);
 
     // reset file input elements and forms if refs exist
     try { overviewFormRef.current?.reset(); } catch (e) { }
+    try { itemparticularwithimageref.current?.reset(); } catch (e) { }
     try { movementFormRef.current?.reset(); } catch (e) { }
     try { filterGroupFormRef.current?.reset(); } catch (e) { }
     try { filterFormRef.current?.reset(); } catch (e) { }
@@ -285,7 +293,7 @@ const fileImageBulkParticularInputRef = useRef(null);
 
 
     //BULK UPDATION WITH IMAGE...
-  const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
+/*   const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
   e.preventDefault();
 
   if (!excelFile) {
@@ -325,6 +333,56 @@ const fileImageBulkParticularInputRef = useRef(null);
     }
 
     setExcelFile(null);
+  } catch (err) {
+    console.error(err);
+    showToast("error", "Upload failed");
+  } finally {
+    setIsParticularImageWithDataBulkUploadLoading(false);
+  }
+}; */
+
+
+
+const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!excelFiles) {
+    showToast("error", "Please upload Excel file");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", excelFiles);
+  formData.append("zip", imageZips); // ✅ ADD THIS
+
+  setIsParticularImageWithDataBulkUploadLoading(true);
+
+  try {
+    const res = await fetch(
+      "/api/categories/particularDataWithImageBulkupload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast(
+        "success",
+        `Updated: ${data.updated}, Skipped: ${data.skipped}`
+      );
+
+      setExcelFiles(null);
+      setImageZips(null);
+
+      if (fileImageBulkParticularInputRef.current) {
+        fileImageBulkParticularInputRef.current.value = "";
+      }
+    } else {
+      showToast("error", data.message || "Upload failed");
+    }
   } catch (err) {
     console.error(err);
     showToast("error", "Upload failed");
@@ -1771,61 +1829,108 @@ const fileImageBulkParticularInputRef = useRef(null);
 
             {/* Section 15: Category Filter Upload Item code With Particular Details */}
             {selectedSection === "item-category-particular-product-bulk-upload-image" && (
-              <form id="item-category-particular-product-bulk-upload-image" onSubmit={handleUpload} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
-                <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
-                  <div className="mb-4">
-                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
-                      Item Particular Bulk Upload part two (with image)
-                    </h2>
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Excel/CSV File
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1">Upload your Particular Bulk Upload Part two Data</p>
-                  </div>
-                  <div className="space-y-4">
-                   <input
-                      type="file"
-                      accept=".xlsx,.csv"
-                      ref={fileImageBulkParticularInputRef}
-                      onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={handleImageDataBulkUploadDownload}
-                      className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Download Sample Format
-                    </button>
-                  </div>
-                  <div className="flex mt-5 justify-between">
-                    <button
-                      onClick={handlewithImageBulkParticularDetailsSubcatSubmit}
-                        disabled={isParticularImageWithDataBulkUploadLoading}
-                      className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none disabled:opacity-50 transition-colors flex items-center"
-                    >
-                      {isParticularImageWithDataBulkUploadLoading ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Uploading...
-                        </>
-                      ) : (
-                        'Particular Bulk Upload One'
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </form>
+              <form
+  id="item-category-particular-product-bulk-upload-image" ref={itemparticularwithimageref} 
+  onSubmit={handlewithImageBulkParticularDetailsSubcatSubmit}
+  className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8"
+>
+  {/* ---------- EXCEL SECTION ---------- */}
+  <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+    
+    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
+      Item Particular Bulk Upload part two (with image)
+    </h2>
+
+    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      Excel/CSV File
+    </h3>
+
+    <p className="text-sm text-gray-500 mt-1">
+      Upload your Particular Bulk Upload Part two Data
+    </p>
+
+    <div className="space-y-4 mt-4">
+      <input
+        type="file"
+        accept=".xlsx,.csv"
+        ref={fileImageBulkParticularInputRef}
+        onChange={(e) => setExcelFiles(e.target.files?.[0] || null)}
+        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700"
+        required
+      />
+
+      <button
+        type="button"
+        onClick={handleImageDataBulkUploadDownload}
+        className="text-sm text-blue-600 hover:text-blue-800"
+      >
+        Download Sample Format
+      </button>
+    </div>
+  </div>
+
+  {/* ---------- ZIP SECTION (REQUIRED) ---------- */}
+  <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+    
+    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      Product Images (ZIP) <span className="text-red-500">*</span>
+    </h3>
+
+    <p className="text-sm text-gray-500 mt-1">
+      Upload ZIP file. Image names must match Excel columns.
+    </p>
+
+    <div className="space-y-4 mt-4">
+      <input
+        type="file"
+        accept=".zip"
+        onChange={(e) => setImageZips(e.target.files?.[0] || null)}
+        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-red-50 file:text-blue-700"
+        required   // ✅ IMPORTANT (NOW REQUIRED)
+      />
+
+      <button
+        type="button"
+        onClick={handleZipDownload}
+        className="text-sm text-blue-600 hover:text-blue-800"
+      >
+        Download Sample ZIP
+      </button>
+    </div>
+  </div>
+
+  {/* ---------- SUBMIT BUTTON ---------- */}
+  <div className="flex mt-5">
+    <button
+      type="submit"
+      disabled={isParticularImageWithDataBulkUploadLoading}
+      className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
+    >
+      {isParticularImageWithDataBulkUploadLoading ? (
+        <>
+          <svg
+            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+          </svg>
+          Uploading...
+        </>
+      ) : (
+        "Upload Excel + Images"
+      )}
+    </button>
+  </div>
+</form>
             )}
 
 
