@@ -2279,11 +2279,23 @@ const Header = () => {
                                 ))}
                             </Swiper>
                       <SwiperSlide className="!w-auto">
-                    <div className="px-5 py-2 pr-14 flex flex-col items-center text-center">
-                      <Link href="/open-box" className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap">
-                      Open Box Sale
-                         </Link>
-                      </div>
+                   <div className="px-5 py-2 pr-14 flex flex-col items-center text-center">
+                   <Link 
+                    href="/open-box" 
+                    className="whitespace-nowrap flex items-center gap-1"
+                    >
+                      <span 
+                     className="text-sm font-bold px-3 py-1 rounded-full animate-pulse"
+                    style={{ 
+                  background: "linear-gradient(90deg, #F7941D, #ff6b00)",
+                    color: "#ffffff",
+                   boxShadow: "0 0 8px rgba(247,148,29,0.6)"
+                   }}
+                    >
+                  🔥 Open Box Sale
+                 </span>
+                </Link>
+                </div> 
                </SwiperSlide>
                         </div>
                     </div>

@@ -24,6 +24,7 @@ export default function OpenBoxPage() {
   const [selectedFilters, setSelectedFilters] = useState({
     brands: [],
     price: { min: 0, max: 100000 },
+    category: "",
   });
   const [values, setValues] = useState([0, 100000]);
   const [pagination, setPagination] = useState({
@@ -33,6 +34,10 @@ export default function OpenBoxPage() {
     hasPrev: false,
     totalProducts: 0,
   });
+  const [banners, setBanners] = useState([]);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const [categories, setCategories] = useState([]);
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
 
   const STEP = 100;
   const MIN = priceRange[0];
@@ -69,7 +74,9 @@ export default function OpenBoxPage() {
       if (selectedFilters.brands.length > 0) {
         query.set("brands", selectedFilters.brands.join(","));
       }
-
+      if (selectedFilters.category) {
+        query.set("category", selectedFilters.category);
+      }
       if (sortOption) {
         query.set("sortBy", sortOption);
       }
@@ -84,6 +91,7 @@ export default function OpenBoxPage() {
 
       setProducts(data.products);
       setBrands(data.brands);
+      setCategories(data.categories);
       setPagination(data.pagination);
 
       if (initial) {
@@ -110,12 +118,33 @@ export default function OpenBoxPage() {
     }
   };
 
+  const fetchBanners = async () => {
+    try {
+      const res = await fetch("/api/openboxbanner");
+      const data = await res.json();
+      if (data.success && data.openBoxBanners) {
+        // Active banners மட்டும் filter
+        const activeBanners = data.openBoxBanners.banners.filter(
+          (b) => b.banner_image && b.status === "Active",
+        );
+        setBanners(activeBanners);
+      }
+    } catch (error) {
+      console.error("Banner fetch error:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchBanners();
+    fetchProducts(1, true);
+  }, []);
+
   // Sort change
- useEffect(() => {
-  if (!isInitialLoad.current) {
-    fetchProducts(1);
-  }
-}, [sortOption]);
+  useEffect(() => {
+    if (!isInitialLoad.current) {
+      fetchProducts(1);
+    }
+  }, [sortOption]);
 
   const handleFilterChange = (type, value) => {
     setSelectedFilters((prev) => {
@@ -126,6 +155,8 @@ export default function OpenBoxPage() {
           : [...prev.brands, value];
       } else if (type === "price") {
         newFilters.price = value;
+      } else if (type === "category") {
+        newFilters.category = prev.category === value ? "" : value;
       }
       return newFilters;
     });
@@ -250,145 +281,167 @@ export default function OpenBoxPage() {
     );
   };
 
-//   if (loading && pagination.currentPage === 1) {
-//     return (
-//       <div className="container mx-auto px-4 py-8">
-//         <div className="flex justify-center items-center h-64">
-//           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-//         </div>
-//       </div>
-//     );
-//   }
-{/* Product Grid */}
-{/* Product Grid */}
-{loading ? (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
-    {[...Array(20)].map((_, i) => (
-      <div key={i} className="bg-white rounded-lg border shadow-sm flex flex-col animate-pulse">
-        <div className="aspect-square bg-gray-200 rounded-t-lg" />
-        <div className="p-3 flex flex-col gap-2">
-          <div className="h-3 bg-gray-200 rounded w-full" />
-          <div className="h-3 bg-gray-200 rounded w-3/4" />
-          <div className="h-4 bg-gray-200 rounded w-1/2 mt-1" />
-          <div className="h-3 bg-gray-200 rounded w-1/3" />
-          <div className="h-8 bg-gray-200 rounded w-full mt-1" />
-        </div>
+  //   if (loading && pagination.currentPage === 1) {
+  //     return (
+  //       <div className="container mx-auto px-4 py-8">
+  //         <div className="flex justify-center items-center h-64">
+  //           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  //         </div>
+  //       </div>
+  //     );
+  //   }
+  {
+    /* Product Grid */
+  }
+  {
+    /* Product Grid */
+  }
+  {
+    loading ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-lg border shadow-sm flex flex-col animate-pulse"
+          >
+            <div className="aspect-square bg-gray-200 rounded-t-lg" />
+            <div className="p-3 flex flex-col gap-2">
+              <div className="h-3 bg-gray-200 rounded w-full" />
+              <div className="h-3 bg-gray-200 rounded w-3/4" />
+              <div className="h-4 bg-gray-200 rounded w-1/2 mt-1" />
+              <div className="h-3 bg-gray-200 rounded w-1/3" />
+              <div className="h-8 bg-gray-200 rounded w-full mt-1" />
+            </div>
+          </div>
+        ))}
       </div>
-    ))}
-  </div>
-) : !nofound ? (
-  <>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
-      {products.map((product) => (
-        <div
-          key={product._id}
-          className="group relative bg-white rounded-lg border hover:border-blue-200 transition-all shadow-sm hover:shadow-md flex flex-col h-full"
-        >
-          {/* Image */}
-          <div className="relative aspect-square bg-white">
-            {product.images?.[0] && (
-              <Image
-                src={product.images[0].startsWith("http") ? product.images[0] : `/uploads/products/${product.images[0]}`}
-                alt={product.name}
-                fill
-                className="object-contain p-2 md:p-4 transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 640px) 50vw, 33vw, 25vw"
-                unoptimized
-              />
-            )}
-            {/* Discount Badge */}
-            {product.special_price &&
-              product.special_price !== product.price &&
-              100 - (product.special_price / product.price) * 100 > 0 && (
-                <span className="absolute top-2 left-2 bg-orange-500 tracking-wider text-white text-xs font-bold px-2 py-1 rounded z-10">
-                  -{Math.round(100 - (product.special_price / product.price) * 100)}%
-                </span>
-              )}
-            {/* Wishlist */}
-            <div className="absolute top-2 right-2">
-              <ProductCard productId={product._id} />
-            </div>
-          </div>
-
-          {/* Info */}
-          <div className="p-2 md:p-4 flex flex-col h-full">
-            <Link
-              href={`/product/${product.slug}`}
-              className="block mb-2"
-              onClick={() => handleProductClick(product)}
+    ) : !nofound ? (
+      <>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+          {products.map((product) => (
+            <div
+              key={product._id}
+              className="group relative bg-white rounded-lg border hover:border-blue-200 transition-all shadow-sm hover:shadow-md flex flex-col h-full"
             >
-              <h3 className="text-xs sm:text-sm font-medium text-gray-800 hover:text-blue-600 line-clamp-2 min-h-[40px]">
-                {product.name}
-              </h3>
-            </Link>
-
-            {/* Price */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-base font-semibold text-red-600">
-                ₹{(
-                  product.special_price &&
-                  product.special_price > 0 &&
-                  product.special_price < product.price
-                    ? Math.round(product.special_price)
-                    : Math.round(product.price)
-                ).toLocaleString()}
-              </span>
-              {product.special_price > 0 &&
-                product.special_price < product.price && (
-                  <span className="text-xs text-gray-500 line-through">
-                    ₹{Math.round(product.price).toLocaleString()}
-                  </span>
+              {/* Image */}
+              <div className="relative aspect-square bg-white">
+                {product.images?.[0] && (
+                  <Image
+                    src={
+                      product.images[0].startsWith("http")
+                        ? product.images[0]
+                        : `/uploads/products/${product.images[0]}`
+                    }
+                    alt={product.name}
+                    fill
+                    className="object-contain p-2 md:p-4 transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, 33vw, 25vw"
+                    unoptimized
+                  />
                 )}
-            </div>
+                {/* Discount Badge */}
+                {product.special_price &&
+                  product.special_price !== product.price &&
+                  100 - (product.special_price / product.price) * 100 > 0 && (
+                    <span className="absolute top-2 left-2 bg-orange-500 tracking-wider text-white text-xs font-bold px-2 py-1 rounded z-10">
+                      -
+                      {Math.round(
+                        100 - (product.special_price / product.price) * 100,
+                      )}
+                      %
+                    </span>
+                  )}
+                {/* Wishlist */}
+                <div className="absolute top-2 right-2">
+                  <ProductCard productId={product._id} />
+                </div>
+              </div>
 
-            {/* Stock */}
-            <div className="mb-2">
-              {product.quantity > 0 ? (
-                <span className="text-xs text-green-600 font-medium">
-                  In Stock, {product.quantity} units
-                </span>
-              ) : (
-                <span className="text-xs text-red-500 font-medium">
-                  Out of Stock
-                </span>
-              )}
-            </div>
+              {/* Info */}
+              <div className="p-2 md:p-4 flex flex-col h-full">
+                <Link
+                  href={`/product/${product.slug}`}
+                  className="block mb-2"
+                  onClick={() => handleProductClick(product)}
+                >
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-800 hover:text-blue-600 line-clamp-2 min-h-[40px]">
+                    {product.name}
+                  </h3>
+                </Link>
 
-            {/* Buttons */}
-            <div className="mt-auto flex items-center justify-between gap-2">
-              <Addtocart
-                productId={product._id}
-                stockQuantity={product.quantity}
-                special_price={product.special_price}
-                className="w-full text-xs sm:text-sm py-1.5"
-              />
-              <a
-                href={`https://wa.me/?text=Check this out: ${product.name}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-green-500 hover:bg-green-600 text-white p-1 rounded-full transition-colors duration-300 flex items-center justify-center"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
-                </svg>
-              </a>
+                {/* Price */}
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-base font-semibold text-red-600">
+                    ₹
+                    {(product.special_price &&
+                    product.special_price > 0 &&
+                    product.special_price < product.price
+                      ? Math.round(product.special_price)
+                      : Math.round(product.price)
+                    ).toLocaleString()}
+                  </span>
+                  {product.special_price > 0 &&
+                    product.special_price < product.price && (
+                      <span className="text-xs text-gray-500 line-through">
+                        ₹{Math.round(product.price).toLocaleString()}
+                      </span>
+                    )}
+                </div>
+
+                {/* Stock */}
+                <div className="mb-2">
+                  {product.quantity > 0 ? (
+                    <span className="text-xs text-green-600 font-medium">
+                      In Stock, {product.quantity} units
+                    </span>
+                  ) : (
+                    <span className="text-xs text-red-500 font-medium">
+                      Out of Stock
+                    </span>
+                  )}
+                </div>
+
+                {/* Buttons */}
+                <div className="mt-auto flex items-center justify-between gap-2">
+                  <Addtocart
+                    productId={product._id}
+                    stockQuantity={product.quantity}
+                    special_price={product.special_price}
+                    className="w-full text-xs sm:text-sm py-1.5"
+                  />
+                  <a
+                    href={`https://wa.me/?text=Check this out: ${product.name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-green-500 hover:bg-green-600 text-white p-1 rounded-full transition-colors duration-300 flex items-center justify-center"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 32 32"
+                      fill="currentColor"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-      ))}
-    </div>
-    {renderPagination()}
-  </>
-) : (
-  <div className="text-center py-10 mx-auto">
-    <img
-      src="/images/no-productbox.png"
-      alt="No Products"
-      className="mx-auto mb-4 w-32 h-32 md:w-40 md:h-40 object-contain"
-    />
-    <p className="text-gray-500">No Open Box products found</p>
-  </div>
-)}
+        {renderPagination()}
+      </>
+    ) : (
+      <div className="text-center py-10 mx-auto">
+        <img
+          src="/images/no-productbox.png"
+          alt="No Products"
+          className="mx-auto mb-4 w-32 h-32 md:w-40 md:h-40 object-contain"
+        />
+        <p className="text-gray-500">No Open Box products found</p>
+      </div>
+    );
+  }
 
   if (values[0] < MIN) values[0] = MIN;
   if (values[1] > MAX) values[1] = MAX;
@@ -432,18 +485,139 @@ export default function OpenBoxPage() {
 
   return (
     <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
-      <ToastContainer />
+      {/* Marquee Banner */}
+      <div
+        className="w-full overflow-hidden mb-4"
+        style={{ backgroundColor: "#1E5FA8" }}
+      >
+        <div
+          className="flex whitespace-nowrap"
+          style={{
+            animation: "marquee 20s linear infinite",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.animationPlayState = "paused")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.animationPlayState = "running")
+          }
+        >
+          {/* Text 2 times போடுங்க — seamless loop-க்கு */}
+          {[...Array(2)].map((_, i) => (
+            <span
+              key={i}
+              className="inline-block px-8 py-2 text-sm font-semibold"
+              style={{ color: "#F7941D" }}
+            >
+              🏷️ <span style={{ color: "#ffffff" }}>Open Box Sale</span> — These
+              are products previously used as display units in our showroom. Now
+              available at discounted prices in excellent condition!
+              &nbsp;&nbsp;&nbsp;✅{" "}
+              <span style={{ color: "#ffffff" }}>Verified Quality</span>
+              &nbsp;&nbsp;&nbsp;💰{" "}
+              <span style={{ color: "#F7941D" }}>Best Price Guaranteed</span>
+              &nbsp;&nbsp;&nbsp;🚀{" "}
+              <span style={{ color: "#ffffff" }}>Limited Stock Available</span>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </span>
+          ))}
+        </div>
+      </div>
 
+      {/* CSS Animation */}
+      <style jsx>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0%);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
+
+      {/* Banners */}
+    {banners.length > 0 && (
+  <div className="relative w-full mb-6 overflow-hidden">
+    <div
+      className="relative w-full cursor-pointer"
+      onClick={() => {
+        const url = banners[currentBannerIndex]?.redirect_url;
+        if (url) window.location.href = url;
+      }}
+    >
+      <Image
+        src={banners[currentBannerIndex].banner_image}
+        alt={`Open Box Banner ${currentBannerIndex + 1}`}
+        width={1920}
+        height={600}
+        className="w-full h-auto object-cover"
+        unoptimized
+      />
+    </div>
+
+    {/* 👈 Prev/Next buttons சேர்த்தேன் */}
+    {banners.length > 1 && (
+      <>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentBannerIndex((prev) =>
+              prev === 0 ? banners.length - 1 : prev - 1
+            );
+          }}
+          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+        >
+          <ChevronLeft size={24} />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentBannerIndex((prev) =>
+              prev === banners.length - 1 ? 0 : prev + 1
+            );
+          }}
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+        >
+          <ChevronRight size={24} />
+        </button>
+      </>
+    )}
+
+    {/* Dots */}
+    {banners.length > 1 && (
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {banners.map((_, index) => (
+          <label
+            key={index}
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentBannerIndex(index);
+            }}
+            className="cursor-pointer"
+          >
+            <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+              index === currentBannerIndex
+                ? "bg-white border-white"
+                : "bg-transparent border-white/70"
+            }`}>
+              {index === currentBannerIndex && (
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+              )}
+            </span>
+          </label>
+        ))}
+      </div>
+    )}
+  </div>
+)}
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-700">Open Box Products</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Discounted products — limited stock!
-        </p>
       </div>
-
       <div className="flex flex-col md:flex-row gap-4 md:gap-6">
         {/* Sidebar */}
+
         <div className="w-full md:w-[250px] shrink-0">
           {/* Active Filters */}
           {(selectedFilters.brands.length > 0 ||
@@ -545,7 +719,55 @@ export default function OpenBoxPage() {
               <span>₹{values[1].toLocaleString()}</span>
             </div>
           </div>
-
+          {/* Categories */}
+          <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+            <div className="flex items-center justify-between pb-2 bg-gray-300 p-2">
+              <h3 className="text-base font-semibold text-gray-700">
+                Categories
+              </h3>
+              <button
+                onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                {isCategoriesExpanded ? (
+                  <ChevronUp size={18} />
+                ) : (
+                  <ChevronDown size={18} />
+                )}
+              </button>
+            </div>
+            {isCategoriesExpanded && (
+              <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+                {categories.map((cat) => (
+                  <li key={cat}>
+                    <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
+                      <input
+                        type="radio"
+                        name="category"
+                        checked={selectedFilters.category === cat}
+                        onChange={() => handleFilterChange("category", cat)}
+                        className="h-4 w-4 text-blue-600 border-gray-300"
+                      />
+                      <span className="text-sm text-gray-600">{cat}</span>
+                    </label>
+                  </li>
+                ))}
+                {/* All option */}
+                <li>
+                  <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
+                    <input
+                      type="radio"
+                      name="category"
+                      checked={selectedFilters.category === ""}
+                      onChange={() => handleFilterChange("category", "")}
+                      className="h-4 w-4 text-blue-600 border-gray-300"
+                    />
+                    <span className="text-sm text-gray-600">All</span>
+                  </label>
+                </li>
+              </ul>
+            )}
+          </div>
           {/* Brands */}
           <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
             <div className="flex items-center justify-between pb-2 bg-gray-300 p-2">

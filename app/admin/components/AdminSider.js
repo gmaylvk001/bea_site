@@ -50,6 +50,7 @@ export default function AdminSider({ collapsed }) {
       { icon: 'mdi:truck-delivery', label: 'Category Flash', link: 'main-cat-flash', dotColor: 'bg-yellow-500' },
       { icon: 'mdi:truck-delivery', label: 'Category banner', link: 'main_cat_prod', dotColor: 'bg-yellow-500' },
       { icon: 'mdi:truck-delivery', label: 'Category Image', link: 'category-image-section', dotColor: 'bg-yellow-500' },
+       { icon: 'mdi:truck-delivery', label: 'open box banner', link: 'openboxbanner', dotColor: 'bg-yellow-500' },
     ]
   },
     { icon: 'mdi:tag-outline', label: 'Offer', link: 'offer' },

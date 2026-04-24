@@ -14,12 +14,13 @@ export async function GET(req) {
     const minPrice = parseFloat(searchParams.get("minPrice") || "0");
     const maxPrice = parseFloat(searchParams.get("maxPrice") || "10000000");
     const sortBy = searchParams.get("sortBy") || "";
+    const category = searchParams.get("category") || ""; 
 
     // Base query 
     const query = {
-      movement: "EOL",
-      status: "Active", 
-       quantity: { $gt: 0 },
+      movement: { $in: ["EOL", "FOCUS"] },
+      status: "Active",
+      quantity: { $gt: 0 },
       special_price: { $gte: minPrice, $lte: maxPrice },
     };
 
@@ -29,74 +30,80 @@ export async function GET(req) {
       query.brand = { $in: brandIds };
     }
 
+    // Category filter 
+    if (category) {
+      query.sub_category_name = {
+        $regex: `##${category}##|##${category}$`,
+        $options: "i"
+      };
+    }
+
     // Sort
     let sortQuery = {};
-  switch (sortBy) {
-  case "price-low-high":
-    sortQuery = { special_price: 1, price: 1 };
-    break;
-  case "price-high-low":
-     sortQuery = { special_price: -1, price: -1 }
-    break;
-  case "name-a-z":
-    sortQuery = { name: 1 };
-    break;
-  case "name-z-a":
-    sortQuery = { name: -1 };
-    break;
-  case "quantity-low-to-high":   
-    sortQuery = { quantity: 1 };
-    break;
-  case "quantity-high-to-low":   
-    sortQuery = { quantity: -1 };
-    break;
-  default:
-    sortQuery = { createdAt: -1 };
-}
+    switch (sortBy) {
+      case "price-low-high":
+        sortQuery = { special_price: 1, price: 1 };
+        break;
+      case "price-high-low":
+        sortQuery = { special_price: -1, price: -1 };
+        break;
+      case "name-a-z":
+        sortQuery = { name: 1 };
+        break;
+      case "name-z-a":
+        sortQuery = { name: -1 };
+        break;
+      case "quantity-low-to-high":
+        sortQuery = { quantity: 1 };
+        break;
+      case "quantity-high-to-low":
+        sortQuery = { quantity: -1 };
+        break;
+      default:
+        sortQuery = { createdAt: -1 };
+    }
 
     const skip = (page - 1) * limit;
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
 
-   const needsPriceSort = sortBy === "price-low-high" || sortBy === "price-high-low";
+    const needsPriceSort = sortBy === "price-low-high" || sortBy === "price-high-low";
 
-let products;
-
-if (needsPriceSort) {
-  products = await Product.aggregate([
-    { $match: query },
-    {
-      $addFields: {
-        effectivePrice: {
-          $cond: {
-            if: {
-              $and: [
-                { $gt: ["$special_price", 0] },
-                { $lt: ["$special_price", "$price"] }
-              ]
-            },
-            then: "$special_price",
-            else: "$price"
+    let products;
+    if (needsPriceSort) {
+      products = await Product.aggregate([
+        { $match: query },
+        {
+          $addFields: {
+            effectivePrice: {
+              $cond: {
+                if: {
+                  $and: [
+                    { $gt: ["$special_price", 0] },
+                    { $lt: ["$special_price", "$price"] }
+                  ]
+                },
+                then: "$special_price",
+                else: "$price"
+              }
+            }
           }
-        }
-      }
-    },
-    { $sort: sortQuery },
-    { $skip: skip },
-    { $limit: limit }
-  ]);
+        },
+        { $sort: sortQuery },
+        { $skip: skip },
+        { $limit: limit }
+      ]);
+    } else {
+      products = await Product.find(query)
+        .sort(sortQuery)
+        .skip(skip)
+        .limit(limit)
+        .lean();
+    }
 
-} else {
-  products = await Product.find(query)
-    .sort(sortQuery)
-    .skip(skip)
-    .limit(limit)
-    .lean();
-}
-
-    // Brands list for filter sidebar
+    // Brands list
     const allEOLProducts = await Product.find(
-       { movement: "EOL", status: "Active", quantity: { $gt: 0 } }, 
+      { movement: { $in: ["EOL", "FOCUS"] }, status: "Active", quantity: { $gt: 0 } },
       { brand: 1 }
     ).lean();
 
@@ -115,14 +122,40 @@ if (needsPriceSort) {
       count: brandCountMap[b._id.toString()] || 0,
     }));
 
+    // Categories list 
+    const allEOLForCategories = await Product.find(
+      { movement: { $in: ["EOL", "FOCUS"] }, status: "Active", quantity: { $gt: 0 } },
+      { sub_category_name: 1 }
+    ).lean();
+
+    const categorySet = new Set();
+    allEOLForCategories.forEach((p) => {
+      if (p.sub_category_name) {
+        const parts = p.sub_category_name.split("##");
+        if (parts[1]) categorySet.add(parts[1].trim());
+      }
+    });
+    const categories = Array.from(categorySet).sort().reverse();
+
     // Price range
     const priceData = await Product.aggregate([
-      { $match: { movement: "EOL" } },
+      { $match: { movement: { $in: ["EOL", "FOCUS"] }, status: "Active" } },
+      {
+        $addFields: {
+          effectivePrice: {
+            $cond: {
+              if: { $and: [{ $gt: ["$special_price", 0] }, { $lt: ["$special_price", "$price"] }] },
+              then: "$special_price",
+              else: "$price"
+            }
+          }
+        }
+      },
       {
         $group: {
           _id: null,
-          minPrice: { $min: "$special_price" },
-          maxPrice: { $max: "$special_price" },
+          minPrice: { $min: "$effectivePrice" },
+          maxPrice: { $max: "$effectivePrice" },
         },
       },
     ]);
@@ -133,6 +166,7 @@ if (needsPriceSort) {
       success: true,
       products,
       brands: brandsWithCount,
+      categories,
       priceRange,
       pagination: {
         currentPage: page,
