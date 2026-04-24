@@ -1,4 +1,4 @@
-// api/categoryproduct/get/route.js
+/* // api/categoryproduct/get/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import CategoryProduct from "@/models/categoryproduct";
@@ -78,6 +78,124 @@ export async function GET() {
       validProducts:validProducts
     }, { status: 200 });
     
+  } catch (err) {
+    console.error("Error fetching category products:", err);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+} */
+
+  // api/categoryproduct/get/route.js
+
+import { NextResponse } from "next/server";
+import connectDB from "@/lib/db";
+import CategoryProduct from "@/models/categoryproduct";
+import Category from "@/models/ecom_category_info";
+import Product from "@/models/product";
+
+export async function GET() {
+  try {
+    await connectDB();
+
+    // 1️⃣ Get active category products
+    const categoryProducts = await CategoryProduct.find({ status: "Active" })
+      .sort({ position: 1 })
+      .lean();
+
+    // 2️⃣ Collect IDs
+    const subcategoryIds = categoryProducts.map(cp => cp.subcategoryId);
+    const allProductIds = categoryProducts.flatMap(cp => cp.products || []);
+
+    // 3️⃣ Get subcategories
+    const subcategories = await Category.find({
+      _id: { $in: subcategoryIds }
+    })
+      .select("category_name category_slug parentid")
+      .lean();
+
+    const subcategoryMap = {};
+    subcategories.forEach(cat => {
+      subcategoryMap[cat._id.toString()] = cat;
+    });
+
+    // 4️⃣ Get all valid products (single query)
+    /* const allProducts = await Product.find({
+      _id: { $in: allProductIds },
+      quantity: { $gt: 0 },
+      special_price: { $gt: 2 },
+      $or: [
+        { model_number: { $exists: false } },
+        { model_number: { $exists: true, $ne: "" } }
+      ]
+    }) */
+    const allProducts = await Product.find({
+    _id: { $in: allProductIds },
+    quantity: { $gt: 0 },
+    stock_status: "In Stock", // ✅ ADD THIS
+    special_price: { $gt: 2 },
+    $or: [
+      { model_number: { $exists: false } },
+      { model_number: { $exists: true, $ne: "" } }
+    ]
+  })
+      .select("name slug images price special_price quantity stock_status brand")
+      .lean();
+
+    // 5️⃣ Product Map
+    const productMap = {};
+    allProducts.forEach(p => {
+      productMap[p._id.toString()] = p;
+    });
+
+    // 6️⃣ Build response with BRAND UNIQUE LOGIC
+    const categoryProductsWithData = categoryProducts.map(cp => {
+      const subcategory = subcategoryMap[cp.subcategoryId.toString()];
+
+      // Get products for this category
+      const cpProducts = (cp.products || [])
+        .map(id => productMap[id.toString()])
+        .filter(Boolean);
+
+      // 🔥 GROUP BY BRAND (pick highest quantity product)
+      const brandMap = {};
+
+      cpProducts.forEach(product => {
+        const brandId = product.brand?.toString();
+        if (!brandId) return;
+
+        if (
+          !brandMap[brandId] ||
+          product.quantity > brandMap[brandId].quantity
+        ) {
+          brandMap[brandId] = product;
+        }
+      });
+
+      // Convert to array
+      const uniqueBrandProducts = Object.values(brandMap);
+
+      return {
+        ...cp,
+        subcategoryId: subcategory,
+        products: uniqueBrandProducts, // ✅ FINAL OUTPUT
+      };
+    });
+
+    // 7️⃣ Remove empty categories
+    const filteredCategoryProducts = categoryProductsWithData.filter(
+      cp => cp.products && cp.products.length > 0
+    );
+
+    return NextResponse.json(
+      {
+        ok: true,
+        data: filteredCategoryProducts,
+      },
+      { status: 200 }
+    );
+
   } catch (err) {
     console.error("Error fetching category products:", err);
     return NextResponse.json(
