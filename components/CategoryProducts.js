@@ -236,7 +236,7 @@ const getBannerRedirectUrls = (urls) => {
                 const showallLink = parentCat
                   ? `/category/${parentCat.category_slug}/${category.category_slug}`
                   : `/category/${category.category_slug}`;
-                const dynamicChildren = childrenByParentId[catId] || [];
+                const dynamicChildren = (childrenByParentId[catId] || []).slice(0, 5);
                 const sanitizedCategoryImage = getSanitizedImage(categoryProduct.categoryImage);
                 const sanitizedBackgroundImage = getSanitizedImage(categoryStyle.backgroundImage);
                 const finalBgUrl = sanitizedCategoryImage || sanitizedBackgroundImage || "/default-image.jpg"; 
