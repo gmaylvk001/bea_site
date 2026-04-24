@@ -6,7 +6,11 @@ import Link from "next/link";
 export default function OpenBoxBannerPage() {
   const [openBoxBanners, setOpenBoxBanners] = useState(null);
   const [bannerData, setBannerData] = useState({
-    banners: Array(4).fill({ banner_image: "", redirect_url: "", status: "Active" }),
+    banners: Array(4).fill({
+      banner_image: "",
+      redirect_url: "",
+      status: "Active",
+    }),
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -33,7 +37,7 @@ export default function OpenBoxBannerPage() {
   }, []);
 
   const handleInputChange = (index, field, value) => {
-    setBannerData(prev => {
+    setBannerData((prev) => {
       const newBanners = [...prev.banners];
       newBanners[index] = { ...newBanners[index], [field]: value };
       if (field === "banner_image") {
@@ -52,20 +56,33 @@ export default function OpenBoxBannerPage() {
     const formData = new FormData();
     for (let i = 0; i < 4; i++) {
       if (bannerData.banners[i]?.banner_image instanceof File) {
-        formData.append(`banner_image_${i + 1}`, bannerData.banners[i].banner_image);
+        formData.append(
+          `banner_image_${i + 1}`,
+          bannerData.banners[i].banner_image,
+        );
       }
-      formData.append(`redirect_url_${i + 1}`, bannerData.banners[i]?.redirect_url || "");
-      formData.append(`status_${i + 1}`, bannerData.banners[i]?.status || "Active"); // 👈
+      formData.append(
+        `redirect_url_${i + 1}`,
+        bannerData.banners[i]?.redirect_url || "",
+      );
+      formData.append(
+        `status_${i + 1}`,
+        bannerData.banners[i]?.status || "Active",
+      ); // 👈
     }
 
     try {
-      const res = await fetch("/api/openboxbanner", { method: "POST", body: formData });
+      const res = await fetch("/api/openboxbanner", {
+        method: "POST",
+        body: formData,
+      });
       const data = await res.json();
       if (data.success) {
         setOpenBoxBanners(data.openBoxBanners);
         setBannerData({ banners: data.openBoxBanners.banners });
         setImageErrors(Array(4).fill(""));
         setSuccess("Banners saved successfully!");
+         setTimeout(() => setSuccess(""), 3000);
       } else {
         setError(data.message || "Something went wrong.");
       }
@@ -86,6 +103,7 @@ export default function OpenBoxBannerPage() {
         setOpenBoxBanners(data.openBoxBanners);
         setBannerData({ banners: data.openBoxBanners.banners });
         setSuccess(`Banner ${index + 1} deleted!`);
+        setTimeout(() => setSuccess(""), 3000);
       }
     } catch (err) {
       setError("Failed to delete banner");
@@ -98,9 +116,16 @@ export default function OpenBoxBannerPage() {
       const data = await res.json();
       if (data.success) {
         setOpenBoxBanners(null);
-        setBannerData({ banners: Array(4).fill({ banner_image: "", redirect_url: "", status: "Active" }) });
+        setBannerData({
+          banners: Array(4).fill({
+            banner_image: "",
+            redirect_url: "",
+            status: "Active",
+          }),
+        });
         setShowDeleteModal(false);
         setSuccess("All banners deleted!");
+        setTimeout(() => setSuccess(""), 3000);
       } else {
         setError(data.message || "Failed to delete");
         setShowDeleteModal(false);
@@ -135,7 +160,9 @@ export default function OpenBoxBannerPage() {
                 {/* Per Banner Status Toggle */}
                 <select
                   value={bannerData.banners[index]?.status || "Active"}
-                  onChange={(e) => handleInputChange(index, "status", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(index, "status", e.target.value)
+                  }
                   className="border px-2 py-1 rounded text-sm"
                 >
                   <option value="Active">Active</option>
@@ -149,7 +176,9 @@ export default function OpenBoxBannerPage() {
                   <img
                     src={
                       bannerData.banners[index].banner_image instanceof File
-                        ? URL.createObjectURL(bannerData.banners[index].banner_image)
+                        ? URL.createObjectURL(
+                            bannerData.banners[index].banner_image,
+                          )
                         : bannerData.banners[index].banner_image
                     }
                     alt={`Banner ${index + 1}`}
@@ -163,15 +192,22 @@ export default function OpenBoxBannerPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleInputChange(index, "banner_image", e.target.files[0])}
+                  onChange={(e) =>
+                    handleInputChange(index, "banner_image", e.target.files[0])
+                  }
                   className="border px-2 py-1 rounded w-full"
                 />
                 {imageErrors[index] && (
-                  <p className="text-red-500 text-sm mt-1">{imageErrors[index]}</p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {imageErrors[index]}
+                  </p>
                 )}
-                {bannerData.banners[index]?.banner_image &&
+                {success &&
+                  bannerData.banners[index]?.banner_image &&
                   !(bannerData.banners[index].banner_image instanceof File) && (
-                    <p className="text-green-500 text-sm mt-1">Image already uploaded</p>
+                    <p className="text-green-500 text-sm mt-1">
+                      Image uploaded ✅
+                    </p>
                   )}
               </div>
 
@@ -181,7 +217,9 @@ export default function OpenBoxBannerPage() {
                   type="text"
                   placeholder="Redirect URL (e.g. /open-box)"
                   value={bannerData.banners[index]?.redirect_url || ""}
-                  onChange={(e) => handleInputChange(index, "redirect_url", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(index, "redirect_url", e.target.value)
+                  }
                   className="border px-2 py-1 rounded w-full"
                 />
               </div>
@@ -224,7 +262,9 @@ export default function OpenBoxBannerPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl w-96">
             <h3 className="text-xl font-semibold mb-4">Confirm Delete</h3>
-            <p className="mb-6">Are you sure you want to delete all Open Box banners?</p>
+            <p className="mb-6">
+              Are you sure you want to delete all Open Box banners?
+            </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}

@@ -2278,27 +2278,26 @@ const Header = () => {
                                     </SwiperSlide>
                                 ))}
                             </Swiper>
-                      <SwiperSlide className="!w-auto">
-                   <div className="px-5 py-2 pr-14 flex flex-col items-center text-center">
-                   <Link 
-                    href="/open-box" 
-                    className="whitespace-nowrap flex items-center gap-1"
-                    >
-                      <span 
-                     className="text-sm font-bold px-3 py-1 rounded-full animate-pulse"
-                    style={{ 
-                  background: "linear-gradient(90deg, #F7941D, #ff6b00)",
-                    color: "#ffffff",
-                   boxShadow: "0 0 8px rgba(247,148,29,0.6)"
-                   }}
-                    >
-                  🔥 Open Box Sale
-                 </span>
-                </Link>
-                </div> 
-               </SwiperSlide>
-                        </div>
-                    </div>
+                <SwiperSlide className="!w-[120px] overflow-visible ">
+  <Link
+    href="/open-box"
+    className="relative flex items-center justify-center h-[40px] overflow-visible left-3 right-[20px]"
+  >
+    <div className="absolute top-1/2  -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+     <video
+  src="/assets/open-box-video.mp4"
+  autoPlay
+  loop
+  muted
+  playsInline
+  preload="none"
+  className="h-[110px] w-auto object-contain rounded"
+/>
+    </div>
+  </Link>
+</SwiperSlide>
+      </div>
+           </div>
                 </div>
               
                 {/* DROPDOWN OUTSIDE SWIPER (fixed so it won't be clipped) */}
