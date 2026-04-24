@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import Product from "@/models/product";
 import Category from "@/models/ecom_category_info";
 import Brand from "@/models/ecom_brand_info";
-
+import crypto from "crypto";
 export async function POST(req) {
   try {
     await dbConnect();
@@ -135,7 +135,29 @@ export async function POST(req) {
 
       console.log(updateData);
 
-      if (productName) updateData.name = productName;
+      // if (productName) updateData.name = productName;
+      if (productName) {
+  // 1️⃣ PRODUCT NAME
+  const name = productName.trim();
+  updateData.name = name;
+
+  // 2️⃣ SLUG (from product name)
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")  // remove special chars
+    .replace(/\s+/g, "-")          // space → dash
+    .replace(/-+/g, "-");          // remove extra dash
+
+  updateData.slug = slug;
+
+  // 3️⃣ MD5 NAME (from slug)
+  const md5Name = crypto
+    .createHash("md5")
+    .update(slug)
+    .digest("hex");
+
+  updateData.md5_name = md5Name;
+}
       // if (brand) updateData.brand = brand;
       if (size) updateData.size = size;
       if (star) updateData.star = star;
