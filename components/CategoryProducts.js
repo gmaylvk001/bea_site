@@ -21,6 +21,10 @@ const CategoryProducts = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [navigating, setNavigating] = useState(false);
   const categoryScrollRefs = useRef({});
+  // id → category doc  (to resolve a category's parent slug)
+  const [idToCategory, setIdToCategory] = useState({});
+  // parentId → active child categories[]
+  const [childrenByParentId, setChildrenByParentId] = useState({});
 
   const priorityCategories = ["air-conditioner", "mobile-phones", "television", "refrigerator", "washing-machine"];
     /* const getSanitizedImage = (img) => {
@@ -90,68 +94,26 @@ const getBannerRedirectUrls = (urls) => {
       "air-conditioner": {
         backgroundImage: "/uploads/categories/category-darling-img/air-conditoner-one.jpg",
         borderColor: "#060F16",
-        showallCategoryLink : "/category/large-appliance/air-conditioner",
-        subcategoryList: [
-          { categoryname: "Cassette AC", category_slug: "/category/large-appliance/air-conditioner/cassette-ac" },
-          { categoryname: "Inverter AC", category_slug: "/category/large-appliance/air-conditioner/inverter-ac" },
-          { categoryname: "Split AC", category_slug: "/category/large-appliance/air-conditioner/split-ac" },
-          { categoryname: "Window AC", category_slug: "/category/large-appliance/air-conditioner/window-ac" },
-        ],
       },
       "mobile-phones": {
         backgroundImage: "/uploads/categories/category-darling-img/smartphone.png",
         borderColor: "#68778B",
-        showallCategoryLink : "/category/mobiles-accessories/mobile-phones",
-        subcategoryList: [
-          { categoryname: "Smart Phone", category_slug: "/category/mobiles-accessories/mobile-phones/smart-phone" },
-          { categoryname: "Tablet", category_slug: "/category/mobiles-accessories/mobile-phones/tablet" },
-        ],
       },
       "television": {
         backgroundImage: "/uploads/categories/category-darling-img/television-one.jpg",
         borderColor: "#A9A097",
-        showallCategoryLink : "/category/televisions/television",
-        subcategoryList: [
-          { categoryname: "FULL HD", category_slug: "/category/televisions/television/full-hd" },
-          { categoryname: "HD Ready", category_slug: "/category/televisions/television/hd-ready" },
-          { categoryname: "ULTRA HD", category_slug: "/category/televisions/television/ultra-hd" },
-        ],
       },
       "refrigerator": {
         backgroundImage: "/uploads/categories/category-darling-img/refirgrator-two.jpg",
         borderColor: "#5C8B99",
-        showallCategoryLink : "/category/large-appliance/refrigerator",
-        subcategoryList: [
-          { categoryname: "Bottom Mount", category_slug: "/category/large-appliance/refrigerator/bottom-mount" },
-          { categoryname: "Deep Freezer", category_slug: "/category/large-appliance/refrigerator/deep-freezer" },
-          { categoryname: "Double Door", category_slug: "/category/large-appliance/refrigerator/double-door" },
-          { categoryname: "Mini Fridge", category_slug: "/category/large-appliance/refrigerator/mini-fridge" },
-          { categoryname: "Side by Side", category_slug: "/category/large-appliance/refrigerator/side-by-side" },
-          { categoryname: "Single Door", category_slug: "/category/large-appliance/refrigerator/single-door" },
-          { categoryname: "Triple Door", category_slug: "/category/large-appliance/refrigerator/triple-door" },
-        ],
       },
       "washing-machine": {
         backgroundImage: "/uploads/categories/category-darling-img/washine-machine-one.jpg",
         borderColor: "#69AEA2",
-        showallCategoryLink : "/category/large-appliance/washing-machine",
-        subcategoryList: [
-          { categoryname: "Front Loading", category_slug: "/category/large-appliance/washing-machine/front-loading" },
-          { categoryname: "Top Loading", category_slug:  "/category/large-appliance/washing-machine/top-loading"},
-          { categoryname: "Semi Automatic", category_slug:  "/category/large-appliance/washing-machine/semi-automatic"},
-        ],
       },
       "dishwasher": {
         backgroundImage: "/uploads/categories/category-darling-img/washine-machine-one.jpg",
         borderColor: "#69AEA2",
-        showallCategoryLink : "/category/large-appliance/dishwasher",
-        subcategoryList: [
-          { categoryname: "12 PLACE SETTING", category_slug: "/category/large-appliance/dishwasher/12-place-setting" },
-          { categoryname: "13 PLACE SETTING", category_slug:  "/category/large-appliance/dishwasher/13-place-setting"},
-          { categoryname: "14 PLACE SETTING", category_slug:  "/category/large-appliance/dishwasher/14-place-setting"},
-          { categoryname: "15 PLACE SETTING", category_slug: "/category/large-appliance/dishwasher/15-place-setting" },
-          { categoryname: "16 PLACE SETTING", category_slug:  "/category/large-appliance/dishwasher/16-place-setting"}
-        ],
       },
     };
 
@@ -186,7 +148,17 @@ const getBannerRedirectUrls = (urls) => {
       try {
         const response = await fetch("/api/categoryproduct/settings");
         const result = await response.json();
-        if (result.ok) setCategoryProducts(result.data);
+        if (result.ok) {
+          // Sort so priorityCategories appear first in declared order; others follow
+          const sorted = [...(result.data || [])].sort((a, b) => {
+            const slugA = a.subcategoryId?.category_slug || "";
+            const slugB = b.subcategoryId?.category_slug || "";
+            const idxA = priorityCategories.indexOf(slugA);
+            const idxB = priorityCategories.indexOf(slugB);
+            return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+          });
+          setCategoryProducts(sorted);
+        }
 
         const brandResponse = await fetch("/api/brand");
         const brandResult = await brandResponse.json();
@@ -194,6 +166,24 @@ const getBannerRedirectUrls = (urls) => {
           const map = {};
           brandResult.data.forEach((b) => { map[b._id] = b.brand_name; });
           setBrandMap(map);
+        }
+
+        // Fetch active category hierarchy for dynamic subcategory links
+        const catRes = await fetch("/api/categories/hierarchy");
+        const catData = await catRes.json();
+        if (catData.success) {
+          const idMap = {};
+          catData.categories.forEach(c => { idMap[c._id.toString()] = c; });
+          setIdToCategory(idMap);
+
+          const childMap = {};
+          catData.categories.forEach(c => {
+            if (c.parentid && c.parentid !== "none") {
+              if (!childMap[c.parentid]) childMap[c.parentid] = [];
+              childMap[c.parentid].push(c);
+            }
+          });
+          setChildrenByParentId(childMap);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -239,6 +229,14 @@ const getBannerRedirectUrls = (urls) => {
                   backgroundImage: '/uploads/small-appliance-banner.webp',
                   borderColor: '#1F3A8C'
                 };
+
+                // Dynamic links from DB (only active categories)
+                const catId = category._id?.toString();
+                const parentCat = idToCategory[category.parentid];
+                const showallLink = parentCat
+                  ? `/category/${parentCat.category_slug}/${category.category_slug}`
+                  : `/category/${category.category_slug}`;
+                const dynamicChildren = childrenByParentId[catId] || [];
                 const sanitizedCategoryImage = getSanitizedImage(categoryProduct.categoryImage);
                 const sanitizedBackgroundImage = getSanitizedImage(categoryStyle.backgroundImage);
                 const finalBgUrl = sanitizedCategoryImage || sanitizedBackgroundImage || "/default-image.jpg"; 
@@ -368,7 +366,7 @@ const getBannerRedirectUrls = (urls) => {
                         <div className="relative z-10 h-full flex flex-col justify-end p-4 sm:p-6 text-white">
                                 <div className="w-full flex items-center justify-between mt-6 sm:mt-8 px-0 py-3 -mb-[11%]" style={{ margin: "0% 0% -9.5%" }}>
                                 <Link
-                                  href={categoryProduct.categoryRedirectUrl || `/category/${category.category_slug}`}
+                                  href={categoryProduct.categoryRedirectUrl || showallLink}
                                   className="bg-gradient-to-r from-black/40 to-black/20 hover:from-black/60 hover:to-black/30 text-white text-xs sm:text-sm font-semibold py-1 px-2 rounded-lg backdrop-blur-sm shadow-md transition-all duration-300"
                                   style={{
                                   textShadow: "0 1px 3px rgba(0, 0, 0, 0.6)",
@@ -399,22 +397,20 @@ const getBannerRedirectUrls = (urls) => {
                               borderRight: alignment === "left" ? `4px solid ${categoryProduct.borderColor || categoryStyle.borderColor}` : "0px",
                             }}
                           >
-                          {/* Category Links Section */}
+                          {/* Category Links Section — fully dynamic from /api/categories/hierarchy */}
                           <div className={`flex flex-wrap items-center gap-2 mb-3 text-sm font-medium ${ alignment === "right" ? "justify-start" : "justify-end" }`} >
-                            {categoryStyle.showallCategoryLink && (
-                              <Link href={categoryStyle.showallCategoryLink} className="px-3 py-1  text-blue-600 hover:underline" >
-                                Show All
+                            <Link href={showallLink} className="px-3 py-1 text-blue-600 hover:underline">
+                              Show All
+                            </Link>
+                            {dynamicChildren.map((child) => (
+                              <Link
+                                key={child._id}
+                                href={`${showallLink}/${child.category_slug}`}
+                                className="px-3 py-1 text-gray-500 hover:text-blue-600 transition hover:underline"
+                              >
+                                {child.category_name}
                               </Link>
-                            )}
-
-                            {categoryStyles[category.category_slug]?.subcategoryList?.map(
-                              (sub, idx) =>
-                                sub.category_slug && (
-                                  <Link key={idx} href={sub.category_slug} className="px-3 py-1  text-gray-500 hover:text-blue-600 transition hover:underline">
-                                    {sub.categoryname}
-                                  </Link>
-                                )
-                            )}
+                            ))}
                           </div>
 
                           {/* Scroll Arrows */}
