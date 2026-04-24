@@ -159,7 +159,7 @@ export async function GET() {
         .filter(Boolean);
 
       // 🔥 GROUP BY BRAND (pick highest quantity product)
-      const brandMap = {};
+      /* const brandMap = {};
 
       cpProducts.forEach(product => {
         const brandId = product.brand?.toString();
@@ -174,7 +174,28 @@ export async function GET() {
       });
 
       // Convert to array
-      const uniqueBrandProducts = Object.values(brandMap);
+      // const uniqueBrandProducts = Object.values(brandMap);
+      const uniqueBrandProducts = Object.values(brandMap)
+        .sort((a, b) => b.quantity - a.quantity); // ✅ ADD THIS */
+
+        // 🔥 GROUP BY BRAND (pick highest quantity product)
+        const brandMap = {};
+
+        cpProducts.forEach(product => {
+          const brandId = product.brand?.toString();
+          if (!brandId) return;
+
+          if (
+            !brandMap[brandId] ||
+            product.quantity > brandMap[brandId].quantity
+          ) {
+            brandMap[brandId] = product;
+          }
+        });
+
+        // ✅ SORT BY HIGHEST QUANTITY
+        const uniqueBrandProducts = Object.values(brandMap)
+          .sort((a, b) => b.quantity - a.quantity);
 
       return {
         ...cp,
