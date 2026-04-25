@@ -143,7 +143,7 @@ if (!existingFilter) {
             // });
 
           if (products) {
-    const existFilterVal = await ProductFilter.findOne({
+   /*  const existFilterVal = await ProductFilter.findOne({
         product_id: products._id,
         filter_id: existingFilter._id,
     });
@@ -156,7 +156,28 @@ if (!existingFilter) {
         addedCount++;
     } else {
         existCount++;
-    }
+    } */
+
+       // get all filters in same group
+const groupFilters = await Filter.find({
+    filter_group: filterGroup._id,
+}).select('_id');
+
+const groupFilterIds = groupFilters.map(f => f._id);
+
+// delete old filter from same group
+await ProductFilter.deleteMany({
+    product_id: products._id,
+    filter_id: { $in: groupFilterIds },
+});
+
+// insert only latest ஒன்று
+await ProductFilter.create({
+    product_id: products._id,
+    filter_id: existingFilter._id,
+});
+
+addedCount++;
 }
 
 
