@@ -123,6 +123,7 @@ const fetchProducts = async () => {
       return {
         ...prod,
         extend_warranty: warranty ? warranty.extend_warranty : [], // add warranty array
+        variants: Array.isArray(prod.variants) ? prod.variants : []
       };
     });
     // 4️⃣ Set state
