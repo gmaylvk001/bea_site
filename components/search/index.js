@@ -1,6 +1,5 @@
 // search-page.js (client)
 "use client";
-
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
@@ -10,6 +9,7 @@ import { FaSpinner } from "react-icons/fa";
 import { ChevronDown, ChevronUp } from "react-feather";
 import Addtocart from "@/components/AddToCart";
 import ProductCard from "@/components/ProductCard";
+
 
 const safeArray = (v) => (Array.isArray(v) ? v : []);
 
@@ -48,7 +48,7 @@ export default function SearchPage() {
   const [selectedFilters, setSelectedFilters] = useState(() => (params.get("filters") || "").split(",").filter(Boolean));
   const [values, setValues] = useState([0, 500000]); // current slider values
   const [priceRange, setPriceRange] = useState([0, 500000]); // available min/max
-
+ const [allFiltersFromResults, setAllFiltersFromResults] = useState([]);
   const [brandsExpanded, setBrandsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState({});
 
@@ -95,57 +95,25 @@ export default function SearchPage() {
   }, []);
 
   // load category filter definitions
-  useEffect(() => {
-    if (!category) {
-      setFilterDefs([]);
-      setFilterGroups({});
-      setFilterDefMap({});
-      return;
-    }
+useEffect(() => {
+  const defs = allFiltersFromResults;
+  if (defs.length === 0) {
+    setFilterGroups({});
+    setFilterDefMap({});
+    return;
+  }
 
-    let mounted = true;
-    (async () => {
-      try {
-        const slug = encodeURIComponent(String(category).toLowerCase().replace(/\s+/g, "-"));
-        const res = await fetch(`/api/categories/${slug}`);
-        const json = await res.json();
-        const defs = safeArray(json.filters);
-        if (!mounted) return;
-        setFilterDefs(defs);
-
-        const groups = {};
-        const map = {};
-        defs.forEach((f) => {
-          const group = f.filter_group_name || "Other";
-          if (!groups[group]) groups[group] = { _id: group, name: group, filters: [] };
-          groups[group].filters.push(f);
-          map[String(f._id)] = { name: f.filter_name, group };
-        });
-        setFilterGroups(groups);
-        setFilterDefMap(map);
-
-        // set price range from category products if returned
-        if (Array.isArray(json.products) && json.products.length > 0) {
-          const ps = json.products.map((p) => {
-            const sp = Number(p.special_price) || 0;
-            const pr = Number(p.price) || 0;
-            return sp > 0 && sp < pr ? sp : pr;
-          });
-          let min = Math.min(...ps);
-          let max = Math.max(...ps);
-          if (min === max) {
-            min = Math.max(0, min - 1);
-            max = max + 1;
-          }
-          setPriceRange([min, max]);
-          setValues([min, max]);
-        }
-      } catch (err) {
-        console.error("Failed to load category filters", err);
-      }
-    })();
-    return () => (mounted = false);
-  }, [category]);
+  const groups = {};
+  const map = {};
+  defs.forEach((f) => {
+    const group = f.filter_group_name || "Other";
+    if (!groups[group]) groups[group] = { _id: group, name: group, filters: [] };
+    groups[group].filters.push(f);
+    map[String(f._id)] = { name: f.filter_name, group };
+  });
+  setFilterGroups(groups);
+  setFilterDefMap(map);
+}, [allFiltersFromResults]);
 
   // build querystring from state
   const buildQueryParams = (overrides = {}) => {
@@ -179,6 +147,7 @@ export default function SearchPage() {
         setPagination(data.pagination || null);
         setBrandSummaryRaw(Array.isArray(data.brandSummary) ? data.brandSummary : []);
         setFilterSummaryRaw(Array.isArray(data.filterSummary) ? data.filterSummary : []);
+      setAllFiltersFromResults(Array.isArray(data.filterDefs) ? data.filterDefs : []);
       } catch (err) {
         console.error("Search API error", err);
         setProducts([]);
@@ -307,6 +276,7 @@ export default function SearchPage() {
 
     return (
       <div className="flex justify-center items-center gap-2 my-6">
+       
         <button disabled={!hasPrev} onClick={() => router.push(`/search?${buildQueryParams({ page: currentPage - 1 })}`)} className={`px-3 py-2 rounded ${hasPrev ? "bg-gray-100 hover:bg-gray-200" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>Prev</button>
         {pages.map((num, idx) => num === "..." ? <span key={`dots-${idx}`} className="px-3 py-2">…</span> : (
           <button key={num} onClick={() => router.push(`/search?${buildQueryParams({ page: num })}`)} className={`px-3 py-2 rounded ${num === currentPage ? "bg-red-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}>{num}</button>

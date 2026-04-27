@@ -4,6 +4,8 @@ import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import Category from "@/models/ecom_category_info";
 import ProductFilter from "@/models/ecom_productfilter_info";
+import Filter from "@/models/ecom_filter_infos";
+import FilterGroup from "@/models/ecom_filter_group_infos";
 import mongoose from "mongoose";
 
 export const runtime = "nodejs";
@@ -36,16 +38,10 @@ export async function GET(req) {
   try {
     await dbConnect();
 
-    /* ---------------- BASE QUERY ---------------- */
-    /*
     let searchFilter = {
       status: "Active",
-      quantity: { $gt: 0 },
     };
-  */
-     let searchFilter = {
-      status: "Active"
-    };
+
     /* ---------------- TEXT SEARCH ---------------- */
     if (query) {
       const safe = escapeRegExp(query);
@@ -70,10 +66,10 @@ export async function GET(req) {
           pagination: { total: 0, currentPage: page, totalPages: 0 },
           brandSummary: [],
           filterSummary: [],
+          filterDefs: [],
         });
       }
 
-      // ✅ same logic as working category filter
       searchFilter.sub_category_new = {
         $regex: categoryDoc.md5_cat_name,
         $options: "i",
@@ -85,7 +81,7 @@ export async function GET(req) {
       searchFilter.brand = { $in: brands };
     }
 
-    /* ---------------- PRICE FILTER (MATCHES CATEGORY ROUTE) ---------------- */
+    /* ---------------- PRICE FILTER ---------------- */
     searchFilter.$and = [
       {
         $or: [
@@ -108,9 +104,7 @@ export async function GET(req) {
     /* ---------------- BASE PRODUCT QUERY ---------------- */
     let productsQuery = Product.find(searchFilter);
 
-    /* ---------------- PRODUCT FILTER (USING ecom_productfilter_info) ---------------- */
-    let filteredProductIds = null;
-
+    /* ---------------- PRODUCT FILTER ---------------- */
     if (filters.length > 0) {
       const baseProductIds = await productsQuery.distinct("_id");
 
@@ -127,7 +121,7 @@ export async function GET(req) {
           return acc;
         }, {});
 
-        filteredProductIds = baseProductIds.filter((id) => {
+        const filteredProductIds = baseProductIds.filter((id) => {
           const productId = id.toString();
           const productFilterIds = filtersByProduct[productId] || new Set();
           return filters.some((fid) => productFilterIds.has(fid));
@@ -147,7 +141,7 @@ export async function GET(req) {
       .limit(limit)
       .lean();
 
-    /* ---------------- ✅ GLOBAL BRAND COUNT (NOT PAGE-BASED) ---------------- */
+    /* ---------------- GLOBAL BRAND COUNT ---------------- */
     const brandAggMatch = { ...searchFilter };
     delete brandAggMatch.brand;
     delete brandAggMatch._id;
@@ -158,15 +152,11 @@ export async function GET(req) {
       { $sort: { count: -1 } },
     ]);
 
-    
     const brandSummary = brandAgg
       .filter((b) => mongoose.Types.ObjectId.isValid(b._id))
       .map((b) => ({ brandId: b._id, count: b.count }));
-      
 
-    //  const brandSummary = await Product.find(searchFilter).select('brand');
-
-    /* ---------------- ✅ GLOBAL PRODUCT FILTER COUNT ---------------- */
+    /* ---------------- GLOBAL PRODUCT FILTER COUNT ---------------- */
     const filterAggMatch = { ...searchFilter };
     delete filterAggMatch._id;
 
@@ -185,6 +175,37 @@ export async function GET(req) {
       count: f.count,
     }));
 
+    /* ---------------- FILTER DEFINITIONS ---------------- */
+    const allProductIds = await Product.distinct("_id", filterAggMatch);
+
+    const productFilterDocs = await ProductFilter.find({
+      product_id: { $in: allProductIds },
+    }).lean();
+
+    const filterDefIds = [
+      ...new Set(
+        productFilterDocs
+          .map((pf) => pf.filter_id?.toString())
+          .filter(Boolean)
+      ),
+    ];
+
+    const filterDefs = await Filter.find({
+      _id: { $in: filterDefIds },
+    })
+      .populate({
+        path: "filter_group",
+        select: "filtergroup_name",
+        model: FilterGroup,
+      })
+      .lean();
+
+    const formattedFilterDefs = filterDefs.map((f) => ({
+      ...f,
+      filter_group_name: f.filter_group?.filtergroup_name || "Other",
+    }));
+
+    /* ---------------- RETURN ---------------- */
     return NextResponse.json({
       products,
       pagination: {
@@ -196,6 +217,7 @@ export async function GET(req) {
       },
       brandSummary,
       filterSummary,
+      filterDefs: formattedFilterDefs,
     });
   } catch (error) {
     console.error("❌ Search API Error:", error);
