@@ -18,8 +18,22 @@ export async function GET(req) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 20;
 
+    const categoryIdsParam = searchParams.get("categoryIds");
+    const subcategoryIdsParam = searchParams.get("subcategoryIds");
+
+    const selectedCategoryIds = categoryIdsParam
+      ? categoryIdsParam.split(",")
+      : [];
+
+    const selectedSubcategoryIds = subcategoryIdsParam
+      ? subcategoryIdsParam.split(",")
+      : [];
+
     if (!categorySlug || !brandSlug) {
-      return Response.json({ error: "Category or Brand missing" }, { status: 400 });
+      return Response.json(
+        { error: "Category or Brand missing" },
+        { status: 400 },
+      );
     }
 
     /* --------------------------------------------------
@@ -39,7 +53,7 @@ export async function GET(req) {
       status: "Active",
     });
 
-    const childIds = childCategories.map(c => c._id);
+    const childIds = childCategories.map((c) => c._id);
 
     const subChildCategories = await ecom_category_info.find({
       parentid: { $in: childIds },
@@ -48,8 +62,8 @@ export async function GET(req) {
 
     const categoryIdsArray = [
       parentCategory._id.toString(),
-      ...childCategories.map(c => c._id.toString()),
-      ...subChildCategories.map(c => c._id.toString()),
+      ...childCategories.map((c) => c._id.toString()),
+      ...subChildCategories.map((c) => c._id.toString()),
     ];
 
     /* --------------------------------------------------
@@ -87,29 +101,93 @@ export async function GET(req) {
     /* --------------------------------------------------
        4️⃣ FINAL PRODUCT QUERY
     -------------------------------------------------- */
-    let query = {
-      status: "Active",
-      brand: find_brand._id.toString(),
-      $and: [
-        {
-          $or: [
-            { category: { $in: categoryIdsArray } },
-            { sub_category: { $in: categoryIdsArray } },
-          ],
-        },
-        priceClause,
-        {
-          $or: [
-            { quantity: { $gt: 0 }, stock_status: "In Stock" },
-            { quantity: { $exists: false }, stock_status: "In Stock" },
-          ],
-        },
+
+// const effectiveCategoryIds =
+//   selectedCategoryIds.length > 0
+//     ? selectedCategoryIds
+//     : categoryIdsArray;
+
+// const effectiveSubcategoryIds =
+//   selectedSubcategoryIds.length > 0
+//     ? selectedSubcategoryIds
+//     : null;
+     
+// console.log("=== DEBUG ===");
+// console.log("categorySlug:", categorySlug);
+// console.log("brandSlug:", brandSlug);
+// console.log("selectedCategoryIds:", selectedCategoryIds);
+// console.log("selectedSubcategoryIds:", selectedSubcategoryIds);
+// console.log("categoryIdsArray:", categoryIdsArray);
+// console.log("effectiveCategoryIds:", effectiveCategoryIds);
+// console.log("effectiveSubcategoryIds:", effectiveSubcategoryIds);
+
+// const categoryMatchClause = effectiveSubcategoryIds
+//   ? {
+//       $or: [
+//         { category: { $in: effectiveSubcategoryIds } },
+//         { sub_category: { $in: effectiveSubcategoryIds } },
+//       ],
+//     }
+//   : {
+//       $or: [
+//         { category: { $in: effectiveCategoryIds } },
+//         { sub_category: { $in: effectiveCategoryIds } },
+//       ],
+//     };
+
+let expandedCategoryIds = categoryIdsArray;
+
+if (selectedSubcategoryIds.length > 0) {
+  expandedCategoryIds = selectedSubcategoryIds;
+} else if (selectedCategoryIds.length > 0) {
+  const childrenOfSelected = await ecom_category_info.find({
+    parentid: { $in: selectedCategoryIds },
+    status: "Active",
+  }).lean();
+
+  const selectedChildIds = childrenOfSelected.map((c) => c._id.toString());
+
+  const grandChildrenOfSelected = await ecom_category_info.find({
+    parentid: { $in: selectedChildIds },
+    status: "Active",
+  }).lean();
+
+  const selectedGrandChildIds = grandChildrenOfSelected.map((c) => c._id.toString());
+
+  expandedCategoryIds = [
+    ...new Set([
+      ...selectedCategoryIds,
+      ...selectedChildIds,
+      ...selectedGrandChildIds,
+    ]),
+  ];
+}
+
+const categoryMatchClause = {
+  $or: [
+    { category: { $in: expandedCategoryIds } },
+    { sub_category: { $in: expandedCategoryIds } },
+  ],
+};
+
+let query = {
+  status: "Active",
+  brand: find_brand._id.toString(),
+  $and: [
+    categoryMatchClause, 
+    priceClause,
+    {
+      $or: [
+        { quantity: { $gt: 0 }, stock_status: "In Stock" },
+        { quantity: { $exists: false }, stock_status: "In Stock" },
       ],
-    };
+    },
+  ],
+};
 
     let productsQuery = Product.find(query).populate(
       "brand",
-      "brand_name brand_slug"
+      "brand_name brand_slug",
     );
 
     /* --------------------------------------------------
@@ -124,20 +202,20 @@ export async function GET(req) {
       });
 
       const filterMap = {};
-      productFilters.forEach(pf => {
+      productFilters.forEach((pf) => {
         const pid = pf.product_id.toString();
         if (!filterMap[pid]) filterMap[pid] = new Set();
         filterMap[pid].add(pf.filter_id.toString());
       });
 
-      const matchedProductIds = productIds.filter(id =>
-        filterIds.every(fid => filterMap[id.toString()]?.has(fid))
+      const matchedProductIds = productIds.filter((id) =>
+        filterIds.every((fid) => filterMap[id.toString()]?.has(fid)),
       );
 
       query._id = { $in: matchedProductIds };
       productsQuery = Product.find(query).populate(
         "brand",
-        "brand_name brand_slug"
+        "brand_name brand_slug",
       );
     }
 
@@ -146,10 +224,7 @@ export async function GET(req) {
     -------------------------------------------------- */
     const skip = (page - 1) * limit;
 
-    const products = await productsQuery
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const products = await productsQuery.skip(skip).limit(limit).lean();
 
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
@@ -166,9 +241,6 @@ export async function GET(req) {
     });
   } catch (error) {
     console.error("Error in category-brand filter:", error);
-    return Response.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

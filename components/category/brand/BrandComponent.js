@@ -125,35 +125,25 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
     if (categoryData.brand?._id) {
       query.set('brands', categoryData.brand._id);
     }
-    /* // ✅ Restrict strictly to current category tree
-    if (categoryData.category?._id) {
-      query.set('categoryIds', [categoryData.category._id, ...(categoryData.categories || []).map(c => c._id)].join(','));
-    } */ 
+  
 
-    // ✅ Only add category filter if user actually clicked on one
-    if (categoryData.category?._id && categoryData.isCategorySelected) {
-      query.set(
-        'categoryIds',
-        [categoryData.category._id, ...(categoryData.categories || []).map(c => c._id)].join(',')
-      );
-    } else{
-      if (selectedFilters.subcategories.length > 0) {
-          query.set('subcategoryIds', selectedFilters.subcategories.join(','));
-        }
-    }
+   // ✅ CATEGORY FILTER (user selected)
+if (selectedFilters.categories.length > 0) {
  
+  query.set('categoryIds', selectedFilters.categories.join(','));
+} 
 
-
-    /* // ✅ Only add user-selected subcategories if any
-    if (selectedFilters.subcategories.length > 0) {
-      query.set('subcategoryIds', selectedFilters.subcategories.join(','));
-    } */
+// ✅ SUBCATEGORY FILTER
+if (selectedFilters.subcategories.length > 0) {
+  query.set('subcategoryIds', selectedFilters.subcategories.join(','));
+}
+  
     // Get current URL path
-    const url = window.location.pathname; // e.g., "/category/brand/televisions/samsung"
+    const url = window.location.pathname; 
 
     // Split and extract
     const parts = url.split("/").filter(Boolean); 
-    // ["category", "brand", "televisions", "samsung"]
+  
 
     const categorySlugName = parts[2]; // "televisions"
     const brandSlugName = parts[3];    // "samsung"
@@ -172,7 +162,7 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
     if (selectedFilters.filters.length > 0) {
       query.set('filters', selectedFilters.filters.join(','));
     }
-
+    console.log("FINAL QUERY:", query.toString());
     const res = await fetch(`/api/product/filter/category-brand/main?${query}`);
    
     const { products, pagination: paginationData } = await res.json();
