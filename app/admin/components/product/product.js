@@ -1227,7 +1227,7 @@ const getAllChildIds = (parentId, allCategories) => {
   return childIds;
 };
 
-  const getFilteredProducts = () => {
+/*   const getFilteredProducts = () => {
   const flattenedProducts = flattenProducts(products);
 
 
@@ -1252,7 +1252,7 @@ const getAllChildIds = (parentId, allCategories) => {
     }
 
     // Sub & Child Category Filter (FIXED)
-    /* let matchesSubCategory = true;
+   let matchesSubCategory = true;
     if (subCategoryFilter) {
       const prodCatId = product.category?._id?.toString() || product.category?.toString();
       const prodSubCatId = product.sub_category?._id?.toString() || product.sub_category?.toString();
@@ -1266,7 +1266,7 @@ const getAllChildIds = (parentId, allCategories) => {
         allRelatedIds.includes(prodCatId) || 
         allRelatedIds.includes(prodSubCatId) || 
         allRelatedIds.includes(prodNewCatId);
-    } */
+    } 
    // Sub & Child Category Filter
     // ... getFilteredProducts உள்ளே ...
 
@@ -1296,104 +1296,87 @@ if (subCategoryFilter && subCategoryFilter !== "") {
       matchesBrand = prodBrandId === brandFilter;
     }
 
+    let matchesStock = true;
+if (stockFilter) {
+  matchesStock = product.stock_status?.toLowerCase() === stockFilter.toLowerCase();
+} 
+let matchesStock = true;
+    if (stockFilter === "In Stock" || stockFilter === "Out of Stock") {
+      matchesStock =
+        product.stock_status?.toLowerCase() === stockFilter.toLowerCase();
+    }
+
     return (
       matchesSearch &&
       matchesStatus &&
       matchesCategory &&
       matchesSubCategory && // இது இப்போது Sub மற்றும் Child இரண்டிற்கும் வேலை செய்யும்
-      matchesBrand
+      matchesBrand &&
+      matchesStock
     );
+
+     // ✅ STOCK SORTING
+  if (stockFilter === "stock_low_high") {
+    filteredProducts.sort((a, b) => Number(a.quantity ?? 0) - Number(b.quantity ?? 0));
+  }
+
+  if (stockFilter === "stock_high_low") {
+    filteredProducts.sort((a, b) => Number(b.quantity ?? 0) - Number(a.quantity ?? 0));
+  }
+
+  return filteredProducts;
+  
   });
 
-/*   const filteredProducts = flattenedProducts.filter((product) => {
+ 
+}; */
+
+const getFilteredProducts = () => {
+  const flattenedProducts = flattenProducts(products);
+
+  const filteredProducts = flattenedProducts.filter((product) => {
+    // Search Filter
     const matchesSearch =
       debouncedSearchQuery === "" ||
       product.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-      product.slug?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
       product.item_code?.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
 
+    // Status Filter
     const matchesStatus =
       statusFilter === "" ||
       product.status?.toLowerCase() === statusFilter.toLowerCase();
 
-    let matchesDate = true;
-    if (dateFilter.startDate && dateFilter.endDate && product.createdAt) {
-      const productDate = new Date(product.createdAt);
-      const startDate = new Date(dateFilter.startDate);
-      const endDate = new Date(dateFilter.endDate);
-
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
-
-      matchesDate = productDate >= startDate && productDate <= endDate;
-    }
-
+    // Main Category Filter
     let matchesCategory = true;
     if (categoryFilter) {
-      if (product.category && typeof product.category === "object") {
-        const productCategoryId = product.category._id.toString();
-        const selectedCategory = categories.find(
-          (cat) => cat._id.toString() === categoryFilter
-        );
-
-        if (selectedCategory.parentid === "none") {
-          const subCategoryIds = categories
-            .filter((cat) => cat.parentid === categoryFilter)
-            .map((cat) => cat._id.toString());
-
-          matchesCategory =
-            productCategoryId === categoryFilter ||
-            subCategoryIds.includes(productCategoryId);
-        } else {
-          matchesCategory = productCategoryId === categoryFilter;
-        }
-      } else if (product.category) {
-        const productCategoryId = product.category.toString();
-        const selectedCategory = categories.find(
-          (cat) => cat._id.toString() === categoryFilter
-        );
-
-        if (selectedCategory.parentid === "none") {
-          const subCategoryIds = categories
-            .filter((cat) => cat.parentid === categoryFilter)
-            .map((cat) => cat._id.toString());
-
-          matchesCategory =
-            productCategoryId === categoryFilter ||
-            subCategoryIds.includes(productCategoryId);
-        } else {
-          matchesCategory = productCategoryId === categoryFilter;
-        }
-      } else {
-        matchesCategory = false;
-      }
+      const prodCatId = product.category?._id?.toString() || product.category?.toString();
+      const childCategoryIds = [categoryFilter, ...getAllChildIds(categoryFilter, categories)];
+      matchesCategory = childCategoryIds.includes(prodCatId);
     }
 
+    // Sub Category Filter
     let matchesSubCategory = true;
+    if (subCategoryFilter && subCategoryFilter !== "") {
+      const prodCatId = product.category?._id?.toString() || product.category?.toString();
+      const prodSubCatId = product.sub_category?._id?.toString() || product.sub_category?.toString();
+      const prodNewCatId = product.category_new?.toString();
 
-if (subCategoryFilter) {
-  if (product.category && typeof product.category === "object") {
-    matchesSubCategory =
-      product.category._id.toString() === subCategoryFilter;
-  } else if (product.category) {
-    matchesSubCategory =
-      product.category.toString() === subCategoryFilter;
-  } else {
-    matchesSubCategory = false;
-  }
-}
+      const allRelatedIds = [subCategoryFilter, ...getAllChildIds(subCategoryFilter, categories)];
 
+      matchesSubCategory =
+        allRelatedIds.includes(prodCatId) ||
+        allRelatedIds.includes(prodSubCatId) ||
+        allRelatedIds.includes(prodNewCatId);
+    }
+
+    // Brand Filter
     let matchesBrand = true;
     if (brandFilter) {
-      if (product.brand && typeof product.brand === "object") {
-        matchesBrand = product.brand._id.toString() === brandFilter;
-      } else if (product.brand) {
-        matchesBrand = product.brand.toString() === brandFilter;
-      } else {
-        matchesBrand = false;
-      }
+      const prodBrandId = product.brand?._id?.toString() || product.brand?.toString();
+      matchesBrand = prodBrandId === brandFilter;
     }
 
+    // Stock Filter
     let matchesStock = true;
     if (stockFilter === "In Stock" || stockFilter === "Out of Stock") {
       matchesStock =
@@ -1403,15 +1386,14 @@ if (subCategoryFilter) {
     return (
       matchesSearch &&
       matchesStatus &&
-      matchesDate &&
       matchesCategory &&
-      matchesSubCategory && // ✅ ADD THIS
+      matchesSubCategory &&
       matchesBrand &&
       matchesStock
     );
-  }); */
+  });
 
-  // ✅ STOCK SORTING
+  // ✅ STOCK SORTING (FIXED POSITION)
   if (stockFilter === "stock_low_high") {
     filteredProducts.sort((a, b) => Number(a.quantity ?? 0) - Number(b.quantity ?? 0));
   }
@@ -1422,7 +1404,6 @@ if (subCategoryFilter) {
 
   return filteredProducts;
 };
-
 
   // const getFilteredProducts = () => {
   //   const flattenedProducts = flattenProducts(products);
