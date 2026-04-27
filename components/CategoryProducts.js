@@ -148,7 +148,8 @@ const getBannerRedirectUrls = (urls) => {
       try {
         const response = await fetch("/api/categoryproduct/settings");
         const result = await response.json();
-        if (result.ok) {
+        if (result.ok) setCategoryProducts(result.data);
+        /* if (result.ok) {
           // Sort so priorityCategories appear first in declared order; others follow
           const sorted = [...(result.data || [])].sort((a, b) => {
             const slugA = a.subcategoryId?.category_slug || "";
@@ -158,7 +159,7 @@ const getBannerRedirectUrls = (urls) => {
             return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
           });
           setCategoryProducts(sorted);
-        }
+        } */
 
         const brandResponse = await fetch("/api/brand");
         const brandResult = await brandResponse.json();
