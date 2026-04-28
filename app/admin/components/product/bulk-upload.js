@@ -21,6 +21,7 @@ export default function BulkUploadPage() {
   const [isFilterUploadLoading, setIsFilterUploadLoading] = useState(false);
   const [isBulkUploadLoading, setIsBulkUploadLoading] = useState(false);
   const [isParticularDataBulkUploadLoading, setIsParticularDataBulkUploadLoading] = useState(false);
+  const [isProductDetailsDataBulkUploadLoading, setIsProductDetailsDataBulkUploadLoading] = useState(false);
   const [isParticularImageWithDataBulkUploadLoading, setIsParticularImageWithDataBulkUploadLoading] = useState(false);
   const [isFilterGroupUploadLoading, setIsFilterGroupUploadLoading] = useState(false);
   const overviewFormRef = useRef(null);
@@ -47,6 +48,7 @@ export default function BulkUploadPage() {
   const notifiedRef = useRef(false);
 const fileInputRef = useRef(null);
 const fileBulkParticularInputRef = useRef(null);
+const fileBulkUploadAddonsInputRef = useRef(null);
 const fileImageBulkParticularInputRef = useRef(null);
   const showToast = (type, message) => {
     if (notifiedRef.current) return;
@@ -77,6 +79,7 @@ const fileImageBulkParticularInputRef = useRef(null);
     setIsFilterUploadLoading(false);
     setIsBulkUploadLoading(false);
     setIsParticularDataBulkUploadLoading(false);
+    setIsProductDetailsDataBulkUploadLoading(false);
     setIsParticularImageWithDataBulkUploadLoading(false);
     setIsFilterGroupUploadLoading(false);
     setMessage("");
@@ -291,6 +294,55 @@ const fileImageBulkParticularInputRef = useRef(null);
   }
 };
 
+
+    //BULK UPDATION ..
+  const handleBulkUploadForAddOnsFrequentRelatedSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!excelFile) {
+    showToast("error", "Please upload a file");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", excelFile); // ✅ MUST BE "file"
+
+  setIsProductDetailsDataBulkUploadLoading(true);
+
+  try {
+    const res = await fetch("/api/categories/productBulkUploaddetailsaddons", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast(
+        "success",
+        `Updated: ${data.updated}, Skipped: ${data.skipped}`
+      );
+
+      // ✅ RESET STATE
+        setExcelFile(null);
+
+        // ✅ RESET INPUT UI (VERY IMPORTANT)
+        if (fileBulkUploadAddonsInputRef.current) {
+          fileBulkUploadAddonsInputRef.current.value = "";
+        }
+
+    } else {
+      showToast("error", data.message || "Upload failed");
+    }
+
+    setExcelFile(null);
+  } catch (err) {
+    console.error(err);
+    showToast("error", "Upload failed");
+  } finally {
+    setIsProductDetailsDataBulkUploadLoading(false);
+  }
+};
 
     //BULK UPDATION WITH IMAGE...
 /*   const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
@@ -518,6 +570,15 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
     const link = document.createElement("a");
     link.href = `/uploads/files/sample_item_code_particular_data.xlsx?t=${Date.now()}`;
     link.download = "item_particular_bulk_upload_part_one_without_image.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const handleProductAddOnsForDataBulkUploadDownload = () => {
+    const link = document.createElement("a");
+    link.href = `/uploads/files/data_for_frequently_addons_and_related_products.xlsx?t=${Date.now()}`;
+    link.download = "data_for_frequently_addons_and_related_products.xlsx";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1302,6 +1363,7 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
     { id: "product_name", label: "Product name only", image: "/uploads/files/Product Name.png" },
     { id: "product_description", label: "Product Description", image: "/uploads/files/product_description.png" },
     { id: "dynamic_filter_upload", label: "Dynamic Filter Upload", image: "/uploads/files/dynamic_filter.png" },
+    { id: "product-added-bulk-addons-frequentlybought-relatedproducts", label: "Add Frequently Addons and Related Products", image: "/uploads/files/bulk_upload_for_product_rightside_datas.png" },
 
   ];
 
@@ -1820,6 +1882,65 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
                         </>
                       ) : (
                         'Particular Bulk Upload One'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {/* Section 14: Bulk Upload for Product Featured , Add ons and Related Products */}
+            {selectedSection === "product-added-bulk-addons-frequentlybought-relatedproducts" && (
+              <form id="product-added-bulk-addons-frequentlybought-relatedproducts" onSubmit={handleUpload} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
+                <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                  <div className="mb-4">
+                    <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
+                      Product Details Bulk Upload (Add Ons, Featured Product and Related Products)
+                    </h2>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Excel/CSV File
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">Upload your Products Details for Addons , Frequently Bought and Related Products</p>
+                  </div>
+                  <div className="space-y-4">
+                   <input
+                      type="file"
+                      accept=".xlsx,.csv"
+                      ref={fileBulkUploadAddonsInputRef}
+                      onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={handleProductAddOnsForDataBulkUploadDownload}
+                      className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download Sample Format
+                    </button>
+                  </div>
+                  <div className="flex mt-5 justify-between">
+                    <button
+                      onClick={handleBulkUploadForAddOnsFrequentRelatedSubmit}
+                        disabled={isProductDetailsDataBulkUploadLoading}
+                      className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none disabled:opacity-50 transition-colors flex items-center"
+                    >
+                      {isProductDetailsDataBulkUploadLoading ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Uploading...
+                        </>
+                      ) : (
+                        'Product Bulk Datas Upload'
                       )}
                     </button>
                   </div>
