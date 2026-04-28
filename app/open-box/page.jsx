@@ -13,6 +13,101 @@ import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from "react-toastify";
 import { Range as ReactRange } from "react-range";
 
+const CategoryTreeFilter = ({
+  categories,
+  level = 0,
+  selectedCategory,
+  onCategorySelect,
+}) => {
+  const [expandedCategories, setExpandedCategories] = useState({});
+
+  // Initialize with all categories expanded
+  useEffect(() => {
+    const allExpanded = {};
+    const expandAll = (cats) => {
+      cats.forEach((cat) => {
+        if (cat.subCategories?.length > 0) {
+          allExpanded[cat._id] = true;
+          expandAll(cat.subCategories);
+        }
+      });
+    };
+    expandAll(categories);
+    setExpandedCategories(allExpanded);
+  }, [categories]);
+
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
+  };
+
+  return (
+    <div className="space-y-2">
+      {categories.map((category) => (
+        <div key={category._id}>
+          <div
+            className={`flex items-center gap-2 ${
+              level > 0 ? `ml-${Math.min(level * 4, 8)}` : ""
+            }`}
+          >
+            <label className="flex items-center gap-2 flex-1 cursor-pointer hover:bg-gray-50 p-1 rounded">
+              <input
+                type="radio"
+                name="category"
+                checked={selectedCategory === category.category_name}
+                onChange={() => onCategorySelect(category.category_name)}
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span
+                className={`text-sm ${
+                  selectedCategory === category.category_name
+                    ? "text-blue-600 font-medium"
+                    : "text-gray-700"
+                }`}
+              >
+                {category.category_name}
+                {category.hasProducts && (
+                  <span className="text-xs text-gray-400 ml-1">
+                    (has products)
+                  </span>
+                )}
+              </span>
+            </label>
+
+            {category.subCategories?.length > 0 && (
+              <button
+                type="button"
+                onClick={() => toggleCategory(category._id)}
+                className="p-1 rounded hover:bg-gray-200 flex-shrink-0"
+              >
+                {expandedCategories[category._id] ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )}
+              </button>
+            )}
+          </div>
+
+          {category.subCategories?.length > 0 &&
+            expandedCategories[category._id] && (
+              <div className={`mt-1 ${level === 0 ? "ml-4" : "ml-6"}`}>
+                <CategoryTreeFilter
+                  categories={category.subCategories}
+                  level={level + 1}
+                  selectedCategory={selectedCategory}
+                  onCategorySelect={onCategorySelect}
+                />
+              </div>
+            )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export default function OpenBoxPage() {
   const [products, setProducts] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -25,6 +120,7 @@ export default function OpenBoxPage() {
     brands: [],
     price: { min: 0, max: 100000 },
     category: "",
+    subCategory: "",
   });
   const [values, setValues] = useState([0, 100000]);
   const [pagination, setPagination] = useState({
@@ -38,16 +134,12 @@ export default function OpenBoxPage() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [categories, setCategories] = useState([]);
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
-
+  const [categoryTree, setCategoryTree] = useState([]);
   const STEP = 100;
   const MIN = priceRange[0];
   const MAX = priceRange[1];
 
   const isInitialLoad = useRef(true);
-
-  useEffect(() => {
-    fetchProducts(1, true);
-  }, []);
 
   useEffect(() => {
     if (isInitialLoad.current) {
@@ -74,8 +166,13 @@ export default function OpenBoxPage() {
       if (selectedFilters.brands.length > 0) {
         query.set("brands", selectedFilters.brands.join(","));
       }
-      if (selectedFilters.category) {
+      if (selectedFilters.subCategory) {
+        query.set("category", selectedFilters.subCategory);
+      } else if (selectedFilters.category) {
         query.set("category", selectedFilters.category);
+      }
+      if (selectedFilters.categories && selectedFilters.categories.length > 0) {
+        query.set("categories", selectedFilters.categories.join(","));
       }
       if (sortOption) {
         query.set("sortBy", sortOption);
@@ -92,6 +189,7 @@ export default function OpenBoxPage() {
       setProducts(data.products);
       setBrands(data.brands);
       setCategories(data.categories);
+      setCategoryTree(data.categoryTree || []);
       setPagination(data.pagination);
 
       if (initial) {
@@ -157,7 +255,12 @@ export default function OpenBoxPage() {
         newFilters.price = value;
       } else if (type === "category") {
         newFilters.category = prev.category === value ? "" : value;
+        newFilters.selectedParent = prev.category === value ? "" : value;
+        newFilters.subCategory = "";
+      } else if (type === "subCategory") {
+        newFilters.subCategory = prev.subCategory === value ? "" : value;
       }
+
       return newFilters;
     });
   };
@@ -173,6 +276,8 @@ export default function OpenBoxPage() {
     setSelectedFilters({
       brands: [],
       price: { min: priceRange[0], max: priceRange[1] },
+      category: "",
+      subCategory: "",
     });
   };
 
@@ -281,18 +386,8 @@ export default function OpenBoxPage() {
     );
   };
 
-  //   if (loading && pagination.currentPage === 1) {
-  //     return (
-  //       <div className="container mx-auto px-4 py-8">
-  //         <div className="flex justify-center items-center h-64">
-  //           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-  //         </div>
-  //       </div>
-  //     );
-  //   }
-  {
-    /* Product Grid */
-  }
+  // Add this component right after imports and before export default function OpenBoxPage()
+
   {
     /* Product Grid */
   }
@@ -502,7 +597,7 @@ export default function OpenBoxPage() {
             (e.currentTarget.style.animationPlayState = "running")
           }
         >
-          {/* Text 2 times போடுங்க — seamless loop-க்கு */}
+          {/* Text 2 times */}
           {[...Array(2)].map((_, i) => (
             <span
               key={i}
@@ -537,80 +632,82 @@ export default function OpenBoxPage() {
       `}</style>
 
       {/* Banners */}
-    {banners.length > 0 && (
-  <div className="relative w-full mb-6 overflow-hidden">
-    <div
-      className="relative w-full cursor-pointer"
-      onClick={() => {
-        const url = banners[currentBannerIndex]?.redirect_url;
-        if (url) window.location.href = url;
-      }}
-    >
-      <Image
-        src={banners[currentBannerIndex].banner_image}
-        alt={`Open Box Banner ${currentBannerIndex + 1}`}
-        width={1920}
-        height={600}
-        className="w-full h-auto object-cover"
-        unoptimized
-      />
-    </div>
-
-    {/* 👈 Prev/Next buttons சேர்த்தேன் */}
-    {banners.length > 1 && (
-      <>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setCurrentBannerIndex((prev) =>
-              prev === 0 ? banners.length - 1 : prev - 1
-            );
-          }}
-          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-        >
-          <ChevronLeft size={24} />
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setCurrentBannerIndex((prev) =>
-              prev === banners.length - 1 ? 0 : prev + 1
-            );
-          }}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-        >
-          <ChevronRight size={24} />
-        </button>
-      </>
-    )}
-
-    {/* Dots */}
-    {banners.length > 1 && (
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {banners.map((_, index) => (
-          <label
-            key={index}
-            onClick={(e) => {
-              e.stopPropagation();
-              setCurrentBannerIndex(index);
+      {banners.length > 0 && (
+        <div className="relative w-full mb-6 overflow-hidden">
+          <div
+            className="relative w-full cursor-pointer"
+            onClick={() => {
+              const url = banners[currentBannerIndex]?.redirect_url;
+              if (url) window.location.href = url;
             }}
-            className="cursor-pointer"
           >
-            <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-              index === currentBannerIndex
-                ? "bg-white border-white"
-                : "bg-transparent border-white/70"
-            }`}>
-              {index === currentBannerIndex && (
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-              )}
-            </span>
-          </label>
-        ))}
-      </div>
-    )}
-  </div>
-)}
+            <Image
+              src={banners[currentBannerIndex].banner_image}
+              alt={`Open Box Banner ${currentBannerIndex + 1}`}
+              width={1920}
+              height={600}
+              className="w-full h-auto object-cover"
+              unoptimized
+            />
+          </div>
+
+          {/* 👈 Prev/Next buttons சேர்த்தேன் */}
+          {banners.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentBannerIndex((prev) =>
+                    prev === 0 ? banners.length - 1 : prev - 1,
+                  );
+                }}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentBannerIndex((prev) =>
+                    prev === banners.length - 1 ? 0 : prev + 1,
+                  );
+                }}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </>
+          )}
+
+          {/* Dots */}
+          {banners.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              {banners.map((_, index) => (
+                <label
+                  key={index}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentBannerIndex(index);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <span
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      index === currentBannerIndex
+                        ? "bg-white border-white"
+                        : "bg-transparent border-white/70"
+                    }`}
+                  >
+                    {index === currentBannerIndex && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                    )}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-700">Open Box Products</h1>
@@ -622,7 +719,9 @@ export default function OpenBoxPage() {
           {/* Active Filters */}
           {(selectedFilters.brands.length > 0 ||
             selectedFilters.price.min !== priceRange[0] ||
-            selectedFilters.price.max !== priceRange[1]) && (
+            selectedFilters.price.max !== priceRange[1] ||
+            selectedFilters.category !== "" ||
+            selectedFilters.subCategory !== "") && (
             <div className="bg-white p-4 rounded shadow mb-3">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold">Active Filters</h3>
@@ -663,6 +762,43 @@ export default function OpenBoxPage() {
                         }))
                       }
                       className="ml-1 text-gray-500 hover:text-gray-700"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+
+                {/* Category tag */}
+                {selectedFilters.category && (
+                  <span className="bg-blue-50 border border-blue-200 px-2 py-1 rounded text-sm flex items-center text-blue-700">
+                    {selectedFilters.category}
+                    <button
+                      onClick={() =>
+                        setSelectedFilters((prev) => ({
+                          ...prev,
+                          category: "",
+                          subCategory: "",
+                        }))
+                      }
+                      className="ml-1 text-blue-400 hover:text-blue-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+
+                {/* SubCategory tag */}
+                {selectedFilters.subCategory && (
+                  <span className="bg-green-50 border border-green-200 px-2 py-1 rounded text-sm flex items-center text-green-700">
+                    {selectedFilters.subCategory}
+                    <button
+                      onClick={() =>
+                        setSelectedFilters((prev) => ({
+                          ...prev,
+                          subCategory: "",
+                        }))
+                      }
+                      className="ml-1 text-green-400 hover:text-green-600"
                     >
                       ×
                     </button>
@@ -719,7 +855,8 @@ export default function OpenBoxPage() {
               <span>₹{values[1].toLocaleString()}</span>
             </div>
           </div>
-          {/* Categories */}
+
+          {/* Categories — subcategories */}
           <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
             <div className="flex items-center justify-between pb-2 bg-gray-300 p-2">
               <h3 className="text-base font-semibold text-gray-700">
@@ -727,7 +864,6 @@ export default function OpenBoxPage() {
               </h3>
               <button
                 onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
-                className="text-gray-500 hover:text-gray-700"
               >
                 {isCategoriesExpanded ? (
                   <ChevronUp size={18} />
@@ -736,38 +872,150 @@ export default function OpenBoxPage() {
                 )}
               </button>
             </div>
+
             {isCategoriesExpanded && (
               <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
-                {categories.map((cat) => (
-                  <li key={cat}>
-                    <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={selectedFilters.category === cat}
-                        onChange={() => handleFilterChange("category", cat)}
-                        className="h-4 w-4 text-blue-600 border-gray-300"
-                      />
-                      <span className="text-sm text-gray-600">{cat}</span>
-                    </label>
-                  </li>
-                ))}
-                {/* All option */}
                 <li>
-                  <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
+                  <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <input
                       type="radio"
                       name="category"
-                      checked={selectedFilters.category === ""}
-                      onChange={() => handleFilterChange("category", "")}
-                      className="h-4 w-4 text-blue-600 border-gray-300"
+                      checked={
+                        selectedFilters.subCategory === "" &&
+                        selectedFilters.category === ""
+                      }
+                      onChange={() =>
+                        setSelectedFilters((prev) => ({
+                          ...prev,
+                          category: "",
+                          subCategory: "",
+                        }))
+                      }
+                      className="h-4 w-4 text-blue-600"
                     />
-                    <span className="text-sm text-gray-600">All</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      All Categories
+                    </span>
                   </label>
                 </li>
+
+                {categoryTree.flatMap((topCat) =>
+                  topCat.subCategories?.length > 0
+                    ? topCat.subCategories.map((sub) => (
+                        <li key={sub._id}>
+                          <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input
+                              type="radio"
+                              name="category"
+                              checked={
+                                selectedFilters.category === sub.category_name
+                              }
+                              onChange={() =>
+                                setSelectedFilters((prev) => ({
+                                  ...prev,
+                                  category: sub.category_name,
+                                  subCategory: "",
+                                }))
+                              }
+                              className="h-4 w-4 text-blue-600"
+                            />
+                            <span
+                              className={`text-sm ${
+                                selectedFilters.category === sub.category_name
+                                  ? "text-blue-600 font-medium"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              {sub.category_name}
+                            </span>
+                          </label>
+                        </li>
+                      ))
+                    : [],
+                )}
               </ul>
             )}
           </div>
+
+          {/* Children — category select */}
+          {selectedFilters.category &&
+            (() => {
+              let children = [];
+              for (const topCat of categoryTree) {
+                const found = topCat.subCategories?.find(
+                  (s) => s.category_name === selectedFilters.category,
+                );
+                if (found) {
+                  children = found.subCategories || [];
+                  break;
+                }
+              }
+
+              if (children.length === 0) return null;
+
+              return (
+                <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+                  <div className="bg-gray-300 p-2 mb-2">
+                    <h3 className="text-base font-semibold text-gray-700">
+                      {selectedFilters.category}
+                    </h3>
+                  </div>
+                  <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+                    <li>
+                      <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                        <input
+                          type="radio"
+                          name="subcategory"
+                          checked={selectedFilters.subCategory === ""}
+                          onChange={() =>
+                            setSelectedFilters((prev) => ({
+                              ...prev,
+                              subCategory: "",
+                            }))
+                          }
+                          className="h-4 w-4 text-blue-600"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          All {selectedFilters.category}
+                        </span>
+                      </label>
+                    </li>
+                    {children.map((child) => (
+                      <li key={child._id}>
+                        <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <input
+                            type="radio"
+                            name="subcategory"
+                            checked={
+                              selectedFilters.subCategory ===
+                              child.category_name
+                            }
+                            onChange={() =>
+                              setSelectedFilters((prev) => ({
+                                ...prev,
+                                subCategory: child.category_name,
+                              }))
+                            }
+                            className="h-4 w-4 text-blue-600"
+                          />
+                          <span
+                            className={`text-sm ${
+                              selectedFilters.subCategory ===
+                              child.category_name
+                                ? "text-blue-600 font-medium"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            {child.category_name}
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
+
           {/* Brands */}
           <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
             <div className="flex items-center justify-between pb-2 bg-gray-300 p-2">

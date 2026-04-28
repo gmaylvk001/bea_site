@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import Brand from "@/models/ecom_brand_info";
+import Category from "@/models/ecom_category_info";
+import mongoose from "mongoose";
 
 export async function GET(req) {
   try {
@@ -14,9 +16,9 @@ export async function GET(req) {
     const minPrice = parseFloat(searchParams.get("minPrice") || "0");
     const maxPrice = parseFloat(searchParams.get("maxPrice") || "10000000");
     const sortBy = searchParams.get("sortBy") || "";
-    const category = searchParams.get("category") || ""; 
+    const category = searchParams.get("category") || "";
 
-    // Base query 
+    // Base query
     const query = {
       movement: { $in: ["EOL", "FOCUS"] },
       status: "Active",
@@ -30,22 +32,41 @@ export async function GET(req) {
       query.brand = { $in: brandIds };
     }
 
-    // Category filter 
+    // Category filter
     if (category) {
-      query.sub_category_name = {
-        $regex: `##${category}##|##${category}$`,
-        $options: "i"
-      };
+      const categoryDoc = await Category.findOne({
+        category_name: { $regex: `^${category}$`, $options: "i" },
+      }).lean();
+
+      if (categoryDoc) {
+        // Recursively get all child IDs
+        const getAllChildIds = async (parentId) => {
+          const children = await Category.find({ parentid: parentId }).lean();
+          let ids = [new mongoose.Types.ObjectId(parentId.toString())];
+          for (const child of children) {
+            const childIds = await getAllChildIds(child._id);
+            ids = ids.concat(childIds);
+          }
+          return ids;
+        };
+
+        const allCategoryIds = await getAllChildIds(categoryDoc._id);
+
+        query.$or = [
+          { category: { $in: allCategoryIds } },
+          { sub_category: { $in: allCategoryIds } },
+        ];
+      }
     }
 
     // Sort
     let sortQuery = {};
     switch (sortBy) {
       case "price-low-high":
-        sortQuery = { special_price: 1, price: 1 };
+        sortQuery = { effectivePrice: 1 };
         break;
       case "price-high-low":
-        sortQuery = { special_price: -1, price: -1 };
+        sortQuery = { effectivePrice: -1 };
         break;
       case "name-a-z":
         sortQuery = { name: 1 };
@@ -67,7 +88,8 @@ export async function GET(req) {
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
 
-    const needsPriceSort = sortBy === "price-low-high" || sortBy === "price-high-low";
+    const needsPriceSort =
+      sortBy === "price-low-high" || sortBy === "price-high-low";
 
     let products;
     if (needsPriceSort) {
@@ -80,18 +102,18 @@ export async function GET(req) {
                 if: {
                   $and: [
                     { $gt: ["$special_price", 0] },
-                    { $lt: ["$special_price", "$price"] }
-                  ]
+                    { $lt: ["$special_price", "$price"] },
+                  ],
                 },
                 then: "$special_price",
-                else: "$price"
-              }
-            }
-          }
+                else: "$price",
+              },
+            },
+          },
         },
         { $sort: sortQuery },
         { $skip: skip },
-        { $limit: limit }
+        { $limit: limit },
       ]);
     } else {
       products = await Product.find(query)
@@ -103,8 +125,12 @@ export async function GET(req) {
 
     // Brands list
     const allEOLProducts = await Product.find(
-      { movement: { $in: ["EOL", "FOCUS"] }, status: "Active", quantity: { $gt: 0 } },
-      { brand: 1 }
+      {
+        movement: { $in: ["EOL", "FOCUS"] },
+        status: "Active",
+        quantity: { $gt: 0 },
+      },
+      { brand: 1 },
     ).lean();
 
     const brandCountMap = {};
@@ -122,20 +148,86 @@ export async function GET(req) {
       count: brandCountMap[b._id.toString()] || 0,
     }));
 
-    // Categories list 
-    const allEOLForCategories = await Product.find(
-      { movement: { $in: ["EOL", "FOCUS"] }, status: "Active", quantity: { $gt: 0 } },
-      { sub_category_name: 1 }
+    // Categories — header API logic use 
+    const allProductsForCategories = await Product.find(
+      {
+        movement: { $in: ["EOL", "FOCUS"] },
+        status: "Active",
+        quantity: { $gt: 0 },
+      },
+      { category: 1, sub_category: 1 },
     ).lean();
 
-    const categorySet = new Set();
-    allEOLForCategories.forEach((p) => {
-      if (p.sub_category_name) {
-        const parts = p.sub_category_name.split("##");
-        if (parts[1]) categorySet.add(parts[1].trim());
-      }
+    // EOL products category IDs collect
+    const productCategoryIds = new Set();
+    allProductsForCategories.forEach((p) => {
+      if (p.category) productCategoryIds.add(p.category.toString());
+      if (p.sub_category) productCategoryIds.add(p.sub_category.toString());
     });
-    const categories = Array.from(categorySet).sort().reverse();
+
+    // எல்லா categories
+    const allCategories = await Category.find().sort({ position: 1 }).lean();
+
+    // Descendant IDs check — sync version
+    const getDescendantIdsSync = (catId, allCats) => {
+      const children = allCats.filter(
+        (c) => c.parentid?.toString() === catId.toString()
+      );
+      let ids = [catId.toString()];
+      for (const child of children) {
+        ids = ids.concat(getDescendantIdsSync(child._id, allCats));
+      }
+      return ids;
+    };
+
+    // T(header API logic)
+    const topLevelCategories = allCategories.filter((c) => {
+      const pid = c.parentid?.toString();
+      return !pid || pid === "0" || pid === "" || pid === "null" || pid === "none";
+    });
+
+    // Top level check
+    const filteredTopLevel = topLevelCategories.filter((cat) => {
+      const allIds = getDescendantIdsSync(cat._id, allCategories);
+      return allIds.some((id) => productCategoryIds.has(id));
+    });
+
+    // Children build
+    const categoryTree = filteredTopLevel.map((cat) => {
+  // 2nd level (Air Conditioners)
+  const children = allCategories
+    .filter((c) => c.parentid?.toString() === cat._id.toString())
+    .filter((c) => {
+      const allIds = getDescendantIdsSync(c._id, allCategories);
+      return allIds.some((id) => productCategoryIds.has(id));
+    });
+
+  return {
+    _id: cat._id,
+    category_name: cat.category_name,
+    subCategories: children.map((c) => {
+      // 3rd level (Inverter AC, Split AC)
+      const grandChildren = allCategories
+        .filter((g) => g.parentid?.toString() === c._id.toString())
+        .filter((g) => productCategoryIds.has(g._id.toString()));
+
+      return {
+        _id: c._id,
+        category_name: c.category_name,
+        subCategories: grandChildren.map((g) => ({
+          _id: g._id,
+          category_name: g.category_name,
+        })),
+      };
+    }),
+  };
+});
+
+    // Flat list — parent names
+    const flatCategoriesList = filteredTopLevel
+      .map((c) => c.category_name)
+      .sort()
+      .reverse();
 
     // Price range
     const priceData = await Product.aggregate([
@@ -144,12 +236,17 @@ export async function GET(req) {
         $addFields: {
           effectivePrice: {
             $cond: {
-              if: { $and: [{ $gt: ["$special_price", 0] }, { $lt: ["$special_price", "$price"] }] },
+              if: {
+                $and: [
+                  { $gt: ["$special_price", 0] },
+                  { $lt: ["$special_price", "$price"] },
+                ],
+              },
               then: "$special_price",
-              else: "$price"
-            }
-          }
-        }
+              else: "$price",
+            },
+          },
+        },
       },
       {
         $group: {
@@ -166,7 +263,8 @@ export async function GET(req) {
       success: true,
       products,
       brands: brandsWithCount,
-      categories,
+      categories: flatCategoriesList,
+      categoryTree,
       priceRange,
       pagination: {
         currentPage: page,
@@ -177,10 +275,10 @@ export async function GET(req) {
       },
     });
   } catch (error) {
-    console.error("❌ Open Box error:", error);
+    console.error(" Open Box error:", error);
     return NextResponse.json(
       { success: false, message: "Server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
