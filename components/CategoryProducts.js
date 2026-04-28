@@ -433,7 +433,8 @@ const getBannerRedirectUrls = (urls) => {
                                 className={`flex overflow-x-auto scrollbar-hide scroll-smooth gap-4 py-3 px-4 ${fewProducts ? "justify-center" : "justify-start"}`}
                                 style={{ WebkitOverflowScrolling: "touch" }}
                               >
-                              {products.slice(0, 15).map((product) => (
+                                {/* {products.slice(0, 15).map((product) => ( */}
+                              {products.map((product) => (
                                     <div
                                       key={product._id}
                                       // fixed responsive card widths so 5 fit on large screens; min-width keeps consistency

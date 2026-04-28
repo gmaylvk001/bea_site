@@ -179,7 +179,7 @@ export async function GET() {
         .sort((a, b) => b.quantity - a.quantity); // ✅ ADD THIS */
 
         // 🔥 GROUP BY BRAND (pick highest quantity product)
-        const brandMap = {};
+        /* const brandMap = {};
 
         cpProducts.forEach(product => {
           const brandId = product.brand?.toString();
@@ -201,7 +201,66 @@ export async function GET() {
         ...cp,
         subcategoryId: subcategory,
         products: uniqueBrandProducts, // ✅ FINAL OUTPUT
-      };
+      }; */
+
+      // 🔥 GROUP PRODUCTS BY BRAND
+const brandGroups = {};
+
+cpProducts.forEach(product => {
+  const brandId = product.brand?.toString();
+  if (!brandId) return;
+
+  if (!brandGroups[brandId]) {
+    brandGroups[brandId] = [];
+  }
+
+  brandGroups[brandId].push(product);
+});
+
+// ✅ Sort each brand's products (optional: by quantity)
+Object.values(brandGroups).forEach(group => {
+  group.sort((a, b) => b.quantity - a.quantity);
+});
+
+// 🔥 STEP 1: First round (1 per brand)
+const finalProducts = [];
+// const brandEntries = Object.entries(brandGroups);
+const brandEntries = Object.entries(brandGroups).sort(
+  (a, b) => (b[1][0]?.quantity || 0) - (a[1][0]?.quantity || 0)
+);
+
+// First round
+brandEntries.forEach(([brandId, products]) => {
+  if (products.length > 0) {
+    finalProducts.push(products.shift());
+  }
+});
+
+// 🔥 STEP 2: Continue based on remaining count (DESC)
+let remainingBrands = brandEntries.filter(([_, products]) => products.length > 0);
+
+while (remainingBrands.length > 0) {
+  // sort brands by remaining product count
+  remainingBrands.sort((a, b) => b[1].length - a[1].length);
+
+  for (let i = 0; i < remainingBrands.length; i++) {
+    const [brandId, products] = remainingBrands[i];
+
+    if (products.length > 0) {
+      finalProducts.push(products.shift());
+    }
+  }
+
+  // remove empty brands
+  remainingBrands = remainingBrands.filter(([_, products]) => products.length > 0);
+}
+
+// ✅ FINAL OUTPUT
+return {
+  ...cp,
+  subcategoryId: subcategory,
+  products: finalProducts,
+};
     });
 
     // 7️⃣ Remove empty categories
