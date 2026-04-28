@@ -14,6 +14,35 @@ function escapeRegExp(str = "") {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+async function getCategoryTree(parentId, productCategoryIds = null) {
+  const categories = await Category.find({ parentid: parentId }).lean();
+  let filteredCategories = [];
+  for (const category of categories) {
+    if (productCategoryIds) {
+      if (productCategoryIds.includes(category._id.toString())) {
+        category.subCategories = await getCategoryTree(
+          category._id,
+          productCategoryIds,
+        );
+        filteredCategories.push(category);
+      } else {
+        const children = await getCategoryTree(
+          category._id,
+          productCategoryIds,
+        );
+        if (children.length > 0) {
+          category.subCategories = children;
+          filteredCategories.push(category);
+        }
+      }
+    } else {
+      category.subCategories = await getCategoryTree(category._id);
+      filteredCategories.push(category);
+    }
+  }
+  return filteredCategories;
+}
+
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
 
@@ -46,10 +75,15 @@ export async function GET(req) {
     if (query) {
       const safe = escapeRegExp(query);
       const regex = new RegExp(safe, "i");
-      searchFilter.$or = [
-        { name: regex },
-        { item_code: regex },
-        { search_keywords: regex },
+      searchFilter.$and = [
+        ...(searchFilter.$and || []),
+        {
+          $or: [
+            { name: regex },
+            { item_code: regex },
+            { search_keywords: regex },
+          ],
+        },
       ];
     }
 
@@ -81,25 +115,51 @@ export async function GET(req) {
       searchFilter.brand = { $in: brands };
     }
 
+    /* --- CATEGORY IDS FILTER --- */
+
+    const categoryIds = (searchParams.get("categoryIds") || "")
+      .split(",")
+      .filter((v) => mongoose.Types.ObjectId.isValid(v));
+    const subcategoryIds = (searchParams.get("subcategoryIds") || "")
+      .split(",")
+      .filter((v) => mongoose.Types.ObjectId.isValid(v));
+
+    if (categoryIds.length > 0 || subcategoryIds.length > 0) {
+      const allIds = [...categoryIds, ...subcategoryIds];
+       const categoryConditions = allIds.map(id => ({
+    $or: [
+      { category: id },
+      { sub_category: id }
+    ]
+  }));
+  
+  searchFilter.$and = [
+    ...(searchFilter.$and || []),
+    { $and: categoryConditions }
+  ];
+}
+
     /* ---------------- PRICE FILTER ---------------- */
-    searchFilter.$and = [
+  
+searchFilter.$and = [
+  ...(searchFilter.$and || []), 
+  {
+    $or: [
       {
-        $or: [
-          {
-            $and: [
-              { special_price: { $ne: null, $ne: 0 } },
-              { special_price: { $gte: minPrice, $lte: maxPrice } },
-            ],
-          },
-          {
-            $and: [
-              { $or: [{ special_price: null }, { special_price: 0 }] },
-              { price: { $gte: minPrice, $lte: maxPrice } },
-            ],
-          },
+        $and: [
+          { special_price: { $ne: null, $ne: 0 } },
+          { special_price: { $gte: minPrice, $lte: maxPrice } },
         ],
       },
-    ];
+      {
+        $and: [
+          { $or: [{ special_price: null }, { special_price: 0 }] },
+          { price: { $gte: minPrice, $lte: maxPrice } },
+        ],
+      },
+    ],
+  },
+];
 
     /* ---------------- BASE PRODUCT QUERY ---------------- */
     let productsQuery = Product.find(searchFilter);
@@ -184,9 +244,7 @@ export async function GET(req) {
 
     const filterDefIds = [
       ...new Set(
-        productFilterDocs
-          .map((pf) => pf.filter_id?.toString())
-          .filter(Boolean)
+        productFilterDocs.map((pf) => pf.filter_id?.toString()).filter(Boolean),
       ),
     ];
 
@@ -205,6 +263,53 @@ export async function GET(req) {
       filter_group_name: f.filter_group?.filtergroup_name || "Other",
     }));
 
+   /* ---------------- CATEGORY TREE ---------------- */
+
+/* ---------------- CATEGORY TREE - SIMPLEST WORKING VERSION ---------------- */
+
+const productSubCategoryIds = [
+  ...new Set([
+    ...products.map(p => p.sub_category?.toString()).filter(Boolean),
+    ...products.map(p => p.category?.toString()).filter(Boolean),
+  ])
+];
+
+let categoryTree = [];
+
+if (productSubCategoryIds.length > 0) {
+  // Get unique category IDs
+  const uniqueCategoryIds = [...new Set(productSubCategoryIds)];
+  
+  // Fetch all these categories
+  const categoriesWithProducts = await Category.find({
+    _id: { $in: uniqueCategoryIds }
+  }).lean();
+  
+  // Simple flat list (no hierarchy)
+  categoryTree = categoriesWithProducts.map(c => ({
+    ...c,
+    subCategories: []
+  }));
+  
+  console.log("Created flat category list:", categoryTree.length);
+}
+
+// If still no categories, try to fetch by category name
+if (categoryTree.length === 0 && category) {
+  const categoryByName = await Category.findOne({ 
+    category_name: category,
+    status: 'Active' 
+  }).lean();
+  
+  if (categoryByName) {
+    categoryTree = [{
+      ...categoryByName,
+      subCategories: []
+    }];
+  }
+}
+
+console.log("Final categories to display:", categoryTree.map(c => c.category_name));
     /* ---------------- RETURN ---------------- */
     return NextResponse.json({
       products,
@@ -218,6 +323,7 @@ export async function GET(req) {
       brandSummary,
       filterSummary,
       filterDefs: formattedFilterDefs,
+      categories: categoryTree,
     });
   } catch (error) {
     console.error("❌ Search API Error:", error);

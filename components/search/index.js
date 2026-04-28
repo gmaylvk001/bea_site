@@ -51,6 +51,10 @@ export default function SearchPage() {
  const [allFiltersFromResults, setAllFiltersFromResults] = useState([]);
   const [brandsExpanded, setBrandsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState({});
+  const [categoryData, setCategoryData] = useState({ categories: [] });
+const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
+const [selectedCategories, setSelectedCategories] = useState([]);
+const [selectedSubcategories, setSelectedSubcategories] = useState([]);
 
   const [page, setPage] = useState(urlPage);
 
@@ -131,6 +135,10 @@ useEffect(() => {
     if (max != null) qp.set("maxPrice", max);
     qp.set("page", p);
     qp.set("limit", 12);
+    const categoryIds = overrides.categoryIds ?? selectedCategories.join(',');
+const subcategoryIds = overrides.subcategoryIds ?? selectedSubcategories.join(',');
+if (categoryIds) qp.set("categoryIds", categoryIds);
+if (subcategoryIds) qp.set("subcategoryIds", subcategoryIds);
     return qp.toString();
   };
 
@@ -148,6 +156,8 @@ useEffect(() => {
         setBrandSummaryRaw(Array.isArray(data.brandSummary) ? data.brandSummary : []);
         setFilterSummaryRaw(Array.isArray(data.filterSummary) ? data.filterSummary : []);
       setAllFiltersFromResults(Array.isArray(data.filterDefs) ? data.filterDefs : []);
+      console.log("Categories from API:", data.categories); 
+      setCategoryData({ categories: Array.isArray(data.categories) ? data.categories : [] });
       } catch (err) {
         console.error("Search API error", err);
         setProducts([]);
@@ -171,6 +181,8 @@ useEffect(() => {
     values[0],
     values[1],
     Object.keys(brandMap).length,
+    selectedCategories.join(","),   
+  selectedSubcategories.join(","),
   ]);
 
   // map brandSummary (raw) -> searchBrands with names
@@ -259,6 +271,255 @@ useEffect(() => {
   }
 }, [filterGroups]);
 
+ const [expandedCategoriesState, setExpandedCategoriesState] = useState({});
+
+// Auto-expand all parent categories when categories load
+useEffect(() => {
+  if (categoryData.categories && categoryData.categories.length > 0) {
+    const expandAll = (categories) => {
+      const expanded = {};
+      const traverse = (cats) => {
+        cats.forEach(cat => {
+          if (cat.subCategories && cat.subCategories.length > 0) {
+            expanded[cat._id] = true;
+            traverse(cat.subCategories);
+          }
+        });
+      };
+      traverse(categories);
+      setExpandedCategoriesState(expanded);
+    };
+    expandAll(categoryData.categories);
+  }
+}, [categoryData.categories]);
+
+ const handleCategoryFilterChange = (type, value, categoryItem = null) => {
+  if (type === 'categories') {
+    // Get all child category IDs for this parent
+    const getAllChildIds = (category) => {
+      const childIds = [category._id];
+      if (category.subCategories && category.subCategories.length > 0) {
+        category.subCategories.forEach(child => {
+          childIds.push(...getAllChildIds(child));
+        });
+      }
+      return childIds;
+    };
+    
+    // Find the category object from tree
+    const findCategory = (categories, id) => {
+      for (let cat of categories) {
+        if (cat._id === id) return cat;
+        if (cat.subCategories) {
+          const found = findCategory(cat.subCategories, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const categoryObj = findCategory(categoryData.categories, value);
+    let idsToToggle = [value];
+    
+    if (categoryObj && categoryObj.subCategories && categoryObj.subCategories.length > 0) {
+      // Parent category - get all children
+      idsToToggle = getAllChildIds(categoryObj);
+    }
+    
+    // Check if parent is currently selected
+    const isParentSelected = selectedCategories.includes(value);
+    let newSelectedCategories = [...selectedCategories];
+    
+    if (isParentSelected) {
+      // Remove parent and all children
+      newSelectedCategories = newSelectedCategories.filter(id => !idsToToggle.includes(id));
+    } else {
+      // Add parent and all children
+      idsToToggle.forEach(id => {
+        if (!newSelectedCategories.includes(id)) {
+          newSelectedCategories.push(id);
+        }
+      });
+    }
+    
+    setSelectedCategories(newSelectedCategories);
+    setPage(1);
+    
+    const qs = buildQueryParams({ 
+      brands: selectedBrands,
+      filters: selectedFilters,
+      min: values[0],
+      max: values[1],
+      categoryIds: newSelectedCategories.join(','), 
+      subcategoryIds: selectedSubcategories.join(','), 
+      page: 1 
+    });
+    router.push(`/search?${qs}`);
+    
+  } else if (type === 'subcategories') {
+    // For subcategory, toggle normally
+    const next = selectedSubcategories.includes(value)
+      ? selectedSubcategories.filter(id => id !== value)
+      : [...selectedSubcategories, value];
+    setSelectedSubcategories(next);
+    setPage(1);
+    
+    const qs = buildQueryParams({ 
+      brands: selectedBrands,
+      filters: selectedFilters,
+      min: values[0],
+      max: values[1],
+      categoryIds: selectedCategories.join(','), 
+      subcategoryIds: next.join(','), 
+      page: 1 
+    });
+    router.push(`/search?${qs}`);
+  }
+};
+
+const CategoryTree = ({ 
+  categories, 
+  level = 0, 
+  selectedCategories,
+  selectedSubcategories,
+  onFilterChange 
+}) => {
+  const [localExpandedCategories, setLocalExpandedCategories] = useState({});
+  
+  // Initialize with all categories expanded
+  useEffect(() => {
+    const allExpanded = {};
+    const expandAll = (cats) => {
+      cats.forEach(cat => {
+        if (cat.subCategories?.length > 0) {
+          allExpanded[cat._id] = true;
+          expandAll(cat.subCategories);
+        }
+      });
+    };
+    expandAll(categories);
+    setLocalExpandedCategories(allExpanded);
+  }, [categories]);
+
+  const toggleCategory = (categoryId) => {
+    setLocalExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+  
+  // Check if a category is selected (parent or child)
+  const isCategorySelected = (category) => {
+    if (selectedCategories.includes(category._id)) return true;
+    // Check if any child is selected
+    if (category.subCategories) {
+      return category.subCategories.some(child => 
+        selectedCategories.includes(child._id) || isCategorySelected(child)
+      );
+    }
+    return false;
+  };
+  
+  // Get selection state for checkbox
+  const getCheckboxState = (category) => {
+    const isSelected = selectedCategories.includes(category._id);
+    const hasSelectedChildren = category.subCategories?.some(child => 
+      selectedCategories.includes(child._id)
+    );
+    
+    if (isSelected) return 'checked';
+    if (hasSelectedChildren) return 'indeterminate';
+    return 'unchecked';
+  };
+
+  return (
+    <div className="space-y-2">
+      {categories.map((category) => {
+        const checkboxState = getCheckboxState(category);
+        const isIndeterminate = checkboxState === 'indeterminate';
+        
+        return (
+          <div key={category._id}>
+            <div className={`flex items-center gap-2 ${level > 0 ? `ml-${Math.min(level * 4, 8)}` : ''}`}>
+              <label className="flex items-center gap-2 flex-1 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                <input
+                  type="checkbox"
+                  ref={el => {
+                    if (el && isIndeterminate) {
+                      el.indeterminate = true;
+                    }
+                  }}
+                  checked={checkboxState === 'checked'}
+                  onChange={() => onFilterChange('categories', category._id, category)}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className={`text-sm ${checkboxState !== 'unchecked' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
+                  {category.category_name}
+                  {category.count !== undefined && category.count > 0 && (
+                    <span className="text-xs text-gray-400 ml-1">({category.count})</span>
+                  )}
+                </span>
+              </label>
+              
+              {category.subCategories?.length > 0 && (
+                <button 
+                  type="button" 
+                  onClick={() => toggleCategory(category._id)} 
+                  className="p-1 rounded hover:bg-gray-200 flex-shrink-0"
+                >
+                  {localExpandedCategories[category._id] ? (
+                    <ChevronUp size={16} />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
+                </button>
+              )}
+            </div>
+            
+            {category.subCategories?.length > 0 && localExpandedCategories[category._id] && (
+              <div className={`mt-1 ${level === 0 ? 'ml-4' : 'ml-6'}`}>
+                <CategoryTree
+                  categories={category.subCategories}
+                  level={level + 1}
+                  selectedCategories={selectedCategories}
+                  selectedSubcategories={selectedSubcategories}
+                  onFilterChange={onFilterChange}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+useEffect(() => {
+  if (products.length > 0 && categoryData.categories.length === 0) {
+    // Extract unique categories from products
+    const productCategories = {};
+    products.forEach(p => {
+      if (p.category) {
+        const catId = p.category._id || p.category;
+        const catName = p.category.category_name || p.category;
+        if (!productCategories[catId]) {
+          productCategories[catId] = { _id: catId, category_name: catName };
+        }
+      }
+    });
+    
+    const flatCategories = Object.values(productCategories);
+    if (flatCategories.length > 0) {
+      setCategoryData(prev => ({ 
+        ...prev, 
+        categories: flatCategories 
+      }));
+      console.log("Created flat categories from products:", flatCategories);
+    }
+  }
+}, [products]);
+
+
   // pagination UI generator (limited)
   const renderPagination = () => {
     if (!pagination || pagination.totalPages <= 1) return null;
@@ -289,6 +550,7 @@ useEffect(() => {
   return (
     <div className="container mx-auto px-4 py-4">
       <div className="max-w-7xl mx-auto">
+     
         <h1 className="text-3xl font-bold mb-3 text-gray-600">Search Results {category && `in ${category}`} {searchQuery && `for '${searchQuery}'`}</h1>
 
         {/* Applied Filter Chips */}
@@ -320,6 +582,34 @@ useEffect(() => {
         <div className="flex flex-col md:flex-row gap-4">
           {/* Sidebar */}
           <div className="w-full md:w-[260px] shrink-0 space-y-4">
+            {/* Categories */}
+            {console.log("Category check:", { 
+  categoriesLength: categoryData.categories?.length, 
+  categories: categoryData.categories 
+})}
+{/* Categories Section with Hierarchy */}
+{categoryData.categories && categoryData.categories.length > 0 && (
+  <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+    <div className="flex items-center justify-between pb-2">
+      <h3 className="text-base font-semibold text-gray-700">Categories</h3>
+      <button 
+        onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)} 
+        className="text-gray-500 hover:text-gray-700"
+      >
+        <ChevronDown className={`transform transition-transform ${isCategoriesExpanded ? 'rotate-180' : ''}`} size={18} />
+      </button>
+    </div>
+    
+    {isCategoriesExpanded && (
+      <CategoryTree
+        categories={categoryData.categories}
+        selectedCategories={selectedCategories}
+        selectedSubcategories={selectedSubcategories}
+        onFilterChange={handleCategoryFilterChange}
+      />
+    )}
+  </div>
+)}
             {/* Price */}
             <div className="bg-white p-4 rounded shadow-sm border">
               <div className="flex items-center justify-between mb-2">
