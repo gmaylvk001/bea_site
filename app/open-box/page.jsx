@@ -435,6 +435,7 @@ export default function OpenBoxPage() {
                   />
                 )}
                 {/* Discount Badge */}
+              
                 {product.special_price &&
                   product.special_price !== product.price &&
                   100 - (product.special_price / product.price) * 100 > 0 && (
@@ -1108,6 +1109,9 @@ export default function OpenBoxPage() {
                         />
                       )}
                       {/* Discount Badge */}
+                      <span className="absolute bottom-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 animate-pulse tracking-wide uppercase">
+                       🏷️ Clearance Sale
+                      </span>
                       {product.special_price &&
                         product.special_price !== product.price &&
                         100 - (product.special_price / product.price) * 100 >

@@ -16,6 +16,7 @@ export default function CategoryPage() {
     brands: [],
     filters: []
   });
+  
   //console.log(categoryData);
   const [showEndMessage, setShowEndMessage] = useState(false);
   // For filter group show more
@@ -27,6 +28,7 @@ export default function CategoryPage() {
     price: { min: 0, max: 100000 },
     filters: []
   });
+  
 const CUSTOM_FILTER_ORDER = [
   "Stock Status",
   "STAR RATING",
@@ -68,6 +70,11 @@ const CUSTOM_FILTER_ORDER = [
   const [wishlist, setWishlist] = useState([]); 
   const toggleFilters = () => setIsFiltersExpanded(!isFiltersExpanded);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedChildCategory, setSelectedChildCategory] = useState("");
+  const [childCategoryTree, setChildCategoryTree] = useState([]);
+ 
+   const selectedChildCategoryRef = useRef("");
+
 
   const toggleCategories = () => {
     setIsCategoriesExpanded(!isCategoriesExpanded);
@@ -160,24 +167,49 @@ const scroll = (direction) => {
         categoryTree: categoryData.category,
         allCategoryIds: categoryData.allCategoryIds
       });
+       if (categoryData.category?.length > 0) {
+      const children = categoryData.category.map(c => ({
+        _id: c._id,
+       category_name: c.category_name,
+       category_slug: c.category_slug,
+       allIds: [c._id, ...(c.subCategories || []).map(s => s._id)]
+     }));
+      setChildCategoryTree(children);
+    }
+    if (categoryData.products?.length > 0) {
+  // ✅ special_price இல்லன்னா price use பண்ணு, இரண்டும் இல்லன்னா 0
+  const prices = categoryData.products
+    .map(p => Number(p.special_price) > 0 ? Number(p.special_price) : Number(p.price))
+    .filter(p => !isNaN(p) && p > 0);
 
-      if (categoryData.products?.length > 0) {
-        const prices = categoryData.products.map(p => p.special_price);
-        let minPrice = Math.min(...prices);
-        let maxPrice = Math.max(...prices);
+  let minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  let maxPrice = prices.length > 0 ? Math.max(...prices) : 100000;
 
-        // ✅ Fix: If only one product, add a small buffer
-        if (minPrice === maxPrice) {
-          minPrice = minPrice - 1; // or e.g., minPrice * 0.95
-          maxPrice = maxPrice + 1; // or e.g., maxPrice * 1.05
-        }
+  // ✅ min === max buffer
+  if (minPrice === maxPrice) {
+    minPrice = Math.max(0, minPrice - 100);
+    maxPrice = maxPrice + 100;
+  }
 
-        setPriceRange([minPrice, maxPrice]);
-        setSelectedFilters(prev => ({
-          ...prev,
-          price: { min: minPrice, max: maxPrice }
-        }));
-      }
+  // ✅ Final safety check - NaN 
+  if (isNaN(minPrice) || isNaN(maxPrice)) {
+    minPrice = 0;
+    maxPrice = 100000;
+  }
+
+  setPriceRange([minPrice, maxPrice]);
+  setSelectedFilters(prev => ({
+    ...prev,
+    price: { min: minPrice, max: maxPrice }
+  }));
+} else {
+  // ✅ Products 
+  setPriceRange([0, 100000]);
+  setSelectedFilters(prev => ({
+    ...prev,
+    price: { min: 0, max: 100000 }
+  }));
+}
 
       const groups = {};
       categoryData.filters.forEach(filter => {
@@ -249,6 +281,13 @@ Object.keys(groups).forEach(key => {
 
       //query.set('categoryIds', categoryIds.join(','));
       query.set('sub_category_new',  categoryData.main_category.md5_cat_name);
+       const activeChild = selectedChildCategoryRef.current;
+        if (activeChild) {
+           const node = childCategoryTree.find(c => c.category_name === activeChild);
+          if (node) {
+    query.set('categoryIds', node.allIds.join(','));
+            }
+          }
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
@@ -302,7 +341,7 @@ Object.keys(groups).forEach(key => {
     } finally {
       setLoading(false);
     }
-  }, [selectedFilters]);
+  }, [selectedFilters, selectedChildCategory, childCategoryTree]);
 
   // const fetchMoreData = () => {
   //   if (!loading && hasMore) {
@@ -597,12 +636,11 @@ Object.keys(groups).forEach(key => {
     );
   };
 
-  useEffect(() => {
-    if (categoryData.main_category && categoryData.category) {
-      // setPage(1);
-      fetchFilteredProducts( categoryData,1);
-    }
-  }, [selectedFilters, categoryData.main_category, categoryData.category]);
+useEffect(() => {
+  if (categoryData.main_category && categoryData.category) {
+    fetchFilteredProducts(categoryData, 1);
+  }
+}, [selectedFilters, selectedChildCategory, categoryData.main_category, categoryData.category, fetchFilteredProducts]);
 
   const clearAllFilters = () => {
     setSelectedFilters({
@@ -611,6 +649,8 @@ Object.keys(groups).forEach(key => {
       price: { min: priceRange[0], max: priceRange[1] },
       filters: []
     });
+    setSelectedChildCategory(""); 
+    selectedChildCategoryRef.current = "";
   };
 
   const sortFilterValues = (a, b) => {
@@ -1168,17 +1208,67 @@ Object.keys(groups).forEach(key => {
                         )}
                       </div>
                       */}
+                         {/* ✅ Child Category Filter */}
+{childCategoryTree.length > 0 && (
+  <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+    <div className="flex items-center justify-between pb-2">
+      <h3 className="text-base font-semibold text-gray-700">Categories</h3>
+      <button onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}>
+        {isCategoriesExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+      </button>
+    </div>
+    {isCategoriesExpanded && (
+      <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+        <li>
+          <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+            <input
+              type="radio"
+              name="childCategory"
+              checked={selectedChildCategory === ""}
+              onChange={() => {
+                   setSelectedChildCategory("");
+                   selectedChildCategoryRef.current = "";
+                     }}
+              className="h-4 w-4 text-blue-600"
+            />
+            <span className="text-sm font-medium text-gray-700">All</span>
+          </label>
+        </li>
+        {childCategoryTree.map((cat) => (
+          <li key={cat._id}>
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+              <input
+                type="radio"
+                name="childCategory"
+                checked={selectedChildCategory === cat.category_name}
+                onChange={() => {
+               setSelectedChildCategory(cat.category_name);
+                selectedChildCategoryRef.current = cat.category_name;
+                   }}
+                className="h-4 w-4 text-blue-600"
+              />
+              <span className={`text-sm ${selectedChildCategory === cat.category_name ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                {cat.category_name}
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+)}
+
                       {/* Price Filter */}
                                 <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
                             <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
                       
-                            <ReactRange
+                            <ReactRange 
                               values={values}
                               step={STEP}
                               min={MIN}
                               max={MAX}
-                              onChange={(newValues) => setValues(newValues)} // move thumbs
-                              onFinalChange={(newValues) => handlePriceChange(newValues)} // apply on release
+                              onChange={(newValues) => setValues(newValues)} 
+                              onFinalChange={(newValues) => handlePriceChange(newValues)}
                               renderTrack={({ props, children }) => (
                                 <div
                                   {...props}
@@ -1430,7 +1520,7 @@ Object.keys(groups).forEach(key => {
                                   )}
             
                             {/* Price Filter */}
-                            <div className="bg-white p-4 rounded-lg shadow-sm border">
+                            {/* <div className="bg-white p-4 rounded-lg shadow-sm border">
                               <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
                         
                               <ReactRange
@@ -1473,8 +1563,56 @@ Object.keys(groups).forEach(key => {
                                 <span>₹{values[0].toLocaleString()}</span>
                                 <span>₹{values[1].toLocaleString()}</span>
                               </div>
-                            </div>
-            
+                            </div> */}
+                                 {/* ✅ Child Category Filter */}
+{childCategoryTree.length > 0 && (
+  <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+    <div className="flex items-center justify-between pb-2">
+      <h3 className="text-base font-semibold text-gray-700">Categories</h3>
+      <button onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}>
+        {isCategoriesExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+      </button>
+    </div>
+    {isCategoriesExpanded && (
+      <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+        <li>
+          <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+            <input
+              type="radio"
+              name="childCategory"
+              checked={selectedChildCategory === ""}
+              onChange={() => {
+                        setSelectedChildCategory("");
+                        selectedChildCategoryRef.current = "";
+                              }}
+              className="h-4 w-4 text-blue-600"
+            />
+            <span className="text-sm font-medium text-gray-700">All</span>
+          </label>
+        </li>
+        {childCategoryTree.map((cat) => (
+          <li key={cat._id}>
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+              <input
+                type="radio"
+                name="childCategory"
+                checked={selectedChildCategory === cat.category_name}
+                onChange={() => {
+                   setSelectedChildCategory(cat.category_name);
+                   selectedChildCategoryRef.current = cat.category_name;
+                       }}
+                className="h-4 w-4 text-blue-600"
+              />
+              <span className={`text-sm ${selectedChildCategory === cat.category_name ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                {cat.category_name}
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+)}
                             {/* Brands Filter */}
                             <div className="bg-white p-4 rounded-lg shadow-sm border">
                               <div className="flex items-center justify-between pb-2">

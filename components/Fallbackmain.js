@@ -19,6 +19,10 @@ export default function CategoryPage(params) {
     filters: [],
     main_category: null
   });
+const [categoryTree, setCategoryTree] = useState([]);
+const [selectedCategory, setSelectedCategory] = useState("");
+const [selectedSubCategory, setSelectedSubCategory] = useState("");
+
   const [showEndMessage, setShowEndMessage] = useState(false);
   const [products, setProducts] = useState([]);
    const [isModalOpen, setIsModalOpen] = useState(false);
@@ -171,6 +175,40 @@ const fetchInitialData = async () => {
       banners: categoryData.main_category?.banners || []
     });
 
+    // fetchInitialData-ல் setCategoryData-க்கு கீழ் போடுங்க
+const buildTree = (categories, parentId) => {
+  return categories
+    .filter(c => c.parentid?.toString() === parentId?.toString())
+    .map(c => ({
+      _id: c._id,
+      category_name: c.category_name,
+      subCategories: buildTree(categories, c._id)
+    }));
+};
+console.log("full category array:", categoryData.category);
+console.log("category[0]:", categoryData.category[0]);
+console.log("category[0].parentid:", categoryData.category[0]?.parentid);
+console.log("main_category._id:", categoryData.main_category?._id);
+// categoryData.category  categories array
+if (categoryData.category?.length > 0) {
+  // current page
+const directChildren = categoryData.category.map(c => ({
+  _id: c._id,
+  category_name: c.category_name,
+  subCategories: (c.subCategories || []).map(sub => ({
+    _id: sub._id,
+    category_name: sub.category_name,
+    subCategories: (sub.subCategories || []).map(grand => ({
+      _id: grand._id,
+      category_name: grand.category_name,
+      subCategories: []
+    }))
+  }))
+}));
+
+setCategoryTree(directChildren);
+}
+     
     // Price range logic
     if (categoryData.products?.length > 0) {
       const prices = categoryData.products.map(p => p.special_price || p.price);
@@ -284,7 +322,44 @@ const fetchInitialData = async () => {
         ? selectedFilters.categories
         : categoryData.allCategoryIds;
 
-      query.set('categoryIds', categoryIds.join(','));
+// ✅ இதை போடுங்க
+if (selectedSubCategory || selectedCategory) {
+  const activeName = selectedSubCategory || selectedCategory;
+
+  const findNode = (tree, name) => {
+    for (const node of tree) {
+      if (node.category_name === name) return node;
+      if (node.subCategories?.length > 0) {
+        const found = findNode(node.subCategories, name);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const node = findNode(categoryTree, activeName);
+
+  if (node) {
+    const getAllIds = (n) => {
+      let ids = [n._id.toString()];
+      if (n.subCategories?.length > 0) {
+        n.subCategories.forEach(child => {
+          ids = ids.concat(getAllIds(child));
+        });
+      }
+      return ids;
+    };
+
+    const selectedIds = getAllIds(node);
+    console.log("selectedIds:", selectedIds);
+    query.set('categoryIds', selectedIds.join(','));
+  }
+} else {
+  const categoryIds = selectedFilters.categories.length > 0
+    ? selectedFilters.categories
+    : categoryData.allCategoryIds;
+  query.set('categoryIds', categoryIds.join(','));
+}
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
@@ -297,7 +372,6 @@ const fetchInitialData = async () => {
       if (selectedFilters.filters.length > 0) {
         query.set('filters', selectedFilters.filters.join(','));
       }
-
       const res = await fetch(`/api/product/filter/main-cat?${query}`);
       const { products, pagination: paginationData } = await res.json();
 
@@ -324,7 +398,7 @@ const fetchInitialData = async () => {
     } finally {
       if (!initialLoad) setLoading(false);
     }
-  }, [selectedFilters]);
+  }, [selectedFilters, , selectedCategory, selectedSubCategory]);
 
   const handleProductClick = (product) => {
     const stored = JSON.parse(localStorage.getItem('recentlyViewed')) || [];
@@ -535,7 +609,7 @@ const fetchInitialData = async () => {
     if (categoryData.main_category && categoryData.category && initialLoadComplete) {
       fetchFilteredProducts(categoryData, 1);
     }
-  }, [selectedFilters, categoryData.main_category, categoryData.category, initialLoadComplete]);
+  }, [selectedFilters,selectedCategory, selectedSubCategory,categoryData.main_category, categoryData.category, initialLoadComplete]);
 
   const clearAllFilters = () => {
     setSelectedFilters({
@@ -544,6 +618,8 @@ const fetchInitialData = async () => {
       price: { min: priceRange[0], max: priceRange[1] },
       filters: []
     });
+      setSelectedCategory("");     
+      setSelectedSubCategory(""); 
   };
 
   const handlePageChange = (page) => {
@@ -1161,7 +1237,118 @@ const fetchInitialData = async () => {
                       <span>₹{values[1].toLocaleString()}</span>
                     </div>
                   </div>
+                 {/* Categories */}
+{categoryTree.length > 0 && (
+  <>
+    <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+      <div className="flex items-center justify-between pb-2">
+        <h3 className="text-base font-semibold text-gray-700">Categories</h3>
+        <button onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}>
+          {isCategoriesExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </button>
+      </div>
+      {isCategoriesExpanded && (
+        <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+          <li>
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+              <input
+                type="radio"
+                name="category"
+                checked={selectedCategory === ""}
+                onChange={() => {
+                  setSelectedCategory("");
+                  setSelectedSubCategory("");
+                }}
+                className="h-4 w-4 text-blue-600"
+              />
+              <span className="text-sm font-medium text-gray-700">All Categories</span>
+            </label>
+          </li>
+          {categoryTree.map((cat) => (
+            <li key={cat._id}>
+              <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                <input
+                  type="radio"
+                  name="category"
+                  checked={selectedCategory === cat.category_name}
+                  onChange={() => {
+                    setSelectedCategory(cat.category_name);
+                    setSelectedSubCategory("");
+                  }}
+                  className="h-4 w-4 text-blue-600"
+                />
+                <span className={`text-sm ${selectedCategory === cat.category_name ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                  {cat.category_name}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
 
+    {/* Sub Categories */}
+{selectedCategory && (() => {
+  const findNode = (tree, name) => {
+    for (const node of tree) {
+      if (node.category_name === name) return node;
+      if (node.subCategories?.length > 0) {
+        const found = findNode(node.subCategories, name);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  //  selectedCategory
+const node = findNode(categoryTree, selectedCategory);
+const children = node?.subCategories || [];
+  if (children.length === 0) return null;
+
+  return (
+    <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+      <div className="bg-gray-300 p-2 mb-2">
+        <h3 className="text-base font-semibold text-gray-700">
+          {selectedCategory}
+        </h3>
+      </div>
+      <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+        <li>
+          <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+            <input
+              type="radio"
+              name="subcategory"
+              checked={selectedSubCategory === ""}
+              onChange={() => setSelectedSubCategory("")}
+              className="h-4 w-4 text-blue-600"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              All {selectedCategory}
+            </span>
+          </label>
+        </li>
+        {children.map((child) => (
+          <li key={child._id}>
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+              <input
+                type="radio"
+                name="subcategory"
+                checked={selectedSubCategory === child.category_name}
+                onChange={() => setSelectedSubCategory(child.category_name)}
+                className="h-4 w-4 text-blue-600"
+              />
+              <span className={`text-sm ${selectedSubCategory === child.category_name ? 'text-blue-600 font-medium' : 'text-gray-600'}`}>
+                {child.category_name}
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+})()}
+  </>
+)}
               {/* Brand Filter */}
               <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
                 <div className="flex items-center justify-between pb-2">

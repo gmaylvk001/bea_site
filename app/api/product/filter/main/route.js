@@ -9,7 +9,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
    // console.log('🔍 API Request Params:', Object.fromEntries(searchParams.entries()));
     
-    //const categoryIds = searchParams.get('categoryIds')?.split(',') || [];
+    const categoryIds = searchParams.get('categoryIds')?.split(',') || [];
     const sub_category_new = searchParams.get('sub_category_new');
     const brandIds = searchParams.get('brands')?.split(',') || [];
     const minPrice = parseFloat(searchParams.get('minPrice')) || 0;
@@ -40,7 +40,7 @@ if (sub_category_new && typeof sub_category_new === "string") {
 }
 
     // Category filter - try different possible category fields
-    /*
+    
     if (categoryIds.length > 0) {
       query.$or = [
         { sub_category: { $in: categoryIds } },
@@ -48,7 +48,7 @@ if (sub_category_new && typeof sub_category_new === "string") {
         { main_category: { $in: categoryIds } }
       ];
     }
-      */
+      
 
     // Brand filter
     if (brandIds.length > 0) {
