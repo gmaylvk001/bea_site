@@ -31,16 +31,17 @@ export async function PUT(req) {
     const status = formData.get("status") || "Active";
     const content = formData.get("content") || ""; // ✅ Add content field
     const file = formData.get("image");
-    const existingImage = formData.get("existingImage");
+    const existingImage = formData.get("existingImage")?.replace(/^https?:\/\/[^/]+/, "") || null;
      const navFile = formData.get("navImage");
-     const existingNavImage = formData.get("existingNavImage");
+     const existingNavImage = formData.get("existingNavImage")?.replace(/^https?:\/\/[^/]+/, "") || null;
     const selectedFilters = formData.get("selectedFilters"); // Get selected filters
 
     if (!_id || !category_name) {
       return NextResponse.json({ error: "Category ID and name are required" }, { status: 400 });
     }
 
-    // Find the existing category
+    // Find the existing category  
+    
     const existingCategory = await Category.findById(_id);
     if (!existingCategory) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });

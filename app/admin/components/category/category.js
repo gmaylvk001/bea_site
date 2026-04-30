@@ -222,8 +222,8 @@ export default function CategoryComponent() {
       // First set the basic category data
       setCategoryToUpdate({
         ...category,
-        existingImage: category.image || null,
-        existingNavImage: category.navImage || null,
+        existingImage: category.image?.replace(/^https?:\/\/[^/]+/, "") || null,
+        existingNavImage: category.navImage?.replace(/^https?:\/\/[^/]+/, "") || null,
         selectedFilters: [], // Initialize as empty
         existingFilters: [],
         content: category.content || "", // Add this line
@@ -588,7 +588,10 @@ export default function CategoryComponent() {
       fetchCategories();
       setAlertMessage("Category updated successfully!");
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 3000);
+      setTimeout(() => {
+  setShowAlert(false);
+  window.location.reload(); 
+}, 1000);
     } catch (error) {
       setUpdateErrorMessage("Failed to update category. Please try again.");
     }
