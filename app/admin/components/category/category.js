@@ -1338,7 +1338,7 @@ export default function CategoryComponent() {
                 {newCategory.parentid == "none" && (
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">
-                    Upload Navigation Image (260px X 240px)
+                    Upload Navigation Image (210px X 370px)
                   </label>
                   <input
                     type="file"
@@ -1683,7 +1683,7 @@ export default function CategoryComponent() {
                 {categoryToUpdate.parentid == "none" && (
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">
-                    Upload Navigation Image (260px X 240px)
+                    Upload Navigation Image (210px X 370px)
                   </label>
                   <input
                     type="file"
