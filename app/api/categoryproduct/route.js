@@ -80,19 +80,23 @@ const categoryImage = await saveFile(formData.get("categoryImage"));
 const categoryRedirectUrl = formData.get("categoryRedirectUrl") || "";
 
 
-    const saved = await CategoryProduct.create({
-      subcategoryId,
-      subcategoryName, // Save the category name
-      products,
-      borderColor,
-      alignment,
-      status,
-      position,
-      bannerImage,
-      bannerRedirectUrl,
-      categoryImage,
-      categoryRedirectUrl,
-    });
+    const saved = await CategoryProduct.findOneAndUpdate(
+  { subcategoryId },
+  {
+    subcategoryId,
+    subcategoryName,
+    products,
+    borderColor,
+    alignment,
+    status,
+    position,
+    bannerImage,
+    bannerRedirectUrl,
+    categoryImage,
+    categoryRedirectUrl,
+  },
+  { upsert: true, new: true }
+);
 
     return NextResponse.json({ success: true, data: saved }, { status: 200 });
   } catch (err) {

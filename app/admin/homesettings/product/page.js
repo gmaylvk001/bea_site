@@ -662,9 +662,12 @@ images.forEach((img, index) => {
       fd.append("keepBannerImages", JSON.stringify([]));
       fd.append("keepBannerRedirectUrls", JSON.stringify([]));
       fd.append("categoryRedirectUrl", "");
+        
+    const alreadyExists = existingCategoryProducts[selectedCategory._id];
+    const method = alreadyExists ? "PUT" : "POST";
 
       const res = await fetch("/api/categoryproduct", {
-        method: "POST",
+        method: method,
         body: fd,
       });
 
@@ -1128,22 +1131,27 @@ images.forEach((img, index) => {
             <div className="space-y-4 ml-6">
               {subcategoriesByParent[mainCategory._id?.toString()]
                 ?.filter((subcat) => {
-                  const hasOwnActiveTable =
-                    existingCategoryProducts[subcat._id]?.status === "Active";
-                  const hasChildActiveTable = subcategoriesByParent[
-                    subcat._id?.toString()
-                  ]?.some(
-                    (child) =>
-                      existingCategoryProducts[child._id]?.status ===
-                        "Active" ||
-                      subcategoriesByParent[child._id?.toString()]?.some(
-                        (grandChild) =>
-                          existingCategoryProducts[grandChild._id]?.status ===
-                          "Active",
-                      ),
-                  );
-                  return hasOwnActiveTable || hasChildActiveTable;
-                })
+  // Check if this subcat OR any child/grandchild has a DB entry (any status)
+  const hasOwnEntry = Object.keys(existingCategoryProducts).some(
+    key => key === subcat._id?.toString() || key === subcat._id
+  );
+  
+  const hasChildEntry = subcategoriesByParent[subcat._id?.toString()]?.some(
+    (child) => {
+      const childHasEntry = Object.keys(existingCategoryProducts).some(
+        key => key === child._id?.toString() || key === child._id
+      );
+      const grandChildHasEntry = subcategoriesByParent[child._id?.toString()]?.some(
+        (grandChild) => Object.keys(existingCategoryProducts).some(
+          key => key === grandChild._id?.toString() || key === grandChild._id
+        )
+      );
+      return childHasEntry || grandChildHasEntry;
+    }
+  );
+  
+  return hasOwnEntry || hasChildEntry;
+})
                 ?.map((subcat) => {
                   const children =
                     subcategoriesByParent[subcat._id?.toString()] || [];
@@ -1493,31 +1501,29 @@ images.forEach((img, index) => {
                           )}
                         </div>
                       </div>
-                      {children.filter(
-                        (child) =>
-                          existingCategoryProducts[child._id]?.status ===
-                            "Active" ||
-                          subcategoriesByParent[child._id?.toString()]?.some(
-                            (grandChild) =>
-                              existingCategoryProducts[grandChild._id]
-                                ?.status === "Active",
-                          ),
-                      ).length > 0 && (
+{children.filter((child) => {
+  const childHasEntry = Object.keys(existingCategoryProducts).some(
+    key => key === child._id?.toString() || key === child._id
+  );
+  const grandChildHasEntry = subcategoriesByParent[child._id?.toString()]?.some(
+    (grandChild) => Object.keys(existingCategoryProducts).some(
+      key => key === grandChild._id?.toString() || key === grandChild._id
+    )
+  );
+  return childHasEntry || grandChildHasEntry;
+         }).length > 0 && (   
                         <div className="space-y-4 ml-6 mt-4">
-                          {children
-                            .filter(
-                              (child) =>
-                                existingCategoryProducts[child._id]?.status ===
-                                  "Active" ||
-                                subcategoriesByParent[
-                                  child._id?.toString()
-                                ]?.some(
-                                  (grandChild) =>
-                                    existingCategoryProducts[grandChild._id]
-                                      ?.status === "Active",
-                                ),
-                            )
-                            .map((child) => renderCategoryForm(child))}
+                          {children.filter((child) => {
+                           const childHasEntry = Object.keys(existingCategoryProducts).some(
+                 key => key === child._id?.toString() || key === child._id
+                       );
+                          const grandChildHasEntry = subcategoriesByParent[child._id?.toString()]?.some(
+               (grandChild) => Object.keys(existingCategoryProducts).some(
+                      key => key === grandChild._id?.toString() || key === grandChild._id
+                        )
+                       );
+                          return childHasEntry || grandChildHasEntry;
+                   }).map((child) => renderCategoryForm(child))} 
                         </div>
                       )}
                     </div>
