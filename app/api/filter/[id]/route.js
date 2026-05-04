@@ -7,11 +7,12 @@ export async function PUT(req, { params }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    // const { id } = params;
+    const { id } = await params; // ✅ correct
     const body = await req.json();
 
-    console.log("PUT ID:", id);
-    console.log("BODY:", body);
+    /* console.log("PUT ID:", id);
+    console.log("BODY:", body); */
 
     const result = await Filter.findByIdAndUpdate(
       new ObjectId(id),
