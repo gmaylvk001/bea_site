@@ -35,6 +35,10 @@ export async function POST(req) {
             );
         }
 
+        const escapeRegex = (text) => {
+            return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        };
+
         const fileName  = file.name.toLowerCase();
         const buffer    = Buffer.from(await file.arrayBuffer());
         let rows        = [];
@@ -102,11 +106,31 @@ export async function POST(req) {
                 continue;
             }
 
-           const normalizedGroupName = filter_group_name.trim().toLowerCase();
+            /* const normalizedGroupName = filter_group_name.trim().toLowerCase();
 
-const filterGroup = await FilterGroup.findOne({
-    filtergroup_name: new RegExp(`^${normalizedGroupName}$`, 'i'),
-});
+            const filterGroup = await FilterGroup.findOne({
+                filtergroup_name: new RegExp(`^${normalizedGroupName}$`, 'i'),
+            }); */
+
+            const normalizedGroupName = filter_group_name.trim();
+            const safeRegex = new RegExp(`^${escapeRegex(normalizedGroupName)}$`, 'i');
+
+           /*  const filterGroup = await FilterGroup.findOne({
+                filtergroup_name: safeRegex,
+            }); */
+
+            const groupSlug = filter_group_name
+            .trim()
+            .toLowerCase()
+            .replace(/[^\w\s.-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+            const filterGroup = await FilterGroup.findOne({
+                filtergroup_slug: groupSlug,
+            });
+
 
 if (!filterGroup) {
     errors.push({
