@@ -23,7 +23,7 @@ export async function POST(req) {
     const category_name = formData.get("category_name");
     // let parentid = formData.get("parentid") || "none";
     // let parentid_new = "none";
-    const parent_name = formData.get("parent_name") || "none";
+    /* const parent_name = formData.get("parent_name") || "none";
     let parentid = "none";
     let parentid_new = "none";
 
@@ -36,6 +36,16 @@ export async function POST(req) {
         parentid = parentCategory._id;
         parentid_new = parentCategory.md5_cat_name;
       }
+    } */
+    const parentid = formData.get("parentid") || "none";
+    let parentid_new = "none";
+
+    if (parentid === "none") {
+      parentid_new = "none";
+    } else {
+      const objectId = new mongoose.Types.ObjectId(parentid);
+      const getParentCategory = await Category.findOne({ _id: objectId });
+      parentid_new = getParentCategory.md5_cat_name;
     }
 
     const meta_title = formData.get("meta_title");
@@ -57,7 +67,8 @@ export async function POST(req) {
     let category_slug = convertSlug(category_name);
 
     if (parentid !== "none") {
-      category_slug = `${category_slug}-${Date.now()}`;
+      // category_slug = `${category_slug}-${Date.now()}`;
+      category_slug = `${category_slug}`;
     }
 
     let md5_cat_name = md5(category_slug);
