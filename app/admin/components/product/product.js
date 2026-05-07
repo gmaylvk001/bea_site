@@ -1347,12 +1347,30 @@ const getFilteredProducts = () => {
       product.status?.toLowerCase() === statusFilter.toLowerCase();
 
     // Main Category Filter
-    let matchesCategory = true;
-    if (categoryFilter) {
-      const prodCatId = product.category?._id?.toString() || product.category?.toString();
-      const childCategoryIds = [categoryFilter, ...getAllChildIds(categoryFilter, categories)];
-      matchesCategory = childCategoryIds.includes(prodCatId);
-    }
+let matchesCategory = true;
+if (categoryFilter) {
+  const selectedCat = categories.find(cat => cat._id?.toString() === categoryFilter);
+  
+  // Get all child category ids
+  const allChildIds = getAllChildIds(categoryFilter, categories);
+  const allRelatedIds = [categoryFilter, ...allChildIds];
+  
+  // Get all related md5 names
+  const allRelatedMd5 = allRelatedIds
+    .map(id => categories.find(cat => cat._id?.toString() === id)?.md5_cat_name)
+    .filter(Boolean)
+    .map(m => m.toLowerCase());
+
+  // Check product category by ID (old way)
+  const prodCatId = product.category?._id?.toString() || product.category?.toString();
+  const matchesById = allRelatedIds.includes(prodCatId);
+
+  // Check product category by md5 (new way)
+  const productCatMd5 = product.sub_category_new?.toLowerCase() || "";
+  const matchesByMd5 = allRelatedMd5.some(md5 => productCatMd5.includes(md5));
+
+  matchesCategory = matchesById || matchesByMd5;
+}
 
     // Sub Category Filter
     let matchesSubCategory = true;
