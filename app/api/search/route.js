@@ -124,36 +124,73 @@ export async function GET(req) {
       .split(",")
       .filter((v) => mongoose.Types.ObjectId.isValid(v));
 
-    if (categoryIds.length > 0 || subcategoryIds.length > 0) {
-      const allIds = [...categoryIds, ...subcategoryIds];
-       const categoryConditions = allIds.map(id => ({
-    $or: [
-      { category: id },
-      { sub_category: id }
-    ]
-  }));
-  
-  searchFilter.$and = [
-    ...(searchFilter.$and || []),
-    { $and: categoryConditions }
-  ];
-}
+const getAllChildIds = async (parentId) => {
+  const children = await Category.find({ parentid: parentId }).lean();
+  let ids = [new mongoose.Types.ObjectId(parentId.toString())];
+  for (const child of children) {
+    const childIds = await getAllChildIds(child._id);
+    ids = ids.concat(childIds);
+  }
+  return ids;
+};
 
+if (subcategoryIds.length > 0) {
+  const subCatDocs = await Category.find({
+    _id: { $in: subcategoryIds.map(id => new mongoose.Types.ObjectId(id)) }
+  }).lean();
+
+  let allIds = [];
+  for (const doc of subCatDocs) {
+    const ids = await getAllChildIds(doc._id);
+    allIds = allIds.concat(ids);
+  }
+
+  const uniqueIds = [...new Map(allIds.map(id => [id.toString(), id])).values()];
+
+  if (uniqueIds.length > 0) {
+    searchFilter.$or = [
+      { category: { $in: uniqueIds } },
+      { sub_category: { $in: uniqueIds } },
+    ];
+  }
+
+} else if (categoryIds.length > 0) {
+  const parentDocs = await Category.find({
+    _id: { $in: categoryIds.map(id => new mongoose.Types.ObjectId(id)) }
+  }).lean();
+
+  let allIds = [];
+  for (const doc of parentDocs) {
+    const ids = await getAllChildIds(doc._id);
+    allIds = allIds.concat(ids);
+  }
+
+  const uniqueIds = [...new Map(allIds.map(id => [id.toString(), id])).values()];
+
+  if (uniqueIds.length > 0) {
+    searchFilter.$or = [
+      { category: { $in: uniqueIds } },
+      { sub_category: { $in: uniqueIds } },
+    ];
+  }
+}
     /* ---------------- PRICE FILTER ---------------- */
   
 searchFilter.$and = [
-  ...(searchFilter.$and || []), 
+  ...(searchFilter.$and || []),
   {
     $or: [
       {
         $and: [
-          { special_price: { $ne: null, $ne: 0 } },
+          { special_price: { $exists: true } },
+          { special_price: { $ne: null } },
+          { special_price: { $ne: 0 } },
           { special_price: { $gte: minPrice, $lte: maxPrice } },
         ],
       },
       {
         $and: [
-          { $or: [{ special_price: null }, { special_price: 0 }] },
+          { $or: [{ special_price: { $exists: false } }, { special_price: null }, { special_price: 0 }] },
           { price: { $gte: minPrice, $lte: maxPrice } },
         ],
       },
@@ -263,53 +300,108 @@ searchFilter.$and = [
       filter_group_name: f.filter_group?.filtergroup_name || "Other",
     }));
 
-   /* ---------------- CATEGORY TREE ---------------- */
+   
 
-/* ---------------- CATEGORY TREE - SIMPLEST WORKING VERSION ---------------- */
+/* ---------------- CATEGORY TREE ---------------- */
+const categoryOnlyFilter = { status: "Active" };
+if (query) {
+  const safe = escapeRegExp(query);
+  const regex = new RegExp(safe, "i");
+  categoryOnlyFilter.$or = [
+    { name: regex },
+    { item_code: regex },
+    { search_keywords: regex },
+  ];
+}
 
-const productSubCategoryIds = [
-  ...new Set([
-    ...products.map(p => p.sub_category?.toString()).filter(Boolean),
-    ...products.map(p => p.category?.toString()).filter(Boolean),
-  ])
-];
+// Search results products-ல இருக்க category/sub_category IDs 
+const productsForCat = await Product.find(
+  categoryOnlyFilter,
+  { category: 1, sub_category: 1 }
+).lean();
+
+const productCategoryIds = new Set();
+productsForCat.forEach(p => {
+  if (p.category) productCategoryIds.add(p.category.toString());
+  if (p.sub_category) productCategoryIds.add(p.sub_category.toString());
+});
 
 let categoryTree = [];
 
-if (productSubCategoryIds.length > 0) {
-  // Get unique category IDs
-  const uniqueCategoryIds = [...new Set(productSubCategoryIds)];
-  
-  // Fetch all these categories
-  const categoriesWithProducts = await Category.find({
-    _id: { $in: uniqueCategoryIds }
-  }).lean();
-  
-  // Simple flat list (no hierarchy)
-  categoryTree = categoriesWithProducts.map(c => ({
-    ...c,
-    subCategories: []
-  }));
-  
-  console.log("Created flat category list:", categoryTree.length);
-}
+if (productCategoryIds.size > 0) {
+  const allCategories = await Category.find().lean();
 
-// If still no categories, try to fetch by category name
-if (categoryTree.length === 0 && category) {
-  const categoryByName = await Category.findOne({ 
-    category_name: category,
-    status: 'Active' 
-  }).lean();
-  
-  if (categoryByName) {
-    categoryTree = [{
-      ...categoryByName,
-      subCategories: []
-    }];
-  }
-}
+  // Recursive —  descendant IDs 
+  const getDescendantIds = (catId, allCats) => {
+    const children = allCats.filter(
+      c => c.parentid?.toString() === catId.toString()
+    );
+    let ids = [catId.toString()];
+    for (const child of children) {
+      ids = ids.concat(getDescendantIds(child._id, allCats));
+    }
+    return ids;
+  };
 
-console.log("Final categories to display:", categoryTree.map(c => c.category_name));
+  // Top level categories
+
+ 
+  const directCatDocs = allCategories.filter(c =>
+    productCategoryIds.has(c._id.toString())
+  );
+
+  const queryWords = query ? query.toLowerCase().split(/\s+/).filter(Boolean) : [];
+
+  const filteredDirectCatDocs = queryWords.length > 0
+    ? directCatDocs.filter(c => {
+        const name = c.category_name?.toLowerCase() || "";
+     
+        if (queryWords.some(w => name.includes(w))) return true;
+ 
+        const parent = allCategories.find(
+          p => p._id.toString() === c.parentid?.toString()
+        );
+        const parentName = parent?.category_name?.toLowerCase() || "";
+        return queryWords.some(w => parentName.includes(w));
+      })
+    : directCatDocs;
+  
+// அந்த categories-ஓட parent எடு
+  const parentIds = [...new Set(
+    filteredDirectCatDocs.map(c => c.parentid?.toString()).filter(Boolean)
+  )];
+
+  const parentDocs = allCategories.filter(c =>
+    parentIds.includes(c._id.toString())
+  );
+
+  // Parent → children group
+  categoryTree = parentDocs.map(parent => {
+    const children = filteredDirectCatDocs.filter(
+      c => c.parentid?.toString() === parent._id.toString()
+    );
+
+    return {
+      _id: parent._id.toString(),
+      category_name: parent.category_name,
+      subCategories: children.map(c => {
+        // child-ஓட children (3rd level)
+        const grandChildren = allCategories.filter(
+          g => g.parentid?.toString() === c._id.toString()
+            && productCategoryIds.has(g._id.toString())
+        );
+        return {
+          _id: c._id.toString(),
+          category_name: c.category_name,
+          subCategories: grandChildren.map(g => ({
+            _id: g._id.toString(),
+            category_name: g.category_name,
+          }))
+        };
+      })
+    };
+  });
+}
     /* ---------------- RETURN ---------------- */
     return NextResponse.json({
       products,
