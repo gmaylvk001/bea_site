@@ -157,7 +157,19 @@ if (subcategoryIds) qp.set("subcategoryIds", subcategoryIds);
         setFilterSummaryRaw(Array.isArray(data.filterSummary) ? data.filterSummary : []);
       setAllFiltersFromResults(Array.isArray(data.filterDefs) ? data.filterDefs : []);
       console.log("Categories from API:", data.categories); 
-      setCategoryData({ categories: Array.isArray(data.categories) ? data.categories : [] });
+            const cats = Array.isArray(data.categories) ? data.categories : [];
+      setCategoryData({ categories: cats }); 
+      if (cats.length > 0 && selectedCategories.length === 0 && selectedSubcategories.length === 0) {
+        const queryLower = searchQuery.toLowerCase();
+        const matchedCat = cats.find(c =>
+          c.category_name?.toLowerCase().includes(queryLower) ||
+          queryLower.includes(c.category_name?.toLowerCase())
+        );
+        if (matchedCat) {
+          const catId = matchedCat._id?.toString();
+          setSelectedCategories([catId]);
+        }
+      }
       } catch (err) {
         console.error("Search API error", err);
         setProducts([]);
@@ -293,203 +305,119 @@ useEffect(() => {
   }
 }, [categoryData.categories]);
 
- const handleCategoryFilterChange = (type, value, categoryItem = null) => {
-  if (type === 'categories') {
-    // Get all child category IDs for this parent
-    const getAllChildIds = (category) => {
-      const childIds = [category._id];
-      if (category.subCategories && category.subCategories.length > 0) {
-        category.subCategories.forEach(child => {
-          childIds.push(...getAllChildIds(child));
-        });
-      }
-      return childIds;
-    };
-    
-    // Find the category object from tree
-    const findCategory = (categories, id) => {
-      for (let cat of categories) {
-        if (cat._id === id) return cat;
-        if (cat.subCategories) {
-          const found = findCategory(cat.subCategories, id);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-    
-    const categoryObj = findCategory(categoryData.categories, value);
-    let idsToToggle = [value];
-    
-    if (categoryObj && categoryObj.subCategories && categoryObj.subCategories.length > 0) {
-      // Parent category - get all children
-      idsToToggle = getAllChildIds(categoryObj);
-    }
-    
-    // Check if parent is currently selected
-    const isParentSelected = selectedCategories.includes(value);
-    let newSelectedCategories = [...selectedCategories];
-    
-    if (isParentSelected) {
-      // Remove parent and all children
-      newSelectedCategories = newSelectedCategories.filter(id => !idsToToggle.includes(id));
-    } else {
-      // Add parent and all children
-      idsToToggle.forEach(id => {
-        if (!newSelectedCategories.includes(id)) {
-          newSelectedCategories.push(id);
-        }
-      });
-    }
-    
-    setSelectedCategories(newSelectedCategories);
+const handleCategoryFilterChange = (type, value, parentId = null) => {
+  if (type === "reset") {
+    setSelectedCategories([]);
+    setSelectedSubcategories([]);
     setPage(1);
-    
-    const qs = buildQueryParams({ 
-      brands: selectedBrands,
-      filters: selectedFilters,
-      min: values[0],
-      max: values[1],
-      categoryIds: newSelectedCategories.join(','), 
-      subcategoryIds: selectedSubcategories.join(','), 
-      page: 1 
-    });
-    router.push(`/search?${qs}`);
-    
-  } else if (type === 'subcategories') {
-    // For subcategory, toggle normally
-    const next = selectedSubcategories.includes(value)
-      ? selectedSubcategories.filter(id => id !== value)
-      : [...selectedSubcategories, value];
-    setSelectedSubcategories(next);
+    router.push(`/search?${buildQueryParams({ categoryIds: "", subcategoryIds: "", page: 1 })}`);
+
+  } else if (type === "parent") {
+    setSelectedCategories([value]);
+    setSelectedSubcategories([]);
     setPage(1);
-    
-    const qs = buildQueryParams({ 
-      brands: selectedBrands,
-      filters: selectedFilters,
-      min: values[0],
-      max: values[1],
-      categoryIds: selectedCategories.join(','), 
-      subcategoryIds: next.join(','), 
-      page: 1 
-    });
-    router.push(`/search?${qs}`);
+    router.push(`/search?${buildQueryParams({ categoryIds: value, subcategoryIds: "", page: 1 })}`);
+
+  } else if (type === "allChildren") {
+    setSelectedSubcategories([]);
+    setPage(1);
+    router.push(`/search?${buildQueryParams({ categoryIds: value, subcategoryIds: "", page: 1 })}`);
+
+  } else if (type === "child") {
+    setSelectedSubcategories([value]);
+    setPage(1);
+    router.push(`/search?${buildQueryParams({ categoryIds: parentId, subcategoryIds: value, page: 1 })}`);
   }
 };
 
-const CategoryTree = ({ 
-  categories, 
-  level = 0, 
-  selectedCategories,
-  selectedSubcategories,
-  onFilterChange 
-}) => {
-  const [localExpandedCategories, setLocalExpandedCategories] = useState({});
-  
-  // Initialize with all categories expanded
-  useEffect(() => {
-    const allExpanded = {};
-    const expandAll = (cats) => {
-      cats.forEach(cat => {
-        if (cat.subCategories?.length > 0) {
-          allExpanded[cat._id] = true;
-          expandAll(cat.subCategories);
-        }
-      });
-    };
-    expandAll(categories);
-    setLocalExpandedCategories(allExpanded);
-  }, [categories]);
-
-  const toggleCategory = (categoryId) => {
-    setLocalExpandedCategories(prev => ({
-      ...prev,
-      [categoryId]: !prev[categoryId]
-    }));
-  };
-  
-  // Check if a category is selected (parent or child)
-  const isCategorySelected = (category) => {
-    if (selectedCategories.includes(category._id)) return true;
-    // Check if any child is selected
-    if (category.subCategories) {
-      return category.subCategories.some(child => 
-        selectedCategories.includes(child._id) || isCategorySelected(child)
-      );
-    }
-    return false;
-  };
-  
-  // Get selection state for checkbox
-  const getCheckboxState = (category) => {
-    const isSelected = selectedCategories.includes(category._id);
-    const hasSelectedChildren = category.subCategories?.some(child => 
-      selectedCategories.includes(child._id)
-    );
-    
-    if (isSelected) return 'checked';
-    if (hasSelectedChildren) return 'indeterminate';
-    return 'unchecked';
-  };
+const CategoryTree = ({ categories, selectedCategories, selectedSubcategories, onFilterChange }) => {
+  const selectedParent = categories.find(
+    (c) => c._id?.toString() === selectedCategories[0]?.toString()
+  ) || null;
+  const subCategories = selectedParent?.subCategories || [];
 
   return (
-    <div className="space-y-2">
-      {categories.map((category) => {
-        const checkboxState = getCheckboxState(category);
-        const isIndeterminate = checkboxState === 'indeterminate';
-        
-        return (
-          <div key={category._id}>
-            <div className={`flex items-center gap-2 ${level > 0 ? `ml-${Math.min(level * 4, 8)}` : ''}`}>
-              <label className="flex items-center gap-2 flex-1 cursor-pointer hover:bg-gray-50 p-1 rounded">
+    <div>
+      {/* Parent Categories */}
+      <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+        <li>
+          <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+            <input
+              type="radio"
+              name="searchCategory"
+              checked={selectedCategories.length === 0}
+              onChange={() => onFilterChange("reset")}
+              className="h-4 w-4 text-blue-600"
+            />
+            <span className="text-sm font-medium text-gray-700">All Categories</span>
+          </label>
+        </li>
+        {categories.map((cat) => {
+          const catId = cat._id?.toString();
+          const isSelected = selectedCategories[0]?.toString() === catId;
+          return (
+            <li key={catId}>
+              <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
                 <input
-                  type="checkbox"
-                  ref={el => {
-                    if (el && isIndeterminate) {
-                      el.indeterminate = true;
-                    }
-                  }}
-                  checked={checkboxState === 'checked'}
-                  onChange={() => onFilterChange('categories', category._id, category)}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  type="radio"
+                  name="searchCategory"
+                  checked={isSelected}
+                  onChange={() => onFilterChange("parent", catId)}
+                  className="h-4 w-4 text-blue-600"
                 />
-                <span className={`text-sm ${checkboxState !== 'unchecked' ? 'text-blue-600 font-medium' : 'text-gray-700'}`}>
-                  {category.category_name}
-                  {category.count !== undefined && category.count > 0 && (
-                    <span className="text-xs text-gray-400 ml-1">({category.count})</span>
-                  )}
+                <span className={`text-sm ${isSelected ? "text-blue-600 font-medium" : "text-gray-600"}`}>
+                  {cat.category_name}
                 </span>
               </label>
-              
-              {category.subCategories?.length > 0 && (
-                <button 
-                  type="button" 
-                  onClick={() => toggleCategory(category._id)} 
-                  className="p-1 rounded hover:bg-gray-200 flex-shrink-0"
-                >
-                  {localExpandedCategories[category._id] ? (
-                    <ChevronUp size={16} />
-                  ) : (
-                    <ChevronDown size={16} />
-                  )}
-                </button>
-              )}
-            </div>
-            
-            {category.subCategories?.length > 0 && localExpandedCategories[category._id] && (
-              <div className={`mt-1 ${level === 0 ? 'ml-4' : 'ml-6'}`}>
-                <CategoryTree
-                  categories={category.subCategories}
-                  level={level + 1}
-                  selectedCategories={selectedCategories}
-                  selectedSubcategories={selectedSubcategories}
-                  onFilterChange={onFilterChange}
-                />
-              </div>
-            )}
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* Child Categories — selected parent இருந்தா மட்டும் காட்டு */}
+      {selectedParent && subCategories.length > 0 && (
+        <div className="mt-3 border-t pt-3">
+          <div className="bg-gray-100 px-3 py-1 mb-2 rounded">
+            <span className="text-xs font-semibold text-gray-600">{selectedParent.category_name}</span>
           </div>
-        );
-      })}
+          <ul className="max-h-48 overflow-y-auto pr-2">
+            <li>
+              <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                <input
+                  type="radio"
+                  name="searchSubCategory"
+                  checked={selectedSubcategories.length === 0}
+                  onChange={() => onFilterChange("allChildren", selectedCategories[0])}
+                  className="h-4 w-4 text-blue-600"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  All {selectedParent.category_name}
+                </span>
+              </label>
+            </li>
+            {subCategories.map((child) => {
+              const childId = child._id?.toString();
+              const isChildSelected = selectedSubcategories[0]?.toString() === childId;
+              return (
+                <li key={childId}>
+                  <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input
+                      type="radio"
+                      name="searchSubCategory"
+                      checked={isChildSelected}
+                      onChange={() => onFilterChange("child", childId, selectedCategories[0])}
+                      className="h-4 w-4 text-blue-600"
+                    />
+                    <span className={`text-sm ${isChildSelected ? "text-blue-600 font-medium" : "text-gray-600"}`}>
+                      {child.category_name}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

@@ -135,19 +135,65 @@ export default function OpenBoxPage() {
   const [categories, setCategories] = useState([]);
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [categoryTree, setCategoryTree] = useState([]);
+
+const [filterDefs, setFilterDefs] = useState([]);
+const [filterSummaryRaw, setFilterSummaryRaw] = useState([]);
+const [filterGroups, setFilterGroups] = useState({});
+const [filterDefMap, setFilterDefMap] = useState({});
+const [expandedGroups, setExpandedGroups] = useState({});
+const [selectedProductFilters, setSelectedProductFilters] = useState([]);
+
   const STEP = 100;
   const MIN = priceRange[0];
   const MAX = priceRange[1];
 
   const isInitialLoad = useRef(true);
 
+
+  useEffect(() => {
+  if (filterDefs.length === 0) {
+    setFilterGroups({});
+    setFilterDefMap({});
+    return;
+  }
+  const groups = {};
+  const map = {};
+  filterDefs.forEach((f) => {
+    const group = f.filter_group_name || "Other";
+    if (!groups[group]) groups[group] = { _id: group, name: group, filters: [] };
+    groups[group].filters.push(f);
+    map[String(f._id)] = { name: f.filter_name, group };
+  });
+  setFilterGroups(groups);
+  setFilterDefMap(map);
+}, [filterDefs]);
+
+const toggleProductFilter = (id) => {
+  const next = selectedProductFilters.includes(id)
+    ? selectedProductFilters.filter((f) => f !== id)
+    : [...selectedProductFilters, id];
+  setSelectedProductFilters(next);
+};
+
+// Auto-expand all filter groups
+useEffect(() => {
+  if (Object.keys(filterGroups).length > 0) {
+    const expanded = {};
+    Object.values(filterGroups).forEach((g) => {
+      expanded[g._id] = true;
+    });
+    setExpandedGroups(expanded);
+  }
+}, [filterGroups]);
+
+   
   useEffect(() => {
     if (isInitialLoad.current) {
       isInitialLoad.current = false;
-      return; // initial load skip பண்ணும்
+      return;
     }
     fetchProducts(1);
-  }, [selectedFilters]);
+  },[selectedFilters, selectedProductFilters]);
   // Sync slider values
   useEffect(() => {
     setValues([selectedFilters.price.min, selectedFilters.price.max]);
@@ -177,6 +223,9 @@ export default function OpenBoxPage() {
       if (sortOption) {
         query.set("sortBy", sortOption);
       }
+      if (selectedProductFilters.length > 0) {
+     query.set("filters", selectedProductFilters.join(","));
+      }
 
       const res = await fetch(`/api/open-box?${query}`);
       const data = await res.json();
@@ -191,6 +240,8 @@ export default function OpenBoxPage() {
       setCategories(data.categories);
       setCategoryTree(data.categoryTree || []);
       setPagination(data.pagination);
+      setFilterSummaryRaw(Array.isArray(data.filterSummary) ? data.filterSummary : []);
+      setFilterDefs(Array.isArray(data.filterDefs) ? data.filterDefs : []);
 
       if (initial) {
         const { minPrice, maxPrice } = data.priceRange;
@@ -244,26 +295,27 @@ export default function OpenBoxPage() {
     }
   }, [sortOption]);
 
-  const handleFilterChange = (type, value) => {
-    setSelectedFilters((prev) => {
-      const newFilters = { ...prev };
-      if (type === "brands") {
-        newFilters.brands = prev.brands.includes(value)
-          ? prev.brands.filter((id) => id !== value)
-          : [...prev.brands, value];
-      } else if (type === "price") {
-        newFilters.price = value;
-      } else if (type === "category") {
-        newFilters.category = prev.category === value ? "" : value;
-        newFilters.selectedParent = prev.category === value ? "" : value;
-        newFilters.subCategory = "";
-      } else if (type === "subCategory") {
-        newFilters.subCategory = prev.subCategory === value ? "" : value;
-      }
-
-      return newFilters;
-    });
-  };
+ const handleFilterChange = (type, value) => {
+  setSelectedFilters((prev) => {
+    const newFilters = { ...prev };
+    if (type === "brands") {
+      newFilters.brands = prev.brands.includes(value)
+        ? prev.brands.filter((id) => id !== value)
+        : [...prev.brands, value];
+    } else if (type === "price") {
+      newFilters.price = value;
+    } else if (type === "category") {
+      newFilters.category = prev.category === value ? "" : value;
+      newFilters.selectedParent = prev.category === value ? "" : value;
+      newFilters.subCategory = "";
+      setSelectedProductFilters([]); // ✅ புதியது
+    } else if (type === "subCategory") {
+      newFilters.subCategory = prev.subCategory === value ? "" : value;
+      setSelectedProductFilters([]); // ✅ புதியது
+    }
+    return newFilters;
+  });
+};
 
   const handlePriceChange = (vals) => {
     let min = Math.max(1, vals[0]);
@@ -885,13 +937,14 @@ export default function OpenBoxPage() {
                         selectedFilters.subCategory === "" &&
                         selectedFilters.category === ""
                       }
-                      onChange={() =>
-                        setSelectedFilters((prev) => ({
-                          ...prev,
-                          category: "",
-                          subCategory: "",
-                        }))
-                      }
+                    onChange={() => {
+                      setSelectedFilters((prev) => ({
+                      ...prev,
+                       category: "",
+                       subCategory: "",
+                        }));
+                      setSelectedProductFilters([]);
+                         }}
                       className="h-4 w-4 text-blue-600"
                     />
                     <span className="text-sm font-medium text-gray-700">
@@ -1052,8 +1105,58 @@ export default function OpenBoxPage() {
               </ul>
             )}
           </div>
-        </div>
+               {Object.keys(filterGroups).length > 0 && (
+        <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+          <h3 className="text-base font-semibold text-gray-700 mb-2">Product Filters</h3>
+          <div className="space-y-4">
+          {Object.values(filterGroups).map((g) => (
+         <div key={g._id} className="border-b last:border-0 pb-2">
+        <button
+          onClick={() =>
+          setExpandedGroups((prev) => ({ ...prev, [g._id]: !prev[g._id] }))
+          }
+          className="flex justify-between w-full items-center text-sm font-medium text-gray-700"
+          >
+          <span>{g.name}</span>
+            <ChevronDown
+              className={expandedGroups[g._id] ? "transform rotate-180" : ""}
+            />
+          </button>
 
+          {expandedGroups[g._id] && (
+            <ul className="mt-2 max-h-48 overflow-y-auto">
+              {g.filters.map((f) => {
+                const cnt =
+                  (filterSummaryRaw.find(
+                    (x) => String(x.filterId) === String(f._id)
+                  ) || {}).count || 0;
+                return (
+                  <li key={f._id} className="py-1">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedProductFilters.includes(String(f._id))}
+                        onChange={() => toggleProductFilter(String(f._id))}
+                      />
+                      <span className="text-sm text-gray-700">
+                        {f.filter_name}{" "}
+                        {cnt ? (
+                          <span className="text-xs text-gray-400">({cnt})</span>
+                        ) : null}
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+       
+        </div>
         {/* Products */}
         <div className="flex-1">
           {/* Sort Bar */}
