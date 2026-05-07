@@ -1246,6 +1246,53 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
         setActiveUploadType(null);
       }
     }
+    else if (uploadType == "filter_values_delete") {
+      if (!productFilterValue || !validateFile(productFilterValue, ['.xlsx', '.csv'])) {
+        showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+        // Clear the file input element
+        const fileInput = document.getElementById('filter-values-delete-file-input');
+        if (fileInput) fileInput.value = "";
+        setProductFilterValue(null);
+        return;
+      }
+
+      setIsLoading(true);
+      setActiveUploadType(uploadType);
+      setMessage(null);
+      formData.append("excel", productFilterValue);
+
+      try {
+        const response = await fetch('/api/product/bulk-upload/filterDelete', {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showToast("success", data.message || "Filter values Deleted.");
+        } else {
+          showToast("error", data.error || "Upload failed.");
+        }
+
+        resetUploadForm();
+        // Clear the file input element
+        const fileInput = document.getElementById('filter-values-delete-file-input');
+        if (fileInput) fileInput.value = "";
+        setProductFilterValue(null);
+      } catch (error) {
+        showToast("error", error?.message || String(error) || "Upload failed.");
+        resetUploadForm();
+        // Clear the file input element
+        const fileInput = document.getElementById('filter-values-delete-file-input');
+        if (fileInput) fileInput.value = "";
+        setProductFilterValue(null);
+      } finally {
+        setIsLoading(false);
+        setActiveUploadType(null);
+      }
+
+    }
   };
 
   const handleDownload = () => {
@@ -1270,6 +1317,15 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
     const link = document.createElement('a');
     link.href = `/uploads/files/filter_values_bulk_upload_new.xlsx?t=${Date.now()}`;
     link.download = 'filter_values_bulk_upload_new.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadFilterValuesDelete = () => {
+    const link = document.createElement('a');
+    link.href = `/uploads/files/filtervaluesdeletebulk.xlsx?t=${Date.now()}`;
+    link.download = 'filter_values_delete_bulk_upload.xlsx';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1357,13 +1413,14 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
     { id: "section-product-brands-upload", label: "Update Product Brands", image: "/uploads/files/Product_Brand_update_nineth_image.png" },
     { id: "section-status-bulk", label: "Status Bulk Upload", image: "/uploads/files/Status_bulk_upload_tenth_box_image.png" },
      { id: "section-stock-status-bulk-upload", label: "Stock Status Upload", image: "/uploads/files/Stock_status_bulk_upload.png" },
-     { id: "section-delete-product-itemcode-upload", label: "Item Code Delete Bulk Upload", image: "/uploads/files/item_code_delete_bulk_upload.png" },
+    //  { id: "section-delete-product-itemcode-upload", label: "Item Code Delete Bulk Upload", image: "/uploads/files/item_code_delete_bulk_upload.png" },
     { id: "extended-warrenty-upload", label: "Extended Warrenty Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
     { id: "Key-Features", label: "Key Features", image: "/uploads/files/Key features.jpg" },
     { id: "product_name", label: "Product name only", image: "/uploads/files/Product Name.png" },
     { id: "product_description", label: "Product Description", image: "/uploads/files/product_description.png" },
     { id: "dynamic_filter_upload", label: "Dynamic Filter Upload", image: "/uploads/files/dynamic_filter.png" },
     { id: "product-added-bulk-addons-frequentlybought-relatedproducts", label: "Add Frequently Addons and Related Products", image: "/uploads/files/bulk_upload_for_product_rightside_datas.png" },
+    { id: "itemcode-product-bulk-upload-delete-filters", label: "Delete Filters For Product", image: "/uploads/files/delete_filters_for_product_bulk_upload.png" },
 
   ];
 
@@ -1948,6 +2005,52 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
               </form>
             )}
 
+            {/* Section 20: Bulk Upload for Product Filters Delete Filters */}
+            {selectedSection === "itemcode-product-bulk-upload-delete-filters" && (
+                <form id="itemcode-product-bulk-upload-delete-filters" ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "filter_values_delete")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
+                  <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                    <div className="mb-4">
+                      <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">Delete Product's Filter Values Bulk Upload</h2>
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Excel/CSV File
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">Upload your product filter values file to delete</p>
+                    </div>
+                    <div className="space-y-4">
+                      <input id="filter-values-delete-file-input" type="file" accept=".xlsx,.csv" onChange={(e) => setProductFilterValue(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-red-100" required />
+                    </div>
+                    <button type="button" onClick={handleDownloadFilterValuesDelete} className="inline-flex items-center pt-5 text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download Sample Format
+                    </button>
+                  </div>
+                  <div className="flex mt-5 justify-between">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="bg-[#3B82F6] hover:bg-[#3B82F6] text-white px-3 py-2 rounded-md flex items-center gap-2"
+                    >
+                      {isLoading && activeUploadType == "filter_values_delete" ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Uploading...
+                        </span>
+                      ) : (
+                        'Upload Product Filter Values'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+
             {/* Section 15: Category Filter Upload Item code With Particular Details */}
             {selectedSection === "item-category-particular-product-bulk-upload-image" && (
               <form
@@ -2257,7 +2360,7 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
             )}
 
             {/* Section 10: Delete Item Code in Product Upload */}
-            {selectedSection === "section-delete-product-itemcode-upload" && (
+            {/* {selectedSection === "section-delete-product-itemcode-upload" && (
               <form id="section-delete-product-itemcode-upload" ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "map_product_brands")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-6">
                   <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
@@ -2285,7 +2388,7 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
                   </div>
                 </div>
               </form>
-            )}
+            )} */}
 
             {/* Section 11: Extended warrenty Upload */}
             {selectedSection === "extended-warrenty-upload" && (

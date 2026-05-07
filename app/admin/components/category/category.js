@@ -408,6 +408,10 @@ export default function CategoryComponent() {
         setAlertMessage("Category added successfully!");
         setShowAlert(true);
         setTimeout(() => setShowAlert(false), 3000);
+        // Small delay optional
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       } else {
         setErrorMessage(result.error || "Failed to add category");
         console.error("Error adding category:", result.error);

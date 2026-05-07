@@ -35,7 +35,7 @@ export default function CategoryComponent() {
   const [showAlert, setShowAlert] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-
+  const [quantitySort, setQuantitySort] = useState("");
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 20;
@@ -297,7 +297,7 @@ const exportToExcel = () => {
       ))
     ];
   };
-const getFilteredProducts = () => {
+/* const getFilteredProducts = () => {
     const flattenedProducts = flattenProducts(products);
    
     return flattenedProducts.filter((product) => {
@@ -381,8 +381,133 @@ if (stockFilter) {
  
       return matchesSearch && matchesStatus && matchesDate && matchesCategory && matchesBrand && matchesStock;
     });
-  };
+  }; */
  
+  const getFilteredProducts = () => {
+  const flattenedProducts = flattenProducts(products);
+
+  let filtered = flattenedProducts.filter((product) => {
+    // Search filter
+    const matchesSearch =
+      debouncedSearchQuery === "" ||
+      product.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      product.slug?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      product.item_code?.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+
+    // Status filter
+    const matchesStatus =
+      statusFilter === "" ||
+      product.status?.toLowerCase() === statusFilter.toLowerCase();
+
+    // Date filter
+    let matchesDate = true;
+
+    if (dateFilter.startDate && dateFilter.endDate && product.createdAt) {
+      const productDate = new Date(product.createdAt);
+      const startDate = new Date(dateFilter.startDate);
+      const endDate = new Date(dateFilter.endDate);
+
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+
+      matchesDate =
+        productDate >= startDate && productDate <= endDate;
+    }
+
+    // Category filter
+    let matchesCategory = true;
+
+    if (categoryFilter) {
+      if (product.category && typeof product.category === "object") {
+        const productCategoryId = product.category._id.toString();
+
+        const selectedCategory = categories.find(
+          (cat) => cat._id.toString() === categoryFilter
+        );
+
+        if (selectedCategory?.parentid === "none") {
+          const subCategoryIds = categories
+            .filter((cat) => cat.parentid === categoryFilter)
+            .map((cat) => cat._id.toString());
+
+          matchesCategory =
+            productCategoryId === categoryFilter ||
+            subCategoryIds.includes(productCategoryId);
+        } else {
+          matchesCategory = productCategoryId === categoryFilter;
+        }
+      } else if (product.category) {
+        const productCategoryId = product.category.toString();
+
+        const selectedCategory = categories.find(
+          (cat) => cat._id.toString() === categoryFilter
+        );
+
+        if (selectedCategory?.parentid === "none") {
+          const subCategoryIds = categories
+            .filter((cat) => cat.parentid === categoryFilter)
+            .map((cat) => cat._id.toString());
+
+          matchesCategory =
+            productCategoryId === categoryFilter ||
+            subCategoryIds.includes(productCategoryId);
+        } else {
+          matchesCategory = productCategoryId === categoryFilter;
+        }
+      } else {
+        matchesCategory = false;
+      }
+    }
+
+    // Brand filter
+    let matchesBrand = true;
+
+    if (brandFilter) {
+      if (product.brand && typeof product.brand === "object") {
+        matchesBrand =
+          product.brand._id.toString() === brandFilter;
+      } else if (product.brand) {
+        matchesBrand =
+          product.brand.toString() === brandFilter;
+      } else {
+        matchesBrand = false;
+      }
+    }
+
+    // Stock filter
+    let matchesStock = true;
+
+    if (stockFilter) {
+      matchesStock =
+        product.stock_status?.toLowerCase() ===
+        stockFilter.toLowerCase();
+    }
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesDate &&
+      matchesCategory &&
+      matchesBrand &&
+      matchesStock
+    );
+  });
+
+  // QUANTITY SORTING
+  if (quantitySort === "high-to-low") {
+    filtered.sort(
+      (a, b) => Number(b.quantity || 0) - Number(a.quantity || 0)
+    );
+  }
+
+  if (quantitySort === "low-to-high") {
+    filtered.sort(
+      (a, b) => Number(a.quantity || 0) - Number(b.quantity || 0)
+    );
+  }
+
+  return filtered;
+};
 
   const filteredProducts = getFilteredProducts();
   const pageCount = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -432,6 +557,19 @@ if (stockFilter) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity Status</label>
+              <select value={quantitySort} onChange={(e) => {
+                setQuantitySort(e.target.value);
+                setCurrentPage(0);}}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+              >
+                <option value="">All</option>
+                <option value="high-to-low">High → Low Quantity</option>
+                <option value="low-to-high">Low → High Quantity</option>
+              </select>
             </div>
 
             {/* Status Filter */}
