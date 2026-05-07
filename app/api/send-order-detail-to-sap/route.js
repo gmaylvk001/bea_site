@@ -43,12 +43,13 @@ export async function POST(req) {
     
     const payment_id = order_new_vk.payment_id;
     
-    const payment_details = await ecom_payment_info.findOne({ _id: new mongoose.Types.ObjectId(payment_id) }).lean();
+    const payment_details = await ecom_payment_info.findOne({ payment_id }).lean();
     
     //return NextResponse.json({ address_new_vk }).lean();
     
     let payment_ref = "";
-    if (payment_details.payment_mode != "cash") {
+    //if (payment_details.payment_mode != "cash") {
+    if (payment_details.payment_mode != "Cash on Delivery") {
         payment_ref = payment_details.payment_id;
     }
   
@@ -101,6 +102,8 @@ export async function POST(req) {
     },
   };
   
+
+  //return NextResponse.json({ data });
   
     
 
