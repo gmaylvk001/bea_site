@@ -288,6 +288,12 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                             />
                           )}
                         </Link>
+                          {/* ✅ Clearance Sale Badge  */}
+                           {(product.movement === "EOL" || product.movement === "FOCUS") && (
+                          <span className="absolute bottom-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 animate-pulse tracking-wide uppercase">
+                                🏷️ Clearance Sale
+                              </span>
+                              )}
 
                         {/* Discount Badge */}
                         {Number(product.special_price) > 0 &&

@@ -619,7 +619,7 @@ useEffect(() => {
             </div>
 
             {loading ? (
-              <div className="flex justify-center items-center h-64"><FaSpinner className="animate-spin text-4xl text-blue-500" /></div>
+          <div className="flex justify-center items-center h-64"><FaSpinner className="animate-spin text-4xl text-blue-500" /></div>
             ) : products.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {products.map((p) => (
@@ -630,12 +630,18 @@ useEffect(() => {
                           <Image src={p.images[0].startsWith("http") ? p.images[0] : `/uploads/products/${p.images[0]}`} alt={p.name} fill className="object-contain p-2 md:p-4 transition-transform duration-300 group-hover:scale-105" sizes="(max-width: 640px) 50vw, 33vw, 25vw" unoptimized />
                         )}
                       </Link>
-
+                     
                       {Number(p.special_price) > 0 && Number(p.special_price) < Number(p.price) && (
                         <span className="absolute top-3 left-2 bg-red-500 text-white text-xs font-bold px-3 py-0.5 rounded z-10">
                           {Math.round(100 - (Number(p.special_price) / Number(p.price)) * 100)}% OFF
                         </span>
                       )}
+                      {/* ✅ Clearance Sale Badge  */}
+                             {(p.movement === "EOL" || p.movement === "FOCUS") && (
+                    <span className="absolute bottom-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10 animate-pulse tracking-wide uppercase">
+                          🏷️ Clearance Sale
+                           </span>
+                            )}
 
                       <div className="absolute top-2 right-2"><ProductCard productId={p._id} /></div>
                     </div>
@@ -682,7 +688,7 @@ useEffect(() => {
 
             {/* Pagination */}
             {renderPagination()}
-          </div>
+       </div>
         </div>
       </div>
     </div>
