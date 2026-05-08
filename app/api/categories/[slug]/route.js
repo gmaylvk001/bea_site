@@ -40,6 +40,8 @@ export async function GET(request, { params }) {
       }, []);
     }
     const allCategoryIds = getAllCategoryIds(categoryTree);
+//     console.log("➡️ allCategoryIds:", allCategoryIds);
+// console.log("➡️ allCategoryIds count:", allCategoryIds.length);
 
     // Fetch products in category/subcategories
     /*

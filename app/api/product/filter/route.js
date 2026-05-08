@@ -1,6 +1,8 @@
 import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import ProductFilter from "@/models/ecom_productfilter_info";
+import Filter from "@/models/ecom_filter_infos";
+import FilterGroup from "@/models/ecom_filter_group_infos";
 
 export async function GET(req) {
   try {
@@ -29,21 +31,20 @@ export async function GET(req) {
       query.brand = { $in: brandIds };
     }
     
-    // Price range filter (considers both price and special_price)
-    query.$or = [
-      { 
-        $and: [
-          { special_price: { $ne: null } },
-          { special_price: { $gte: minPrice, $lte: maxPrice } }
-        ]
-      },
-      { 
-        $and: [
-          { special_price: null },
-          { special_price: { $gte: minPrice, $lte: maxPrice } }
-        ]
-      }
-    ];
+    // Price range filter 
+query.$or = [
+  // special_price 
+  { 
+    special_price: { $ne: null, $gt: 0, $gte: minPrice, $lte: maxPrice }
+  },
+  // special_price
+  { 
+    $and: [
+      { $or: [{ special_price: null }, { special_price: 0 }] },
+      { price: { $gte: minPrice, $lte: maxPrice } }
+    ]
+  }
+];
     
     // First fetch products matching brand and price filters
     // let products = await Product.find(query)
@@ -127,16 +128,56 @@ export async function GET(req) {
       // Get total count for pagination info (optional)
       const totalProducts = await Product.countDocuments(query);
       const totalPages = Math.ceil(totalProducts / limit);
-      
-      return Response.json({
-        products,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalProducts,
-          hasMore: page < totalPages
-        }
+
+    const allProductIds = await Product.distinct('_id', query);
+
+    const allProductFilters = await ProductFilter.find({
+      product_id: { $in: allProductIds }
+    }).lean();
+
+    const uniqueFilterIds = [
+      ...new Set(allProductFilters.map(pf => pf.filter_id.toString()))
+    ];
+
+    const filtersWithGroup = await Filter.find({
+      _id: { $in: uniqueFilterIds }
+    })
+      .populate({
+        path: 'filter_group',
+        select: 'filtergroup_name',
+        model: FilterGroup
+      })
+      .lean();
+
+
+    const filterGroups = {};
+    filtersWithGroup.forEach(filter => {
+      const groupName = filter.filter_group?.filtergroup_name || 'Other';
+      if (!filterGroups[groupName]) {
+        filterGroups[groupName] = {
+          _id: groupName,
+          name: groupName,
+          filters: []
+        };
+      }
+      filterGroups[groupName].filters.push({
+        _id: filter._id,
+        filter_name: filter.filter_name,
+        filter_group_name: groupName
       });
+    });
+
+    return Response.json({
+      products,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalProducts,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+      filterGroups  
+    });
 
       
   } catch (error) {

@@ -1,6 +1,7 @@
 import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import ProductFilter from "@/models/ecom_productfilter_info";
+import mongoose from "mongoose";
 
 export async function GET(req) {
   try {
@@ -9,6 +10,10 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     console.log(searchParams);
     const categoryIds = searchParams.get('categoryIds')?.split(',') || [];
+    const objectIdCategoryIds = categoryIds
+  .filter(id => mongoose.Types.ObjectId.isValid(id))
+  .map(id => new mongoose.Types.ObjectId(id));    
+
     const brandIds = searchParams.get('brands')?.split(',') || [];
     const minPrice = parseFloat(searchParams.get('minPrice')) || 0;
     const maxPrice = parseFloat(searchParams.get('maxPrice')) || 1000000;
@@ -16,13 +21,26 @@ export async function GET(req) {
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 5;
 
+    const totalBeforeFilter = await Product.countDocuments({
+  sub_category: { $in: categoryIds },
+  status: "Active",
+  stock_status: "In Stock"
+});
+console.log("➡️ sub_category match count:", totalBeforeFilter);
 
+const totalByMd5 = await Product.countDocuments({
+  status: "Active", 
+  stock_status: "In Stock",
+  sub_category_new: { $regex: categoryIds[0] }
+});
+console.log("➡️ First categoryId as md5 test:", totalByMd5);
+     
     // Base query - always filter by category
-    let query = { 
-        sub_category: { $in: categoryIds }, // Use $in for multiple categories
-        status: "Active",
-        quantity: { $gt: 0 } 
-      };
+let query = { 
+  sub_category: { $in: objectIdCategoryIds },
+  status: "Active",
+  stock_status: "In Stock"
+};
 
     // Add brand filters if any
     if (brandIds.length > 0) {
@@ -128,6 +146,8 @@ export async function GET(req) {
   // Get total count for pagination info (optional)
   const totalProducts = await Product.countDocuments(query);
   const totalPages = Math.ceil(totalProducts / limit);
+
+  
   
   return Response.json({
     products,

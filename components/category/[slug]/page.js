@@ -93,7 +93,7 @@ const handleProductClick = (product) => {
         categoryTree: categoryData.category,
         allCategoryIds: categoryData.allCategoryIds
       });
-      
+     console.log(`categoryData: `,categoryData.name);
       // Set initial price range based on products in category
       if (categoryData.products?.length > 0) {
         const prices = categoryData.products.map(p => p.special_price);
@@ -698,7 +698,7 @@ const STEP = 100;
         <div className="lg:col-span-3">
           {/* Sorting and Count */}
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <p className="text-sm text-gray-600">{products.length} products founds</p>
+            <p className="text-sm text-gray-600">{products.length} products found</p>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-600">Sort by:</span>
               <select
