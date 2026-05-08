@@ -8,14 +8,15 @@ import Addtocart from "@/components/AddToCart";
 import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
 
-const RelatedProducts = ({ currentProductId,categoryId }) => {
+// const RelatedProducts = ({ currentProductId,categoryId }) => {
+  const RelatedProducts = ({ relatedProducts: relatedIds = [] }) => {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [startIndex, setStartIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [navigating, setNavigating] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const fetchRelatedProducts = async () => {
+  /* const fetchRelatedProducts = async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/product/related?category=${categoryId}&exclude=${currentProductId}&limit=5`);
@@ -36,14 +37,44 @@ const RelatedProducts = ({ currentProductId,categoryId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }; */
+
+  const fetchRelatedProducts = async () => {
+  try {
+    setLoading(true);
+
+    if (!relatedIds.length) {
+      setRelatedProducts([]);
+      return;
+    }
+    const ids = relatedIds.join(",");
+    const res = await fetch(`/api/product/related?ids=${ids}`);
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      setRelatedProducts(data.products || []);
+    } else {
+      setRelatedProducts([]);
+    }
+
+  } catch (error) {
+    console.error("Error fetching related products:", error);
+    setRelatedProducts([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
      
-    useEffect(() => {
+    /* useEffect(() => {
     if (currentProductId) {
         fetchRelatedProducts();
       }
-    }, [currentProductId]);
+    }, [currentProductId]); */
+
+    useEffect(() => {
+  fetchRelatedProducts();
+}, [relatedIds]);
 
 
      const [brandMap, setBrandMap] = useState([]);
@@ -120,7 +151,7 @@ const RelatedProducts = ({ currentProductId,categoryId }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
         </div>
       )}
-    <section className="mb-10 px-4">
+    <section className="mb-10 px-4 py-4">
   <div className="bg-gray-100 rounded-2xl p-6">
     <div className="flex justify-between items-center mb-6">
       <h5 className="text-xl font-bold">Related Products</h5>
@@ -151,14 +182,18 @@ const RelatedProducts = ({ currentProductId,categoryId }) => {
               >
                 <div className="relative aspect-square bg-gray-50">
                   {product.images?.[0] && (
-                    <img
+                    <Image
                       src={
                         product.images[0].startsWith("http")
                           ? product.images[0]
                           : `/uploads/products/${product.images[0]}`
                       }
                       alt={product.name}
-                      className="object-contain p-2 md:p-4 transition-transform duration-300 group-hover:scale-105 w-full h-full"
+                      fill
+                                              // ensure the image fits without stretching
+                                              className="object-contain p-2 sm:p-3"
+                                              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 18vw"
+                                              unoptimized
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = "/uploads/products/placeholder.jpg";
@@ -197,7 +232,7 @@ const RelatedProducts = ({ currentProductId,categoryId }) => {
                   </Link>
 
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base font-semibold text-red-600">
+                    {/* <span className="text-base font-semibold text-red-600">
                       ₹ {(
                         product.special_price && product.special_price > 0 && product.special_price < product.price
                           ? product.special_price
@@ -210,6 +245,22 @@ const RelatedProducts = ({ currentProductId,categoryId }) => {
                         <span className="text-xs text-gray-500 line-through">
                           ₹ {product.price.toLocaleString()}
                         </span>
+                      )} */}
+                      <span className="text-base font-semibold text-red-600">
+                        ₹ {Number(
+                          product.special_price &&
+                          Number(product.special_price) > 0 &&
+                          Number(product.special_price) < Number(product.price)
+                            ? product.special_price
+                            : product.price || 0
+                        ).toLocaleString()}
+                      </span>
+
+                      {Number(product.special_price) > 0 &&
+                        Number(product.special_price) < Number(product.price) && (
+                          <span className="text-xs text-gray-500 line-through">
+                            ₹ {Number(product.price || 0).toLocaleString()}
+                          </span>
                       )}
                   </div>
 

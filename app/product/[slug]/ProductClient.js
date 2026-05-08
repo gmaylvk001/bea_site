@@ -1790,7 +1790,7 @@ const fetchBrand = async () => {
               </Link>
 
               <div className="flex items-center gap-2">
-                <span className="text-base font-semibold text-red-600">
+                {/* <span className="text-base font-semibold text-red-600">
                   ₹ {(
                     item.special_price &&
                     item.special_price > 0 &&
@@ -1808,6 +1808,26 @@ const fetchBrand = async () => {
                     <span className="text-xs text-gray-500 line-through">
                       ₹ {item.price.toLocaleString()}
                     </span>
+                  )} */}
+
+                  <span className="text-base font-semibold text-red-600">
+                    ₹ {Number(
+                      item?.special_price &&
+                      item?.special_price > 0 &&
+                      item?.special_price !== "0" &&
+                      item?.special_price < item?.price
+                        ? item?.special_price
+                        : item?.price || 0
+                    ).toLocaleString()}
+                  </span>
+
+                  {item?.special_price &&
+                    item?.special_price > 0 &&
+                    item?.special_price !== "0" &&
+                    item?.special_price < item?.price && (
+                      <span className="text-xs text-gray-500 line-through">
+                        ₹ {Number(item?.price || 0).toLocaleString()}
+                      </span>
                   )}
               </div>
 
@@ -2193,7 +2213,7 @@ const fetchBrand = async () => {
       </div>
      
 
-        <div className="space-y-8">
+        <div className="space-y-3">
           <ProductDetailsSection 
             product={product} 
             reviews={reviews}
@@ -2209,6 +2229,9 @@ const fetchBrand = async () => {
              currentProductId={product._id}
            /> */}
          
+         <RelatedProducts 
+  relatedProducts={product.related_products}
+/>
          
          
          

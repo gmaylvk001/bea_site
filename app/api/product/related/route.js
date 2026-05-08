@@ -1,4 +1,4 @@
-// app/api/products/related/route.js
+/* // app/api/products/related/route.js
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db"; // your DB connection
 import Product from "@/models/product";
@@ -31,5 +31,61 @@ export async function GET(req) {
   } catch (error) {
     console.error("Error fetching related products:", error);
     return NextResponse.json({ error: "Failed to fetch related products" }, { status: 500 });
+  }
+}
+ */
+
+
+// app/api/products/related/route.js
+
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/db";
+import Product from "@/models/product";
+import mongoose from "mongoose";
+
+export async function GET(req) {
+  try {
+    await dbConnect();
+
+    const { searchParams } = new URL(req.url);
+
+    const ids = searchParams.get("ids");
+
+    if (!ids) {
+      return NextResponse.json(
+        {
+          success: false,
+          products: [],
+          error: "Related product IDs are required",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Convert comma separated ids to ObjectIds
+    const productIds = ids
+      .split(",")
+      .filter(Boolean)
+      .map((id) => new mongoose.Types.ObjectId(id));
+
+    const products = await Product.find({
+      _id: { $in: productIds },
+    }).lean();
+
+    return NextResponse.json({
+      success: true,
+      products,
+    });
+
+  } catch (error) {
+    console.error("Related products fetch error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        products: [],
+      },
+      { status: 500 }
+    );
   }
 }
