@@ -56,59 +56,95 @@ for (const row of rows) {
     continue;
   }
 
-/* ---------- FIND CHILD CATEGORY ---------- */
-const childCategory = await Category.findOne({
+/* ---------- FIND CATEGORY ---------- */
+const selectedCategory = await Category.findOne({
   category_name: { $regex: `^${childName}$`, $options: "i" },
 });
 
-if (!childCategory) {
+if (!selectedCategory) {
   skipped++;
   continue;
 }
 
-/* ---------- GET SUB CATEGORY FROM CHILD ---------- */
-const subCategory = await Category.findById(childCategory.parentid);
+let mainCategory = null;
+let subCategory = null;
+let childCategory = null;
 
-if (!subCategory) {
-  skipped++;
-  continue;
-}
-
-/* ---------- GET MAIN CATEGORY FROM SUB ---------- */
-const mainCategory = await Category.findById(subCategory.parentid);
-
-if (!mainCategory) {
-  skipped++;
-  continue;
-}
-
-/* ---------- MATCH INPUT CATEGORY ---------- */
 const inputCategory = subCategoryName.toLowerCase();
 
-const isSubMatch =
-  subCategory.category_name.toLowerCase() === inputCategory;
+/* =========================================================
+   CASE 1:
+   SMALL APPLIANCE -> FABRIC CARE
+========================================================= */
 
-const isMainMatch =
-  mainCategory.category_name.toLowerCase() === inputCategory;
+if (
+  selectedCategory.parentid &&
+  selectedCategory.parentid !== "none"
+) {
+  const parentCategory = await Category.findById(
+    selectedCategory.parentid
+  );
 
-if (!isSubMatch && !isMainMatch) {
+  if (!parentCategory) {
+    skipped++;
+    continue;
+  }
+
+  // parent is main category
+  if (
+    parentCategory.category_name.toLowerCase() === inputCategory
+  ) {
+    mainCategory = parentCategory;
+    subCategory = selectedCategory;
+  }
+
+  // parent is sub category
+  else {
+    const grandParent =
+      parentCategory.parentid &&
+      parentCategory.parentid !== "none"
+        ? await Category.findById(parentCategory.parentid)
+        : null;
+
+    if (
+      grandParent &&
+      grandParent.category_name.toLowerCase() === inputCategory
+    ) {
+      mainCategory = grandParent;
+      subCategory = parentCategory;
+      childCategory = selectedCategory;
+    }
+  }
+}
+
+if (!mainCategory || !subCategory) {
   skipped++;
   continue;
 }
 
-  /* ---------- BUILD MD5 CHAIN ---------- */
-  const subCategoryNew = [
-    mainCategory.md5_cat_name,
-    subCategory.md5_cat_name,
-    childCategory.md5_cat_name,
-  ].join("##");
+/* ---------- BUILD MD5 CHAIN ---------- */
+const md5Parts = [
+  mainCategory.md5_cat_name,
+  subCategory.md5_cat_name,
+];
 
-  /* ---------- BUILD NAME CHAIN ---------- */
-  const subCategoryNameFull = [
-    mainCategory.category_name,
-    subCategory.category_name,
-    childCategory.category_name,
-  ].join("##");
+if (childCategory) {
+  md5Parts.push(childCategory.md5_cat_name);
+}
+
+const subCategoryNew = md5Parts.join("##");
+
+/* ---------- BUILD NAME CHAIN ---------- */
+const nameParts = [
+  mainCategory.category_name,
+  subCategory.category_name,
+];
+
+if (childCategory) {
+  nameParts.push(childCategory.category_name);
+}
+
+const subCategoryNameFull = nameParts.join("##");
 
   /* ---------- UPDATE ---------- */
   await Product.updateMany(
@@ -117,7 +153,10 @@ if (!isSubMatch && !isMainMatch) {
       category_new: mainCategory.md5_cat_name,     // ✅ MAIN
       sub_category_new: subCategoryNew,            // ✅ MD5 chain
       sub_category_new_name: subCategoryNameFull,      // ✅ NAME chain
-      sub_category: childCategory._id,             // ✅ CHILD ID
+      // sub_category: childCategory._id,             // ✅ CHILD ID
+      sub_category: childCategory
+  ? childCategory._id
+  : subCategory._id,
     }
   );
 
