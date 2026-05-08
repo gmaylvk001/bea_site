@@ -317,9 +317,17 @@ Object.keys(groups).forEach(key => {
       }
 
       const res = await fetch(`/api/product/filter/main?${query}`);
-      const { products, pagination: paginationData } = await res.json();
-      //console.log('products: ',products);
-      setProducts(products);
+       const { products, pagination: paginationData, brands: filteredBrands } = await res.json();
+
+       setProducts(products);
+
+      // ✅ Brand update — category based
+      if (filteredBrands && filteredBrands.length > 0) {
+      setCategoryData(prev => ({
+      ...prev,
+      brands: filteredBrands,
+      }));
+      }
       
       // Update pagination state
       setPagination({
