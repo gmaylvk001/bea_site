@@ -612,6 +612,41 @@ const exportToExcel = () => {
     }
   });
 
+
+// ✅ GET ALL IDS
+/* const allIds = filteredProducts.flatMap(product => [
+  ...(product.featured_products || []),
+  ...(product.related_products || []),
+  ...(product.add_ons || [])
+]); */
+
+const allIds = filteredProducts.flatMap(product => [
+  ...(Array.isArray(product.featured_products)
+    ? product.featured_products
+    : []),
+
+  ...(Array.isArray(product.related_products)
+    ? product.related_products
+    : []),
+
+  ...(Array.isArray(product.add_ons)
+    ? product.add_ons
+    : [])
+]);
+
+// ✅ UNIQUE IDS
+const uniqueIds = [...new Set(allIds.map(id => id.toString()))];
+
+// ✅ CREATE MAP FROM PRODUCTS STATE
+const productMap = {};
+
+products.forEach(p => {
+  if (p._id && p.item_code) {
+    productMap[p._id.toString()] = p.item_code;
+  }
+});
+
+
   /* ---------- MAIN EXPORT ---------- */
   const dataForExport = filteredProducts.map(product => {
     /* let mainCategory = 'No Category';
@@ -822,6 +857,27 @@ const exportToExcel = () => {
       'variants': product.hasVariants
         ? JSON.stringify(product.variants)
         : '',
+
+      'featured_products': (Array.isArray(product.featured_products)
+      ? product.featured_products
+      : [])
+      .map(id => productMap[id.toString()])
+      .filter(Boolean)
+      .join(','),
+
+      'related_products': (Array.isArray(product.related_products)
+      ? product.related_products
+      : [])
+      .map(id => productMap[id.toString()])
+      .filter(Boolean)
+      .join(','),
+
+      'add_ons': (Array.isArray(product.add_ons)
+      ? product.add_ons
+      : [])
+      .map(id => productMap[id.toString()])
+      .filter(Boolean)
+      .join(','),
 
       'Status': product.status
     };
