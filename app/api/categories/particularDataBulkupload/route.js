@@ -58,33 +58,34 @@ export async function POST(req) {
 
       console.log("➡ Processing:", itemCode, childName);
 
-      /* ---------- FIND CATEGORY ---------- */
-      const childCategory = await Category.findOne({
-        category_name: {
-          $regex: escapeRegex(childName),
-          $options: "i",
-        },
-      });
 
-      if (!childCategory) {
-          console.log("⚠️ SKIPPED - itemCode:", itemCode, "| childName:", childName); 
-        skipped++;
-        continue;
-      }
+/* ---------- FIND CATEGORY ---------- */
+const childCategory = await Category.findOne({
+  category_name: {
+    $regex: escapeRegex(childName),
+    $options: "i",
+  },
+});
 
-      const subCategory = await Category.findById(childCategory.parentid);
-      if (!subCategory) {
-        console.log("❌ Subcategory missing");
-        skipped++;
-        continue;
-      }
+if (!childCategory) {
+  console.log("⚠️ SKIPPED - itemCode:", itemCode, "| childName:", childName, "| REASON: Category not found in DB");
+  skipped++;
+  continue;
+}
 
-      const mainCategory = await Category.findById(subCategory.parentid);
-      if (!mainCategory) {
-        console.log("❌ Main category missing");
-        skipped++;
-        continue;
-      }
+const subCategory = await Category.findById(childCategory.parentid);
+if (!subCategory) {
+  console.log("⚠️ SKIPPED - itemCode:", itemCode, "| REASON: SubCategory parent not found | parentid:", childCategory.parentid);
+  skipped++;
+  continue;
+}
+
+const mainCategory = await Category.findById(subCategory.parentid);
+if (!mainCategory) {
+  console.log("⚠️ SKIPPED - itemCode:", itemCode, "| REASON: Main category parent not found | parentid:", subCategory.parentid);
+  skipped++;
+  continue;
+}
 
       /* ---------- BUILD CATEGORY CHAINS ---------- */
       const subCategoryNew = [
