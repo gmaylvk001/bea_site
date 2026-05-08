@@ -91,6 +91,20 @@ export async function POST(req) {
         continue;
       }
 
+      /* 🔥 IF featured_products IS {} → CONVERT TO [] */
+      await Product.updateOne(
+        {
+          item_code: itemCode,
+          featured_products: { $type: "object" },
+        },
+        {
+          $set: {
+            featured_products: [],
+          },
+        }
+      );
+
+
       /* 🔄 Convert */
       const featuredIds = await getStringIdsFromItemCodes(featuredStr); // string[]
       const relatedIds = await getObjectIdsFromItemCodes(relatedStr);   // ObjectId[]
