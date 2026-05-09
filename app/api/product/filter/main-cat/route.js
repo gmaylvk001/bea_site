@@ -21,10 +21,10 @@ export async function GET(req) {
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 5;
 
-    const totalBeforeFilter = await Product.countDocuments({
-  sub_category: { $in: categoryIds },
+const totalBeforeFilter = await Product.countDocuments({
+  sub_category: { $in: objectIdCategoryIds },
   status: "Active",
-  stock_status: "In Stock"
+  quantity: { $gt: 0 }
 });
 console.log("➡️ sub_category match count:", totalBeforeFilter);
 
@@ -39,9 +39,12 @@ console.log("➡️ First categoryId as md5 test:", totalByMd5);
 let query = { 
   sub_category: { $in: objectIdCategoryIds },
   status: "Active",
-  stock_status: "In Stock"
+  $and: [
+    { quantity: { $exists: true } },
+    { quantity: { $ne: null } },
+    { quantity: { $gt: 0 } }
+  ]
 };
-
     // Add brand filters if any
     if (brandIds.length > 0) {
       query.brand = { $in: brandIds };
@@ -132,11 +135,11 @@ let query = {
  
     // Apply sorting: Products with quantity > 0 first, then quantity <= 0
     productsQuery = productsQuery.sort({ 
-      quantity: -1, // -1 for descending: quantity > 0 comes first, then quantity <= 0
-      _id: -1 // Secondary sort by _id or any other field you prefer
+      price: -1, 
+      _id: -1 
     });
   
-  // Apply pagination
+  // Apply paginationn
   const skip = (page - 1) * limit;
   const products = await productsQuery
     .skip(skip)

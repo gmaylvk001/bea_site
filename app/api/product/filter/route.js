@@ -24,7 +24,7 @@ export async function GET(req) {
         $options: "i"
       }, status: "Active", quantity: { $gt: 0 }
  };
-    
+
 
     // Add brand filters if any
     if (brandIds.length > 0) {
@@ -112,11 +112,8 @@ query.$or = [
         productsQuery = Product.find(query).populate('brand', 'brand_name brand_slug');
       }
 
-      // Apply sorting: Products with quantity > 0 first, then quantity <= 0
-    productsQuery = productsQuery.sort({ 
-      quantity: -1, // -1 for descending: quantity > 0 comes first, then quantity <= 0
-      _id: -1 // Secondary sort by _id or any other field you prefer
-    });
+   
+ productsQuery = productsQuery.sort({ _id: -1 });
       
       // Apply pagination
       const skip = (page - 1) * limit;
@@ -127,6 +124,8 @@ query.$or = [
       
       // Get total count for pagination info (optional)
       const totalProducts = await Product.countDocuments(query);
+       console.log('FILTER API Query:', JSON.stringify(query));
+       console.log('FILTER API Total:', totalProducts);
       const totalPages = Math.ceil(totalProducts / limit);
 
     const allProductIds = await Product.distinct('_id', query);

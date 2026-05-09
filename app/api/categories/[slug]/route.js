@@ -50,14 +50,20 @@ export async function GET(request, { params }) {
       status: "Active"
     });
     */
-    const products = await Product.find({
-      status: "Active",
-      sub_category_new: { 
-        $regex: main_category.md5_cat_name,
-        $options: "i"
-      }, quantity: { $gt: 0 }
-    });
-
+const products = await Product.find({
+  status: "Active",
+  sub_category_new: { 
+    $regex: main_category.md5_cat_name,
+    $options: "i"
+  },
+  $and: [
+    { quantity: { $exists: true } },
+    { quantity: { $ne: null } },
+    { quantity: { $gt: 0 } }
+  ]
+});
+    console.log('Total products🍀🍀:', products.length);
+    console.log('Sample quantities🍀🍀:', products.slice(0, 5).map(p => ({ name: p.name, quantity: p.quantity, type: typeof p.quantity })));
     if (!products || products.length === 0) {
       return Response.json({ category: categoryTree, products: [], brands: [], filters: [] });
     }
