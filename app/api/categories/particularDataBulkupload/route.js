@@ -6,6 +6,8 @@ import Product from "@/models/product";
 import Category from "@/models/ecom_category_info";
 import Brand from "@/models/ecom_brand_info";
 import crypto from "crypto";
+import mongoose from "mongoose";
+
 export async function POST(req) {
   try {
     await dbConnect();
@@ -16,7 +18,7 @@ export async function POST(req) {
     if (!file) {
       return NextResponse.json(
         { success: false, message: "No file uploaded" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -29,18 +31,25 @@ export async function POST(req) {
     let skipped = 0;
 
     /* ---------- HELPERS ---------- */
-    const normalize = (val) => val?.toString().trim().replace(/\s+/g, " ");
 
-    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const normalize = (val) =>
+      val?.toString().trim().replace(/\s+/g, " ");
+
+    const escapeRegex = (str) =>
+      str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const isValidObjectId = (id) =>
+      mongoose.Types.ObjectId.isValid(id);
 
     /* ---------- LOOP ---------- */
+
     for (const row of rows) {
       const itemCode = normalize(
         row["Item No."] ||
           row["Item No"] ||
           row["ITEM NO."] ||
           row["Item Code"] ||
-          row["item_code"],
+          row["item_code"]
       );
 
       const childName = normalize(row["Subcategory"]);
@@ -58,49 +67,140 @@ export async function POST(req) {
 
       console.log("➡ Processing:", itemCode, childName);
 
+      /* =========================================================
+         FIND CATEGORY
+         ========================================================= */
 
-/* ---------- FIND CATEGORY ---------- */
-const childCategory = await Category.findOne({
-  category_name: {
-    $regex: escapeRegex(childName),
-    $options: "i",
-  },
-});
+      const childCategory = await Category.findOne({
+        category_name: {
+          $regex: escapeRegex(childName),
+          $options: "i",
+        },
+      });
 
-if (!childCategory) {
-  console.log("⚠️ SKIPPED - itemCode:", itemCode, "| childName:", childName, "| REASON: Category not found in DB");
-  skipped++;
-  continue;
-}
+      if (!childCategory) {
+        console.log(
+          "⚠️ SKIPPED - itemCode:",
+          itemCode,
+          "| childName:",
+          childName,
+          "| REASON: Category not found in DB"
+        );
 
-const subCategory = await Category.findById(childCategory.parentid);
-if (!subCategory) {
-  console.log("⚠️ SKIPPED - itemCode:", itemCode, "| REASON: SubCategory parent not found | parentid:", childCategory.parentid);
-  skipped++;
-  continue;
-}
+        skipped++;
+        continue;
+      }
 
-const mainCategory = await Category.findById(subCategory.parentid);
-if (!mainCategory) {
-  console.log("⚠️ SKIPPED - itemCode:", itemCode, "| REASON: Main category parent not found | parentid:", subCategory.parentid);
-  skipped++;
-  continue;
-}
+      /*
+        CASE 1:
+        Main Category -> Subcategory -> Child Category
+      */
 
-      /* ---------- BUILD CATEGORY CHAINS ---------- */
-      const subCategoryNew = [
-        mainCategory.md5_cat_name,
-        subCategory.md5_cat_name,
-        childCategory.md5_cat_name,
-      ].join("##");
+      let mainCategory = null;
+      let subCategory = null;
 
-      const subCategoryNameFull = [
-        mainCategory.category_name,
-        subCategory.category_name,
-        childCategory.category_name,
-      ].join("##");
+      // child category has valid parent
+      if (
+        childCategory.parentid &&
+        childCategory.parentid !== "none" &&
+        isValidObjectId(childCategory.parentid)
+      ) {
+        subCategory = await Category.findById(childCategory.parentid);
 
-      /* ---------- KEY FEATURES ---------- */
+        if (subCategory) {
+          /*
+            sub category has valid parent
+            => full 3 level category
+          */
+          if (
+            subCategory.parentid &&
+            subCategory.parentid !== "none" &&
+            isValidObjectId(subCategory.parentid)
+          ) {
+            mainCategory = await Category.findById(subCategory.parentid);
+          }
+
+          /*
+            CASE 2:
+            Main Category -> Subcategory only
+
+            subCategory parent invalid/none
+            => childCategory itself is subcategory
+          */
+          if (!mainCategory) {
+            mainCategory = subCategory;
+            subCategory = childCategory;
+          }
+        }
+      }
+
+      /*
+        CASE 3:
+        Only Main Category
+      */
+      if (!subCategory && !mainCategory) {
+        mainCategory = childCategory;
+      }
+
+      if (!mainCategory) {
+        console.log(
+          "⚠️ SKIPPED - itemCode:",
+          itemCode,
+          "| REASON: Main category not found"
+        );
+
+        skipped++;
+        continue;
+      }
+
+      /* =========================================================
+         BUILD CATEGORY CHAINS
+         ========================================================= */
+
+      let subCategoryNew = mainCategory.md5_cat_name;
+      let subCategoryNameFull = mainCategory.category_name;
+      let subCategoryId = mainCategory._id;
+
+      // if subcategory available
+      if (subCategory) {
+        subCategoryNew = [
+          mainCategory.md5_cat_name,
+          subCategory.md5_cat_name,
+        ].join("##");
+
+        subCategoryNameFull = [
+          mainCategory.category_name,
+          subCategory.category_name,
+        ].join("##");
+
+        subCategoryId = subCategory._id;
+      }
+
+      // if child category available (3 level)
+      if (
+        childCategory &&
+        subCategory &&
+        childCategory._id.toString() !== subCategory._id.toString()
+      ) {
+        subCategoryNew = [
+          mainCategory.md5_cat_name,
+          subCategory.md5_cat_name,
+          childCategory.md5_cat_name,
+        ].join("##");
+
+        subCategoryNameFull = [
+          mainCategory.category_name,
+          subCategory.category_name,
+          childCategory.category_name,
+        ].join("##");
+
+        subCategoryId = childCategory._id;
+      }
+
+      /* =========================================================
+         KEY FEATURES
+         ========================================================= */
+
       const keySpecsArray = keyFeatures
         ? keyFeatures.split(",").map((x) => x.trim())
         : [];
@@ -122,55 +222,71 @@ if (!mainCategory) {
         }
       }
 
-      /* ---------- UPDATE DATA ---------- */
+      /* =========================================================
+         UPDATE DATA
+         ========================================================= */
+
       const updateData = {
         category_new: mainCategory.md5_cat_name,
         sub_category_new: subCategoryNew,
         sub_category_new_name: subCategoryNameFull,
-        sub_category: childCategory._id,
+        sub_category: subCategoryId,
       };
 
       if (brandId) {
-        updateData.brand = brandId; // 👈 IMPORTANT
+        updateData.brand = brandId;
       }
 
-      console.log(updateData);
+      /*
+        PRODUCT NAME + SLUG + MD5
+      */
 
-      // if (productName) updateData.name = productName;
       if (productName) {
-  // 1️⃣ PRODUCT NAME
-  const name = productName.trim();
-  updateData.name = name;
+        const name = productName.trim();
 
-  // 2️⃣ SLUG (from product name)
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")  // remove special chars
-    .replace(/\s+/g, "-")          // space → dash
-    .replace(/-+/g, "-");          // remove extra dash
+        updateData.name = name;
 
-  updateData.slug = slug;
+        const slug = name
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-");
 
-  // 3️⃣ MD5 NAME (from slug)
-  const md5Name = crypto
-    .createHash("md5")
-    .update(slug)
-    .digest("hex");
+        updateData.slug = slug;
 
-  updateData.md5_name = md5Name;
-}
-      // if (brand) updateData.brand = brand;
+        const md5Name = crypto
+          .createHash("md5")
+          .update(slug)
+          .digest("hex");
+
+        updateData.md5_name = md5Name;
+      }
+
       if (size) updateData.size = size;
       if (star) updateData.star = star;
       if (description) updateData.description = description;
+
       if (keySpecsArray.length > 0) {
         updateData.key_specifications = keySpecsArray;
       }
+
+      console.log("✅ FINAL UPDATE DATA:", updateData);
+
+      /* =========================================================
+         UPDATE PRODUCT
+         ========================================================= */
+
       const result = await Product.updateOne(
         { item_code: itemCode },
-        { $set: { ...updateData, item_code: itemCode } },
-        { upsert: true },
+        {
+          $set: {
+            ...updateData,
+            item_code: itemCode,
+          },
+        },
+        { upsert: true }
       );
+
       if (result.upsertedCount > 0) {
         console.log("✅ Created new product:", itemCode);
         updated++;
@@ -190,9 +306,13 @@ if (!mainCategory) {
     });
   } catch (error) {
     console.error("❌ Upload error:", error);
+
     return NextResponse.json(
-      { success: false, message: "Server error" },
-      { status: 500 },
+      {
+        success: false,
+        message: error.message,
+      },
+      { status: 500 }
     );
   }
 }
