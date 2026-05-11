@@ -995,10 +995,36 @@ const descriptionContent = (() => {
 
   const hasSpecifications = specifications.length > 0;
 
+  const decodeAndClean = (html) => {
+  if (!html) return "";
+
+  let cleaned = html;
+
+  // remove starting/ending quotes
+  cleaned = cleaned.replace(/^"+|"+$/g, "");
+
+  // remove <p>" and "</p>
+  cleaned = cleaned.replace(/^<p>"/, "").replace(/"<\/p>$/, "");
+
+  // decode escaped slashes
+  cleaned = cleaned.replace(/\\"/g, '"');
+  cleaned = cleaned.replace(/\\\//g, "/");
+
+  // remove unicode invisible chars
+  cleaned = cleaned.replace(/\\u200e/g, "");
+
+  // decode html entities
+  const txt = document.createElement("textarea");
+  txt.innerHTML = cleaned;
+  cleaned = txt.value;
+
+  return cleaned;
+};
+
   return (
     <div>
       {/* Product Description - only show if we have valid content */}
-      {(hasValidDescription || hasPlainDescription) && (
+      {/* {(hasValidDescription || hasPlainDescription) && (
         <>
           <h2 className={`text-sm font-bold text-left ${poppins.className}`}>
             Product Description
@@ -1035,6 +1061,90 @@ const descriptionContent = (() => {
                 __html: decodeAndClean(String(product?.description || "")),
               }}
             />
+          )}
+        </>
+      )} */}
+
+      {(hasValidDescription || hasPlainDescription) && (
+        <>
+          <h2 className={`text-sm font-bold text-left ${poppins.className}`}>Product Description</h2>
+          {hasValidDescription ? (
+            <div className="mt-3 text-xs sm:text-sm text-gray-700 space-y-1">
+              {Object.entries(descObj)
+                .filter(([key, val]) => {
+                  return (
+                    key &&
+                    val &&
+                    !isNullContent(key) &&
+                    !isNullContent(val)
+                  );
+                })
+                .map(([key, val]) => {
+                  const cleanKey = decodeAndClean(key);
+                  const cleanVal = decodeAndClean(val);
+
+                  return (
+                    <div key={cleanKey} className="grid grid-cols-[150px,1fr] gap-x-2 items-start">
+                      <div className={`text-xs sm:text-sm font-bold ${poppins.className}`}>{cleanKey}:</div>
+                      <div className={`text-xs sm:text-sm ${poppins.className}`}>{cleanVal}</div>
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            (() => {
+              const cleanedDescription = decodeAndClean(
+                String(product?.description || "")
+              );
+
+              // table html iruka check
+              const hasTableHtml = cleanedDescription.includes("<table") || cleanedDescription.includes("&lt;table");
+
+              return (
+                <div
+                  className={
+                    hasTableHtml
+                      ? `
+                        mt-3
+                        text-xs sm:text-sm
+                        text-gray-700
+                        prose
+                        prose-gray
+                        max-w-none
+                        text-left
+                        overflow-x-auto
+
+                        [&_table]:w-full
+                        [&_table]:border
+                        [&_table]:border-collapse
+
+                        [&_th]:border
+                        [&_td]:border
+
+                        [&_th]:p-2
+                        [&_td]:p-2
+
+                        [&_th]:bg-gray-100
+                        [&_th]:font-semibold
+
+                        [&_tr:nth-child(even)]:bg-gray-50
+                      `
+                      : `
+                        mt-3
+                        text-xs sm:text-sm
+                        text-gray-700
+                        prose
+                        prose-gray
+                        max-w-none
+                        text-left
+                      `
+                  }
+                  dangerouslySetInnerHTML={{
+                    __html: cleanedDescription,
+                  }}
+                />
+              );
+            })()
           )}
         </>
       )}
