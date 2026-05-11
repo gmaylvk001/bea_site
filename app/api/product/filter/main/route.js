@@ -244,44 +244,90 @@ if (categoryIds.length > 0) {
   baseQuery.$or = query.$or;
 }
 
-const baseProductIds = await Product.distinct("_id", baseQuery);
+const finalFilteredProductIds = await Product.distinct('_id', query);
+    const finalFilteredProductIdStrings = finalFilteredProductIds.map(id => id.toString());
 
-const baseProductIdStrings = baseProductIds.map((id) => id.toString());
+    // Get selected filters grouped by filter_group
+    let selectedFiltersByGroup = {};
+    const filterIds = Object.values(filterGroupsMap).flat();
+    if (filterIds.length > 0) {
+      const selectedFilterDocs = await Filter.find({ _id: { $in: filterIds } })
+        .populate({ path: "filter_group", select: "filtergroup_name", model: FilterGroup })
+        .lean();
+      selectedFilterDocs.forEach(f => {
+        const groupId = f.filter_group?._id?.toString() || "other";
+        if (!selectedFiltersByGroup[groupId]) selectedFiltersByGroup[groupId] = [];
+        selectedFiltersByGroup[groupId].push(f._id.toString());
+      });
+    }
 
+    const filterAggMap = {};
 
-const filterAgg = await ProductFilter.aggregate([
-  {
-    $match: {
-      $or: [
-        { product_id: { $in: baseProductIdStrings } },
-        { product_id: { $in: baseProductIds } },
-      ],
-    },
-  },
-  { $group: { _id: "$filter_id", count: { $sum: 1 } } },
-]);
+    if (filterIds.length > 0) {
+      for (const [groupId, groupFilterIds] of Object.entries(selectedFiltersByGroup)) {
+      
+        let baseIds = await Product.distinct('_id', baseQuery);
 
-console.log("🔍 filterAgg count:", filterAgg.length);
-console.log("🔍 filterAgg:", filterAgg);
+        
+        for (const [otherGroupId, otherGroupFilterIds] of Object.entries(selectedFiltersByGroup)) {
+          if (otherGroupId === groupId) continue;
 
-const filterIdList = filterAgg.map((f) => f._id);
+          const otherGroupPF = await ProductFilter.find({
+            product_id: { $in: baseIds.map(id => id.toString()) },
+            filter_id: { $in: otherGroupFilterIds }
+          }).lean();
 
-const filterDocs = await Filter.find({ _id: { $in: filterIdList } })
-  .populate({
-    path: "filter_group",
-    select: "filtergroup_name",
-    model: FilterGroup,
-  })
-  .lean();
+          const otherMatchIds = new Set(otherGroupPF.map(pf => pf.product_id.toString()));
+          baseIds = baseIds.filter(id => otherMatchIds.has(id.toString()));
+        }
 
-const filtersWithGroup = filterDocs.map((f) => ({
-  ...f,
-  filter_group_name: f.filter_group?.filtergroup_name || "Other",
-  count: (filterAgg.find(
-    (fa) => fa._id.toString() === f._id.toString()
-  ) || {}).count || 0,
-}));
+        const agg = await ProductFilter.aggregate([
+          {
+            $match: {
+              product_id: { $in: baseIds.map(id => id.toString()) },
+              filter_id: { $in: groupFilterIds.map(id => new mongoose.Types.ObjectId(id)) }
+            }
+          },
+          { $group: { _id: "$filter_id", count: { $sum: 1 } } }
+        ]);
 
+        agg.forEach(item => {
+          filterAggMap[item._id.toString()] = item.count;
+        });
+      }
+    }
+
+    // Standard agg for all filters based on final filtered products
+    const filterAgg = await ProductFilter.aggregate([
+      {
+        $match: {
+          $or: [
+            { product_id: { $in: finalFilteredProductIdStrings } },
+            { product_id: { $in: finalFilteredProductIds } },
+          ],
+        },
+      },
+      { $group: { _id: "$filter_id", count: { $sum: 1 } } },
+    ]);
+
+    // Merge counts - selected group counts take priority
+    filterAgg.forEach(item => {
+      if (!filterAggMap[item._id.toString()]) {
+        filterAggMap[item._id.toString()] = item.count;
+      }
+    });
+
+    const filterIdList = filterAgg.map(f => f._id);
+    const filterDocs = await Filter.find({ _id: { $in: filterIdList } })
+      .populate({ path: "filter_group", select: "filtergroup_name", model: FilterGroup })
+      .lean();
+
+    const filtersWithGroup = filterDocs.map(f => ({
+      ...f,
+      filter_group_name: f.filter_group?.filtergroup_name || "Other",
+      filter_group_id: f.filter_group?._id?.toString() || "other",
+      count: filterAggMap[f._id.toString()] || 0,
+    }));
     return Response.json({
       products,
       pagination: {

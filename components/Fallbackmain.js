@@ -1450,7 +1450,7 @@ const children = node?.subCategories || [];
 
                         {expandedFilters[group._id] && (
                           <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
-                            {[...group.filters].sort(sortFilterValues).map(filter => (
+{[...group.filters].sort(sortFilterValues).map(filter => (
   <li key={filter._id} className="flex items-center">
     <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
       <input
@@ -1460,23 +1460,17 @@ const children = node?.subCategories || [];
         className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
       />
       <span className="text-sm text-gray-600">{filter.filter_name}</span>
-      {filter.count > 0 && (
-        <span className="text-xs text-gray-400 ml-auto">
-          ({filter.count})
-        </span>
-      )}
     </label>
   </li>
-))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+))}                                                                                                                                                                                                                                                                                                                                                                                                           
+    </ul>
+        )}
+         </div>
+              ))} 
                 </div>
-              )}
-            </div>
-
+              </div>
+             )}
+           </div>
         {isFilterPanelOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
             <div className="fixed left-0 top-0 w-4/5 h-full bg-white shadow-lg flex flex-col">

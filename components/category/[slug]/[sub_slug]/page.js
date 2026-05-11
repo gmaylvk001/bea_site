@@ -260,18 +260,7 @@ Object.keys(groups).forEach(key => {
       // setLoading(false);
     }
   };
-  //const [showEndMessage, setShowEndMessage] = useState(false);
-
-// useEffect(() => {
-//   if (!hasMore && products.length > 0) {
-//     setShowEndMessage(true);
-//     const timer = setTimeout(() => {
-//       setShowEndMessage(false);
-//     }, 5000);
-//     return () => clearTimeout(timer);
-//   }
-// }, [hasMore, products.length]);
-
+ 
   const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
     try {
       setLoading(true);
@@ -371,73 +360,7 @@ Object.keys(groups).forEach(key => {
     }
   }, [selectedFilters, selectedChildCategory, childCategoryTree]);
 
-  // const fetchMoreData = () => {
-  //   if (!loading && hasMore) {
-  //     setPage(prev => prev + 1);
-  //     fetchFilteredProducts(categoryData, page + 1);
-  //   }
-  // };
-
-  // Handle filter changes
-  
-  // useEffect(() => {
-  //   const observer = new IntersectionObserver(
-  //     async (entries) => {
-  //       const firstEntry = entries[0];
-  //       if (firstEntry.isIntersecting && !loading && hasMore) {
-  //         // Save scroll position and container height
-  //         scrollPositionBeforeFetch.current = {
-  //           y: window.scrollY,
-  //           containerHeight: productsContainerRef.current?.scrollHeight || 0,
-  //           isRestoring: false
-  //         };
-          
-  //         await fetchMoreData();
-  //       }
-  //     },
-  //     { rootMargin: '250px' }
-  //   );
-  
-  //   if (sentinelRef.current) {
-  //     observer.observe(sentinelRef.current);
-  //   }
-  
-  //   return () => {
-  //     if (sentinelRef.current) {
-  //       observer.unobserve(sentinelRef.current);
-  //     }
-  //   };
-  // }, [loading, hasMore]);
-  
-  // Add this effect for scroll restoration
-  // useEffect(() => {
-  //   if (!loading && scrollPositionBeforeFetch.current.y > 0 && !scrollPositionBeforeFetch.current.isRestoring) {
-  //     const container = productsContainerRef.current;
-  //     if (!container) return;
-  
-  //     // Calculate height difference after DOM update
-  //     const newContainerHeight = container.scrollHeight;
-  //     const heightDifference = newContainerHeight - scrollPositionBeforeFetch.current.containerHeight;
-      
-  //     // Prevent scroll jump if we're at the same position
-  //     if (heightDifference > 0) {
-  //       scrollPositionBeforeFetch.current.isRestoring = true;
-  //       window.scrollTo({
-  //         top: scrollPositionBeforeFetch.current.y + heightDifference,
-  //         behavior: 'smooth'
-  //       });
-        
-  //       // Reset after scroll
-  //       requestAnimationFrame(() => {
-  //         scrollPositionBeforeFetch.current = {
-  //           y: 0,
-  //           containerHeight: 0,
-  //           isRestoring: false
-  //         };
-  //       });
-  //     }
-  //   }
-  // }, [products, loading]); // Trigger when products or loading state changes
+ 
   
     const handleProductClick = (product) => {
         const stored = JSON.parse(localStorage.getItem('recentlyViewed')) || [];
@@ -455,22 +378,6 @@ Object.keys(groups).forEach(key => {
         localStorage.setItem('recentlyViewed', JSON.stringify(limited));
     };
 
-  // Sorting functionality
-  /* const getSortedProducts = () => {
-    const sortedProducts = [...products];
-    switch(sortOption) {
-      case 'price-low-high':
-        return sortedProducts.sort((a, b) => a.special_price - b.special_price);
-      case 'price-high-low':
-        return sortedProducts.sort((a, b) => b.special_price - a.special_price);
-      case 'name-a-z':
-        return sortedProducts.sort((a, b) => { if (a.name.toLowerCase() === 'capacity') return -1; if (b.name.toLowerCase() === 'capacity') return 1; return a.name.localeCompare(b.name); });
-      case 'name-z-a':
-        return sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
-      default:
-        return sortedProducts;
-    }
-  }; */
 
     // Sorting functionality
     const getSortedProducts = () => {
@@ -532,18 +439,7 @@ Object.keys(groups).forEach(key => {
   useEffect(() => {
     fetchBrand();
   }, []);
-  
-// useEffect(() => {
-//   if (!hasMore && products.length > 0) {
-//     setShowEndMessage(true);
-//     const timer = setTimeout(() => {
-//       setShowEndMessage(false);
-//     }, 2000); // 2000ms = 2 seconds
-//     return () => clearTimeout(timer);
-//   } else {
-//     setShowEndMessage(false); // Clear message when there's more or no products
-//   }
-// }, [hasMore, products.length]);
+
   const handleFilterChange = (type, value) => {
     setSelectedFilters(prev => {
       const newFilters = { ...prev };
@@ -620,16 +516,7 @@ Object.keys(groups).forEach(key => {
         {categories.map((category) => (
           <div key={category._id}>
             <div className={`flex items-center gap-2 ${level > 0 ? `ml-${level * 4}` : ''}`}>
-              {/* <button
-                onClick={() => onFilterChange('categories', category._id)}
-                className={`flex-1 text-left p-2 rounded hover:bg-gray-100 text-gray-700 ${
-                  selectedFilters.includes(category._id) 
-                    ? 'bg-blue-100 font-medium' 
-                    : ''
-                }`}
-              >
-                {category.category_name}
-              </button> */}
+           
                <Link
                 href={`/category/${slug}/${sub_slug}/${category.category_slug}`}
                 className="p-2 hover:bg-gray-100 rounded inline-flex items-center"
@@ -844,35 +731,7 @@ useEffect(() => {
               unoptimized
             />
       
-            {/* Navigation Arrows */}
-            {/* {categoryData.banners.length > 1 && (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentCategoryBannerIndex(
-                      (prev) =>
-                        prev === 0 ? categoryData.banners.length - 1 : prev - 1
-                    );
-                  }}
-                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentCategoryBannerIndex(
-                      (prev) =>
-                        prev === categoryData.banners.length - 1 ? 0 : prev + 1
-                    );
-                  }}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </>
-            )} */}
+
       
             {/* Radio Button Indicators */}
             {categoryData.main_category.banners.length > 1 && (
