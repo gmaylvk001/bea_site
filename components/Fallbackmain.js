@@ -1,3 +1,5 @@
+//C:\Users\hariharan\OneDrive\ドキュメント\Desktop\Bea_\bea_site\components\Fallbackmain.js
+
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
@@ -175,7 +177,7 @@ const fetchInitialData = async () => {
       banners: categoryData.main_category?.banners || []
     });
 
-    // fetchInitialData-ல் setCategoryData-க்கு கீழ் போடுங்க
+    
 const buildTree = (categories, parentId) => {
   return categories
     .filter(c => c.parentid?.toString() === parentId?.toString())
@@ -314,52 +316,50 @@ setCategoryTree(directChildren);
     fetchBrand();
   }, []);
 
-  const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
+const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
     try {
       if (!initialLoad) setLoading(true);
       const query = new URLSearchParams();
-      const categoryIds = selectedFilters.categories.length > 0
-        ? selectedFilters.categories
-        : categoryData.allCategoryIds;
 
-// ✅ இதை போடுங்க
-if (selectedSubCategory || selectedCategory) {
-  const activeName = selectedSubCategory || selectedCategory;
+      // Category IDs correctly based on selected category/subcategory
+      let categoryIds = categoryData.allCategoryIds;
 
-  const findNode = (tree, name) => {
-    for (const node of tree) {
-      if (node.category_name === name) return node;
-      if (node.subCategories?.length > 0) {
-        const found = findNode(node.subCategories, name);
-        if (found) return found;
+      if (selectedSubCategory || selectedCategory) {
+        const activeName = selectedSubCategory || selectedCategory;
+
+        const findNode = (tree, name) => {
+          for (const node of tree) {
+            if (node.category_name === name) return node;
+            if (node.subCategories?.length > 0) {
+              const found = findNode(node.subCategories, name);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+
+        const node = findNode(categoryTree, activeName);
+
+        if (node) {
+          const getAllIds = (n) => {
+            let ids = [n._id.toString()];
+            if (n.subCategories?.length > 0) {
+              n.subCategories.forEach(child => {
+                ids = ids.concat(getAllIds(child));
+              });
+            }
+            return ids;
+          };
+          categoryIds = getAllIds(node); 
+        }
       }
-    }
-    return null;
-  };
 
-  const node = findNode(categoryTree, activeName);
-
-  if (node) {
-    const getAllIds = (n) => {
-      let ids = [n._id.toString()];
-      if (n.subCategories?.length > 0) {
-        n.subCategories.forEach(child => {
-          ids = ids.concat(getAllIds(child));
-        });
+  
+      if (selectedFilters.categories.length > 0) {
+        categoryIds = selectedFilters.categories;
       }
-      return ids;
-    };
 
-    const selectedIds = getAllIds(node);
-    console.log("selectedIds:", selectedIds);
-    query.set('categoryIds', selectedIds.join(','));
-  }
-} else {
-  const categoryIds = selectedFilters.categories.length > 0
-    ? selectedFilters.categories
-    : categoryData.allCategoryIds;
-  query.set('categoryIds', categoryIds.join(','));
-}
+      query.set('categoryIds', categoryIds.join(','));
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
@@ -368,37 +368,69 @@ if (selectedSubCategory || selectedCategory) {
       }
       query.set('minPrice', selectedFilters.price.min);
       query.set('maxPrice', selectedFilters.price.max);
-      
+
       if (selectedFilters.filters.length > 0) {
         query.set('filters', selectedFilters.filters.join(','));
       }
+
       const res = await fetch(`/api/product/filter/main-cat?${query}`);
-      const { products, pagination: paginationData } = await res.json();
+      const data = await res.json();
+      const { products, pagination: paginationData } = data;
+      const filteredBrands = data.brands || [];
+      const filteredFilters = data.filters || [];
 
       setProducts(products);
-      
-      // Update pagination state
+
+      //  Brands dynamic update
+      if (filteredBrands.length > 0) {
+        setCategoryData(prev => ({ ...prev, brands: filteredBrands }));
+      } else {
+        setCategoryData(prev => ({ ...prev, brands: [] }));
+      }
+
+  
+      if (filteredFilters.length > 0) {
+        const groups = {};
+        filteredFilters.forEach(filter => {
+          const groupId = filter.filter_group_name;
+          if (groupId) {
+            if (!groups[groupId]) {
+              groups[groupId] = {
+                _id: groupId,
+                name: filter.filter_group_name,
+                slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
+                filters: []
+              };
+            }
+            groups[groupId].filters.push(filter);
+          }
+        });
+        setFilterGroups(groups);
+      } else {
+        setFilterGroups({});
+      }
+
+    
       setPagination({
         currentPage: paginationData.currentPage,
         totalPages: paginationData.totalPages,
-        hasNext: paginationData.hasNext,
-        hasPrev: paginationData.hasPrev,
+        hasNext: paginationData.currentPage < paginationData.totalPages,
+        hasPrev: paginationData.currentPage > 1,
         totalProducts: paginationData.totalProducts
       });
-      
+
       if (products.length === 0 && pageNum === 1) {
         setNofound(true);
       } else {
         setNofound(false);
       }
     } catch (error) {
-      toast.error('Error fetching products'+error);
-      // Redirect to 404 on error
+      toast.error('Error fetching products: ' + error);
       router.push('/noproduct');
     } finally {
       if (!initialLoad) setLoading(false);
     }
-  }, [selectedFilters, , selectedCategory, selectedSubCategory]);
+  }, [selectedFilters, selectedCategory, selectedSubCategory, categoryTree]);
 
   const handleProductClick = (product) => {
     const stored = JSON.parse(localStorage.getItem('recentlyViewed')) || [];

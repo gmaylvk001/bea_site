@@ -1,6 +1,9 @@
 import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import ProductFilter from "@/models/ecom_productfilter_info";
+import Brand from "@/models/ecom_brand_info";
+import Filter from "@/models/ecom_filter_infos";
+import FilterGroup from "@/models/ecom_filter_group_infos";
 import mongoose from "mongoose";
 
 export async function GET(req) {
@@ -150,7 +153,52 @@ let query = {
   const totalProducts = await Product.countDocuments(query);
   const totalPages = Math.ceil(totalProducts / limit);
 
-  
+   const brandBaseQuery = {
+      sub_category: { $in: objectIdCategoryIds },
+      status: "Active",
+      quantity: { $gt: 0 },
+    };
+
+    const allProductsForBrand = await Product.find(brandBaseQuery, { brand: 1 }).lean();
+    const brandCountMap = {};
+    allProductsForBrand.forEach((p) => {
+      if (p.brand) {
+        const key = p.brand.toString();
+        brandCountMap[key] = (brandCountMap[key] || 0) + 1;
+      }
+    });
+    const brandIdList = Object.keys(brandCountMap).filter(id => id && id !== "undefined");
+    const brandDocs = await Brand.find({ _id: { $in: brandIdList } }).lean();
+    const brandsWithCount = brandDocs
+      .map((b) => ({ ...b, count: brandCountMap[b._id.toString()] || 0 }))
+      .sort((a, b) => a.brand_name.localeCompare(b.brand_name));
+
+    // ✅ Dynamic Product Filters — selected category-க்கு மட்டும்
+    const baseProductIds = await Product.distinct("_id", brandBaseQuery);
+    const baseProductIdStrings = baseProductIds.map(id => id.toString());
+
+    const filterAgg = await ProductFilter.aggregate([
+      {
+        $match: {
+          $or: [
+            { product_id: { $in: baseProductIdStrings } },
+            { product_id: { $in: baseProductIds } },
+          ],
+        },
+      },
+      { $group: { _id: "$filter_id", count: { $sum: 1 } } },
+    ]);
+
+    const filterIdList = filterAgg.map(f => f._id);
+    const filterDocs = await Filter.find({ _id: { $in: filterIdList } })
+      .populate({ path: "filter_group", select: "filtergroup_name", model: FilterGroup })
+      .lean();
+
+    const filtersWithGroup = filterDocs.map(f => ({
+      ...f,
+      filter_group_name: f.filter_group?.filtergroup_name || "Other",
+      count: (filterAgg.find(fa => fa._id?.toString() === f._id?.toString()) || {}).count || 0,
+    }));
   
   return Response.json({
     products,
@@ -158,8 +206,12 @@ let query = {
       currentPage: page,
       totalPages,
       totalProducts,
+      hasNext: page < totalPages,  
+      hasPrev: page > 1,    
       hasMore: page < totalPages
-    }
+    },
+      brands: brandsWithCount,
+      filters: filtersWithGroup,
   });
   } catch (error) {
     console.error('Error in /api/product/filter:', error);
