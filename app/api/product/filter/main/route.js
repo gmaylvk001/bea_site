@@ -2,6 +2,10 @@ import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import ProductFilter from "@/models/ecom_productfilter_info";
 import Brand from "@/models/ecom_brand_info";
+import Filter from "@/models/ecom_filter_infos";
+import FilterGroup from "@/models/ecom_filter_group_infos";
+
+const mongoose = require('mongoose'); 
 
 export async function GET(req) {
   try {
@@ -120,25 +124,20 @@ if (sub_category_new && typeof sub_category_new === "string") {
         break;
     }
 
-    // Apply product attribute filters (AND between groups, OR within group)
     if (Object.keys(filterGroupsMap).length > 0) {
-      // Start with all products matching the base query (category + brand + price)
       let candidateIds = await productsQuery.distinct('_id');
 
       if (candidateIds.length > 0) {
-        // Process each filter group — product must satisfy every group (AND)
         for (const groupFilterIds of Object.values(filterGroupsMap)) {
-          // Within a group — product only needs to match one filter (OR)
           const matchingProductIds = await ProductFilter.find({
             product_id: { $in: candidateIds },
             filter_id: { $in: groupFilterIds }
           }).distinct('product_id');
 
           const matchingSet = new Set(matchingProductIds.map(id => id.toString()));
-          // Intersect: keep only products that matched this group
           candidateIds = candidateIds.filter(id => matchingSet.has(id.toString()));
 
-          if (candidateIds.length === 0) break; // no point checking further groups
+          if (candidateIds.length === 0) break; 
         }
 
         query._id = { $in: candidateIds };
@@ -222,6 +221,67 @@ const brandsWithCount = brandDocs
   }))
   .sort((a, b) => a.brand_name.localeCompare(b.brand_name));
 
+  const baseQuery = {
+  status: "Active",
+  quantity: { $gt: 0 },
+};
+
+if (sub_category_new) {
+  baseQuery.sub_category_new = {
+    $regex: sub_category_new,
+    $options: "i",
+  };
+}
+
+
+if (categoryIds.length > 0) {
+  baseQuery.$or = [
+    { sub_category: { $in: categoryIds } },
+    { category: { $in: categoryIds } },
+    { main_category: { $in: categoryIds } },
+  ];
+} else if (query.$or) {
+  baseQuery.$or = query.$or;
+}
+
+const baseProductIds = await Product.distinct("_id", baseQuery);
+
+const baseProductIdStrings = baseProductIds.map((id) => id.toString());
+
+
+const filterAgg = await ProductFilter.aggregate([
+  {
+    $match: {
+      $or: [
+        { product_id: { $in: baseProductIdStrings } },
+        { product_id: { $in: baseProductIds } },
+      ],
+    },
+  },
+  { $group: { _id: "$filter_id", count: { $sum: 1 } } },
+]);
+
+console.log("🔍 filterAgg count:", filterAgg.length);
+console.log("🔍 filterAgg:", filterAgg);
+
+const filterIdList = filterAgg.map((f) => f._id);
+
+const filterDocs = await Filter.find({ _id: { $in: filterIdList } })
+  .populate({
+    path: "filter_group",
+    select: "filtergroup_name",
+    model: FilterGroup,
+  })
+  .lean();
+
+const filtersWithGroup = filterDocs.map((f) => ({
+  ...f,
+  filter_group_name: f.filter_group?.filtergroup_name || "Other",
+  count: (filterAgg.find(
+    (fa) => fa._id.toString() === f._id.toString()
+  ) || {}).count || 0,
+}));
+
     return Response.json({
       products,
       pagination: {
@@ -232,6 +292,7 @@ const brandsWithCount = brandDocs
         hasPrev: page > 1
       },
       brands: brandsWithCount,
+      filters: filtersWithGroup,
     });
     
   } catch (error) {

@@ -317,8 +317,10 @@ Object.keys(groups).forEach(key => {
       }
 
       const res = await fetch(`/api/product/filter/main?${query}`);
-       const { products, pagination: paginationData, brands: filteredBrands } = await res.json();
-
+     const data = await res.json();
+     const { products, pagination: paginationData, brands: filteredBrands } = data;
+     const filteredFilters = data.filters || [];
+      console.log("🍀🍀🍀🍀🍀filteredFilters:", filteredFilters);
        setProducts(products);
 
       // ✅ Brand update — category based
@@ -328,7 +330,24 @@ Object.keys(groups).forEach(key => {
       brands: filteredBrands,
       }));
       }
-      
+       if (filteredFilters) {
+      const groups = {};
+      filteredFilters.forEach(filter => {
+        const groupId = filter.filter_group_name;
+        if (groupId) {
+          if (!groups[groupId]) {
+            groups[groupId] = {
+              _id: groupId,
+              name: filter.filter_group_name,
+              slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
+              filters: []
+            };
+          }
+          groups[groupId].filters.push(filter);
+        }
+      });
+      setFilterGroups(groups);
+    }  
       // Update pagination state
       setPagination({
         currentPage: paginationData.currentPage,
