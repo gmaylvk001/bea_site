@@ -371,7 +371,7 @@ const capitalizeFirstLetter = (str) =>
                     <Link href="https://www.instagram.com/bharathelectronics/">
                       <FaInstagram className="text-xl text-pink-500" />
                     </Link>
-                    <Link href="https://www.youtube.com/@bharathelectronicsandappli3074">
+                    <Link href="https://www.youtube.com/@bharathelectronicsandapplian">
                       <FaYoutube className="text-xl text-red-500" />
                     </Link>
                     <Link href="https://twitter.com/bharath_bea">
