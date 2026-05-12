@@ -373,6 +373,10 @@ const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, init
         query.set('filters', selectedFilters.filters.join(','));
       }
 
+      if (sortOption) {
+        query.set('sort', sortOption);
+      }
+
       const res = await fetch(`/api/product/filter/main-cat?${query}`);
       const data = await res.json();
       const { products, pagination: paginationData } = data;
@@ -430,7 +434,7 @@ const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, init
     } finally {
       if (!initialLoad) setLoading(false);
     }
-  }, [selectedFilters, selectedCategory, selectedSubCategory, categoryTree]);
+  }, [selectedFilters, selectedCategory, selectedSubCategory, categoryTree, sortOption]);
 
   const handleProductClick = (product) => {
     const stored = JSON.parse(localStorage.getItem('recentlyViewed')) || [];
@@ -637,12 +641,12 @@ const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, init
     );
   };
 
-  useEffect(() => {
+useEffect(() => {
     if (categoryData.main_category && categoryData.category && initialLoadComplete) {
       fetchFilteredProducts(categoryData, 1);
     }
-  }, [selectedFilters,selectedCategory, selectedSubCategory,categoryData.main_category, categoryData.category, initialLoadComplete]);
-
+  }, [selectedFilters, selectedCategory, selectedSubCategory, sortOption, categoryData.main_category, categoryData.category, initialLoadComplete]);
+  
   const clearAllFilters = () => {
     setSelectedFilters({
       categories: [],

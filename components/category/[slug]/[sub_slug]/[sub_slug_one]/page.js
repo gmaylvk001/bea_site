@@ -313,8 +313,12 @@ useEffect(() => {
       query.set('minPrice', selectedFilters.price.min);
       query.set('maxPrice', selectedFilters.price.max);
       
-      if (selectedFilters.filters.length > 0) {
+if (selectedFilters.filters.length > 0) {
         query.set('filters', selectedFilters.filters.join(','));
+      }
+
+       if (sortOption && !['price-low-high', 'price-high-low'].includes(sortOption)) {
+        query.set('sort', sortOption);
       }
 
       //const res = await fetch(`/api/product/filter/main?${query}`);
@@ -349,7 +353,7 @@ useEffect(() => {
     } finally {
       setLoading(false);
     }
-  }, [selectedFilters]);
+  }, [selectedFilters, sortOption]);
 
   // const fetchMoreData = () => {
   //   if (!loading && hasMore) {
@@ -580,12 +584,12 @@ const getSortedProducts = () => {
   }, [selectedFilters.price.min, selectedFilters.price.max]);
 
 
-  useEffect(() => {
+useEffect(() => {
     if (categoryData.category?._id) {
       setPage(1);
       fetchFilteredProducts(categoryData,1);
     }
-  }, [selectedFilters]);
+  }, [selectedFilters, sortOption]);
 
   const clearAllFilters = () => {
     setSelectedFilters({

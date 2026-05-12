@@ -152,10 +152,32 @@ if (filterIds.length > 0) {
 
  
     // Apply sorting: Products with quantity > 0 first, then quantity <= 0
-    productsQuery = productsQuery.sort({ 
-       createdAt: -1, 
-      _id: -1 
-    });
+const sort = searchParams.get('sort') || 'featured';
+    
+    switch(sort) {
+      case 'price-low-high':
+        productsQuery = productsQuery.sort({ price: 1, _id: -1 });
+        break;
+      case 'price-high-low':
+        productsQuery = productsQuery.sort({ price: -1, _id: -1 });
+        break;
+      case 'name-a-z':
+        productsQuery = productsQuery.sort({ name: 1, _id: -1 });
+        break;
+      case 'name-z-a':
+        productsQuery = productsQuery.sort({ name: -1, _id: -1 });
+        break;
+      case 'quantity-low-to-high':
+        productsQuery = productsQuery.sort({ quantity: 1, _id: -1 });
+        break;
+      case 'quantity-high-to-low':
+        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
+        break;
+      case 'featured':
+      default:
+        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
+        break;
+    }
   
   // Apply paginationn
   const skip = (page - 1) * limit;

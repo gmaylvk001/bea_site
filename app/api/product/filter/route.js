@@ -18,6 +18,7 @@ export async function GET(req) {
     const filterIds = searchParams.get('filters')?.split(',') || [];
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 5;
+    const sort = searchParams.get('sort') || 'featured';
     // Base query - always filter by category
    let query = { sub_category_new: {
         $regex: sub_category_new,
@@ -113,7 +114,30 @@ query.$or = [
       }
 
    
- productsQuery = productsQuery.sort({ _id: -1 });
+ switch(sort) {
+      case 'price-low-high':
+        productsQuery = productsQuery.sort({ special_price: 1, price: 1, _id: -1 });
+        break;
+      case 'price-high-low':
+        productsQuery = productsQuery.sort({ special_price: -1, price: -1, _id: -1 });
+        break;
+      case 'name-a-z':
+        productsQuery = productsQuery.sort({ name: 1, _id: -1 });
+        break;
+      case 'name-z-a':
+        productsQuery = productsQuery.sort({ name: -1, _id: -1 });
+        break;
+      case 'quantity-low-to-high':
+        productsQuery = productsQuery.sort({ quantity: 1, _id: -1 });
+        break;
+      case 'quantity-high-to-low':
+        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
+        break;
+      case 'featured':
+      default:
+        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
+        break;
+    }
       
       // Apply pagination
       const skip = (page - 1) * limit;
