@@ -153,7 +153,7 @@ if (filterIds.length > 0) {
  
     // Apply sorting: Products with quantity > 0 first, then quantity <= 0
     productsQuery = productsQuery.sort({ 
-      price: -1, 
+       createdAt: -1, 
       _id: -1 
     });
   
