@@ -63,7 +63,7 @@ const CUSTOM_FILTER_ORDER = [
   const [filterGroups, setFilterGroups] = useState({});
   const [loading, setLoading] = useState(true);
   const { slug,sub_slug } = useParams();
-  const [sortOption, setSortOption] = useState('price-high-low');
+  const [sortOption, setSortOption] = useState('');
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [isBrandsExpanded, setIsBrandsExpanded] = useState(true);
   const [expandedFilters, setExpandedFilters] = useState({}); 
@@ -305,11 +305,15 @@ Object.keys(groups).forEach(key => {
         }
       }
 
+      if (sortOption) {
+        query.set('sort', sortOption);
+      }
+
       const res = await fetch(`/api/product/filter/main?${query}`);
      const data = await res.json();
      const { products, pagination: paginationData, brands: filteredBrands } = data;
      const filteredFilters = data.filters || [];
-      console.log("🍀🍀🍀🍀🍀filteredFilters:", filteredFilters);
+     
        setProducts(products);
 
       // ✅ Brand update — category based
@@ -358,7 +362,7 @@ Object.keys(groups).forEach(key => {
     } finally {
       setLoading(false);
     }
-  }, [selectedFilters, selectedChildCategory, childCategoryTree]);
+  },  [selectedFilters, selectedChildCategory, childCategoryTree, sortOption]);
 
  
   
@@ -555,7 +559,7 @@ useEffect(() => {
   if (categoryData.main_category && categoryData.category) {
     fetchFilteredProducts(categoryData, 1);
   }
-}, [selectedFilters, selectedChildCategory, categoryData.main_category, categoryData.category, fetchFilteredProducts]);
+}, [selectedFilters, selectedChildCategory, sortOption, categoryData.main_category, categoryData.category, fetchFilteredProducts]);
 
   const clearAllFilters = () => {
     setSelectedFilters({

@@ -118,9 +118,15 @@ if (sub_category_new && typeof sub_category_new === "string") {
       case 'name-z-a':
         productsQuery = productsQuery.sort({ name: -1 });
         break;
+      case 'quantity-low-to-high':
+        productsQuery = productsQuery.sort({ quantity: 1, _id: -1 });
+        break;
+      case 'quantity-high-to-low':
+        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
+        break;
       case 'featured':
       default:
-        productsQuery = productsQuery.sort({ createdAt: -1, _id: -1 });
+        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
         break;
     }
 
@@ -159,7 +165,7 @@ if (sub_category_new && typeof sub_category_new === "string") {
             break;
           case 'featured':
           default:
-            productsQuery = productsQuery.sort({ price: -1, _id: -1 });
+            productsQuery = productsQuery.sort({ createdAt: -1, _id: -1 });
             break;
         }
       }
