@@ -1176,14 +1176,15 @@ const Header = () => {
                     : "text-[#8c8c8c] !p-[5px] hover:text-[#0e54e6]"
                 }`}
               >
-                <span className={item.level === 0 ? "font-bold" : "font-normal"}>
+                {/* <span className={item.level === 0 ? "font-bold" : "font-normal"}> */}
+                <span className={`${item.level === 0 ? "font-bold" : "font-normal"} w-[20ch] break-words whitespace-normal leading-5`}>
                   {item.category_name}
                 </span>
                 {item.level === 0 && (
                   <Play
                     size={14}
                     strokeWidth={0}
-                    className="text-blue-600 fill-blue-600"
+                    className="text-blue-600 fill-blue-600 mt-1"
                   />
                 )}
               </Link>
