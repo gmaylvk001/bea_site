@@ -41,7 +41,7 @@ const [selectedSubCategory, setSelectedSubCategory] = useState("");
   const [loading, setLoading] = useState(true);
   const { slug,sub_slug } = useParams();
   //const { slug } = useParams();
-  const [sortOption, setSortOption] = useState('');
+  const [sortOption, setSortOption] = useState('price-high-low');
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [isBrandsExpanded, setIsBrandsExpanded] = useState(true);
   const [expandedFilters, setExpandedFilters] = useState(() => {

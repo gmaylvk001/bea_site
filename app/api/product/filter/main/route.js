@@ -159,7 +159,7 @@ if (sub_category_new && typeof sub_category_new === "string") {
             break;
           case 'featured':
           default:
-            productsQuery = productsQuery.sort({ createdAt: -1, _id: -1 });
+            productsQuery = productsQuery.sort({ price: -1, _id: -1 });
             break;
         }
       }
