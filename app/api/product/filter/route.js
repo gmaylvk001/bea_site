@@ -114,44 +114,46 @@ query.$or = [
       }
 
    
- switch(sort) {
-      case 'price-low-high':
-        productsQuery = productsQuery.sort({ special_price: 1, price: 1, _id: -1 });
-        break;
-      case 'price-high-low':
-        productsQuery = productsQuery.sort({ special_price: -1, price: -1, _id: -1 });
-        break;
-      case 'name-a-z':
-        productsQuery = productsQuery.sort({ name: 1, _id: -1 });
-        break;
-      case 'name-z-a':
-        productsQuery = productsQuery.sort({ name: -1, _id: -1 });
-        break;
-      case 'quantity-low-to-high':
-        productsQuery = productsQuery.sort({ quantity: 1, _id: -1 });
-        break;
-      case 'quantity-high-to-low':
-        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
-        break;
-      case 'featured':
-      default:
-        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
-        break;
-    }
-      
-      // Apply pagination
-      const skip = (page - 1) * limit;
-      const products = await productsQuery
+    const skip = (page - 1) * limit;
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    let products;
+
+    if (sort === 'price-low-high' || sort === 'price-high-low') {
+      const sortDir = sort === 'price-low-high' ? 1 : -1;
+      products = await Product.aggregate([
+        { $match: query },
+        {
+          $addFields: {
+            effective_price: {
+              $cond: {
+                if: { $and: [{ $gt: ["$special_price", 0] }, { $lt: ["$special_price", "$price"] }] },
+                then: "$special_price",
+                else: "$price"
+              }
+            }
+          }
+        },
+        { $sort: { effective_price: sortDir, _id: -1 } },
+        { $skip: skip },
+        { $limit: limit }
+      ]);
+    } else {
+      const sortObj =
+        sort === 'name-a-z' ? { name: 1, _id: -1 } :
+        sort === 'name-z-a' ? { name: -1, _id: -1 } :
+        sort === 'quantity-low-to-high' ? { quantity: 1, _id: -1 } :
+        sort === 'quantity-high-to-low' ? { quantity: -1, _id: -1 } :
+        { quantity: -1, _id: -1 };
+
+      products = await productsQuery
+        .sort(sortObj)
         .skip(skip)
         .limit(limit)
         .lean();
-      
-      // Get total count for pagination info (optional)
-      const totalProducts = await Product.countDocuments(query);
-       console.log('FILTER API Query:', JSON.stringify(query));
-       console.log('FILTER API Total:', totalProducts);
-      const totalPages = Math.ceil(totalProducts / limit);
-
+    }
+    
     const allProductIds = await Product.distinct('_id', query);
 
     const allProductFilters = await ProductFilter.find({

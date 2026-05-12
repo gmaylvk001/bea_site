@@ -154,41 +154,85 @@ if (filterIds.length > 0) {
     // Apply sorting: Products with quantity > 0 first, then quantity <= 0
 const sort = searchParams.get('sort') || 'featured';
     
-    switch(sort) {
-      case 'price-low-high':
-        productsQuery = productsQuery.sort({ price: 1, _id: -1 });
-        break;
-      case 'price-high-low':
-        productsQuery = productsQuery.sort({ price: -1, _id: -1 });
-        break;
-      case 'name-a-z':
-        productsQuery = productsQuery.sort({ name: 1, _id: -1 });
-        break;
-      case 'name-z-a':
-        productsQuery = productsQuery.sort({ name: -1, _id: -1 });
-        break;
-      case 'quantity-low-to-high':
-        productsQuery = productsQuery.sort({ quantity: 1, _id: -1 });
-        break;
-      case 'quantity-high-to-low':
-        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
-        break;
-      case 'featured':
-      default:
-        productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
-        break;
+const skip = (page - 1) * limit;
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    let products;
+
+if (sort === 'price-low-high' || sort === 'price-high-low') {
+      const sortDir = sort === 'price-low-high' ? 1 : -1;
+
+       const aggregateMatch = {
+        sub_category: { $in: [...objectIdCategoryIds, ...categoryIds] },
+        status: "Active",
+        quantity: { $gt: 0 },
+      };
+
+      if (brandIds.length > 0) {
+        aggregateMatch.brand = { $in: brandIds.map(id => 
+          mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id
+        )};
+      }
+
+      
+      if (query._id) {
+        const idList = query._id.$in;
+        aggregateMatch._id = { 
+          $in: idList.map(id => 
+            mongoose.Types.ObjectId.isValid(id.toString()) 
+              ? new mongoose.Types.ObjectId(id.toString()) 
+              : id
+          )
+        };
+      }
+      
+      products = await Product.aggregate([
+        { $match: aggregateMatch },
+        {
+          $match: {
+            $or: [
+              { 
+                special_price: { $gt: 0, $gte: minPrice, $lte: maxPrice } 
+              },
+              {
+                $and: [
+                  { $or: [{ special_price: { $exists: false } }, { special_price: null }, { special_price: 0 }] },
+                  { price: { $gte: minPrice, $lte: maxPrice } }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          $addFields: {
+            effective_price: {
+              $cond: {
+                if: { $and: [{ $gt: ["$special_price", 0] }, { $lt: ["$special_price", "$price"] }] },
+                then: "$special_price",
+                else: "$price"
+              }
+            }
+          }
+        },
+        { $sort: { effective_price: sortDir, _id: -1 } },
+        { $skip: skip },
+        { $limit: limit }
+      ]);
+    } else {
+      const sortObj =
+        sort === 'name-a-z' ? { name: 1, _id: -1 } :
+        sort === 'name-z-a' ? { name: -1, _id: -1 } :
+        sort === 'quantity-low-to-high' ? { quantity: 1, _id: -1 } :
+        sort === 'quantity-high-to-low' ? { quantity: -1, _id: -1 } :
+        { quantity: -1, _id: -1 };
+
+      products = await productsQuery
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit)
+        .lean();
     }
-  
-  // Apply paginationn
-  const skip = (page - 1) * limit;
-  const products = await productsQuery
-    .skip(skip)
-    .limit(limit)
-    .lean();
-  
-  // Get total count for pagination info (optional)
-  const totalProducts = await Product.countDocuments(query);
-  const totalPages = Math.ceil(totalProducts / limit);
 
 const brandBaseQuery = {
       sub_category: { $in: objectIdCategoryIds },

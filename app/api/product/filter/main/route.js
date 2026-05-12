@@ -150,37 +150,103 @@ if (sub_category_new && typeof sub_category_new === "string") {
         productsQuery = Product.find(query).populate('brand', 'brand_name brand_slug');
 
         // Re-apply sorting
-        switch(sort) {
-          case 'price-low-high':
-            productsQuery = productsQuery.sort({ price: 1 });
-            break;
-          case 'price-high-low':
-            productsQuery = productsQuery.sort({ price: -1 });
-            break;
+          switch(sort) {
           case 'name-a-z':
             productsQuery = productsQuery.sort({ name: 1 });
             break;
           case 'name-z-a':
             productsQuery = productsQuery.sort({ name: -1 });
             break;
+          case 'quantity-low-to-high':
+            productsQuery = productsQuery.sort({ quantity: 1, _id: -1 });
+            break;
+          case 'quantity-high-to-low':
+            productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
+            break;
           case 'featured':
           default:
-            productsQuery = productsQuery.sort({ createdAt: -1, _id: -1 });
+            productsQuery = productsQuery.sort({ quantity: -1, _id: -1 });
             break;
         }
       }
     }
-
     // Apply pagination
-    const skip = (page - 1) * limit;
-    const products = await productsQuery
-      .skip(skip)
-      .limit(limit)
-      .lean();
-    
-    // Get total count for pagination
+const skip = (page - 1) * limit;
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
+
+    let products;
+
+    if (sort === 'price-low-high' || sort === 'price-high-low') {
+      const sortDir = sort === 'price-low-high' ? 1 : -1;
+
+      const aggregateMatch = {
+        status: "Active",
+        quantity: { $gt: 0 },
+      };
+
+      if (sub_category_new) {
+        aggregateMatch.sub_category_new = { $regex: sub_category_new, $options: "i" };
+      }
+
+      if (categoryIds.length > 0) {
+        aggregateMatch.$or = [
+          { sub_category: { $in: categoryIds } },
+          { category: { $in: categoryIds } },
+          { main_category: { $in: categoryIds } }
+        ];
+      }
+
+      if (brandIds.length > 0) {
+        aggregateMatch.brand = { $in: brandIds };
+      }
+
+      if (query._id) {
+        aggregateMatch._id = { 
+          $in: query._id.$in.map(id => 
+            mongoose.Types.ObjectId.isValid(id.toString()) 
+              ? new mongoose.Types.ObjectId(id.toString()) 
+              : id
+          )
+        };
+      }
+
+      products = await Product.aggregate([
+        { $match: aggregateMatch },
+        {
+          $match: {
+            $or: [
+              { special_price: { $gt: 0, $gte: minPrice, $lte: maxPrice } },
+              {
+                $and: [
+                  { $or: [{ special_price: null }, { special_price: 0 }] },
+                  { price: { $gte: minPrice, $lte: maxPrice } }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          $addFields: {
+            effective_price: {
+              $cond: {
+                if: { $and: [{ $gt: ["$special_price", 0] }, { $lt: ["$special_price", "$price"] }] },
+                then: "$special_price",
+                else: "$price"
+              }
+            }
+          }
+        },
+        { $sort: { effective_price: sortDir, _id: -1 } },
+        { $skip: skip },
+        { $limit: limit }
+      ]);
+    } else {
+      products = await productsQuery
+        .skip(skip)
+        .limit(limit)
+        .lean();
+    }
       
           
     const brandFilterQuery = {

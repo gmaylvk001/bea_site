@@ -317,7 +317,7 @@ if (selectedFilters.filters.length > 0) {
         query.set('filters', selectedFilters.filters.join(','));
       }
 
-       if (sortOption && !['price-low-high', 'price-high-low'].includes(sortOption)) {
+       if (sortOption) {
         query.set('sort', sortOption);
       }
 
@@ -355,91 +355,7 @@ if (selectedFilters.filters.length > 0) {
     }
   }, [selectedFilters, sortOption]);
 
-  // const fetchMoreData = () => {
-  //   if (!loading && hasMore) {
-  //     setPage(prev => prev + 1);
-  //     fetchFilteredProducts(categoryData.category._id, page + 1);
-  //   }
-  // };
   
-  // useEffect(() => {
-  //   const observer = new IntersectionObserver(
-  //     async (entries) => {
-  //       const firstEntry = entries[0];
-  //       if (firstEntry.isIntersecting && !loading && hasMore) {
-  //         // Save scroll position and container height
-  //         scrollPositionBeforeFetch.current = {
-  //           y: window.scrollY,
-  //           containerHeight: productsContainerRef.current?.scrollHeight || 0,
-  //           isRestoring: false
-  //         };
-          
-  //         await fetchMoreData();
-  //       }
-  //     },
-  //     { rootMargin: '250px' }
-  //   );
-  
-  //   if (sentinelRef.current) {
-  //     observer.observe(sentinelRef.current);
-  //   }
-  
-  //   return () => {
-  //     if (sentinelRef.current) {
-  //       observer.unobserve(sentinelRef.current);
-  //     }
-  //   };
-  // }, [loading, hasMore]);
-  
-  // // Add this effect for scroll restoration
-  // useEffect(() => {
-  //   if (!loading && scrollPositionBeforeFetch.current.y > 0 && !scrollPositionBeforeFetch.current.isRestoring) {
-  //     const container = productsContainerRef.current;
-  //     if (!container) return;
-  
-  //     // Calculate height difference after DOM update
-  //     const newContainerHeight = container.scrollHeight;
-  //     const heightDifference = newContainerHeight - scrollPositionBeforeFetch.current.containerHeight;
-      
-  //     // Prevent scroll jump if we're at the same position
-  //     if (heightDifference > 0) {
-  //       scrollPositionBeforeFetch.current.isRestoring = true;
-  //       window.scrollTo({
-  //         top: scrollPositionBeforeFetch.current.y + heightDifference,
-  //         behavior: 'smooth'
-  //       });
-        
-  //       // Reset after scroll
-  //       requestAnimationFrame(() => {
-  //         scrollPositionBeforeFetch.current = {
-  //           y: 0,
-  //           containerHeight: 0,
-  //           isRestoring: false
-  //         };
-  //       });
-  //     }
-  //   }
-  // }, [products, loading]); // Trigger when products or loading state changes
-  
-
-  // Sorting functionality
-  /* const getSortedProducts = () => {
-    const sortedProducts = [...products];
-    switch(sortOption) {
-      case 'price-low-high':
-        return sortedProducts.sort((a, b) => a.special_price - b.special_price);
-      case 'price-high-low':
-        return sortedProducts.sort((a, b) => b.special_price - a.special_price);
-      case 'name-a-z':
-        return sortedProducts.sort((a, b) => { if (a.name.toLowerCase() === 'capacity') return -1; if (b.name.toLowerCase() === 'capacity') return 1; return a.name.localeCompare(b.name); });
-      case 'name-z-a':
-        return sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
-      default:
-        return sortedProducts;
-    }
-  }; */
-
-
   // Sorting functionality
 const getSortedProducts = () => {
   const sortedProducts = [...products];
