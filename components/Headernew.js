@@ -1177,7 +1177,7 @@ const Header = () => {
                 }`}
               >
                 {/* <span className={item.level === 0 ? "font-bold" : "font-normal"}> */}
-                <span className={`${item.level === 0 ? "font-bold" : "font-normal"} w-[20ch] break-words whitespace-normal leading-5`}>
+                <span className={`${item.level === 0 ? "font-bold" : "font-normal"} w-[18ch] break-words whitespace-normal leading-5`}>
                   {item.category_name}
                 </span>
                 {item.level === 0 && (
