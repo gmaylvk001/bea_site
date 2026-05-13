@@ -1924,7 +1924,7 @@ const fetchBrand = async () => {
   {addOnProducts.filter(
   (item) => item.quantity > 0 && item.status === "Active"
 ).length > 0 && (
-<div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide" style={{background:"linear-gradient(176deg, rgb(184 241 234) 0%, rgb(252 212 244) 100%)"}}>
+<div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide" style={{background:"#eaeaea"}}>
     <div className="px-4 py-4">
       <h2 className="text-sm font-bold text-customBlue underline mb-2">
         Add Ons
