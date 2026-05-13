@@ -1,6 +1,7 @@
 import dbConnect from "@/lib/db";
 import Brand from "@/models/ecom_brand_info";
 import { NextResponse } from "next/server";
+import fs from "fs/promises";
 import path from "path";
 import { writeFile, unlink } from "fs/promises";
 // app/api/brand/route.js
@@ -33,7 +34,7 @@ export async function PUT(req) {
     }
 
     // Handle image upload
-    let imagePath = existingBrand.image;
+    /* let imagePath = existingBrand.image;
     if (image && image.name) {
       // Delete old image if it exists
       if (existingImage) {
@@ -54,7 +55,59 @@ export async function PUT(req) {
 
       await writeFile(filePath, buffer);
       imagePath = `${fileName}`;
+    } */
+
+      // Handle image upload
+// Handle image upload
+let imagePath = existingBrand.image;
+
+if (image && image.name) {
+
+  // Delete old image if exists
+  if (existingBrand.image) {
+
+    try {
+
+      // remove starting slash if exists
+      const cleanImagePath = existingBrand.image.replace(/^\/+/, "");
+
+      const oldImagePath = path.join(
+        process.cwd(),
+        "public",
+        cleanImagePath
+      );
+
+      // check file exists
+      await fs.access(oldImagePath);
+
+      // delete file
+      await fs.unlink(oldImagePath);
+
+      console.log("Old image deleted");
+
+    } catch (err) {
+      console.error("Delete failed:", err.message);
     }
+  }
+
+  // Save new image
+  const bytes = await image.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  const ext = path.extname(image.name);
+
+  const fileName = `brand_${Date.now()}${ext}`;
+
+  const uploadDir = path.join(
+    process.cwd(),
+    "public/uploads/brands"
+  );
+  const filePath = path.join(uploadDir, fileName);
+
+  await fs.writeFile(filePath, buffer);
+
+  imagePath = `${fileName}`;
+}
 
     // Update the brand
     const updatedBrand = await Brand.findByIdAndUpdate(
