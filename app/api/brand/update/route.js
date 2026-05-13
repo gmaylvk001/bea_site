@@ -1,146 +1,135 @@
 import dbConnect from "@/lib/db";
 import Brand from "@/models/ecom_brand_info";
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
 import path from "path";
-
-// app/api/brand/update/route.js
-
+import fs from "fs/promises";
+import { writeFile, unlink } from "fs/promises";
+// app/api/brand/route.js
 export async function PUT(req) {
   try {
     await dbConnect();
-
+    
     const formData = await req.formData();
-
     const id = formData.get("id");
     const brand_name = formData.get("brand_name");
     const status = formData.get("status");
     const image = formData.get("image");
+    const existingImage = formData.get("existingImage");
 
-    // Validate
+    // Validate required fields
     if (!id || !brand_name) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Missing required fields",
-        },
+        { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Find brand
+    // Find the existing brand
     const existingBrand = await Brand.findById(id);
-
     if (!existingBrand) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Brand not found",
-        },
+        { success: false, error: "Brand not found" },
         { status: 404 }
       );
     }
 
-    // Default existing image
-    let imagePath = existingBrand.image;
-
-    // If new image uploaded
+    // Handle image upload
+    /* let imagePath = existingBrand.image;
     if (image && image.name) {
-
-      /* =========================
-         DELETE OLD IMAGE
-      ========================= */
-
-      if (existingBrand.image) {
+      // Delete old image if it exists
+      if (existingImage) {
         try {
-
-          // remove starting slash
-          const cleanImagePath = existingBrand.image.replace(/^\/+/, "");
-
-          const oldImagePath = path.join(
-            process.cwd(),
-            "public",
-            cleanImagePath
-          );
-
-          // check file exists
-          await fs.access(oldImagePath);
-
-          // delete file
-          await fs.unlink(oldImagePath);
-
-          console.log("Old image deleted");
-
+          const oldImagePath = path.join(process.cwd(), "public", existingImage);
+          await unlink(oldImagePath);
         } catch (err) {
-          console.error("Delete failed:", err.message);
+          console.error("Error deleting old image:", err);
         }
       }
 
-      /* =========================
-         SAVE NEW IMAGE
-      ========================= */
+      // Save new image
+      const bytes = await image.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const ext = path.extname(image.name);
+      const fileName = `brand_${Date.now()}${ext}`;
+      const filePath = path.join(process.cwd(), "public/uploads/brands", fileName);
 
+      await writeFile(filePath, buffer);
+      imagePath = `${fileName}`;
+    } */
+
+       // Existing image name from DB
+    let imagePath = existingBrand.image;
+
+    // Upload new image
+    if (image && image.name) {
+
+      // Delete old image
+      if (existingBrand.image) {
+        try {
+          const oldImagePath = path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "brands",
+            path.basename(existingBrand.image)
+          );
+
+          // Check file exists
+          await fs.access(oldImagePath);
+
+          // Delete file
+          await fs.unlink(oldImagePath);
+
+        } catch (err) {
+          console.log("Old image not found or already deleted");
+        }
+      }
+
+      // Save new image
       const bytes = await image.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
       const ext = path.extname(image.name);
-
       const fileName = `brand_${Date.now()}${ext}`;
 
-      const uploadDir = path.join(
+      const newFilePath = path.join(
         process.cwd(),
-        "public/uploads/brands"
+        "public",
+        "uploads",
+        "brands",
+        fileName
       );
-
-      // create folder if not exists
-      await fs.mkdir(uploadDir, { recursive: true });
-
-      const filePath = path.join(uploadDir, fileName);
-
-      // save image
-      await fs.writeFile(filePath, buffer);
-
-      // save path in DB
-      imagePath = `${fileName}`;
+      await writeFile(newFilePath, buffer);
+      
+      imagePath = fileName;
     }
 
-    /* =========================
-       UPDATE BRAND
-    ========================= */
 
+    // Update the brand
     const updatedBrand = await Brand.findByIdAndUpdate(
       id,
       {
         brand_name,
-        brand_slug: brand_name
-          .toLowerCase()
-          .replace(/\s+/g, "-"),
-
+        brand_slug: brand_name.toLowerCase().replace(/\s+/g, "-"),
         status,
-
-        image: imagePath,
+        image: imagePath
       },
       { new: true }
     );
 
     return NextResponse.json(
-      {
-        success: true,
+      { 
+        success: true, 
         message: "Brand updated successfully",
-        data: updatedBrand,
+        data: updatedBrand 
       },
       { status: 200 }
     );
 
   } catch (error) {
-
     console.error("Error updating brand:", error);
-
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Internal server error",
-      },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
