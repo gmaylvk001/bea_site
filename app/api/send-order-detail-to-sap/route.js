@@ -10,6 +10,19 @@ export async function POST(req) {
     const body = await req.json();
     
     const order_number = body.order_number;
+
+    const formatState = (state) => {
+  if (!state) return "";
+
+  const states = {
+    Tamilnadu: "Tamil Nadu",
+    TamilNadu: "Tamil Nadu",
+    Karnataka: "Karnataka",
+    Kerala: "Kerala",
+  };
+
+  return states[state] || state;
+};
     
     
     const order_new_vk = await EcomOrderInfo.findOne({ order_number }).lean();
@@ -59,9 +72,22 @@ export async function POST(req) {
   
   
   
-  
+  /*
   const items = order_new_vk.order_details.map(item => ({
   SKU: item.item_code || "",
+  Product: item.product_name || "",
+  Quantity: item.quantity || 0,
+  Price: item.product_price || 0,
+  Discount: item.coupondiscount || 0
+}));
+
+*/
+
+const items = order_new_vk.order_details.map(item => ({
+  SKU: item.item_code?.startsWith('ITEM')
+    ? item.item_code.replace(/^ITEM/, '')
+    : item.item_code || "",
+
   Product: item.product_name || "",
   Quantity: item.quantity || 0,
   Price: item.product_price || 0,
@@ -94,11 +120,11 @@ export async function POST(req) {
       ShipToStreetAddress: address_new_vk.address,
       ShipToZipCode: address_new_vk.postCode,
       ShipToCity: address_new_vk.city,
-      ShipToState: address_new_vk.state,
+      ShipToState: formatState(address_new_vk.state),
       BillToStreetAddress: address_new_vk.address,
       BillToZipCode: address_new_vk.postCode,
       BillToCity: address_new_vk.city,
-      BillToState: address_new_vk.state,
+      BillToState: formatState(address_new_vk.state),
     },
   };
   
