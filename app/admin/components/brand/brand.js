@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { FaPlus, FaMinus, FaEdit } from "react-icons/fa";
 import ReactPaginate from "react-paginate";
 import { Icon } from '@iconify/react';
+import Image from "next/image";
 
 export default function BrandComponent() {
   const [brand, setBrand] = useState([]);
@@ -65,7 +66,8 @@ export default function BrandComponent() {
   // Function to validate image dimensions
   const validateImageDimensions = (file) => {
     return new Promise((resolve) => {
-      const img = new Image();
+      //const img = new Image();
+      const img = new window.Image();
       img.src = URL.createObjectURL(file);
       img.onload = () => {
         const valid = img.width === 140 && img.height === 60;
@@ -77,7 +79,7 @@ export default function BrandComponent() {
   };
 
   // Handle image upload
-  const handleImageChange = async (e) => {
+  /*const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const isValid = await validateImageDimensions(file);
@@ -90,10 +92,29 @@ export default function BrandComponent() {
       setNewBrand((prev) => ({ ...prev, image: file }));
       setImagePreview(URL.createObjectURL(file));
     }
+  }; */
+  
+  const handleImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const isValid = await validateImageDimensions(file);
+    if (!isValid) {
+      setImageError("Image must be exactly 140px width and 60px height");
+      e.target.value = "";
+      return;
+    }
+    setImageError("");
+    setNewBrand((prev) => ({ ...prev, image: file }));
+
+    // ✅ Use FileReader instead of createObjectURL
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result);
+    reader.readAsDataURL(file);
+  }
   };
 
   // Handle edit image upload
-  const handleEditImageChange = async (e) => {
+  /* const handleEditImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const isValid = await validateImageDimensions(file);
@@ -106,7 +127,26 @@ export default function BrandComponent() {
       setEditingBrand((prev) => ({ ...prev, image: file, existingImage: prev.image }));
       setEditImagePreview(URL.createObjectURL(file));
     }
-  };
+  }; */
+  
+  const handleEditImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const isValid = await validateImageDimensions(file);
+    if (!isValid) {
+      setImageError("Image must be exactly 140px width and 60px height");
+      e.target.value = "";
+      return;
+    }
+    setImageError("");
+    setEditingBrand((prev) => ({ ...prev, image: file, existingImage: prev.image }));
+
+    // ✅ Use FileReader instead of createObjectURL
+    const reader = new FileReader();
+    reader.onloadend = () => setEditImagePreview(reader.result);
+    reader.readAsDataURL(file);
+  }
+};
 
   // Handle category submission
   // const handleAddBrand = async (e) => {
@@ -203,6 +243,7 @@ const handleAddBrand = async (e) => {
 };
 
   // Handle brand edit
+  /*
   const handleEditBrand = (brand) => {
     setEditingBrand({
       ...brand,
@@ -211,7 +252,20 @@ const handleAddBrand = async (e) => {
     });
     setEditImagePreview(brand.image ? `/uploads/Brands/${brand.image}` : null);
     setIsEditModalOpen(true);
-  };
+  }; */
+  
+  const handleEditBrand = (brand) => {
+  setEditingBrand({
+    ...brand,
+    image: brand.image,
+    existingImage: brand.image
+  });
+  // ✅ Add cache-busting param for production
+  setEditImagePreview(
+    brand.image ? `/uploads/Brands/${brand.image}?t=${Date.now()}` : null
+  );
+  setIsEditModalOpen(true);
+};
 
   // Handle brand update
   // const handleUpdateBrand = async (e) => {
@@ -440,14 +494,21 @@ const handleDeleteBrand = async (brandId) => {
           <td className="p-2">{brand.brand_slug}</td>
           <td className="p-2">
             {brand.image ? (
-              <img 
+             /* <img 
                 src={`/uploads/Brands/${brand.image}`} 
                 alt="brand" 
                 className="h-7 mx-auto"
-                onError={(e) => {
-                  e.target.src = '/placeholder-brand.png'; // Fallback image
-                }}
-              />
+              /> */
+              
+              <Image
+                  src={`/uploads/Brands/${brand.image}`}
+                  alt="brand"
+                  width={0}
+                  height={0}
+                  sizes="10vw"
+                  className="w-auto h-7 mx-auto"
+                  unoptimized
+               /> 
             ) : (
               <div className="h-[60px] w-[140px] bg-gray-100 flex items-center justify-center mx-auto">
                 No Image
@@ -655,11 +716,16 @@ const handleDeleteBrand = async (brandId) => {
                   )}
                   {imagePreview && (
                     <div className="mt-3 flex flex-col items-center">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="h-[60px] w-[140px] object-contain border rounded"
-                      />
+                      
+                       <Image
+                  src={imagePreview}
+                  alt="Preview"
+                  width={0}
+                  height={0}
+                  sizes="10vw"
+                  className="h-[60px] w-[140px] object-contain border rounded"
+                  unoptimized
+               /> 
                       <p className="text-xs text-gray-500 mt-1">Preview (140×60)</p>
                     </div>
                   )}
