@@ -54,7 +54,7 @@ export async function PUT(req) {
       const filePath = path.join(process.cwd(), "public/uploads/brands", fileName);
 
       await writeFile(filePath, buffer);
-      imagePath = `${fileName}`;
+      imagePath = `${fileName}`; 
     } */
 
        // Existing image name from DB
@@ -70,7 +70,7 @@ export async function PUT(req) {
             process.cwd(),
             "public",
             "uploads",
-            "brands",
+            "Brands",
             path.basename(existingBrand.image)
           );
 
@@ -96,7 +96,7 @@ export async function PUT(req) {
         process.cwd(),
         "public",
         "uploads",
-        "brands",
+        "Brands",
         fileName
       );
       await writeFile(newFilePath, buffer);
