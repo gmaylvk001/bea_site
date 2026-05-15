@@ -329,7 +329,7 @@ const capitalizeFirstLetter = (str) =>
                       <li>
                         <button 
                           onClick={() => setShowAuthModal(true)}
-                          className="hover:underline hover:text-white"
+                          className="hover:underline hover:text"
                         >
                           Sign In / Register
                         </button>
@@ -340,10 +340,10 @@ const capitalizeFirstLetter = (str) =>
                 <div>
                   <h3 className="text-[#677279] font-semibold text-lg mb-4">Policy</h3>
                   <ul className="space-y-2">
-                    <li><Link href="/privacypolicy" className="hover:underline hover:text-white">Privacy Policy</Link></li>
-                    <li><Link href="/shipping" className="hover:underline hover:text-white">Shipping Policy</Link></li>
-                    <li><Link href="/terms-and-condition" className="hover:underline hover:text-white">Terms and Conditions</Link></li>
-                    <li><Link href="/cancellation-refund-policy" className="hover:underline hover:text-white">Cancellation and Refund Policy</Link></li>
+                    <li><Link href="/privacypolicy" className="hover:underline hover:text">Privacy Policy</Link></li>
+                    <li><Link href="/shipping" className="hover:underline hover:text">Shipping Policy</Link></li>
+                    <li><Link href="/terms-and-condition" className="hover:underline hover:text">Terms and Conditions</Link></li>
+                    <li><Link href="/cancellation-refund-policy" className="hover:underline hover:text">Cancellation and Refund Policy</Link></li>
                   </ul>
                 </div>
               </div>
@@ -352,11 +352,12 @@ const capitalizeFirstLetter = (str) =>
                 <div className="mb-8">
                   <h3 className="text-[#677279] font-semibold text-lg mb-4">Company</h3>
                   <ul className="space-y-2">
-                    <li><Link href="/aboutus" className="hover:underline hover:text-white">About Us</Link></li>
-                    <li><Link href="/blog" className="hover:underline hover:text-white">Blogs</Link></li>
-                    <li><Link href="/contact" className="hover:underline hover:text-white text-blue-600">Contact Us</Link></li>
-                    <li><Link href="/careers" className="hover:underline hover:text-white text-blue-600">Careers</Link></li>
-                    <li><Link href="/feedback" className="hover:underline hover:text-white text-blue-600">Feedback</Link></li> 
+                    <li><Link href="/aboutus" className="hover:underline hover:text">About Us</Link></li>
+                    <li><Link href="/blog" className="hover:underline hover:text">Blogs</Link></li>
+                    <li><Link href="/contact" className="hover:underline hover:text-blue-600 text-blue-600">Contact Us</Link></li>
+                    <li><Link href="/careers" className="hover:underline hover:text-blue-600 text-blue-600">Careers</Link></li>
+                    <li><Link href="/feedback" className="hover:underline hover:text-blue-600 text-blue-600">Feedback</Link></li>
+                    <li><Link href="/bulk-orders-and-gift-card-enquiry" className="hover:underline hover:text-blue-600 text-blue-600">B2B Orders</Link></li> 
                   </ul>
                 </div>
               <div>
@@ -386,7 +387,7 @@ const capitalizeFirstLetter = (str) =>
             </div>
           </div>
         </div>
-        <OurLocations />
+        {/* <OurLocations /> */}
       {/* Bottom Section */}
       <div className="bg-[#f3f5f6] text-gray-400 mt-10 pt-5 border-t border-black">
         <div className="container mx-auto px-2 grid grid-cols-1 md:grid-cols-[55%_45%] gap-8">
