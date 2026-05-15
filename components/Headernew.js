@@ -1964,6 +1964,15 @@ const Header = () => {
                             </div>
                           )}
                         </div>
+                        {/* Open Box Sale - Mobile */}
+                           <Link
+                       href="/open-box"
+                        className="mt-3 flex items-center justify-between bg-white rounded-md px-4 py-3 text-black font-semibold text-sm"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                         >
+                   <span> Open Box Clearance Sale</span>
+              <FiChevronRight className="bg-[#2453D3] rounded-full text-white" size={18} />
+                       </Link>
                   </div>
                 )}
                 {/* Auth Modal */}
@@ -2278,25 +2287,26 @@ const Header = () => {
                                         </div>
                                     </SwiperSlide>
                                 ))}
+                                <SwiperSlide className="!w-[120px] overflow-visible ">
+                                 <Link
+                              href="/open-box"
+                              className="relative flex items-center justify-center h-[40px] overflow-visible left-20"
+                                    >
+                              <div className="absolute top-1/2  -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                  <video
+                               src="/assets/open-box-video.mp4"
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                preload="none"
+                                className="h-[110px] w-auto object-contain rounded"
+                                />
+                               </div>
+                              </Link>
+                  </SwiperSlide>
                             </Swiper>
-                <SwiperSlide className="!w-[120px] overflow-visible ">
-  <Link
-    href="/open-box"
-    className="relative flex items-center justify-center h-[40px] overflow-visible left-3 right-[20px]"
-  >
-    <div className="absolute top-1/2  -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-     <video
-  src="/assets/open-box-video.mp4"
-  autoPlay
-  loop
-  muted
-  playsInline
-  preload="none"
-  className="h-[110px] w-auto object-contain rounded"
-/>
-    </div>
-  </Link>
-</SwiperSlide>
+
       </div>
            </div>
                 </div>
