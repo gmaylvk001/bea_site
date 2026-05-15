@@ -2287,24 +2287,22 @@ const Header = () => {
                                         </div>
                                     </SwiperSlide>
                                 ))}
-                                <SwiperSlide className="!w-[120px] overflow-visible ">
-                                 <Link
-                              href="/open-box"
-                              className="relative flex items-center justify-center h-[40px] overflow-visible left-20"
-                                    >
-                              <div className="absolute top-1/2  -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                                  <video
-                               src="/assets/open-box-video.mp4"
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                                preload="none"
-                                className="h-[110px] w-auto object-contain rounded"
-                                />
-                               </div>
-                              </Link>
-                  </SwiperSlide>
+                                <SwiperSlide className="!w-[140px] overflow-visible flex justify-center">
+  <Link
+    href="/open-box"
+    className="relative flex items-center justify-center h-[40px]"
+  >
+    <video
+      src="/assets/open-box-video.mp4"
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="none"
+      className="h-[110px] w-auto object-contain rounded pointer-events-none"
+    />
+  </Link>
+</SwiperSlide>
                             </Swiper>
 
       </div>
