@@ -298,7 +298,10 @@ useEffect(() => {
   // const fetchFilteredProducts = async (categoryId) => {
     const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
     try {
-      if (!initialLoad) setLoading(true);
+      if (!initialLoad){ 
+         window.scrollTo({ top: 0, behavior: 'instant' });
+        setLoading(true);
+      }
       const query = new URLSearchParams();
    
 
@@ -515,12 +518,14 @@ useEffect(() => {
     });
   };
 
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= pagination.totalPages) {
+const handlePageChange = (page) => {
+  if (page >= 1 && page <= pagination.totalPages) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setTimeout(() => {
       fetchFilteredProducts(categoryData, page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
+    }, 50);
+  }
+};
 
   const renderPagination = () => {
     if (pagination.totalPages <= 1) return null;

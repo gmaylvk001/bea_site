@@ -275,7 +275,7 @@ setCategoryTree(directChildren);
       setExpandedFilters(initialExpanded);
       
     } else {
-      console.log('❌ No filters found in category data');
+     
       setFilterGroups({});
     }
 
@@ -318,7 +318,10 @@ setCategoryTree(directChildren);
 
 const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
     try {
-      if (!initialLoad) setLoading(true);
+      if (!initialLoad){ 
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        setLoading(true);
+      }
       const query = new URLSearchParams();
 
       // Category IDs correctly based on selected category/subcategory
@@ -658,12 +661,14 @@ useEffect(() => {
       setSelectedSubCategory(""); 
   };
 
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= pagination.totalPages) {
+const handlePageChange = (page) => {
+  if (page >= 1 && page <= pagination.totalPages) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setTimeout(() => {
       fetchFilteredProducts(categoryData, page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
+    }, 50);
+  }
+};
 
   const renderPagination = () => {
     if (pagination.totalPages <= 1) return null;
@@ -761,7 +766,7 @@ useEffect(() => {
     );
   }
 
-  console.log("📌 Category Data:", categoryData);
+ 
 
   return (
 
