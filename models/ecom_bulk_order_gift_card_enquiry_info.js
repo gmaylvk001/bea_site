@@ -50,7 +50,7 @@ const BulkOrderGiftCardEnquirySchema = new mongoose.Schema(
       ],
     },
 
-    address: {
+    /* address: {
       type: String,
       required: true,
       trim: true,
@@ -60,7 +60,7 @@ const BulkOrderGiftCardEnquirySchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "",
-    },
+    }, */
 
     city: {
       type: String,
@@ -68,7 +68,25 @@ const BulkOrderGiftCardEnquirySchema = new mongoose.Schema(
       trim: true,
     },
 
-    state: {
+    business_type: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    requirement_category: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    gst_number: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    /* state: {
       type: String,
       required: true,
       trim: true,
@@ -78,7 +96,7 @@ const BulkOrderGiftCardEnquirySchema = new mongoose.Schema(
       type: String,
       required: true,
       match: [/^\d{6}$/, "Please fill a valid 6-digit pincode"],
-    },
+    }, */
 
     // Product Array
     product_name_and_quantity: {
