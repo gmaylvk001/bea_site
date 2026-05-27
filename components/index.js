@@ -1008,90 +1008,156 @@ export default function HomeComponent() {
           case 'flash_sales':
           return (
             <motion.section
-              ref={refs.flashSales}
-              initial="hiddenDown"
-              animate="visible"
-              variants={sectionVariants}
-              id="flash_sales"
-              className="px-4 md:px-6 py-8"
-            >
-              {flashSalesData.filter(item => item.bgImage && item.productImage).length > 0 && (
-                <div className="grid grid-cols-12 gap-6">
-                  {isFlashSalesLoading ? (
-                    <div className="flex justify-center items-center h-64 col-span-12">
-                      <div className="rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 animate-spin"></div>
-                    </div>
-                  ) : (
-                    flashSalesData
-                      .filter(item => item.bgImage && item.productImage)
-                      .slice(0, 3) // only take 3 items for 4/4/4
-                      .map((item) => (
-                        <div
-                          key={item.id}
-                          className="col-span-12 md:col-span-4 relative shadow-md overflow-hidden flex items-center p-6"
-                          style={{
-                            backgroundImage: `url(${item.bgImage})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }}
+  ref={refs.flashSales}
+  initial="hiddenDown"
+  animate="visible"
+  variants={sectionVariants}
+  id="flash_sales"
+  className="px-4 md:px-6 py-8 relative"
+>
+  {flashSalesData.filter(item => item.bgImage && item.productImage).length > 0 && (
+
+    <div className="relative">
+
+      {/* Navigation Buttons */}
+      {flashSalesData.length > 3 && (
+        <>
+          {/* Left Arrow */}
+<button className="flash-prev absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg transition">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="black"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+</button>
+
+{/* Right Arrow */}
+<button className="flash-next absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg transition">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="black"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+</button>
+        </>
+      )}
+
+      <Swiper
+        modules={[Navigation]}
+        navigation={{
+          nextEl: ".flash-next",
+          prevEl: ".flash-prev",
+        }}
+        spaceBetween={20}
+        breakpoints={{
+          0: {
+            slidesPerView: 1,
+          },
+          768: {
+            slidesPerView: 2,
+          },
+          1024: {
+            slidesPerView: 3,
+          },
+        }}
+      >
+        {isFlashSalesLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 animate-spin"></div>
+          </div>
+        ) : (
+          flashSalesData
+            .filter(item => item.bgImage && item.productImage)
+            .map((item) => (
+              <SwiperSlide key={item.id}>
+                <div
+                  className="relative shadow-md overflow-hidden flex items-center p-6 min-h-[250px]"
+                  style={{
+                    backgroundImage: `url(${item.bgImage})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+
+                  {/* Content */}
+                  <div className="relative z-10 flex items-center w-full">
+                    
+                    {/* Image */}
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      transition={{ duration: 0.4 }}
+                      className="w-1/2 flex justify-center"
+                    >
+                      <Image
+                        src={item.productImage}
+                        alt={item.title}
+                        width={300}
+                        height={300}
+                        className="object-cover rounded-lg"
+                      />
+                    </motion.div>
+
+                    {/* Text */}
+                    <div className="w-1/2 pl-4 text-left text-white">
+                      <h3 className="text-lg md:text-xl font-bold">
+                        {item.title}
+                      </h3>
+
+                      <p className="text-sm mt-1 opacity-90">
+                        {item.discountText || "Flat up to 30% discount"}
+                      </p>
+
+                      <motion.a
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        href={item.redirectUrl}
+                        className="mt-2 inline-flex items-center text-sm font-medium text-white"
+                      >
+                        Shop Now
+
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="ml-1 h-4 w-4"
                         >
-                          {/* Overlay */}
-                          <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-
-                          {/* Content Wrapper */}
-                          <div className="relative z-10 flex items-center w-full">
-                            {/* Image Left with animation */}
-                            <motion.div
-                              whileHover={{ scale: 1.1 }}
-                              transition={{ duration: 0.4 }}
-                              className="w-1/2 flex justify-center"
-                            >
-                              <Image
-                                src={item.productImage}
-                                alt={item.title}
-                                width={300}
-                                height={300}
-                                className="object-cover rounded-lg"
-                              />
-                            </motion.div>
-
-                            {/* Text Right */}
-                            <div className="w-1/2 pl-4 text-left text-white">
-                              <h3 className="text-lg md:text-xl font-bold">{item.title}</h3>
-                              <p className="text-sm mt-1 opacity-90">
-                                {item.discountText || "Flat up to 30% discount"}
-                              </p>
-                              <motion.a
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                href={item.redirectUrl}
-                                className="mt-2 inline-flex items-center text-sm font-medium text-gray-800 hover:text-black transition"
-                              >
-                                Shop Now
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="lucide lucide-chevron-right ml-1 h-4 w-4"
-                                >
-                                  <path d="M9 18l6-6-6-6" />
-                                </svg>
-
-                              </motion.a>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                  )}
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </motion.a>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </motion.section>
+              </SwiperSlide>
+            ))
+        )}
+      </Swiper>
+    </div>
+  )}
+</motion.section>
           );
           case 'features':
               return (
