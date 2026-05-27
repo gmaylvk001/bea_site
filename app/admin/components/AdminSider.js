@@ -54,11 +54,11 @@ export default function AdminSider({ collapsed }) {
     ]
   },
     { icon: 'mdi:tag-outline', label: 'Offer', link: 'offer' },
-   { icon: "mdi:briefcase-account-outline", label: "Job Positions", link: "careers" },
-   { icon: "mdi:briefcase-account-outline", label: "Feedback", link: "feedback_page" },
+    { icon: "mdi:briefcase-account-outline", label: "Job Positions", link: "careers" },
     { icon: 'mdi:note-text-outline', label: 'Blog', link: 'blog' },
     { icon: 'mdi:account-outline', label: 'User', link: 'user' },
     { icon: 'mdi:phone-outline', label: 'Contact Us', link: 'contact' },
+    { icon: "mdi:briefcase-account-outline", label: "Feedback", link: "feedback_page" },
     { icon: 'material-symbols:reviews-rounded', label: 'Reviews', link: 'reviews' },
     {
   icon: 'mdi:file-chart-outline', // changed to reports icon
@@ -81,6 +81,7 @@ export default function AdminSider({ collapsed }) {
       { icon: 'mdi:map', label: 'Mapbox Settings', link: 'mapbox', dotColor: 'bg-yellow-500' },
     ]
   },
+  // { icon: 'material-symbols:fact-check-outline', label: 'Audit', link: 'audit' },
     //     {
     //   icon: 'mdi:map-marker-outline',
     //   label: 'Store Location',

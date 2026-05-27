@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Icon } from '@iconify/react';
 import DateRangePicker from '@/components/DateRangePicker';
+import * as XLSX from 'xlsx';
 
 export default function ContactComponent() {
   const [contacts, setContacts] = useState([]);
@@ -157,6 +158,48 @@ export default function ContactComponent() {
     setCurrentPage(1);
   };
 
+
+  const exportToExcel = () => {
+
+  // Prepare export data
+  const dataForExport = filteredContacts.map((item) => ({
+    Date: item.createdAt
+      ? item.createdAt.split("T")[0]
+      : "",
+
+    Name: item.name || "",
+
+    Email: item.email_address || "",
+
+    "Mobile Number": item.mobile_number || "",
+
+    Message: item.message || "",
+  }));
+
+  // Create worksheet
+  const worksheet = XLSX.utils.json_to_sheet(dataForExport, {
+    header: [
+      "Date",
+      "Name",
+      "Email",
+      "Mobile Number",
+      "Message",
+    ],
+  });
+
+  // Create workbook
+  const workbook = XLSX.utils.book_new();
+
+  // Append sheet
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Contacts");
+
+  // Download file
+  XLSX.writeFile(
+    workbook,
+    `contacts_export_${new Date().toISOString().slice(0, 10)}.xlsx`
+  );
+};
+
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-5 mt-5">
@@ -229,6 +272,16 @@ export default function ContactComponent() {
               </div>
             </div>
 
+            <div className="w-full col-span-1 md:col-span-1 flex items-end">
+                        <button
+                          onClick={exportToExcel}
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                        >
+                          <Icon icon="mdi:microsoft-excel" className="text-lg" />
+                          Export to Excel
+                        </button>
+                      </div>
+
             {/* Add Contact Button (if needed) */}
             {/* <div className="flex justify-end">
               <button
@@ -257,7 +310,7 @@ export default function ContactComponent() {
               <table className="w-full border border-gray-300">
                 <thead>
                   <tr className="bg-gray-200 text-center">
-                   
+                   <th className="p-2">Date</th>
                     <th className="p-2">Name</th>
                      <th className="p-2">Email</th>
                     <th className="p-2">Mobile Number</th>
@@ -271,6 +324,7 @@ export default function ContactComponent() {
                   {currentContacts.map((contact) => (
                     <tr key={contact._id} className="text-center border-b">
                       {/* <td className="p-2 font-bold">{contact.email_address || '-'}</td> */}
+                      <td className="p-2 whitespace-nowrap">{contact.createdAt.split("T")[0] || "-"}</td>
                       <td className="p-2">{contact.name || '-'}</td>
                       <td className="p-2">{contact.email_address || '-'}</td>
                       <td className="p-2">{contact.mobile_number || '-'}</td>
