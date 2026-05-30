@@ -11,15 +11,18 @@ export async function POST(request) {
     const body = await request.json();
 
     const {
-      name,
       company_name,
+      name,
       email_address,
       mobile_number,
-      address,
-      landmark,
       city,
+      business_type,
+      requirement_category,
+      /* address,
+      landmark,
       state,
-      pincode,
+      pincode, */
+      gst_number,
       product_name_and_quantity,
       status,
       _hp,
@@ -39,10 +42,12 @@ export async function POST(request) {
       !company_name ||
       !email_address ||
       !mobile_number ||
-      !address ||
+      // !address ||
       !city ||
-      !state ||
-      !pincode
+      !business_type ||
+      !requirement_category
+      // !state ||
+      // !pincode
     ) {
       return NextResponse.json(
         { success: false, message: "All required fields must be filled" },
@@ -102,12 +107,12 @@ export async function POST(request) {
       );
     }
 
-    if (!textPattern.test(state.trim())) {
+    /* if (!textPattern.test(state.trim())) {
       return NextResponse.json(
         { success: false, message: "Invalid state format" },
         { status: 400 }
       );
-    }
+    } */
 
     // Company name validation
     const companyPattern = /^[a-zA-Z0-9\s.&'-]{2,100}$/;
@@ -137,21 +142,37 @@ export async function POST(request) {
       );
     }
 
-    // Pincode validation
+    /* // Pincode validation
     if (!/^\d{6}$/.test(pincode)) {
       return NextResponse.json(
         { success: false, message: "Invalid pincode" },
         { status: 400 }
       );
-    }
+    } */
 
-    // Address validation
+    /* // Address validation
     if (address.trim().length < 5) {
       return NextResponse.json(
         { success: false, message: "Invalid address" },
         { status: 400 }
       );
-    }
+    } */
+
+      // Business Type validation
+      if (!business_type || business_type.trim() === "") {
+        return NextResponse.json(
+          { success: false, message: "Please select a business type" },
+          { status: 400 }
+        );
+      }
+
+      // Requirement Type validation
+      if (!requirement_category || requirement_category.trim() === "") {
+        return NextResponse.json(
+          { success: false, message: "Please select a requirement type" },
+          { status: 400 }
+        );
+      }
 
     // Create contact
     const newContact = await BulkOrderGiftCardEnquiryModel.create({
@@ -159,11 +180,14 @@ export async function POST(request) {
       company_name,
       email_address,
       mobile_number,
-      address,
-      landmark,
+      /* address,
+      landmark, */
       city,
-      state,
-      pincode,
+      business_type,
+      requirement_category,
+      gst_number,
+      /* state,
+      pincode, */
       product_name_and_quantity,
       status,
     });

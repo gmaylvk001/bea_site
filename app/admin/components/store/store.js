@@ -5,6 +5,7 @@ import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 import DateRangePicker from "@/components/DateRangePicker";
+import * as XLSX from 'xlsx';
 
 export default function StoreComponent() {
   const [stores, setStores] = useState([]);
@@ -156,6 +157,45 @@ export default function StoreComponent() {
     setDateFilter({ startDate, endDate });
     setCurrentPage(0);
   }; */
+
+const exportToExcel = () => {
+
+  // Prepare export data
+  const dataForExport = filteredStores.map((item) => ({
+    Title: item.organisation_name || "",
+
+    Phone: item.phone || "",
+
+    Email: item.email || "",
+
+    Zipcode: item.zipcode || "",
+    Status: item.status || "",
+  }));
+
+  // Create worksheet
+  const worksheet = XLSX.utils.json_to_sheet(dataForExport, {
+    header: [
+      "Title",
+      "Phone",
+      "Email",
+      "Zipcode",
+      "Status",
+    ],
+  });
+
+  // Create workbook
+  const workbook = XLSX.utils.book_new();
+
+  // Append sheet
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Stores");
+
+  // Download file
+  XLSX.writeFile(
+    workbook,
+    `stores_export_${new Date().toISOString().slice(0, 10)}.xlsx`
+  );
+};
+
 
   const filteredStores = useMemo(() => {
     if (!Array.isArray(stores)) {
@@ -353,6 +393,15 @@ const endEntry = Math.min(currentPage * itemsPerPage, totalEntries);
                 + Add Store
               </button>
              </Link>
+            </div>
+            <div className="w-full col-span-1 md:col-span-1 flex items-end">
+              <button
+                onClick={exportToExcel}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              >
+                <Icon icon="mdi:microsoft-excel" className="text-lg" />
+                Export to Excel
+              </button>
             </div>
           </div>
           <hr className="border-t border-gray-200 mb-4" />

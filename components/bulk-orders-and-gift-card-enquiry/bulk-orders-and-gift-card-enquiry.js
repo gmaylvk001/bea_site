@@ -3,16 +3,19 @@ import { useEffect, useState } from "react";
 import {FaPhoneAlt,FaEnvelope,FaCheck,FaGift,FaBolt,FaChevronDown,FaChevronUp} from "react-icons/fa";
 export default function BulkOrdersAndGiftCardEnquiry() {
     const [form, setForm] = useState({
-        name: "",
         company_name: "",
-        email_address: "",
+        name: "",
         mobile_number: "",
-        address: "",
-        landmark: "",
+        email_address: "",
         city: "",
+        business_type: "",
+        requirement_category: "",
+        gst_number: "",
+        /* address: "",
+        landmark: "",
         state:"",
         pincode: "",
-       /*  product_name: "",
+        product_name: "",
         product_quantity: "", */
         _hp: "",
     });
@@ -79,12 +82,14 @@ const removeProductRow = (index) => {
         } else if (!/^[6-9]\d{9}$/.test(form.mobile_number)) {
             newErrors.mobile_number = "Invalid Mobile Number";
         }
-        if (!form.address.trim()) newErrors.address = "Address is required";
-        if (!form.landmark.trim()) newErrors.landmark = "Landmark is required";
         if (!form.city.trim()) newErrors.city = "City is required";
+        if (!form.business_type.trim()) newErrors.business_type = "Business Type is required";
+        if (!form.requirement_category.trim()) newErrors.requirement_category = "Requirement category is required";
+        /* if (!form.address.trim()) newErrors.address = "Address is required";
+        if (!form.landmark.trim()) newErrors.landmark = "Landmark is required";
         if (!form.state.trim()) newErrors.state = "State is required";
         if (!form.pincode.trim()) newErrors.pincode = "Pincode is required";
-        /* if (!form.product_name.trim()) newErrors.product_name = "Product is required";
+        if (!form.product_name.trim()) newErrors.product_name = "Product is required";
         if (!form.product_quantity.trim()) newErrors.product_quantity = "Qty is required"; */
 
         // Product Validation
@@ -160,7 +165,7 @@ const removeProductRow = (index) => {
                 adminemailFormData.append("campaign_id", "9d517b62-99ab-455b-a23a-84211c07adce");
                 adminemailFormData.append(
                     "params",
-                    JSON.stringify([contact.name,contact.company_name,contact.email_address,contact.mobile_number,contact.address,contact.landmark,contact.city,contact.state,contact.pincode,productsDetails])
+                    JSON.stringify([contact.name,contact.company_name,contact.email_address,contact.mobile_number,contact.city,contact.business_type,contact.requirement_category,contact.gst_number,productsDetails])
                 );
                 const emailadmin = ["arunkarthik@bharathelectronics.in","rajesh@bharathelectronics.in","customercare@bharathelectronics.in"];
                 // const emailadmin = ["sorambeeviuit@gmail.com"];
@@ -176,7 +181,8 @@ const removeProductRow = (index) => {
                     let adminData = await adminresponse.json();
                 });
                 setResponseMsg("Message sent successfully!");
-                setForm({ name: "", company_name: "", email_address: "", mobile_number: "", address:"", landmark: "", city: "", state:"", pincode: "", _hp: "" });
+                setForm({ company_name: "", name: "",  email_address: "", mobile_number: "", city: "", business_type:"", requirement_category: "", gst_number: "", _hp: "" });
+                // setForm({ name: "", company_name: "", email_address: "", mobile_number: "", address:"", landmark: "", city: "", state:"", pincode: "", _hp: "" });
                 setProducts([
                     { product_name: "", product_quantity: "" },
                 ]);
@@ -202,112 +208,158 @@ const removeProductRow = (index) => {
     return (
         <>
             <section className="w-full overflow-hidden">
-                <img src="/uploads/B2B_NEW.webp" alt="Bulk Order and Enquiry" className="w-full h-auto block"/>
+                <img src="/uploads/B2B.webp" alt="Bulk Order and Enquiry" className="w-full h-auto block"/>
             </section>
-            <h1 className="text-2xl md:text-5xl font-bold text-center mt-6 px-4">Bulk Order & Enquiry</h1>
-            {/* White Content Box */}
-            <div className="bg-white text-black rounded-xl p-6 md:p-8 max-w-5xl mx-auto">
-                <p className="text-[15px] md:text-[17px] leading-8 mb-6">Are you a business looking for a bulk purchase of electronic items? BEA has a dedicated B2B team which works to fulfil bulk electronicorders for corporate requirements.</p>
+            <div className="relative z-10 max-w-5xl mx-auto">
+                {/* Heading */}
+                <h2 className="text-3xl md:text-4xl font-bold text-center text-black mb-6">
+                    Bulk Order & Corporate Solutions
+                </h2>
 
-                <p className="text-[15px] md:text-[17px] leading-8">Our B2B team will work closely with you to understand your requirements which may include:</p>
-                <div className="space-y-4 mb-8">
-                    <div className="flex items-start gap-3">
-                        <div className="mt-2 w-2 h-2 rounded-full bg-black"></div>
-                        <p className="text-[15px] md:text-[17px]">Corporate Requirements for customer/dealer/employee gifting</p>
-                    </div>
-                    <div className="flex items-start gap-3">
-                        <div className="mt-2 w-2 h-2 rounded-full bg-black"></div>
-                        <p className="text-[15px] md:text-[17px]">Institutional Requirements for offices and work sites</p>
-                    </div>
-                    <div className="flex items-start gap-3">
-                        <div className="mt-2 w-2 h-2 rounded-full bg-black"></div>
-                        <p className="text-[15px] md:text-[17px]">Employee engagement programs and corporate gifting solutions</p>
-                    </div>
+                {/* Paragraphs */}
+                <div className="space-y-3 text-left">
+                    <p className="text-black leading-8 text-[16px]">
+                        Looking for bulk electronics, appliances, corporate gifting, or institutional purchases?
+                    </p>
+
+                    <p className="text-black leading-8 text-[16px]">
+                        BEA Corporate Solutions provides dedicated pricing, product consultation, delivery coordination, and after-sales support for businesses across Tamil Nadu.
+                    </p>
                 </div>
-                <p className="text-[15px] md:text-[17px] leading-8">Our corporate team will offer the best pricing for your bulk order and continue to support you even for after-sales needs.Fill out the enquiry form below and we will reach out to you.</p>
-            </div>
-            <div className="max-w-7xl mx-auto px-6 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-[40%_60%] gap-8 mb-12 items-stretch">
-                    {/* LEFT SIDE */}
-                    <div className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-black via-[#0b1235] to-[#004d43] p-8 md:p-10 text-white shadow-2xl">
-                        {/* Glow Effects */}
-                        <div className="absolute -top-10 -right-10 h-52 w-52 rounded-full bg-cyan-400/20 blur-3xl"></div>
-                        <div className="absolute bottom-0 left-0 h-40 w-40 rounded-full bg-blue-500/20 blur-3xl"></div>
-                        <div className="relative z-10">
-                            <p className="text-sm text-gray-300 mb-3 uppercase tracking-[3px]">BEA Corporate Solutions</p>
-                            <h2 className="text-4xl md:text-3xl font-bold leading-tight mb-3">Bulk Order & Enquiry</h2>
-                            <p className="text-gray-200 leading-8 text-[15px] mb-2">Looking for corporate gifting, employee rewards, institutional electronics purchase, or bulk business orders? Our dedicated BEA corporate team will help you with pricing, quotation, delivery, and after-sales support.
+
+                {/* Second Heading */}
+                <h2 className="text-3xl md:text-4xl font-bold text-center text-black mt-5 mb-6">
+                    Complete Electronics & Appliance Solutions for Businesses
+                </h2>
+
+                {/* Paragraphs */}
+                <div className="space-y-3 text-left">
+                    <p className="text-black leading-8 text-[16px]">
+                        BEA Corporate Solutions helps businesses, institutions, hotels, builders, offices, and retailers fulfil bulk electronics and appliance requirements with ease.
+                    </p>
+
+                    <p className="text-black leading-8 text-[16px]">
+                        From product consultation and quotation support to delivery coordination and after-sales service, our dedicated B2B team ensures a smooth and reliable experience for every business order.
+                    </p>
+
+                    <p className="text-black leading-8 text-[16px]">
+                        Whether you require a single category or multi-brand bulk purchases, BEA offers competitive pricing, GST billing, and trusted support across Tamil Nadu.
+                    </p>
+                </div>
+
+                {/* Small Title */}
+                <p className="text-sm font-bold uppercase tracking-[4px] text-center mt-5 mb-6">
+                    Our Corporate Services
+                </p>
+
+                {/* Cards */}
+                <div className="space-y-5">
+                    {/* Card 1 */}
+                    <div className="bg-white shadow-lg border rounded-2xl p-5 flex gap-4">
+                        <div className="w-14 h-14 rounded-full bg-[#0b1235] text-white flex items-center justify-center text-xl shrink-0">
+                            <FaCheck />
+                        </div>
+
+                        <div>
+                            <h3 className="font-semibold text-xl text-black mb-2">
+                                Corporate Bulk Orders
+                            </h3>
+
+                            <p className="text-gray-600 leading-7 text-[15px]">
+                                Best pricing and dedicated support for offices, institutions, builders, resellers, and enterprise purchases.
                             </p>
-                            <div className="space-y-5">
-                                {/* Card 1 */}
-                                <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 flex gap-4">
-                                    <div className="w-14 h-14 rounded-full bg-white text-[#0b1235] flex items-center justify-center text-xl shrink-0"><FaCheck /></div>
-                                    <div>
-                                        <h3 className="font-semibold text-lg mb-1">Corporate Bulk Orders</h3>
-                                        <p className="text-sm text-gray-200 leading-6">Best pricing and support for offices, institutions, resellers, and enterprise purchases.</p>
-                                    </div>
-                                </div>
-
-                                {/* Card 2 */}
-                                <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 flex gap-4">
-                                    <div className="w-14 h-14 rounded-full bg-white text-[#0b1235] flex items-center justify-center text-xl shrink-0"><FaGift /></div>
-                                    <div>
-                                        <h3 className="font-semibold text-lg mb-1">Gift Card Solutions</h3>
-                                        <p className="text-sm text-gray-200 leading-6">Festival gifting, employee engagement, and customised gift card programs for businesses.</p>
-                                    </div>
-                                </div>
-
-                                {/* Card 3 */}
-                                <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 flex gap-4">
-                                    <div className="w-14 h-14 rounded-full bg-white text-[#0b1235] flex items-center justify-center text-xl shrink-0"><FaBolt /></div>
-                                    <div>
-                                        <h3 className="font-semibold text-lg mb-1">Dedicated Support</h3>
-                                        <p className="text-sm text-gray-200 leading-6">Our team assists you with quotations, product selection, delivery, and coordination.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Contact */}
-                            <div className="mt-3 pt-6 border-t border-white/20 space-y-5">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"><FaPhoneAlt /></div>
-                                    <div>
-                                        <p className="text-sm text-gray-300">Call Us</p>
-                                        <a href="tel:9842344323" className="font-semibold hover:underline">9842344323</a>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"><FaEnvelope /></div>
-                                    <div>
-                                        <p className="text-sm text-gray-300">Mail Us</p>
-                                        <a href="mailto:customercare@bharathelectronics.in" className="font-semibold hover:underline break-all">customercare@bharathelectronics.in</a>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
+                    {/* Card 2 */}
+                    <div className="bg-white shadow-lg border rounded-2xl p-5 flex gap-4">
+                        <div className="w-14 h-14 rounded-full bg-[#0b1235] text-white flex items-center justify-center text-xl shrink-0">
+                            <FaGift />
+                        </div>
+
+                        <div>
+                            <h3 className="font-semibold text-xl text-black mb-2">
+                                Employee & Festival Gifting
+                            </h3>
+
+                            <p className="text-gray-600 leading-7 text-[15px]">
+                                Customized gifting solutions for employees, dealers, customers, and festive campaigns.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Card 3 */}
+                    <div className="bg-white shadow-lg border rounded-2xl p-5 flex gap-4">
+                        <div className="w-14 h-14 rounded-full bg-[#0b1235] text-white flex items-center justify-center text-xl shrink-0">
+                            <FaBolt />
+                        </div>
+
+                        <div>
+                            <h3 className="font-semibold text-xl text-black mb-2">
+                                Institutional Requirements
+                            </h3>
+
+                            <p className="text-gray-600 leading-7 text-[15px]">
+                                Solutions for hotels, offices, schools, hospitals, apartments, and commercial projects.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Card 4 */}
+                    <div className="bg-white shadow-lg border rounded-2xl p-5 flex gap-4">
+                        <div className="w-14 h-14 rounded-full bg-[#0b1235] text-white flex items-center justify-center text-xl shrink-0">
+                            <FaBolt />
+                        </div>
+
+                        <div>
+                            <h3 className="font-semibold text-xl text-black mb-2">
+                                Dedicated B2B Support
+                            </h3>
+
+                            <p className="text-gray-600 leading-7 text-[15px]">
+                                From quotation to delivery and installation, our corporate team ensures smooth coordination throughout the process.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h1 className="text-2xl md:text-3xl font-bold text-center mt-3 px-4">Trusted by Businesses Across Tamil Nadu</h1>
+            <div className="bg-white text-black rounded-xl p-6 md:p-3 max-w-5xl mx-auto">
+                <p className="text-[15px] md:text-[17px] leading-8 mb-3">Supporting corporate offices, institutions, hospitality projects, retailers, and enterprise clients with bulk electronics and appliance solutions.</p>
+            </div>
+            <div className="bg-white text-black rounded-xl p-6 md:p-3 max-w-5xl mx-auto">
+                <div className="flex flex-wrap justify-center items-center gap-3 whitespace-nowrap">
+                    <span className="px-4 py-2 rounded-full bg-gray-100 border text-[15px] md:text-[16px] cursor-default select-none">🏨 Hotels</span>
+                    <span className="px-4 py-2 rounded-full bg-gray-100 border text-[15px] md:text-[16px] cursor-default select-none">🏢 Offices</span>
+                    <span className="px-4 py-2 rounded-full bg-gray-100 border text-[15px] md:text-[16px] cursor-default select-none">🏗️ Builders</span>
+                    <span className="px-4 py-2 rounded-full bg-gray-100 border text-[15px] md:text-[16px] cursor-default select-none">🏫 Schools & Colleges</span>
+                    <span className="px-4 py-2 rounded-full bg-gray-100 border text-[15px] md:text-[16px] cursor-default select-none">🛍️ Retail Chains</span>
+                    <span className="px-4 py-2 rounded-full bg-gray-100 border text-[15px] md:text-[16px] cursor-default select-none">🏥 Hospitals</span>
+                </div>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-bold text-center mt-3 px-4">Why Businesses Choose BEA</h1>
+            <div className="flex justify-center p-6">
+                <ul className="space-y-3 text-[15px] md:text-[16px] text-black text-start">
+                    <li className="flex items-center gap-2">✅ Competitive Bulk Pricing</li>
+                    <li className="flex items-center gap-2">✅ Multi-Brand Product Availability</li>
+                    <li className="flex items-center gap-2">✅ Dedicated Relationship Manager</li>
+                    <li className="flex items-center gap-2">✅ GST Billing Available</li>
+                    <li className="flex items-center gap-2">✅ Delivery Across Tamil Nadu</li>
+                    <li className="flex items-center gap-2">✅ Installation & After-Sales Support</li>
+                    <li className="flex items-center gap-2">✅ Trusted Retail Network Across Tamil Nadu</li>
+                    <li className="flex items-center gap-2">✅ Fast Quotation & Order Processing</li>
+                </ul>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-6 py-2">
                     {/* RIGHT FORM */}
                     <div className="bg-white rounded-[30px] border border-gray-200 shadow-2xl p-6 md:p-8">
                         <div className="mb-8 text-center">
-                            <h2 className="text-3xl font-bold text-gray-900 mb-2">Contact Us</h2>
-                            <p className="text-gray-500 text-sm md:text-base">Fill your details and our corporate team will contact you shortly.</p>
+                            <h2 className="text-3xl font-bold text-gray-900 mb-2">Contact Our Corporate Team</h2>
+                            <p className="text-gray-500 text-sm md:text-base">Fill in your business requirements and our corporate solutions team will get in touch with you shortly.</p>
                         </div>
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {/* Name */}
-                            <div>
-                                <label className="block text-sm font-semibold mb-2 text-gray-700">Full Name *</label>
-                                <input type="text" name="name" value={form.name} onChange={handleChange} onBlur={handleBlur} placeholder="Enter your name" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
-                                    errors.name && touched.name
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                }`}/>
-                                {errors.name && touched.name && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {errors.name}
-                                    </p>
-                                )}
-                            </div>
-
                             {/* Company Name */}
                             <div>
                                 <label className="block text-sm font-semibold mb-2 text-gray-700">Company Name *</label>
@@ -323,17 +375,17 @@ const removeProductRow = (index) => {
                                 )}
                             </div>
 
-                            {/* Email */}
+                            {/* Contact Person Name */}
                             <div>
-                                <label className="block text-sm font-semibold mb-2 text-gray-700">Email Address *</label>
-                                <input type="email" name="email_address" value={form.email_address} onChange={handleChange} onBlur={handleBlur} placeholder="Enter your email" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
-                                    errors.email_address && touched.email_address
+                                <label className="block text-sm font-semibold mb-2 text-gray-700">Contact Person Name *</label>
+                                <input type="text" name="name" value={form.name} onChange={handleChange} onBlur={handleBlur} placeholder="Enter your name" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
+                                    errors.name && touched.name
                                     ? "border-red-500"
                                     : "border-gray-300"
                                 }`}/>
-                                {errors.email_address && touched.email_address && (
+                                {errors.name && touched.name && (
                                     <p className="text-red-500 text-sm mt-1">
-                                        {errors.email_address}
+                                        {errors.name}
                                     </p>
                                 )}
                             </div>
@@ -352,34 +404,19 @@ const removeProductRow = (index) => {
                                         {errors.mobile_number}
                                     </p>
                                 )}
-                            </div>
+                            </div>                            
 
-                            {/* Address */}
+                            {/* Email */}
                             <div>
-                                <label className="block text-sm font-semibold mb-2 text-gray-700">Address *</label>
-                                <input type="text" name="address" value={form.address} onChange={handleChange} onBlur={handleBlur} placeholder="Flat no./Building Name/Society" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
-                                    errors.address && touched.address
+                                <label className="block text-sm font-semibold mb-2 text-gray-700">Email Address *</label>
+                                <input type="email" name="email_address" value={form.email_address} onChange={handleChange} onBlur={handleBlur} placeholder="Enter your email" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
+                                    errors.email_address && touched.email_address
                                     ? "border-red-500"
                                     : "border-gray-300"
                                 }`}/>
-                                {errors.address && touched.address && (
+                                {errors.email_address && touched.email_address && (
                                     <p className="text-red-500 text-sm mt-1">
-                                        {errors.address}
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Landmark */}
-                            <div>
-                                <label className="block text-sm font-semibold mb-2 text-gray-700">Landmark *</label>
-                                <input type="text" name="landmark" value={form.landmark} onChange={handleChange} onBlur={handleBlur} placeholder="Landmark/Locatlity/Area" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
-                                    errors.landmark && touched.landmark
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                }`}/>
-                                {errors.landmark && touched.landmark && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {errors.landmark}
+                                        {errors.email_address}
                                     </p>
                                 )}
                             </div>
@@ -398,8 +435,94 @@ const removeProductRow = (index) => {
                                     </p>
                                 )}
                             </div>
+                            {/* Bussiness Type */}
+                            <div>
+                                <label className="block text-sm font-semibold mb-2 text-gray-700">Business Type *</label>
+                                <select name="business_type" value={form.business_type} onChange={handleChange} onBlur={handleBlur} className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
+                                    errors.business_type && touched.business_type
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                    }`}
+                                >
+                                    <option value="">Select Business Type</option>
+                                    <option value="Corporate Office">Corporate Office</option>
+                                    <option value="Dealer / Reseller">Dealer / Reseller</option>
+                                    <option value="Builder / Contractor">Builder / Contractor</option>
+                                    <option value="Institution">Institution</option>
+                                    <option value="Hotel / Hospitality">Hotel / Hospitality</option>
+                                    <option value="Retail Business">Retail Business</option>
+                                    <option value="Government">Government</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                                {errors.business_type && touched.business_type && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                    {errors.business_type}
+                                    </p>
+                                )}
+                            </div>
 
-                            {/* State */}
+                            {/* Requirement Caregory */}
+                            <div>
+                                <label className="block text-sm font-semibold mb-2 text-gray-700">Requirement Category *</label>
+                                <select name="requirement_category" value={form.requirement_category} onChange={handleChange} onBlur={handleBlur} className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
+                                    errors.requirement_category && touched.requirement_category
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                    }`}
+                                >
+                                    <option value="">Select Requirement Category</option>
+                                    <option value="Air Conditioners">Air Conditioners</option>
+                                    <option value="Televisions">Televisions</option>
+                                    <option value="Refrigerators">Refrigerators</option>
+                                    <option value="Washing Machines">Washing Machines</option>
+                                    <option value="Mobiles">Mobiles</option>
+                                    <option value="Kitchen Appliances">Kitchen Appliances</option>
+                                    <option value="Corporate Gifting">Corporate Gifting</option>
+                                    <option value="Multi-Category Requirement">Multi-Category Requirement</option>
+                                </select>
+                                {errors.requirement_category && touched.requirement_category && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                    {errors.requirement_category}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* GST Number */}
+                            <div>
+                                <label className="block text-sm font-semibold mb-2 text-gray-700">GST Number (Optional)</label>
+                                <input type="text" name="gst_number" value={form.gst_number} onChange={handleChange} onBlur={handleBlur} placeholder="Enter GST number" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all`}/>
+                            </div>
+                            
+
+                            {/* Address
+                            <div>
+                                <label className="block text-sm font-semibold mb-2 text-gray-700">Address *</label>
+                                <input type="text" name="address" value={form.address} onChange={handleChange} onBlur={handleBlur} placeholder="Flat no./Building Name/Society" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
+                                    errors.address && touched.address
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                }`}/>
+                                {errors.address && touched.address && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                        {errors.address}
+                                    </p>
+                                )}
+                            </div>
+                            Landmark
+                            <div>
+                                <label className="block text-sm font-semibold mb-2 text-gray-700">Landmark *</label>
+                                <input type="text" name="landmark" value={form.landmark} onChange={handleChange} onBlur={handleBlur} placeholder="Landmark/Locatlity/Area" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
+                                    errors.landmark && touched.landmark
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                }`}/>
+                                {errors.landmark && touched.landmark && (
+                                    <p className="text-red-500 text-sm mt-1">
+                                        {errors.landmark}
+                                    </p>
+                                )}
+                            </div>
+                            State
                             <div>
                                 <label className="block text-sm font-semibold mb-2 text-gray-700">State *</label>
                                 <input type="text" name="state" value={form.state} onChange={handleChange} onBlur={handleBlur} placeholder="Enter state" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
@@ -413,8 +536,7 @@ const removeProductRow = (index) => {
                                     </p>
                                 )}
                             </div>
-
-                            {/* Pincode */}
+                            Pincode
                             <div>
                                 <label className="block text-sm font-semibold mb-2 text-gray-700">Pincode *</label>
                                 <input type="text" name="pincode" value={form.pincode} onChange={handleChange} onBlur={handleBlur} placeholder="Enter pincode" className={`${inputClass} h-12 rounded-xl border bg-gray-50 focus:bg-white transition-all ${
@@ -427,99 +549,64 @@ const removeProductRow = (index) => {
                                         {errors.pincode}
                                     </p>
                                 )}
-                            </div>
+                            </div> */}
 
                             {/* Product Details */}
-{/* Product Details */}
-<div className="col-span-1 md:col-span-2 mt-6">
-  <label className="block text-sm font-semibold mb-3 text-gray-700">
-    Product Details *
-  </label>
+                            <div className="col-span-1 md:col-span-2 mt-1">
+                                {/* <label className="block text-sm font-semibold mb-1 text-gray-700">Product Details *</label> */}
+                                <div className="space-y-4">
+                                    {products.map((product, index) => (
+                                        <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto_auto] gap-4 items-end">
+                                            {/* Product Name */}
+                                            <div>
+                                                <label className="block text-sm font-semibold mb-2 text-gray-700">Product / Requirement</label>
+                                                <input type="text" placeholder="Enter product name" value={product.product_name} onChange={(e) =>handleProductChange(
+                                                    index,
+                                                    "product_name",
+                                                    e.target.value
+                                                )}
+                                                className={`w-full h-12 rounded-2xl border bg-gray-50 px-4 focus:outline-none focus:bg-white ${
+                                                errors.products?.[index]?.product_name
+                                                    ? "border-red-500"
+                                                    : "border-gray-300"
+                                                }`}/>
+                                                {errors.products?.[index]?.product_name && (
+                                                    <p className="text-red-500 text-sm mt-1">
+                                                    {errors.products[index].product_name}
+                                                    </p>
+                                                )}
+                                            </div>
 
-  <div className="space-y-4">
-    {products.map((product, index) => (
-      <div
-        key={index}
-        className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto_auto] gap-4 items-start"
-      >
-        {/* Product Name */}
-        <div>
-          <input
-            type="text"
-            placeholder="Enter product name"
-            value={product.product_name}
-            onChange={(e) =>
-              handleProductChange(
-                index,
-                "product_name",
-                e.target.value
-              )
-            }
-            className={`w-full h-12 rounded-xl border bg-gray-50 px-4 focus:outline-none focus:bg-white ${
-              errors.products?.[index]?.product_name
-                ? "border-red-500"
-                : "border-gray-300"
-            }`}
-          />
-
-          {errors.products?.[index]?.product_name && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.products[index].product_name}
-            </p>
-          )}
-        </div>
-
-        {/* Product Quantity */}
-        <div>
-          <input
-            type="number"
-            placeholder="Enter quantity"
-            value={product.product_quantity}
-            onChange={(e) =>
-              handleProductChange(
-                index,
-                "product_quantity",
-                e.target.value
-              )
-            }
-            className={`w-full h-12 rounded-xl border bg-gray-50 px-4 focus:outline-none focus:bg-white ${
-              errors.products?.[index]?.product_quantity
-                ? "border-red-500"
-                : "border-gray-300"
-            }`}
-          />
-
-          {errors.products?.[index]?.product_quantity && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.products[index].product_quantity}
-            </p>
-          )}
-        </div>
-
-        {/* Add Button */}
-        <button
-          type="button"
-          onClick={addProductRow}
-          className="h-12 w-12 rounded-xl bg-black text-white text-2xl flex items-center justify-center"
-        >
-          +
-        </button>
-
-        {/* Delete Button */}
-        {products.length > 1 && (
-          <button
-            type="button"
-            onClick={() => removeProductRow(index)}
-            className="h-12 w-12 rounded-xl bg-red-500 text-white text-2xl flex items-center justify-center"
-          >
-            ×
-          </button>
-        )}
-      </div>
-    ))}
-  </div>
-</div>
-
+                                            {/* Product Quantity */}
+                                            <div>
+                                                <label className="block text-sm font-semibold mb-2 text-gray-700">Approx Quantity *</label>
+                                                <input type="number" placeholder="Enter quantity" value={product.product_quantity} onChange={(e) =>handleProductChange(
+                                                    index,
+                                                    "product_quantity",
+                                                    e.target.value
+                                                )}
+                                                className={`w-full h-12 rounded-2xl border bg-gray-50 px-4 focus:outline-none focus:bg-white ${
+                                                errors.products?.[index]?.product_quantity
+                                                    ? "border-red-500"
+                                                    : "border-gray-300"
+                                                }`}/>
+                                                {errors.products?.[index]?.product_quantity && (
+                                                    <p className="text-red-500 text-sm mt-1">
+                                                    {errors.products[index].product_quantity}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Add Button */}
+                                            <button type="button" onClick={addProductRow} className="h-12 w-12 rounded-2xl bg-black text-white text-3xl flex items-center justify-center">+</button>
+                                            {/* Delete Button */}
+                                            {products.length > 1 && (
+                                                <button type="button" onClick={() => removeProductRow(index)} className="h-12 w-12 rounded-2xl bg-red-500 text-white text-3xl flex items-center justify-center">×</button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                             {/* Honeypot */}
                             <div style={{position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden",}}aria-hidden="true">
                                 <input type="text" name="_hp" value={form._hp} onChange={handleChange} tabIndex="-1" autoComplete="off"/>
@@ -528,7 +615,7 @@ const removeProductRow = (index) => {
                             {/* Submit */}
                             <div className="md:col-span-2 pt-2">
                                 <button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-gradient-to-r from-[#0b1235] to-[#004d43] hover:opacity-90 text-white font-semibold transition-all duration-300">
-                                    {loading ? "Submitting..." : "Submit Enquiry"}
+                                    {loading ? "Submitting..." : "Get Corporate Pricing"}
                                 </button>
                                 {responseMsg && (
                                     <p className="text-center text-green-600 font-medium mt-4">
@@ -538,8 +625,10 @@ const removeProductRow = (index) => {
                             </div>
                         </form>
                     </div>
-                </div>
+               
             </div>
+
+            
         </>
     );
 }

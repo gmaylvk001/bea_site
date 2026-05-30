@@ -1357,6 +1357,14 @@ const handleSubmit = async (e) => {
 };
 
 
+// ✅ Add group label into every option
+const updatedFilter = Filter.map((group) => ({
+  ...group,
+  options: group.options.map((option) => ({
+    ...option,
+    groupLabel: group.label,
+  })),
+}));
 
 
   const handleAddVariantAttribute = () => {
@@ -1920,7 +1928,63 @@ const handleSubmit = async (e) => {
 
     <div className="border p-4 rounded">
       <label className="block text-sm font-medium text-gray-700 mb-1">Filter</label>
-     <Select
+      <Select
+  options={updatedFilter}
+  isMulti
+  hideSelectedOptions={false}
+  closeMenuOnSelect={false}
+  components={{ Option: CustomOption }}
+
+  // ✅ Search by option + group heading
+  filterOption={(option, inputValue) => {
+    const search = inputValue.toLowerCase();
+
+    return (
+      option.label.toLowerCase().includes(search) ||
+      option.value.toLowerCase().includes(search) ||
+      option.data.groupLabel.toLowerCase().includes(search)
+    );
+  }}
+
+  value={
+    Array.isArray(product.filters)
+      ? product.filters.every((f) => typeof f === "string")
+        ? updatedFilter
+            .flatMap((g) => g.options)
+            .filter((o) => product.filters.includes(o.value))
+        : product.filters
+      : []
+  }
+
+  onChange={handleFilterChange}
+  placeholder="Select filters..."
+
+  styles={{
+    groupHeading: (base) => ({
+      ...base,
+      backgroundColor: "#f3f4f6",
+      color: "#1f2937",
+      fontWeight: 600,
+      padding: "8px 12px",
+      borderBottom: "1px solid #e5e7eb",
+      borderRadius: "4px",
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+    }),
+
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? "#e6f4ea"
+        : state.isFocused
+        ? "#f9fafb"
+        : "white",
+      color: "#111827",
+      fontWeight: state.isSelected ? 600 : 400,
+    }),
+  }}
+/>
+     {/* <Select
   options={Filter}
   isMulti
   hideSelectedOptions={false}  // ✅ keeps selected options visible in dropdown
@@ -1954,7 +2018,7 @@ const handleSubmit = async (e) => {
       fontWeight: state.isSelected ? 600 : 400,
     }),
   }}
-/>
+/> */}
       {/* <Select
   options={Filter}
   isMulti

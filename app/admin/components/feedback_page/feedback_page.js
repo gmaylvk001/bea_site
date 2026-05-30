@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import DateRangePicker from "@/components/DateRangePicker";
+import { Icon } from '@iconify/react';
+import * as XLSX from 'xlsx';
 
 export default function FeedbackComponent() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -58,6 +60,53 @@ export default function FeedbackComponent() {
     setDateFilter({ startDate, endDate });
   };
 
+
+
+  const exportToExcel = () => {
+
+  // Prepare only required fields
+  const dataForExport = feedbacks.map((item) => ({
+    Date: item.createdAt
+      ? item.createdAt.split("T")[0]
+      : "",
+
+    Name: item.name || "",
+
+    Email: item.email_address || "",
+
+    Mobile: item.mobile_number || "",
+
+    Invoice: item.invoice_number || "",
+
+    Feedback: item.feedback || "",
+  }));
+
+  // Create worksheet
+  const worksheet = XLSX.utils.json_to_sheet(dataForExport, {
+    header: [
+      "Date",
+      "Name",
+      "Email",
+      "Mobile",
+      "Invoice",
+      "Feedback",
+    ],
+  });
+
+  // Create workbook
+  const workbook = XLSX.utils.book_new();
+
+  // Append sheet
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Feedback");
+
+  // Download file
+  XLSX.writeFile(
+    workbook,
+    `feedback_export_${new Date().toISOString().slice(0, 10)}.xlsx`
+  );
+};
+
+
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-5 mt-5">
@@ -105,6 +154,19 @@ export default function FeedbackComponent() {
               </div>
             </div>
            </div>
+
+           <div className="w-full col-span-1 md:col-span-1 flex items-end">
+            <button
+              onClick={exportToExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              <Icon icon="mdi:microsoft-excel" className="text-lg" />
+              Export to Excel
+            </button>
+          </div>
+
+         
+
             </div>
 
           <hr className="mb-4" />
