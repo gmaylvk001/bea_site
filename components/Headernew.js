@@ -94,6 +94,7 @@ const Header = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { wishlistCount } = useWishlist();
     const { cartCount, updateCartCount } = useCart();
+    const [loyaltyPoints, setLoyaltyPoints] = useState(0);
 
     // ADD: Cross-tab cart sync helpers
     const CART_COUNT_KEY = 'cartCount';
@@ -368,7 +369,6 @@ const Header = () => {
           if (mounted) setWords(ensureWordsNotEmpty([]));
         }
       };
-
       useCachedOrFetch();
       return () => { mounted = false; };
     }, []);
@@ -567,6 +567,19 @@ const Header = () => {
                     setIsAdmin(false);
                 }
                 setUserData(data.user);
+                console.log("user data:", data.user);
+                console.log("phone:", data.phone);
+                
+                try {
+                const loyaltyRes = await fetch(`/api/award-points?phone=${data.phone || ''}`);
+              const loyaltyData = await loyaltyRes.json();
+             if (loyaltyData.success) {
+
+             setLoyaltyPoints(loyaltyData.points);
+              }
+             } catch (e) {
+            console.error('Loyalty fetch failed:', e);
+             }
             } else {
                 localStorage.removeItem('token');
                 setIsLoggedIn(false);
@@ -1829,7 +1842,8 @@ const Header = () => {
 							{/* <Link href="/feedback" className="hidden sm:flex items-center relative">
                             <FiMessageSquare size={18} className="text-customBlue" />
 							</Link> */}
-						
+               {/* Loyalty Points */}
+              
 						<Link href="/feedback" className="hidden sm:flex items-center relative group z-50">
 						  <FiMessageSquare size={18} className="text-customBlue" />
 
@@ -1907,6 +1921,16 @@ const Header = () => {
                                                         </Link>
                                                     </>
                                                 )}
+                                                      {/* ✅ இதை add பண்ணு — My Orders-க்கு முன்னாடி */}
+                                                   {isLoggedIn && (
+                                                      <Link href="/loyalty" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                                                   <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
+                                                    🏆
+                                                  </span>
+                                           Loyalty Points
+                                     <span className="ml-auto text-xs font-bold text-customBlue">{loyaltyPoints} pts</span>
+                                                </Link>
+                                          )}
                                                 <Link href="/orders" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
                                                     <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
                                                         <FaShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />

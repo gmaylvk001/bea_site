@@ -184,6 +184,17 @@ export default function CheckoutPage() {
   });
   console.log(cartItems);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [userPhone, setUserPhone] = useState('');
+  const [loyaltyBalance, setLoyaltyBalance] = useState(0);
+  const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+  const [loyaltyToken, setLoyaltyToken] = useState('');
+  const [pointsApplied, setPointsApplied] = useState(false);
+  const [loyaltyLoading, setLoyaltyLoading] = useState(false);
+  const [showPointsInput, setShowPointsInput] = useState(false);
+  const [customPoints, setCustomPoints] = useState(0);
+  const [maxUsablePoints, setMaxUsablePoints] = useState(0);
+
   const [touched, setTouched] = useState({});
   useEffect(() => {
     const fetchStores = async () => {
@@ -308,6 +319,23 @@ export default function CheckoutPage() {
       console.error("Error fetching data:", error);
       toast.error("Failed to load checkout data");
     } finally {
+       try {
+    const token = localStorage.getItem("token");
+    const authRes = await fetch('/api/auth/check', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const authData = await authRes.json();
+    if (authData.phone) {
+      setUserPhone(authData.phone);
+      const loyaltyRes = await fetch(`/api/award-points?phone=${authData.phone}`);
+      const loyaltyData = await loyaltyRes.json();
+      if (loyaltyData.success) {
+        setLoyaltyBalance(loyaltyData.points);
+      }
+    }
+  } catch (e) {
+    console.error('Loyalty balance fetch failed:', e);
+  }
       setLoading(false);
     }
   };
@@ -329,7 +357,144 @@ export default function CheckoutPage() {
 
   const handlePaymentChange = (e) => {
     setPaymentMethod(e.target.value);
+    if (e.target.value === 'Cash on Delivery' && pointsApplied) {
+    handleRemovePoints();
+  }
   };
+
+
+  const handleUseAllPoints = async () => {
+  if (!userPhone || loyaltyBalance <= 0) {
+    toast.error("No loyalty points available!");
+    return;
+  }
+  // Max usable points = 5% of bill (Truco limit)
+  const maxByBill = Math.floor(orderSummary.total * 0.05);
+  const max = Math.min(loyaltyBalance, maxByBill);
+   
+      setMaxUsablePoints(max);
+      setCustomPoints(max); 
+      setShowPointsInput(true);
+
+  setLoyaltyLoading(true);
+  try {
+   const res = await fetch('/api/validate-points?action=validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mobileNumber: userPhone,
+        pointsToRedeem: loyaltyBalance,
+        billTotal: orderSummary.total
+      })
+    });
+    const data = await res.json();
+    console.log("Validate response:", data);
+  if (data.isValid) {
+  
+  const discount = Math.min(data.redemptionAmount, orderSummary.total);
+  
+  setLoyaltyToken(data.token);
+  setLoyaltyDiscount(discount);
+  setPointsApplied(true);
+
+  setOrderSummary(prev => ({
+    ...prev,
+    total: Math.max(0, prev.total - discount)
+  }));
+  toast.success(`🎉 ₹${discount} discount applied!`);
+} else {
+ 
+  if (data.token) {
+    try {
+      await fetch('/api/validate-points?action=cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: data.token })
+      });
+    } catch (e) {
+      console.error('Token cancel failed:', e);
+    }
+  }
+  toast.error(data.errorMessage || "Points redemption failed!");
+}
+} catch (e) {
+  toast.error("Failed to apply points!");
+    console.error('handleUseAllPoints error:', e);
+} finally {
+  setLoyaltyLoading(false);
+}
+};
+
+ const handleApplyPoints = async () => {
+  if (customPoints <= 0 || customPoints > maxUsablePoints) {
+    toast.error(`Enter points between 1 and ${maxUsablePoints}`);
+    return;
+  }
+  setLoyaltyLoading(true);
+  try {
+    const res = await fetch('/api/validate-points?action=validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mobileNumber: userPhone,
+        pointsToRedeem: customPoints,
+        billTotal: orderSummary.total
+      })
+    });
+    const data = await res.json();
+
+    if (data.isValid) {
+      const discount = Math.min(data.redemptionAmount, orderSummary.total);
+      setLoyaltyToken(data.token);
+      setLoyaltyDiscount(discount);
+      setPointsApplied(true);
+      setShowPointsInput(false);
+      setOrderSummary(prev => ({
+        ...prev,
+        total: Math.max(0, prev.total - discount)
+      }));
+      toast.success(`🎉 ₹${discount} discount applied!`);
+    } else {
+      if (data.token) {
+        await fetch('/api/validate-points?action=cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: data.token })
+        });
+      }
+      toast.error(data.errorMessage || "Points redemption failed!");
+    }
+  } catch (e) {
+    toast.error("Failed to apply points!");
+    console.error('handleApplyPoints error:', e);
+  } finally {
+    setLoyaltyLoading(false);
+  }
+};
+
+const handleRemovePoints = async () => {
+
+
+  if (loyaltyToken) {
+    try {
+        await fetch('/api/validate-points?action=cancel', {
+         method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: loyaltyToken })
+       });
+    } catch (e) {
+      console.error('Token cancel failed:', e);
+    }
+  }
+
+  setOrderSummary(prev => ({
+    ...prev,
+    total: prev.total + loyaltyDiscount
+  }));
+  setLoyaltyDiscount(0);
+  setLoyaltyToken('');
+  setPointsApplied(false);
+};
 
   const handleBlur = (e) => {
     const { name } = e.target;
@@ -562,6 +727,7 @@ export default function CheckoutPage() {
         };
 
       // Validation Checks (only if not using saved address)
+
       if (!useSavedAddress || selectedAddress === null) {
         setTouched({ firstName: true, lastName: true, email: true, phonenumber: true, country: true, address: true, city: true, postCode: true });
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -598,25 +764,7 @@ export default function CheckoutPage() {
 
       const totalAmount = orderSummary.total;
 
-      // ✅ STEP 1: Save abandoned order BEFORE payment starts
-      // const abandonedRes = await fetch('/api/abandoned/create', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     user_id: userId,
-      //     cart_items: cartItems,
-      //     total_amount: totalAmount,
-      //     address: addressData,
-      //     payment_mode: paymentMethod,
-      //     payment_id: "",
-      //     order_username: "",
-      //     orderNumber: "ORD" + Date.now()
-      //   })
-      // });
-
-      // const abandonedData = await abandonedRes.json();
-      // const abandonedId = abandonedData.data._id;
-
+        let savedAddressId = null;
       if (!useSavedAddress || selectedAddress === null) {
         const formDataToSend = new FormData();
         formDataToSend.append('userId', userId);
@@ -646,6 +794,7 @@ export default function CheckoutPage() {
         }
         const newAddressData = await addressRes.json();
         setUseraddress(prev => [...prev, newAddressData.userAddress]);
+        savedAddressId = newAddressData.userAddress?._id;
       }
 
             const deliveryAddress = useSavedAddress && selectedAddress !== null
@@ -687,13 +836,17 @@ export default function CheckoutPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               user_id: userId,
-              user_adddeliveryid: useSavedAddress && selectedAddress !== null
-                ? useraddress[selectedAddress]._id
-                : useraddress[0]?._id,
+           user_adddeliveryid: useSavedAddress && selectedAddress !== null
+          ? useraddress[selectedAddress]._id  : savedAddressId || useraddress[0]?._id,
               order_username: `${addressData.firstName} ${addressData.lastName}`,
               order_phonenumber: addressData.phonenumber,
               email_address: addressData.email,
-              order_item: cartItems,
+               order_item: cartItems.map(item => ({
+           ...item,
+         coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
+      ? item.coupondetails.map(c => c.offer_code || String(c))
+          : []
+           })),
               order_amount: totalAmount,
               order_deliveryaddress: deliveryAddress,
               payment_method: paymentMethod,
@@ -707,19 +860,21 @@ export default function CheckoutPage() {
               payment_status: "payment_initialized",
               order_number:"ORD" + Date.now() || "ORD" + Date.now(),
               order_details: cartItems.map((item) => ({
-                item_code: `ITEM${item.item_code}`,
-                product_id: item.id,
-                product_name: item.name,
-                product_price: item.price,
-                model: "N/A",
-                user_id: userId,
-                coupondiscount: 0,
-                created_at: new Date(),
-                updated_at: new Date(),
-                // quantity: 1,
-                quantity: item.quantity,
-                store_id: formData.deliveryType === "store" ? formData.selectedStore : "STORE01",
-                orderNumber: "ORD" + Date.now(),
+              item_code: `ITEM${item.item_code}`,
+               product_id: item.id,
+              product_name: item.name,
+              product_price: item.price,
+               model: "N/A",
+              user_id: userId,
+              coupondiscount: item.discount || 0,
+               coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
+                ? item.coupondetails.map(c => c.offer_code || String(c))
+              : [],
+              created_at: new Date(),
+             updated_at: new Date(),
+              quantity: item.quantity,
+             store_id: formData.deliveryType === "store" ? formData.selectedStore : "STORE01",
+               orderNumber: "ORD" + Date.now(),
               })),
             }),
           });
@@ -730,10 +885,13 @@ export default function CheckoutPage() {
           console.log(order_number,'testing')
 
           let result = await handleOnlinePayment(totalAmount);
+
           console.log(result,'razer pay result dfoidfnalkdsfoignldfoiafn;ldksafnhoi')
           paymentId = result.paymentId;
           paymentStatus = result.status;
           paymentMode = result.mode;
+
+
         } catch (error) {
           toast.error(`Payment failed: ${error.message}`);
           setIsSubmitting(false);
@@ -743,8 +901,27 @@ export default function CheckoutPage() {
         console.log("Invalid Payment Method");
         return;
       }
-
+             if (loyaltyToken && pointsApplied) {
+        console.log("Redeem token:", loyaltyToken);
+      try {
+        const redeemRes = await fetch('/api/validate-points?action=redeem', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+          token: loyaltyToken,
+          orderNumber: order_number,
+         })
+        });
+      const redeemData = await redeemRes.json();
+      console.log("Redeem response:", redeemData);
+     } catch (e) {
+      console.error('Points redeem failed:', e);
+    }
+   }
+       
       // Only save new address if not using saved address
+        console.log("loyaltyToken:", loyaltyToken);
+         console.log("pointsApplied:", pointsApplied);
 
 
       // Save Payment
@@ -790,13 +967,18 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: userId,
-          user_adddeliveryid: useSavedAddress && selectedAddress !== null
-            ? useraddress[selectedAddress]._id
-            : useraddress[0]?._id,
+         user_adddeliveryid: useSavedAddress && selectedAddress !== null
+         ? useraddress[selectedAddress]._id
+         : savedAddressId || useraddress[0]?._id,
           order_username: `${addressData.firstName} ${addressData.lastName}`,
           order_phonenumber: addressData.phonenumber,
           email_address: addressData.email,
-          order_item: cartItems,
+          order_item: cartItems.map(item => ({    
+                  ...item,
+         coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
+         ? item.coupondetails.map(c => c.offer_code || String(c))
+           : []
+          })),
           order_amount: totalAmount,
           order_deliveryaddress: deliveryAddress,
           payment_method: paymentMethod,
@@ -899,11 +1081,41 @@ export default function CheckoutPage() {
         const orderData = await orderRes.json();
 
         // ✅ GA4 purchase event
-        ga4Purchase({
+     ga4Purchase({
           orderId: orderData.order.order_number,
           value: orderSummary.total,
           items: cartItems,
         });
+        if (paymentMethod !== 'Cash on Delivery') {
+         try {
+ const loyaltyRes = await fetch('/api/award-points', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      phoneNumber: userPhone,
+      orderNumber: order_number,
+      orderAmount: totalAmount,
+      firstName: addressData.firstName,
+      lastName: addressData.lastName,
+      email: addressData.email,
+      cartItems: cartItems,
+      loyaltyPointsRedeemedAmount: loyaltyDiscount || 0,
+      loyaltyPointsRedeemedCode: loyaltyToken || "",       
+      paymentMode: paymentMode  
+     })
+  });
+   const loyaltyData = await loyaltyRes.json();
+
+  if (loyaltyData.success && loyaltyData.points_awarded > 0) {
+    toast.success(`🎉 You earned ${loyaltyData.points_awarded} loyalty points!`, {
+      autoClose: 5000
+    });
+     window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
+  }
+} catch (loyaltyErr) {
+  console.error("Loyalty points award failed:", loyaltyErr);
+}
+}
 
         // send_order_detail_to_sap
         const Send_SAP_Res = await fetch('/api/send-order-detail-to-sap', {
@@ -950,8 +1162,8 @@ export default function CheckoutPage() {
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
-          //const emailadmin = ['gmaylvk001@gmail.com'];
+           const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
+          // const emailadmin = ['hariharann2026@gmail.com'];
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -1451,7 +1663,7 @@ export default function CheckoutPage() {
                           alt={item.name}
                           className="w-full h-full object-contain"
                         />
-
+ 
                         {/* Quantity Badge */}
                         <div className="absolute top-0 right-0 bg-gray-700 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                           {item.quantity}
@@ -1526,6 +1738,88 @@ export default function CheckoutPage() {
                   <span>-₹{orderSummary.discount.toFixed(2)}</span>
                 </div>
               )}
+                {/* Loyalty Points Section */}
+  {loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
+  <div className="border rounded-lg p-3 mb-3 bg-blue-50">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-sm font-semibold text-[#2453D3]">🏆 Loyalty Points</p>
+        <p className="text-xs text-gray-500">
+          {loyaltyBalance} pts ≈ ₹{loyaltyBalance.toFixed(2)}
+        </p>
+      </div>
+      {!pointsApplied && !showPointsInput && (
+        <button
+          onClick={handleUseAllPoints}
+          className="bg-[#2453D3] text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+        >
+          Use Points
+        </button>
+      )}
+      {pointsApplied && (
+        <button
+          onClick={handleRemovePoints}
+          className="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-600 transition"
+        >
+          Remove
+        </button>
+      )}
+    </div>
+
+    {/* ✅ Input box — 5% exceed ஆனா காட்டும் */}
+    {showPointsInput && !pointsApplied && (
+      <div className="mt-3 bg-white rounded-lg p-3 border border-blue-200">
+        <p className="text-xs text-gray-500 mb-2">
+          Max <span className="font-semibold text-[#2453D3]">{maxUsablePoints} pts</span> use (₹{maxUsablePoints})
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            min={1}
+            max={maxUsablePoints}
+            value={customPoints}
+            onChange={(e) => {
+              const val = Math.min(Number(e.target.value), maxUsablePoints);
+              setCustomPoints(val);
+            }}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            onClick={handleApplyPoints}
+            disabled={loyaltyLoading}
+            className="bg-[#2453D3] text-white text-xs px-4 py-1.5 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
+          >
+            {loyaltyLoading ? '...' : 'Apply'}
+          </button>
+          <button
+            onClick={() => setShowPointsInput(false)}
+            className="bg-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-lg hover:bg-gray-300 transition"
+          >
+            Cancel
+          </button>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={maxUsablePoints}
+          value={customPoints}
+          onChange={(e) => setCustomPoints(Number(e.target.value))}
+          className="w-full mt-2 accent-blue-600"
+        />
+        <p className="text-xs text-gray-400 mt-1">
+          Discount: ₹{customPoints} off your order
+        </p>
+      </div>
+    )}
+
+    {pointsApplied && (
+      <p className="text-green-600 text-xs mt-2 font-semibold">
+        ✅ ₹{loyaltyDiscount.toFixed(2)} discount applied!
+      </p>
+    )}
+  </div>
+)}
+
 
               {/* Subtotal */}
               <div className="flex justify-between text-gray-800 font-semibold  pt-2 mt-2">

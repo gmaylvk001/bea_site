@@ -80,9 +80,9 @@ export async function POST(req) {
           const product = await Product.findById(item.productId);
           const discount = item.discount;
 
-          if (discount > 0) {
-            const userObjectId = new mongoose.Types.ObjectId(user_id);
-            const couponid = new mongoose.Types.ObjectId(item.coupondetails[0]._id);
+          if (discount > 0 && item.coupondetails?.length > 0 && item.coupondetails[0]?._id) {
+           const userObjectId = new mongoose.Types.ObjectId(user_id);
+          const couponid = new mongoose.Types.ObjectId(item.coupondetails[0]._id);
 
             const coupon_track = new Usedcoupon({ coupon_id: couponid, user_id: userObjectId });
             await coupon_track.save();
@@ -92,7 +92,7 @@ export async function POST(req) {
               updatecoupon.used_by += 1;
               await updatecoupon.save();
             }
-          }
+             }
 
           if (product && product.quantity > 0) {
             product.quantity = product.quantity - item.quantity;
@@ -124,7 +124,12 @@ export async function POST(req) {
       { status: isNew ? 201 : 200 }
     );
 
-  } catch (error) {
-    return Response.json({ success: false, message: "Server error", error: error.message }, { status: 500 });
-  }
+ } catch (error) {
+  console.error("ORDER ERROR:", error.message, error.stack); 
+  return Response.json({ 
+    success: false, 
+    message: "Server error", 
+    error: error.message 
+  }, { status: 500 });
+}
 }

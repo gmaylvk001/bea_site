@@ -1,0 +1,146 @@
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/db";
+import EcomOrderInfo from "@/models/ecom_order_info";
+
+export async function POST(req) {
+  await dbConnect();
+
+  try {
+    const body = await req.json();
+    const {
+      phoneNumber,
+      orderNumber,
+      orderAmount,
+      firstName,
+      lastName,
+      email,
+      cartItems,
+      loyaltyPointsRedeemedAmount,
+      loyaltyPointsRedeemedCode,
+      paymentMode
+    } = body;
+
+    // Validate required fields
+    if (!phoneNumber || !orderNumber || !orderAmount) {
+      return NextResponse.json(
+        { success: false, message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Truco API call
+    const trucoRes = await fetch(
+      `${process.env.TRUCO_BASE_URL}/external/transaction`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": process.env.TRUCO_API_KEY
+        },
+        body: JSON.stringify({
+          phone_number: phoneNumber,
+          invoice: {
+            invoice_number: orderNumber,
+            invoice_date: new Date().toISOString(),
+            gross_amount: orderAmount,
+            net_amount: orderAmount,
+            currency: "INR",
+            payment_method: paymentMode === "Cash on Delivery" ? "cod" : "card",
+            sales_channel: "online",
+            loyalty_points_redeemed_amount: loyaltyPointsRedeemedAmount || 0,
+            loyalty_points_redeemed_code: loyaltyPointsRedeemedCode || "",
+            line_items: cartItems.map((item) => ({
+              product_code: item.item_code || String(item.id),
+              product_name: item.name,
+              category: item.category || "General",
+              quantity: item.quantity,
+              unit_price: item.price,
+              line_total: item.price * item.quantity
+            }))
+          },
+          store_info: {
+            store_code: "ECOM",
+            store_name: "Online Store",
+            location: "web",
+            terminal_id: "ecom-web",
+            cashier_code: "system"
+          },
+          metadata: {
+            source_system: "bea-ecom",
+            customer_first_name: firstName,
+            customer_last_name: lastName,
+            customer_email: email
+          }
+        })
+      }
+    );
+
+    const trucoData = await trucoRes.json();
+    console.log("Truco response:", trucoData);
+
+    if (trucoData.success) {
+      // Order-ல points update பண்ணு
+      await EcomOrderInfo.findOneAndUpdate(
+        { order_number: orderNumber },
+        {
+          loyalty_points_awarded: trucoData.points_awarded,
+          truco_transaction_id: trucoData.transaction_id
+        }
+      );
+
+      return NextResponse.json({
+        success: true,
+        points_awarded: trucoData.points_awarded,
+        message: trucoData.messages?.[0] || "Points awarded successfully"
+      });
+    } else {
+      return NextResponse.json({
+        success: false,
+        message: "Truco API failed",
+        error: trucoData.error
+      });
+    }
+
+  } catch (error) {
+    console.error("Award points error:", error);
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const phone = searchParams.get('phone');
+
+  if (!phone) {
+    return NextResponse.json({ success: false, points: 0 });
+  }
+
+  try {
+    const res = await fetch(
+      `${process.env.TRUCO_BASE_URL}/external/customer/check?phoneNumber=${phone}`,
+      {
+        headers: {
+          'X-Api-Key': process.env.TRUCO_API_KEY,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.customerExists) {
+      return NextResponse.json({
+        success: true,
+        points: data.currentPointsBalance || 0,
+        value: data.currentBalanceValue || 0
+      });
+    } else {
+      return NextResponse.json({ success: false, points: 0 });
+    }
+  } catch (error) {
+    return NextResponse.json({ success: false, points: 0 });
+  }
+}

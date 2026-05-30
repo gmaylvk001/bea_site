@@ -86,6 +86,9 @@ const OrderSchema = new mongoose.Schema(
     type: String,
   },
 
+  loyalty_points_awarded: { type: Number, default: 0 },
+  truco_transaction_id: { type: String, default: null },
+
   // NEW: Order History
     order_history: [OrderHistorySchema]
 },

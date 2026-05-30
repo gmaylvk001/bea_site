@@ -158,6 +158,9 @@ export default function CartComponent() {
   // Coupon states
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [trucoCouponApplied, setTrucoCouponApplied] = useState(false);
+  const [trucoCouponDiscount, setTrucoCouponDiscount] = useState(0);
+  const [trucoCouponCode, setTrucoCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [couponSuccess, setCouponSuccess] = useState(""); // inline success text
@@ -732,97 +735,201 @@ export default function CartComponent() {
       setProductToDelete(null);
     }
   };
-  const validateCoupon = async () => {
-    if (!couponFeatureEnabled) {
-      setCouponError("Coupons are currently disabled");
-      setCouponSuccess("");
-      return;
-    }
-    const code = couponCode.trim();
-    if (!code) {
-      setCouponError("Please enter a coupon code");
-      setCouponSuccess("");
-      return;
-    }
-
-    setIsValidatingCoupon(true);
-    setCouponError("");
+const validateCoupon = async () => {
+  if (!couponFeatureEnabled) {
+    setCouponError("Coupons are currently disabled");
     setCouponSuccess("");
+    return;
+  }
+ 
+  const code = couponCode.trim();
+  if (!code) {
+    setCouponError("Please enter a coupon code");
+    setCouponSuccess("");
+    return;
+  }
+ 
+  setIsValidatingCoupon(true);
+  setCouponError("");
+  setCouponSuccess("");
+ 
 
-    try {
-      
-      const token = localStorage.getItem("token");
-      const params = new URLSearchParams({ code });
-   
-      const resp = await fetch(`/api/offers/offer-products?${params.toString()}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      const data = await resp.json();
-      
-      if (!resp.ok) throw new Error("INVALID");
-
-      // Must have a valid normalized coupon from API
-      // if (!data.success || data.validOffer !== true || !data.coupon) {
-       
-      //   setCouponError("The coupon code entered is not valid.");
-      //   setCouponSuccess("");
-      //   return;
-      // }
-
+  let dbCouponValid = false;
+ 
+  try {
+    const token = localStorage.getItem("token");
+    const params = new URLSearchParams({ code });
+ 
+    const resp = await fetch(`/api/offers/offer-products?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+ 
+    const data = await resp.json();
+ 
+    if (resp.ok && data?.coupon) {
       const normalized = normalizeOfferToCoupon(data.coupon);
-          
-      // Only Active coupons
-      if ((normalized.status || "").toLowerCase() !== "active") {
-       
-        setCouponError("The coupon code entered is not valid.");
-        setCouponSuccess("");
-        return;
-      }
-
-      // Reject if both percentage and fixed are zero/invalid
-      if ((normalized.percentage ?? 0) <= 0 && (normalized.fixed_price ?? 0) <= 0) {
-        
-        setCouponError("The coupon code entered is not valid.");
-        setCouponSuccess("");
-        return;
-      }
-
-      // Check applicability to items in cart
+ 
+      // Active check
+      const isActive = (normalized.status || "").toLowerCase() === "active";
+      // Discount value check
+      const hasDiscount = (normalized.percentage ?? 0) > 0 || (normalized.fixed_price ?? 0) > 0;
+      // Cart product check
       const cartProductIds = cartData?.items?.map((i) => i.productId) || [];
-      if (
-        Array.isArray(normalized.offer_product) &&
-        normalized.offer_product.length > 0 &&
-        !normalized.offer_product.some((id) => cartProductIds.includes(id))
-      ) {
-         console.log(normalized);
-        setCouponError("The coupon code entered is not valid.");
-        setCouponSuccess("");
-        return;
+      const isApplicable =
+        !Array.isArray(normalized.offer_product) ||
+        normalized.offer_product.length === 0 ||
+        normalized.offer_product.some((id) => cartProductIds.includes(id));
+ 
+      if (isActive && hasDiscount && isApplicable) {
+        // ✅ DB coupon valid — existing flow exactly same
+        const itemsWithDiscount = applyDiscountToItems(normalized, cartData.items);
+        const newCart = { ...cartData, items: itemsWithDiscount };
+ 
+        setAppliedCoupon(normalized);
+        localStorage.setItem("appliedCoupon", JSON.stringify(normalized));
+        setCartData(newCart);
+        saveCartState(newCart);
+ 
+        // Truco state clear pannurom — DB coupon use pannurom
+        setTrucoCouponApplied(false);
+        setTrucoCouponDiscount(0);
+        setTrucoCouponCode("");
+ 
+        setCouponSuccess(`${normalized.offer_code} is applied`);
+        setCouponError("");
+        dbCouponValid = true;
       }
-
-      // Apply discount and persist (same flow as existing)
-      const itemsWithDiscount = applyDiscountToItems(normalized, cartData.items);
-      const newCart = { ...cartData, items: itemsWithDiscount };
-
-      setAppliedCoupon(normalized);
-      localStorage.setItem("appliedCoupon", JSON.stringify(normalized));
-      setCartData(newCart);
-      saveCartState(newCart);
-
-      setCouponSuccess(`${normalized.offer_code} is applied`);
-      setCouponError("");
-    } catch (_) {
+    }
+  } catch (_) {
+    
+  }
+ 
+  if (dbCouponValid) {
+    setIsValidatingCoupon(false);
+    return;
+  }
+ 
+  
+  try {
+  
+    const statusRes = await fetch("/api/truco-promo-code?action=status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+ 
+    const statusData = await statusRes.json();
+ 
+    if (!statusData.found || !statusData.isValid || statusData.isExpired) {
       setCouponError("The coupon code entered is not valid.");
       setCouponSuccess("");
-    } finally {
       setIsValidatingCoupon(false);
+      return;
     }
-  };
+ 
+    
+    const token = localStorage.getItem("token");
+    const authRes = await fetch("/api/auth/check", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const authData = await authRes.json();
+    
+ 
+    const validateRes = await fetch("/api/truco-promo-code?action=validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code,
+        phoneNumber: authData.phone || "",
+        cartTotal: calculateSubtotal(),
+       
+        cartItems: cartData?.items?.map((item) => ({
+          sku: item.item_code || String(item.productId),
+          brand: item.brand || "",
+          category: item.category || "",
+          price: item.price > 0 ? item.price : item.actual_price,
+          quantity: item.quantity,
+        })) || [],
+        paymentMethod: "CARD",
+        channel: "ONLINE",
+        storeId: "ECOM",
+      }),
+    });
+ 
+    const validateData = await validateRes.json();
+ 
+    if (!validateData.valid) {
+    
+      const errorMessages = {
+        PROMOTION_NOT_FOUND: "Coupon code does not exist.",
+        PROMOTION_EXPIRED: "This coupon has expired.",
+        PROMOTION_INACTIVE: "This coupon is no longer active.",
+        MAX_USES_REACHED: "This coupon has reached its usage limit.",
+        CUSTOMER_ALREADY_REDEEMED: "You have already used this coupon.",
+        MINIMUM_AMOUNT_NOT_MET: "Your cart total is below the minimum required amount.",
+        MIN_CART_VALUE_NOT_MET: "Your cart total is below the minimum required amount.",
+        BRAND_NOT_FOUND: "This coupon is not applicable for items in your cart.",
+        CATEGORY_NOT_FOUND: "This coupon is not applicable for items in your cart.",
+        BUDGET_EXHAUSTED: "This coupon's budget has been exhausted.",
+      };
+ 
+      const msg =
+        errorMessages[validateData.errorCode] ||
+        validateData.errorMessage ||
+        "The coupon code entered is not valid.";
+ 
+      setCouponError(msg);
+      setCouponSuccess("");
+      setIsValidatingCoupon(false);
+      return;
+    }
+ 
+
+    const discountAmount = validateData.benefitPreview?.discountAmount || 0;
+ 
+    
+    const trucoCouponShape = {
+      offer_code: code,
+      offer_type: "fixed_price",        
+      fixed_price: discountAmount,
+      percentage: 0,
+      offer_product: [],              
+      status: "active",
+    };
+ 
+    const itemsWithDiscount = applyDiscountToItems(trucoCouponShape, cartData.items);
+    const newCart = { ...cartData, items: itemsWithDiscount };
+ 
+   
+    setTrucoCouponApplied(true);
+    setTrucoCouponDiscount(discountAmount);
+    setTrucoCouponCode(code);
+ 
+   
+    setAppliedCoupon(trucoCouponShape);
+    localStorage.setItem("appliedCoupon", JSON.stringify(trucoCouponShape));
+    setCartData(newCart);
+    saveCartState(newCart);
+ 
+    const offerDesc = validateData.benefitPreview?.offerDescription || "";
+    setCouponSuccess(
+      `${code} applied! ${offerDesc ? `— ${offerDesc}` : `₹${discountAmount} discount`}`
+    );
+    setCouponError("");
+ 
+  } catch (err) {
+    console.error("Truco promo validate error:", err);
+    setCouponError("The coupon code entered is not valid.");
+    setCouponSuccess("");
+  } finally {
+    setIsValidatingCoupon(false);
+  }
+};
+ 
 
   const removeCoupon = () => {
     const newCart = {
@@ -834,7 +941,10 @@ export default function CartComponent() {
 
     setAppliedCoupon(null);
     localStorage.removeItem("appliedCoupon");
-    setCouponSuccess(""); // clear inline success
+    setTrucoCouponApplied(false);
+    setTrucoCouponDiscount(0);
+    setTrucoCouponCode("");
+    setCouponSuccess(""); 
     setSuccessMessage("Coupon removed successfully");
     setCouponCode("");
     setShowSuccessModal(true);
@@ -913,7 +1023,10 @@ export default function CartComponent() {
 
     subtotal,
 
-    total
+    total,
+    trucoCouponApplied,
+    trucoCouponCode: trucoCouponApplied ? trucoCouponCode : "",
+    trucoCouponDiscount: trucoCouponApplied ? trucoCouponDiscount : 0,
 
   }));
 
