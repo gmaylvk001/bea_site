@@ -184,8 +184,8 @@ const removeProductRow = (index) => {
                     "params",
                     JSON.stringify([contact.name,contact.company_name,contact.email_address,contact.mobile_number,contact.city,contact.business_type,contact.requirement_category,contact.gst_number,contact.contact_method,productsDetails])
                 );
-                // const emailadmin = ["arunkarthik@bharathelectronics.in","rajesh@bharathelectronics.in","customercare@bharathelectronics.in"];
-                const emailadmin = ["sorambeeviuit@gmail.com"];
+                const emailadmin = ["arunkarthik@bharathelectronics.in","rajesh@bharathelectronics.in","customercare@bharathelectronics.in"];
+                // const emailadmin = ["sorambeeviuit@gmail.com"];
                 emailadmin.forEach(async (emailadmin) => {
                     adminemailFormData.set("email", emailadmin);
                     let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
