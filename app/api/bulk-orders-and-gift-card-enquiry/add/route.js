@@ -24,6 +24,7 @@ export async function POST(request) {
       pincode, */
       gst_number,
       product_name_and_quantity,
+      contact_method,
       status,
       _hp,
     } = body;
@@ -45,7 +46,8 @@ export async function POST(request) {
       // !address ||
       !city ||
       !business_type ||
-      !requirement_category
+      !requirement_category ||
+      !contact_method 
       // !state ||
       // !pincode
     ) {
@@ -174,6 +176,14 @@ export async function POST(request) {
         );
       }
 
+      // Contact Method validation
+      if (!contact_method || contact_method.trim() === "") {
+        return NextResponse.json(
+          { success: false, message: "Please select a contact method" },
+          { status: 400 }
+        );
+      }
+
     // Create contact
     const newContact = await BulkOrderGiftCardEnquiryModel.create({
       name,
@@ -189,6 +199,7 @@ export async function POST(request) {
       /* state,
       pincode, */
       product_name_and_quantity,
+      contact_method,
       status,
     });
 
