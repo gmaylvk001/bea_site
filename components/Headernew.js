@@ -1921,7 +1921,7 @@ const Header = () => {
                                                         </Link>
                                                     </>
                                                 )}
-                                                      {/* ✅ இதை add பண்ணு — My Orders-க்கு முன்னாடி */}
+                                                     
                                                    {isLoggedIn && (
                                                       <Link href="/loyalty" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
                                                    {/* <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
