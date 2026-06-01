@@ -1924,11 +1924,11 @@ const Header = () => {
                                                       {/* ✅ இதை add பண்ணு — My Orders-க்கு முன்னாடி */}
                                                    {isLoggedIn && (
                                                       <Link href="/loyalty" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                                                   <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
+                                                   {/* <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
                                                     🏆
                                                   </span>
                                            Loyalty Points
-                                     <span className="ml-auto text-xs font-bold text-customBlue">{loyaltyPoints} pts</span>
+                                     <span className="ml-auto text-xs font-bold text-customBlue">{loyaltyPoints} pts</span> */}
                                                 </Link>
                                           )}
                                                 <Link href="/orders" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">

@@ -1107,9 +1107,9 @@ const handleRemovePoints = async () => {
    const loyaltyData = await loyaltyRes.json();
 
   if (loyaltyData.success && loyaltyData.points_awarded > 0) {
-    toast.success(`🎉 You earned ${loyaltyData.points_awarded} loyalty points!`, {
-      autoClose: 5000
-    });
+    // toast.success(`🎉 You earned ${loyaltyData.points_awarded} loyalty points!`, {
+    //   autoClose: 5000
+    // });
      window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
   }
 } catch (loyaltyErr) {
@@ -1162,8 +1162,8 @@ const handleRemovePoints = async () => {
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-           const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
-          // const emailadmin = ['hariharann2026@gmail.com'];
+        //   const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
+          const emailadmin = ['hariharan.g@eywamedia.com'];
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -1738,8 +1738,11 @@ const handleRemovePoints = async () => {
                   <span>-₹{orderSummary.discount.toFixed(2)}</span>
                 </div>
               )}
+          
+          
                 {/* Loyalty Points Section */}
-  {loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
+                
+  {/* {loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
   <div className="border rounded-lg p-3 mb-3 bg-blue-50">
     <div className="flex justify-between items-center">
       <div>
@@ -1766,7 +1769,7 @@ const handleRemovePoints = async () => {
       )}
     </div>
 
-    {/* ✅ Input box — 5% exceed ஆனா காட்டும் */}
+  
     {showPointsInput && !pointsApplied && (
       <div className="mt-3 bg-white rounded-lg p-3 border border-blue-200">
         <p className="text-xs text-gray-500 mb-2">
@@ -1818,7 +1821,8 @@ const handleRemovePoints = async () => {
       </p>
     )}
   </div>
-)}
+  
+)} */}
 
 
               {/* Subtotal */}
