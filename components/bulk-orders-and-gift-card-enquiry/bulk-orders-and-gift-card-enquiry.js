@@ -243,16 +243,25 @@ const removeProductRow = (index) => {
                             {/* BUTTONS */}
                             <div className="flex flex-col sm:flex-row gap-3">
                                 {/* CORPORATE BUTTON */}
-                                <button className="flex items-center gap-3 bg-[#ff7b22] hover:bg-[#ff8f3c] transition-all duration-300 text-white font-semibold text-[15px] px-8 py-4 rounded-xl shadow-[0_10px_30px_rgba(255,123,34,0.35)] whitespace-nowrap">
+                                <button  onClick={() => {
+                                    document
+                                    .getElementById("corporate-pricing-form")
+                                    ?.scrollIntoView({
+                                        behavior: "smooth",
+                                        block: "start",
+                                    });
+                                }} className="flex items-center gap-3 bg-[#ff7b22] hover:bg-[#ff8f3c] transition-all duration-300 text-white font-semibold text-[15px] px-8 py-4 rounded-xl shadow-[0_10px_30px_rgba(255,123,34,0.35)] whitespace-nowrap">
                                 <FaBriefcase className="text-[18px]" />
                                 <span>Get Corporate Pricing</span>
                                 </button>
 
                                 {/* WHATSAPP BUTTON */}
-                                <button className="flex items-center gap-3 border border-white/30 bg-white/5 backdrop-blur-md hover:bg-white hover:text-[#0b1235] transition-all duration-300 text-white font-semibold text-[15px] px-8 py-4 rounded-xl whitespace-nowrap">
-                                <FaWhatsapp className="text-[20px]" />
-                                <span>WhatsApp Our B2B Team</span>
-                                </button>
+                                <a href="https://wa.me/919842248668" target="_blank" rel="noopener noreferrer">
+                                    <button className="flex items-center gap-3 border border-white/30 bg-white/5 backdrop-blur-md hover:bg-white hover:text-[#0b1235] transition-all duration-300 text-white font-semibold text-[15px] px-8 py-4 rounded-xl whitespace-nowrap">
+                                    <FaWhatsapp className="text-[20px]" />
+                                    <span>WhatsApp Our B2B Team</span>
+                                    </button>
+                                </a>
                             </div>
                         </div>
 
@@ -602,7 +611,7 @@ const removeProductRow = (index) => {
 
                             {/* RIGHT FORM */}
                             <div className="bg-white rounded-[32px] p-8 md:p-10 shadow-md">
-                                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <form onSubmit={handleSubmit} id="corporate-pricing-form" className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                     {/* Full Name */}
                                     <div>
                                         <label className="block text-sm font-semibold mb-2 text-gray-700">
@@ -1016,7 +1025,9 @@ const removeProductRow = (index) => {
                                 {/* CONTENT */}
                                 <div>
                                     <h3 className="font-bold text-[15px] text-[#081028] mb-2">Mail Us</h3>
-                                    <p className="text-[15px] font-bold text-[#081028] mb-3 break-all leading-7">corporate@bharathelectronics.in</p>
+                                    <p className="text-[15px] font-bold text-[#081028] mb-3 break-all leading-7">
+                                        <a href="mailto:corporate@bharathelectronics.in" className="text-[15px] font-bold text-blue-600 mb-3 break-all leading-7 hover:text-blue-600">corporate@bharathelectronics.in</a>
+                                    </p>
                                     <p className="text-gray-600 text-[13px]">We reply within 24 hours</p>
                                 </div>
                             </div>
@@ -1045,7 +1056,9 @@ const removeProductRow = (index) => {
                                 <div className="w-full">
                                     <h3 className="font-bold text-[15px] text-[#00a63e] mb-2">WhatsApp Support</h3>
                                     <p className="text-gray-600 text-[15px] leading-7 mb-5">Chat with our B2B team for quick assistance</p>
-                                    <button className="w-full h-[50px] rounded-xl bg-[#00b140] hover:bg-[#009b38] transition-all text-white font-semibold text-[13px]">WhatsApp Us</button>
+                                    <a href="https://wa.me/919842248668" target="_blank" rel="noopener noreferrer">
+                                        <button className="w-full h-[50px] rounded-xl bg-[#00b140] hover:bg-[#009b38] transition-all text-white font-semibold text-[13px]">WhatsApp Us</button>
+                                    </a>
                                 </div>
                             </div>
                         </div>
