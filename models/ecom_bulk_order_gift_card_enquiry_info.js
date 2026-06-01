@@ -86,6 +86,12 @@ const BulkOrderGiftCardEnquirySchema = new mongoose.Schema(
       default: "",
     },
 
+    contact_method: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
     /* state: {
       type: String,
       required: true,
