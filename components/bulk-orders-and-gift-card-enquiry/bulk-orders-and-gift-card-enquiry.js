@@ -15,6 +15,12 @@ FaAward,
   ShieldCheck,
   Truck,
   Headphones,
+  BedDouble,
+  Building2,
+  Construction,
+  GraduationCap,
+  ShoppingCart,
+  Cross
 } from "lucide-react";
   import Image from "next/image";
 export default function BulkOrdersAndGiftCardEnquiry() {
@@ -243,17 +249,25 @@ const removeProductRow = (index) => {
                             {/* BUTTONS */}
                             <div className="flex flex-col sm:flex-row gap-3">
                                 {/* CORPORATE BUTTON */}
-                                <button  onClick={() => {
-                                    document
-                                    .getElementById("corporate-pricing-form")
-                                    ?.scrollIntoView({
-                                        behavior: "smooth",
-                                        block: "start",
-                                    });
-                                }} className="flex items-center gap-3 bg-[#ff7b22] hover:bg-[#ff8f3c] transition-all duration-300 text-white font-semibold text-[15px] px-8 py-4 rounded-xl shadow-[0_10px_30px_rgba(255,123,34,0.35)] whitespace-nowrap">
-                                <FaBriefcase className="text-[18px]" />
-                                <span>Get Corporate Pricing</span>
-                                </button>
+<button
+  onClick={() => {
+    const form = document.getElementById("corporate-pricing-form");
+
+    if (form) {
+      const y =
+        form.getBoundingClientRect().top + window.pageYOffset - 200; // header height
+
+      window.scrollTo({
+        top: y,
+        behavior: "smooth",
+      });
+    }
+  }}
+  className="flex items-center gap-3 bg-[#ff7b22] hover:bg-[#ff8f3c] transition-all duration-300 text-white font-semibold text-[15px] px-8 py-4 rounded-xl shadow-[0_10px_30px_rgba(255,123,34,0.35)] whitespace-nowrap"
+>
+  <FaBriefcase className="text-[18px]" />
+  <span>Get Corporate Pricing</span>
+</button>
 
                                 {/* WHATSAPP BUTTON */}
                                 <a href="https://wa.me/919842248668" target="_blank" rel="noopener noreferrer">
@@ -438,42 +452,38 @@ const removeProductRow = (index) => {
 
                     {/* INDUSTRIES */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 mb-8">
-                        {/* ITEM */}
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-24 h-24 rounded-3xl bg-[#edf4ff] flex items-center justify-center text-[#2563eb] text-5xl mb-4 shadow-sm">🏨</div>
-                            <h3 className="text-[18px] font-bold text-[#081028]">Hotels</h3>
-                        </div>
+  
+  <div className="flex flex-col items-center text-center">
+    <BedDouble size={56} strokeWidth={1.8} className="text-[#2563eb] mb-3" />
+    <h3 className="text-sm font-semibold text-[#081028] whitespace-nowrap">Hotels</h3>
+  </div>
 
-                        {/* ITEM */}
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-24 h-24 rounded-3xl bg-[#edf4ff] flex items-center justify-center text-[#2563eb] text-5xl mb-4 shadow-sm">🏢</div>
-                            <h3 className="text-[18px] font-bold text-[#081028]">Offices</h3>
-                        </div>
+  <div className="flex flex-col items-center text-center">
+    <Building2 size={56} strokeWidth={1.8} className="text-[#2563eb] mb-3" />
+    <h3 className="text-sm font-semibold text-[#081028] whitespace-nowrap">Offices</h3>
+  </div>
 
-                        {/* ITEM */}
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-24 h-24 rounded-3xl bg-[#edf4ff] flex items-center justify-center text-[#2563eb] text-5xl mb-4 shadow-sm">🏗️</div>
-                            <h3 className="text-[18px] font-bold text-[#081028]">Builders</h3>
-                        </div>
+  <div className="flex flex-col items-center text-center">
+    <Construction size={56} strokeWidth={1.8} className="text-[#2563eb] mb-3" />
+    <h3 className="text-sm font-semibold text-[#081028] whitespace-nowrap">Builders</h3>
+  </div>
 
-                        {/* ITEM */}
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-24 h-24 rounded-3xl bg-[#edf4ff] flex items-center justify-center text-[#2563eb] text-5xl mb-4 shadow-sm">🎓</div>
-                            <h3 className="text-[18px] font-bold text-[#081028]">Schools & Colleges</h3>
-                        </div>
+  <div className="flex flex-col items-center text-center">
+    <GraduationCap size={56} strokeWidth={1.8} className="text-[#2563eb] mb-3" />
+    <h3 className="text-sm font-semibold text-[#081028] whitespace-nowrap">Schools & Colleges</h3>
+  </div>
 
-                        {/* ITEM */}
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-24 h-24 rounded-3xl bg-[#edf4ff] flex items-center justify-center text-[#2563eb] text-5xl mb-4 shadow-sm">🛒</div>
-                            <h3 className="text-[18px] font-bold text-[#081028]">Retail Chains</h3>
-                        </div>
+  <div className="flex flex-col items-center text-center">
+    <ShoppingCart size={56} strokeWidth={1.8} className="text-[#2563eb] mb-3" />
+    <h3 className="text-sm font-semibold text-[#081028] whitespace-nowrap">Retail Chains</h3>
+  </div>
 
-                        {/* ITEM */}
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-24 h-24 rounded-3xl bg-[#edf4ff] flex items-center justify-center text-[#2563eb] text-5xl mb-4 shadow-sm">🏥</div>
-                            <h3 className="text-[18px] font-bold text-[#081028]">Hospitals</h3>
-                        </div>
-                    </div>
+  <div className="flex flex-col items-center text-center">
+    <Cross size={56} strokeWidth={1.8} className="text-[#2563eb] mb-3" />
+    <h3 className="text-sm font-semibold text-[#081028] whitespace-nowrap">Hospitals</h3>
+  </div>
+
+</div>
                     
                     {/* WHY CHOOSE + BRANDS */}
                     <div className="bg-[#f8fbff] border border-[#dce8ff] rounded-[32px] p-6 md:p-10 mb-5">
@@ -1116,9 +1126,11 @@ const removeProductRow = (index) => {
                         </div>
 
                         {/* WhatsApp Button */}
-                        <button className="bg-white text-[#032c7a] px-6 py-3 rounded-xl flex items-center gap-2 font-semibold text-[14px] min-w-max">
-                            <FaWhatsapp className="text-green-500 text-lg" />WhatsApp Our Team
-                        </button>
+                        <a href="https://wa.me/919842344323" target="_blank" rel="noopener noreferrer">
+                            <button className="bg-white text-[#032c7a] px-6 py-3 rounded-xl flex items-center gap-2 font-semibold text-[14px] min-w-max">
+                                <FaWhatsapp className="text-green-500 text-lg" />WhatsApp Our Team
+                            </button>
+                        </a>
                     </div>
                 </div>
             </section>
