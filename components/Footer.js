@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { FaFacebookF, FaInstagram, FaYoutube, FaWhatsapp } from "react-icons/fa";
-import { FiMail, FiPhone } from "react-icons/fi";
+import { FiMail, FiPhone, FiMapPin, FiClock } from "react-icons/fi";
 import { FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
 import { IoReload, IoStorefront, IoCardOutline, IoShieldCheckmark } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
@@ -271,387 +271,411 @@ const capitalizeFirstLetter = (str) =>
 
   return (
     <>
-      <footer className="bg-[#f3f5f6] text-gray-300 text-sm py-5 md:px-4 p-6">
-        <div className="bg-[#f3f5f6] text-gray-400  border-white ">
-          <div className="w-full flex justify-center">
-            <div className="w-full container mx-auto px-3  grid grid-cols-1 md:grid-cols-3 gap-16 justify-between">
-              {/* Corporate Office */}
-              <div className="space-y-3">
-                <h3 className="text-[#677279] font-semibold text-lg mb-4">Corporate Office</h3>
-                <p>
-                  26/1 Dr. Alagappa Chettiyar Rd, Tatabad, Near Kovai Scan Centre,
-                  Coimbatore-641012
-                </p>
-                <hr className="border-gray-600 my-3" />
-                <div className="flex items-center gap-2">
-                  <FiPhone />
-                  <a href="tel:9842344323" className="text-blue-600 hover:underline">
-                    9842344323
-                  </a>
+        <footer className="bg-white">
+          {/* TOP FEATURES */}
+          <div className="py-3 bg-gray-50">
+            <div className="container mx-auto">
+
+              <div className="w-full lg:w-12/12 mx-auto bg-white rounded-2xl shadow-xl px-6 py-4">
+
+                <div className="flex flex-wrap lg:flex-nowrap">
+
+                  {/* Item 1 */}
+                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                    <IoShieldCheckmark className="text-3xl text-blue-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                        100% Original Products
+                      </h4>
+                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                        Authorized Brand Partner
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Item 2 */}
+                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                    <IoShieldCheckmark className="text-3xl text-blue-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                        2 Year Warranty
+                      </h4>
+                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                        On Select Products
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Item 3 */}
+                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                    <TbTruckDelivery className="text-3xl text-blue-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                        Fast Delivery
+                      </h4>
+                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                        Across Tamil Nadu
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Item 4 */}
+                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                    <IoReload className="text-3xl text-blue-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                        Easy Returns
+                      </h4>
+                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                        Hassle Free
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Item 5 */}
+                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                    <IoStorefront className="text-3xl text-blue-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                        Best Prices
+                      </h4>
+                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                        Top Brands
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Item 6 */}
+                  <div className="flex items-center gap-3 px-6">
+                    <IoCardOutline className="text-3xl text-blue-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                        No Cost EMI
+                      </h4>
+                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                        Easy EMI
+                      </p>
+                    </div>
+                  </div>
+
                 </div>
-                <hr className="border-gray-600 my-3" />
-                <div className="flex items-center gap-2">
-                  <FiMail />
-                  <a
-                    href="mailto:customercare@bharathelectronics.in"
-                    className="text-blue-600 hover:underline"
-                  >
-                    customercare@bharathelectronics.in
-                  </a>
-                </div>
-                <hr className="border-gray-600 my-3" />
-                <p>
-                  <strong>Business Hours:</strong> 09:30AM - 09:30 PM (Mon to Sun)
-                </p>
+
               </div>
-              {/* My Account & Policy */}
-              <div className="flex flex-col space-y-6 md:mx-auto">
-                <div>
-                  <h3 className="text-[#677279] font-semibold text-lg mb-4">My Account</h3>
-                  <ul className="space-y-2">
-                    {isLoggedIn ? (
-                      <>
-                        <li>
-                          <Link href="/order" className="hover:underline hover:text-white flex items-center gap-2">
-                            <FaShoppingBag /> My Orders
+
+            </div>
+          </div>
+
+          {/* WHITE FOOTER */}
+          <div className="container mx-auto px-4 py-3">
+            <div className="grid md:grid-cols-12 gap-8">
+
+              {/* LEFT LOGO SECTION */}
+              <div className="md:col-span-3 border-r border-gray-200 pr-8">
+                <Image
+                  src="/logo.png"
+                  alt="Logo"
+                  width={150}
+                  height={70}
+                />
+
+                <p className="text-gray-600 mt-4 text-sm leading-6">
+                  Bharath Electronics & Appliances – Trusted by thousands of customers for the best brands, unbeatable prices and reliable services.
+                </p>
+
+                <div className="mt-5 space-y-3 text-sm text-gray-600">
+
+            <div className="flex items-start gap-3">
+              <FiMapPin className="text-blue-600 text-lg mt-1 shrink-0" />
+              <p>
+                26/1 Dr. Alagappa Chettiyar Rd, Tatabad,
+                Near Kovai Scan Centre, Coimbatore - 641012,
+                Tamil Nadu
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <FiPhone className="text-blue-600 text-lg" />
+              <a
+                href="tel:9842344323"
+                className="text-blue-600 hover:text-blue-600"
+              >
+                9842344323
+              </a>
+            </div>
+
+          <div className="flex items-center gap-3">
+            <FiMail className="text-blue-600 text-lg shrink-0" />
+
+            <a
+              href="mailto:customercare@bharathelectronics.in"
+              className="text-blue-600 hover:text-blue-600 break-all"
+            >
+              customercare@bharathelectronics.in
+            </a>
+          </div>
+
+            <div className="flex items-center gap-3">
+              <FiClock className="text-blue-600 text-lg" />
+              <p>Mon - Sun : 09:30 AM - 09:30 PM</p>
+            </div>
+
+          </div>
+              </div>
+
+              {/* MIDDLE SECTION */}
+              <div className="md:col-span-7 border-r border-gray-200 pr-8">
+                <div className="grid grid-cols-4 gap-3">
+
+                  {/* SHOP BY CATEGORY */}
+                  <div>
+                    <h3 className="font-bold text-[#041b4d] text-sm uppercase">
+            SHOP BY CATEGORY
+          </h3>
+
+          <div className="w-8 h-[2px] bg-blue-600 mt-2 mb-3"></div>
+
+                    <ul className="space-y-2 text-gray-600 text-sm">
+                      {groupedCategories.main.slice(0,8).map((cat) => (
+                        <li key={cat._id}>
+                          <Link href={`/category/${cat.category_slug}`}>
+                            {cat.category_name}
                           </Link>
                         </li>
+                      ))}
+                      <li>
+              <Link href="/open-box-deals">
+                Open Box Deal
+              </Link>
+            </li>
+                    </ul>
+                  </div>
+
+                  {/* CUSTOMER SERVICE */}
+                  <div>
+                    <h3 className="font-bold text-[#041b4d] text-sm uppercase">
+                      CUSTOMER SERVICE
+                    </h3>
+                    <div className="w-8 h-[2px] bg-blue-600 mt-2 mb-3"></div>
+
+                    <ul className="space-y-2 text-gray-600 text-sm">
+                      <li><Link href="/shipping">Shipping Policy</Link></li>
+                      <li><Link href="/cancellation-refund-policy">Returns</Link></li>
+                      <li><Link href="/faq">FAQs</Link></li>
+                      <li><Link href="/contact">Contact</Link></li>
+                      <li><Link href="/bulk-orders-and-gift-card-enquiry">B2B / Corporate Enquiries</Link></li>
+                    </ul>
+                  </div>
+
+                  {/* COMPANY */}
+                  <div>
+                    <h3 className="font-bold text-[#041b4d] text-sm uppercase">
+                      COMPANY
+                    </h3>
+                    <div className="w-8 h-[2px] bg-blue-600 mt-2 mb-3"></div>
+                    <ul className="space-y-2 text-gray-600 text-sm">
+                      <li><Link href="/aboutus">About Us</Link></li>
+                      <li><Link href="/blog">Blog</Link></li>
+                      <li><Link href="/careers">Careers</Link></li>
+                      <li><Link href="/location">Our Stores</Link></li>
+                    </ul>
+                  </div>
+
+                  {/* MY ACCOUNT */}
+                  <div>
+                    <h3 className="font-bold text-[#041b4d] text-sm uppercase">
+                      MY ACCOUNT
+                    </h3>
+                    <div className="w-8 h-[2px] bg-blue-600 mt-2 mb-3"></div>
+                    <ul className="space-y-2 text-gray-600 text-sm">
+                      {isLoggedIn ? (
+                        <>
+                          <li><Link href="/order">My Orders</Link></li>
+                          <li>
+                            <button onClick={handleLogout}>
+                              Logout
+                            </button>
+                          </li>
+                        </>
+                      ) : (
                         <li>
-                          <button 
-                            onClick={handleLogout}
-                            className="hover:underline hover:text-white flex items-center gap-2"
-                          >
-                            <IoLogOut /> Logout
+                          <button onClick={() => setShowAuthModal(true)}>
+                            Sign In / Register
                           </button>
                         </li>
-                      </>
-                    ) : (
-                      <li>
-                        <button 
-                          onClick={() => setShowAuthModal(true)}
-                          className="hover:underline hover:text"
-                        >
-                          Sign In / Register
-                        </button>
-                      </li>
-                    )}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-[#677279] font-semibold text-lg mb-4">Policy</h3>
-                  <ul className="space-y-2">
-                    <li><Link href="/privacypolicy" className="hover:underline hover:text">Privacy Policy</Link></li>
-                    <li><Link href="/shipping" className="hover:underline hover:text">Shipping Policy</Link></li>
-                    <li><Link href="/terms-and-condition" className="hover:underline hover:text">Terms and Conditions</Link></li>
-                    <li><Link href="/cancellation-refund-policy" className="hover:underline hover:text">Cancellation and Refund Policy</Link></li>
-                  </ul>
-                </div>
-              </div>
-              {/* Company & Social Media  */}
-              <div className="md:ml-12">
-                <div className="mb-8">
-                  <h3 className="text-[#677279] font-semibold text-lg mb-4">Company</h3>
-                  <ul className="space-y-2">
-                    <li><Link href="/aboutus" className="hover:underline hover:text">About Us</Link></li>
-                    <li><Link href="/blog" className="hover:underline hover:text">Blogs</Link></li>
-                    <li><Link href="/contact" className="hover:underline hover:text-blue-600 text-blue-600">Contact Us</Link></li>
-                    <li><Link href="/careers" className="hover:underline hover:text-blue-600 text-blue-600">Careers</Link></li>
-                    <li><Link href="/feedback" className="hover:underline hover:text-blue-600 text-blue-600">Feedback</Link></li>
-                    <li><Link href="/bulk-orders-and-gift-card-enquiry" className="hover:underline hover:text-blue-600 text-blue-600">B2B Orders</Link></li> 
-                  </ul>
-                </div>
-              <div>
-                  <h3 className="text-[#677279] font-semibold text-lg mb-4">Connect With Us</h3>
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                    <Link href="https://web.whatsapp.com/send?phone=919842344323&amp;text=Hi">
-                      <FaWhatsapp className="text-xl text-green-500" />
-                    </Link>
-                    <Link href="https://www.facebook.com/BharathElectronics/">
-                      <FaFacebookF className="text-xl text-customBlue" />
-                    </Link>
-                    <Link href="https://www.instagram.com/bharathelectronics/">
-                      <FaInstagram className="text-xl text-pink-500" />
-                    </Link>
-                    <Link href="https://www.youtube.com/@bharathelectronicsandapplian">
-                      <FaYoutube className="text-xl text-red-500" />
-                    </Link>
-                    <Link href="https://twitter.com/bharath_bea">
-                      <FaXTwitter className="text-xl text-black" />
-                    </Link>
-                    <Link href="https://in.linkedin.com/company/bharath-electronics-and-appliances">
-                      <FaLinkedinIn className="text-xl text-customBlue" />
-                    </Link>
+                      )}
+                      <li><Link href="/orders">My Orders</Link></li>
+                      <li><Link href="/wishlist">Wishlist</Link></li>
+                    </ul>
                   </div>
+
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-        {/* <OurLocations /> */}
-      {/* Bottom Section */}
-      <div className="bg-[#f3f5f6] text-gray-400 mt-10 pt-5 border-t border-black">
-        <div className="container mx-auto px-2 grid grid-cols-1 md:grid-cols-[55%_45%] gap-8">
-          {/* LEFT SECTION (Categories + Brands) */}
-          <div>
-            <div className="mb-2  flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="text-center md:text-left ml-1 mb-1">
-                <p>
-                  <a href="#" className="hover:underline text-[#677279]">
-                    Bharath Electronics ©
-                  </a>{" "}
-                  2026 All rights reserved.
+
+              {/* RIGHT SOCIAL SECTION */}
+              <div className="md:col-span-2">
+                <h3 className="font-bold text-[#041b4d] mb-4">
+                  CONNECT WITH US
+                </h3>
+                <p className="text-gray-600 mt-2 text-sm leading-6">
+                  Stay Connected for the latest offers & updates
                 </p>
-              </div>
-            </div>
-
-          <div className="space-y-4 mt-4 ml-1 mb-1">
-              {preparedSections.map((section) => {
-                if (section.type === "la") {
-                  const { main, la, children, brands } = section;
-                  return (
-                    <div key={section.key}>
-                      <span className="text-gray-400">
-                        <Link
-                          href={`/category/${main.category_slug}/${la.category_slug}`}
-                          className="text-[#677279] hover:underline"
-                        >
-                          {capitalizeFirstLetter(la.category_name)} :
-                        </Link>
-                          {children.length > 0 && (
-                            <span className="ml-2 text-gray-500">
-                              {children.map((child, j) => {
-                                return (
-                                  <span key={child._id}>
-                                    <Link
-                                      href={`/category/${main.category_slug}/${la.category_slug}/${child.category_slug}`}
-                                      className="hover:text-[#677279] hover:underline"
-                                    >
-                                      {capitalizeFirstLetter(child.category_name)}
-                                    </Link>
-                                    {j < children.length - 1 && " / "}
-                                  </span>
-                                );
-                              })}
-                            </span>
-                          )}
-                        {brands.length > 0 && (
-                          <>
-                            <br />
-                            <span className="font-semibold text-[#677279]">Brands :</span>
-                            <span className="ml-2 text-gray-500">
-                              {brands.map((brand, i) => (
-                                <span key={brand._id || `${la._id}-brand-${i}`}>
-                                  <Link
-                                    href={`/category/brand/${main.category_slug}/${brand.brand_slug}`}
-                                    className="hover:text-[#677279] hover:underline"
-                                  >
-                                    {brand.brand_name.charAt(0).toUpperCase() +
-                                      brand.brand_name.slice(1).toLowerCase()}
-                                  </Link>
-                                  {i < brands.length - 1 && " / "}
-                                </span>
-                              ))}
-                            </span>
-                          </>
-                        )}
-                      </span>
-                    </div>
-                  );
-                }
-
-                // Default (non-Large Appliances) block: keep existing behavior
-                const { main, subs, brands } = section;
-                return (
-                  <div key={section.key}>
-                    <span className="text-gray-400">
-                      {subs.map((subcat, i) => (
-                        <span key={subcat._id}>
-                          <Link
-                            href={`/category/${main.category_slug}/${subcat.category_slug}`}
-                            className="text-[#677279] hover:underline"
-                          >
-                            {capitalizeFirstLetter(subcat.category_name)} :
-                          </Link>
-
-                          {(groupedCategories.subs[subcat._id] || []).length > 0 && (
-                            <span className="ml-2 text-gray-500">
-                              {groupedCategories.subs[subcat._id].map((child, j, arr) => (
-                                <span key={child._id}>
-                                  <Link
-                                    href={`/category/${main.category_slug}/${subcat.category_slug}/${child.category_slug}`}
-                                    className="hover:text-[#677279] hover:underline"
-                                  >
-                                    {capitalizeFirstLetter(child.category_name)}
-                                  </Link>
-                                  {j < arr.length - 1 && " / "}
-                                </span>
-                              ))}
-                            </span>
-                          )}
-
-                          {inSetCI(
-                            subcat.category_name,
-                            ["kitchen appliance","air conditioner", "kitchen appliances", "small appliance", "small appliances", "dishwasher","washing machine","refrigerator"]
-                          ) &&
-                            brands.length > 0 && (
-                              <span>
-                                <br />
-                                <span className="font-semibold text-[#677279]">Brands :</span>
-                                <span className="ml-2 text-gray-500">
-                                  {brands.map((brand, bi) => (
-                                    <span key={brand._id || `${main._id}-brand-${bi}`}>
-                                      <Link
-                                        href={`/category/brand/${subcat.category_slug}/${brand.brand_slug}`}
-                                        className="hover:text-[#677279] hover:underline"
-                                      >
-                                        {brand.brand_name.charAt(0).toUpperCase() +
-                                          brand.brand_name.slice(1).toLowerCase()}
-                                      </Link>
-                                      {bi < brands.length - 1 && " / "}
-                                    </span>
-                                  ))}
-                                </span>
-                              </span>
-                            )}
-
-                          {i < subs.length - 1 && <span className="block mb-1"></span>}
-                        </span>
-                      ))}
-
-                      {brands.length > 0 &&
-                        !subs.some((s) =>
-                          inSetCI(
-                            s.category_name,
-                            [
-                              
-                              "small appliance", "small appliances",
-                              // also exclude these to avoid duplicate brand sections
-                               "air conditioners",
-                               "washing machines","refrigerators","refrigerator"
-                            ]
-                          )
-                        ) && (
-                          <>
-                            <br />
-                            <span className="font-semibold text-[#677279]">Brands :</span>
-                            <span className="ml-2 text-gray-500">
-                              {brands.map((brand, i) => (
-                                <span key={brand._id || `${main._id}-brand-${i}`}>
-                                  <Link
-                                    href={`/category/brand/${main.category_slug}/${brand.brand_slug}`}
-                                    className="hover:text-[#677279] hover:underline"
-                                  >
-                                    {brand.brand_name.charAt(0).toUpperCase() +
-                                      brand.brand_name.slice(1).toLowerCase()}
-                                  </Link>
-                                  {i < brands.length - 1 && " / "}
-                                </span>
-                              ))}
-                            </span>
-                          </>
-                        )}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-          </div>
-          {/* RIGHT SECTION (Our Location) */}
-         <div className="space-y-4">
-  {/* Corporate Office Direction */}
-  <h3 className="text-[#677279] font-semibold text-lg mb-2">
-    Corporate Office Direction
-  </h3>
-
-  <div className="rounded overflow-hidden" style={{maxWidth:'320px'}}>
-    {/* <iframe
-      src={`https://www.google.com/maps?q=${encodeURIComponent(
-        "Bharath Electronics & Appliances"
-      )}&output=embed`}
-      width="100%"
-      height="160"
-      style={{ border: 0, maxWidth: '320px', minWidth: '120px', display: 'block' }}
-      allowFullScreen
-      loading="lazy"
-    ></iframe> */}
-
-   <iframe
-  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d391.02517849236526!2d76.9626592!3d11.0194039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8585cc4962b87%3A0x38eddb57f0f66203!2sBharath%20Electronics%20%26%20Appliances!5e0!3m2!1sen!2sin!4v1740660808642!5m2!1sen!2sin"
-  width="100%"
-  height="160"
-  style={{
-    border: 0,
-    maxWidth: "320px",
-    minWidth: "120px",
-    display: "block",
-  }}
-  allowFullScreen
-  loading="lazy"
-  referrerPolicy="no-referrer-when-downgrade"
-  title="Google Maps - Bharath Electronics & Appliances Location"
-></iframe>
-
-  </div>
-
-  {/* Our Location */}
-  <h3 className="text-[#677279] font-semibold text-lg mt-6 mb-4">
-    Our Location
-  </h3>
-
-  {Object.entries(groupedStores).map(([city, orgs], index) => (
-    <div key={index}>
-      <p className="text-sm text-gray-400">{orgs.join(", ")}</p>
-    </div>
-  ))}
-</div>
-
-        </div>
-      </div>
-      <div className="bg-[#f3f5f6] text-gray-400 mt-10 pt-5">
-        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-[70%_30%] gap-8">
-          {/* LEFT SECTION */}
-            <div className="space-y-8">
-              {/* SEO Content */}
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="text-[#677279] font-semibold">
-                      Buy Best Laptops & Gadgets Online
-                    </h2>
-                    <p className="text-gray-400 py-2">
-                      Unleash the Power of Technology with{" "}
-                      <span className="font-semibold text-[#677279]">
-                        Bharath Electronics' Laptop & Computers Collection
-                      </span>
-                      . Find the Perfect Device for Your Computing Needs, including Gaming
-                      Laptops, Everyday Laptops, and Business Laptops. We Offer a Wide
-                      Selection from Top Brands such as Samsung, Asus, Apple, HP, Lenovo, and
-                      More. Our Laptops and Computers Boast Premium Design, High-Capacity RAM,
-                      Latest Processors, Quality Graphics Cards, Excellent Battery Life, and
-                      Incredible Display & Sound Features. Don’t Forget to Check Out our Range
-                      of Smart Watches, Chargers, Power Banks, Headphones, and Bluetooth
-                      Speakers for a Complete Tech Experience.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h2 className="text-[#677279] font-semibold">
-                      Buy Kitchen Appliances at Best Prices Online – Shop Now
-                    </h2>
-                    <p className="text-gray-400 py-2">
-                      Revolutionize Your Kitchen with Bharath Electronics' Kitchen Appliances Collection. 
-                      Explore a Wide Range of Colours, Sizes, Manufacturers, and Types to Find the Perfect 
-                      Appliances for Your Culinary Needs. From Multi-Functional Mixer Juicer Grinders to 
-                      Energy-Efficient Electric Cookers, Kitchen Chimneys, Gas Stoves, Induction Stoves, 
-                      Water Purifiers, Microwave Ovens, and Pressure Cookers, we Offer a Diverse Selection. 
-                      Upgrade Your Cooking Experience Today with our Affordable and High-Quality Kitchen Appliances.
-                    </p>
-                  </div>
+                <div className="flex gap-4 text-xl mb-6 mt-5">
+                  <Link href="https://web.whatsapp.com/send?phone=919842344323&amp;text=Hi">
+                    <FaWhatsapp className="text-green-500" />
+                  </Link>
+                  <Link href="https://www.facebook.com/BharathElectronics/">
+                    <FaFacebookF className="text-blue-600" />
+                  </Link>
+                  <Link href="https://www.instagram.com/bharathelectronics/">
+                    <FaInstagram className="text-pink-500" />
+                  </Link>
+                  <Link href="https://www.youtube.com/@bharathelectronicsandapplian">
+                    <FaYoutube className="text-red-500" />
+                  </Link>
+                  <Link href="https://twitter.com/bharath_bea">
+                    <FaXTwitter />
+                  </Link>
+                  <Link href="https://in.linkedin.com/company/bharath-electronics-and-appliances">
+                    <FaLinkedinIn className="text-blue-700" />
+                  </Link>
                 </div>
+              </div>
+
             </div>
           </div>
-      </div>
-      </footer>
+
+          {/* DARK BLUE CATEGORY FOOTER */}
+          <div className="bg-[#041b4d] text-white py-10">
+            <div className="container mx-auto px-4">
+
+              <div className="grid grid-cols-7 text-sm">
+
+                {groupedCategories.main.slice(0, 5).map((main) => (
+                  <div
+                    key={main._id}
+                    className="border-r border-[#14346d] px-4 min-w-0"
+                  >
+                    <h4 className="font-semibold uppercase mb-4 whitespace-nowrap overflow-hidden text-ellipsis">
+                      {main.category_name}
+                    </h4>
+
+                    <ul className="space-y-2 text-gray-300 text-sm">
+                      {(groupedCategories.subs[main._id] || [])
+                        .slice(0, 5)
+                        .map((sub) => (
+                          <li
+                            key={sub._id}
+                            className="whitespace-nowrap overflow-hidden text-ellipsis"
+                          >
+                            <Link
+                              href={`/category/${main.category_slug}/${sub.category_slug}`}
+                            >
+                              {sub.category_name}
+                            </Link>
+                          </li>
+                        ))}
+
+                      <li className="whitespace-nowrap">
+                        <Link
+                          href={`/category/${main.category_slug}`}
+                          className="text-blue-300"
+                        >
+                          View All →
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+                ))}
+
+                {/* Top Brands */}
+                <div className="border-r border-[#14346d] px-4 min-w-0">
+                  <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
+                    Top Brands
+                  </h4>
+
+                  <ul className="space-y-2 text-gray-300 text-sm">
+                    <li className="whitespace-nowrap">LG</li>
+                    <li className="whitespace-nowrap">Samsung</li>
+                    <li className="whitespace-nowrap">Sony</li>
+                    <li className="whitespace-nowrap">Whirlpool</li>
+                    <li className="whitespace-nowrap">Bosch</li>
+                  </ul>
+                </div>
+
+                {/* Our Location */}
+                <div className="px-4 min-w-0">
+                  <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
+                    Our Location
+                  </h4>
+
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d391.02517849236526!2d76.9626592!3d11.0194039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8585cc4962b87%3A0x38eddb57f0f66203!2sBharath%20Electronics%20%26%20Appliances!5e0!3m2!1sen!2sin!4v1740660808642!5m2!1sen!2sin"
+                    width="100%"
+                    height="120"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Google Maps - Bharath Electronics & Appliances Location"
+                  />
+
+                  <a
+                    href="https://maps.app.goo.gl/aceBM5ztAjNQLx217"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-300 text-sm mt-3 inline-block whitespace-nowrap"
+                  >
+                    View on Google Maps →
+                  </a>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+          <div className="bg-[#02133a] text-gray-300 py-4">
+            <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+
+              {/* Left Side */}
+              <div className="flex items-center gap-3 text-sm">
+                <div className="text-xl">🔒</div>
+                <div>
+                  <p className="font-medium text-white">Secure Payments</p>
+                  <p className="text-xs text-gray-400">
+                    Your data is protected with 256-bit encryption
+                  </p>
+                </div>
+              </div>
+
+              {/* Center */}
+              <div className="text-center text-sm">
+                <p>© 2026 Bharath Electronics & Appliances. All Rights Reserved.</p>
+
+                <div className="flex justify-center gap-4 mt-1 text-xs">
+                  <Link href="/terms-and-condition" className="hover:text-white">
+                    Terms & Conditions
+                  </Link>
+                  <span>|</span>
+                  <Link href="/privacypolicy" className="hover:text-white">
+                    Privacy Policy
+                  </Link>
+                  {/* <span>|</span>
+                  <Link href="/sitemap" className="hover:text-white">
+                    Sitemap
+                  </Link> */}
+                </div>
+              </div>
+
+              {/* Right Side */}
+              <div className="flex items-center gap-4">
+                <img src="/uploads/finale.png" alt="Visa" className="h-6" />
+                
+              </div>
+
+            </div>
+          </div>
+        </footer>
       {/* Auth Modal */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
