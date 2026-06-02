@@ -443,7 +443,7 @@ const capitalizeFirstLetter = (str) =>
                         </li>
                       ))}
                       <li>
-              <Link href="/open-box-deals">
+              <Link href="/open-box">
                 Open Box Deal
               </Link>
             </li>
@@ -460,7 +460,8 @@ const capitalizeFirstLetter = (str) =>
                     <ul className="space-y-2 text-gray-600 text-sm">
                       <li><Link href="/shipping">Shipping Policy</Link></li>
                       <li><Link href="/cancellation-refund-policy">Returns</Link></li>
-                      <li><Link href="/faq">FAQs</Link></li>
+                      <li><Link href="/feedback">Feedback</Link></li>
+                      {/* <li><Link href="/faq">FAQs</Link></li> */}
                       <li><Link href="/contact">Contact</Link></li>
                       <li><Link href="/bulk-orders-and-gift-card-enquiry">B2B / Corporate Enquiries</Link></li>
                     </ul>
