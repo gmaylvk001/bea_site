@@ -278,7 +278,7 @@ const capitalizeFirstLetter = (str) =>
 
               <div className="w-full lg:w-12/12 mx-auto bg-white rounded-2xl shadow-xl px-6 py-4">
 
-                <div className="flex flex-wrap lg:flex-nowrap">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
 
                   {/* Item 1 */}
                   <div className="flex items-center gap-3 px-6 border-r border-gray-200">
@@ -367,10 +367,10 @@ const capitalizeFirstLetter = (str) =>
 
           {/* WHITE FOOTER */}
           <div className="container mx-auto px-4 py-3">
-            <div className="grid md:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
 
               {/* LEFT LOGO SECTION */}
-              <div className="md:col-span-3 border-r border-gray-200 pr-8">
+              <div className="md:col-span-3 md:border-r border-gray-200 md:pr-8">
                 <Image
                   src="/logo.png"
                   alt="Logo"
@@ -423,8 +423,8 @@ const capitalizeFirstLetter = (str) =>
               </div>
 
               {/* MIDDLE SECTION */}
-              <div className="md:col-span-7 border-r border-gray-200 pr-8">
-                <div className="grid grid-cols-4 gap-3">
+              <div className="md:col-span-7 md:border-r border-gray-200 md:pr-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
                   {/* SHOP BY CATEGORY */}
                   <div>
@@ -549,14 +549,14 @@ const capitalizeFirstLetter = (str) =>
           <div className="bg-[#041b4d] text-white py-10">
             <div className="container mx-auto px-4">
 
-              <div className="grid grid-cols-7 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 text-sm">
 
                 {groupedCategories.main.slice(0, 5).map((main) => (
                   <div
                     key={main._id}
-                    className="border-r border-[#14346d] px-4 min-w-0"
+                    className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0"
                   >
-                    <h4 className="font-semibold uppercase mb-4 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <h4 className="font-semibold uppercase mb-4 break-words">
                       {main.category_name}
                     </h4>
 
@@ -589,7 +589,7 @@ const capitalizeFirstLetter = (str) =>
                 ))}
 
                 {/* Top Brands */}
-                <div className="border-r border-[#14346d] px-4 min-w-0">
+                <div className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0">
                   <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
                     Top Brands
                   </h4>
