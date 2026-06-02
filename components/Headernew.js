@@ -24,73 +24,14 @@ const alphaSortString = (a, b) => {
   return sa.localeCompare(sb, undefined, { sensitivity: 'base' });
 };
 
-// ADD: prepareFlatListAlpha - level-aware alphabetical ordering
-const prepareFlatListAlpha = (flatList = []) => {
-  const list = Array.isArray(flatList) ? flatList.filter(Boolean) : [];
 
-  // Split into categories vs brands
-  const brandsHeader = list.find((i) => i.type === 'brands-header');
-  const brands = list.filter((i) => i.type === 'brand');
-  const categories = list.filter((i) => i.type !== 'brand' && i.type !== 'brands-header');
-
-  // Headers are top-level categories (level 0)
-  const headers = categories.filter((i) => Number(i.level) === 0);
-
-  // Group by rootCategory (slug of the top-level)
-  const byRoot = new Map();
-  categories.forEach((item) => {
-    const root = item.rootCategory || item.category_slug || '';
-    if (!byRoot.has(root)) byRoot.set(root, []);
-    byRoot.get(root).push(item);
-  });
-
-  const result = [];
-
-  // Sort headers A-Z and then their children by (level asc, name A-Z)
-  headers
-    .sort((a, b) => alphaSortString(a.category_name, b.category_name))
-    .forEach((header) => {
-      const root = header.rootCategory || header.category_slug || '';
-      const group = (byRoot.get(root) || []).filter((i) => i !== header);
-
-      group.sort((a, b) => {
-        const la = Number(a.level) || 0;
-        const lb = Number(b.level) || 0;
-        if (la !== lb) return la - lb;
-        return alphaSortString(a.category_name, b.category_name);
-      });
-
-      result.push(header, ...group);
-    });
-
-  // Append any leftover categories (edge cases)
-  const used = new Set(result.map((i) => i.uniqueKey || i._id));
-  const leftovers = categories.filter((i) => !used.has(i.uniqueKey || i._id));
-  if (leftovers.length) {
-    leftovers.sort((a, b) => {
-      const la = Number(a.level) || 0;
-      const lb = Number(b.level) || 0;
-      if (la !== lb) return la - lb;
-      return alphaSortString(a.category_name, b.category_name);
-    });
-    result.push(...leftovers);
-  }
-
-  // Brands section at the end
-  if (brandsHeader) result.push(brandsHeader);
-  if (brands.length) {
-    brands.sort((a, b) => alphaSortString(a.brand_name, b.brand_name));
-    result.push(...brands);
-  }
-
-  return result;
-};
 
 const Header = () => {
     const router = useRouter();
     // REMOVED: unused pathname
     // const pathname = usePathname();
     const [category, setCategory] = useState('All Category');
+    const [activeSubCategory, setActiveSubCategory] = useState(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { wishlistCount } = useWishlist();
     const { cartCount, updateCartCount } = useCart();
@@ -977,86 +918,8 @@ const Header = () => {
         
         return result;
     };
-    // Flatten all starting from actual visible categories (like Refrigerator, AC…)
-    const flattenAllCategories = (cats) => {
-        let result = [];
-        let brandCounter = 0; // Counter for unique keys
+ 
 
-        // Use a Map to dedupe brands by a normalized key (slug/name/id)
-        const brandMap = new Map();
-
-        const normalizeKey = (s) => {
-            if (!s && s !== 0) return '';
-            return String(s).toLowerCase().replace(/\s+/g, ' ').trim().replace(/[^a-z0-9]/g, '');
-        };
-
-        cats.forEach(cat => {
-            // Add the category and its subcategories
-            result = result.concat(flattenTree(cat, cat.category_slug, 0));
-
-            // Collect brands for this category and add to map if unique
-            if (Array.isArray(cat.brands) && cat.brands.length > 0) {
-                cat.brands.forEach(brand => {
-                    // try multiple fields for a stable identifier
-                    const candidate = brand.brand_slug || brand.slug || brand.brand_name || brand.name || brand._id || '';
-                    const key = normalizeKey(candidate);
-                    if (!key) return; // skip invalid
-
-                    if (!brandMap.has(key)) {
-                        // store first occurrence and include a stable uniqueKey
-                        brandMap.set(key, {
-                            ...brand,
-                            type: 'brand',
-                            sourceCategory: cat.category_name,
-                            uniqueKey: `${brand._id || key}-${brandCounter++}`
-                        });
-                    } else {
-                        // already present: optionally we could merge sourceCategory info
-                        const existing = brandMap.get(key);
-                        if (existing && existing.sourceCategory !== cat.category_name) {
-                            existing.sourceCategory = existing.sourceCategory + ", " + cat.category_name;
-                        }
-                    }
-                });
-            }
-        });
-
-        const allBrands = Array
-          .from(brandMap.values())
-          // ADDED: alphabetical sort (case-insensitive) for brand listing
-          .sort((a, b) =>
-            (a.brand_name || '').localeCompare(b.brand_name || '', undefined, { sensitivity: 'base' })
-          );
-
-        // Add a single brands header at the end
-        if (allBrands.length > 0) { 
-            result.push({
-                _id: 'all-brands-header',
-                type: 'brands-header',
-                category_name: 'Brands',
-                level: 0,
-                uniqueKey: 'all-brands-header'
-            });
-
-            result = result.concat(allBrands.map(brand => ({
-                ...brand,
-                level: 1,
-                uniqueKey: brand.uniqueKey
-            })));
-        }
-
-        return result;
-    };
-    const chunkFlatList = (flatList, size = 11) => {
-        const chunks = [];
-        if (!Array.isArray(flatList) || flatList.length === 0) return chunks;
-
-        for (let i = 0; i < flatList.length; i += size) {
-            chunks.push(flatList.slice(i, i + size));
-        }
-
-        return chunks;
-    };
     const cancelHide = () => {
         if (hideTimeout.current) {
             clearTimeout(hideTimeout.current);
@@ -1074,6 +937,9 @@ const Header = () => {
         const cat = categories.find((c) => c._id === categoryId);
         if (!cat) return;
         setHoveredCategory(cat);
+        const sortedSubs = [...(cat.subcategories || [])]
+     .sort((a, b) => alphaSortString(a.category_name, b.category_name));
+      setActiveSubCategory(sortedSubs[0] || null);
 
         const el = slideRefs.current[categoryId];
         if (!el) return;
@@ -1152,63 +1018,7 @@ const Header = () => {
             setForgotPasswordLoading(false);
         }
     };
-    // Render flattened category/brand item
-    const renderFlatItem = (item, hoveredCategory) => {
-        const itemKey = item.uniqueKey || item._id;
-        const paddingLeft = `${(item.level || 0) * 12}px`;
-        let content = null;
-        if (item.type === "brands-header") {
-          content = (
-              <h3 className="flex items-center justify-between mb-1 text-sm font-semibold text-blue-600 ml-1">
-                  {item.category_name}
-              </h3>
-          );
-        }else if (item.type === "brand") {
-          const href = `/category/brand/${encodeURIComponent(hoveredCategory.category_slug)}/${encodeURIComponent(item.brand_slug)}`;
-              
-
-          content = (
-            <Link
-              href={href}
-              className="flex items-center mb-1 text-sm text-[#8c8c8c] p-[5px] hover:text-[#0e54e6]"
-            >
-              <span className="font-normal">{item.brand_name}</span>
-            </Link>
-          );
-        }else {
-          const href =
-            item.level === 0
-              ? `/category/${encodeURIComponent(hoveredCategory?.category_slug || "")}/${encodeURIComponent(item.category_slug || "")}`
-              : `/category/${encodeURIComponent(hoveredCategory?.category_slug || "")}/${encodeURIComponent(item.rootCategory || "")}/${encodeURIComponent(item.category_slug || "")}`;
-            content = (
-              <Link
-                href={href}
-                className={`flex items-center justify-between mb-1 text-sm ${
-                  item.level === 0
-                    ? "font-semibold text-blue-600"
-                    : "text-[#8c8c8c] !p-[5px] hover:text-[#0e54e6]"
-                }`}
-              >
-                {/* <span className={item.level === 0 ? "font-bold" : "font-normal"}> */}
-                <span className={`${item.level === 0 ? "font-bold" : "font-normal"} w-[18ch] break-words whitespace-normal leading-5`}>
-                  {item.category_name}
-                </span>
-                {item.level === 0 && (
-                  <Play
-                    size={14}
-                    strokeWidth={0}
-                    className="text-blue-600 fill-blue-600 mt-1"
-                  />
-                )}
-              </Link>
-            );
-        }
-        return (
-          <div key={itemKey} style={{ paddingLeft }}>
-            {content}
-          </div>
-        );
-    };
+  
 
     // Price formatter
     const formatPrice = (value) => {
@@ -1921,14 +1731,14 @@ const Header = () => {
                                                         </Link>
                                                     </>
                                                 )}
-                                                     
+                                                
                                                    {isLoggedIn && (
                                                       <Link href="/loyalty" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                                                   {/* <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
+                                                   <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
                                                     🏆
                                                   </span>
                                            Loyalty Points
-                                     <span className="ml-auto text-xs font-bold text-customBlue">{loyaltyPoints} pts</span> */}
+                                     <span className="ml-auto text-xs font-bold text-customBlue">{loyaltyPoints} pts</span>
                                                 </Link>
                                           )}
                                                 <Link href="/orders" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
@@ -2334,141 +2144,190 @@ const Header = () => {
                 </div>
               
                 {/* DROPDOWN OUTSIDE SWIPER (fixed so it won't be clipped) */}
-                {hoveredCategory && hoveredCategory.subcategories?.length > 0 && (() => {
-                  // 1) Strict alphabetical sort for hovered subcategories
-                  const sortedSubcategories = [...hoveredCategory.subcategories]
-                    .filter(Boolean)
-                    .sort((a, b) => alphaSortString(a?.category_name, b?.category_name));
+{hoveredCategory && hoveredCategory.subcategories?.length > 0 && (
+<div
+  ref={dropdownRef}
+  className="fixed z-50 bg-white shadow-2xl border border-gray-200"
+  style={{
+    top: `${dropdownTop}px`,
+    left: 0,
+    right: 0,
+    width: '100%',
+  }}
+  onMouseEnter={cancelHide}
+  onMouseLeave={() => startHide(120)}
+>
+<div className="mx-auto flex" style={{ width: 'fit-content', maxWidth: '100%', alignItems: 'stretch', minHeight: '200px', maxHeight: '370px' }}>
+           
+      {/* COLUMN 1: Left sidebar - subcategory list */}
+      <div className="w-[220px] flex-shrink-0 bg-white border-r border-gray-100 flex flex-col overflow-hidden">
+        <div className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 flex-shrink-0">
+          Shop by Category
+        </div>
+        <div className="overflow-y-auto flex-1">
+        {[...hoveredCategory.subcategories]
+          .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+          .map((sub) => (
+            <div
+              key={sub._id}
+              onMouseEnter={() => setActiveSubCategory(sub)}
+              className={`flex items-center justify-between px-4 py-2.5 cursor-pointer transition-colors group ${
+                activeSubCategory?._id === sub._id
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'hover:bg-gray-50 text-gray-700'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                {sub.icon_url ? (
+                  <img src={sub.icon_url} alt="" className="w-5 h-5 object-contain" />
+                ) : (
+                  <div className="w-5 h-5 rounded bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[8px] text-blue-600 font-bold">
+                      {(sub.category_name || '').charAt(0)}
+                    </span>
+                  </div>
+                )}
+                <Link
+                  href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
+                  onClick={() => setHoveredCategory(null)}
+                  className="text-sm font-medium"
+                >
+                  {sub.category_name}
+                </Link>
+              </div>
+              <FiChevronRight
+                size={14}
+                className={`flex-shrink-0 ${
+                  activeSubCategory?._id === sub._id ? 'text-blue-600' : 'text-gray-400'
+                }`}
+              />
+            </div>
+          ))}
+        </div>
 
-                  // 2) Flatten (existing logic) then alphabetize the final list
-                  const flatAll = flattenAllCategories(
-                    sortedSubcategories,
-                    hoveredCategory.category_slug
-                  );
+        <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0">
+          <Link
+            href={`/category/${hoveredCategory.category_slug}`}
+            onClick={() => setHoveredCategory(null)}
+            className="flex items-center gap-1 text-sm font-semibold text-blue-600 hover:underline"
+          >
+            View All {hoveredCategory.category_name}
+            <FiChevronRight size={14} />
+          </Link>
+        </div>
+      </div>
 
-                  // Remove items missing display names
-                  const sanitizedFlat = (flatAll || []).filter((item) =>
-                    item?.type === "brand"
-                      ? !!item?.brand_name
-                      : !!item?.category_name
-                  );
+      {/* COLUMN 2+: ALL subcategories shown at once as columns */}
+      <div className="flex-1 flex overflow-hidden" style={{ minWidth: 0 }}>
+        <div className="flex-1 p-5 overflow-y-auto">
+          <div className="flex gap-8 flex-wrap">
+            {[...hoveredCategory.subcategories]
+              .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+              .map((sub) => (
+                <div key={sub._id} className="min-w-[160px]">
+                  {/* Subcategory heading */}
+                  <Link
+                    href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
+                    onClick={() => setHoveredCategory(null)}
+                    className="block text-sm font-bold text-blue-700 mb-2 pb-1 border-b border-gray-100 hover:text-blue-900 uppercase tracking-wide"
+                  >
+                    {sub.category_name}
+                  </Link>
 
-                  // New: level-aware alphabetical output
-                  const flatAlpha = prepareFlatListAlpha(sanitizedFlat);
-
-                  // 3) Chunk and drop empty chunks to avoid gaps
-                  let dropdownChunksLocal = chunkFlatList(flatAlpha, 11);
-                  const filteredChunks = dropdownChunksLocal.filter(
-                    (chunk) =>
-                      Array.isArray(chunk) &&
-                      chunk.length > 0 &&
-                      chunk.some(Boolean)
-                  );
-
-                  // --- Image columns logic (unchanged) ---
-                  let navImages = [];
-                  if (hoveredCategory?.navImage) {
-                    if (typeof hoveredCategory.navImage === "string") {
-                      navImages = hoveredCategory.navImage
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean);
-                    } else if (Array.isArray(hoveredCategory.navImage)) {
-                      navImages = hoveredCategory.navImage.filter(Boolean);
-                    }
-                  }
-                  const imageCols = navImages.length;
-
-                  // Layout constraints
-                  const maxCols = 6;
-                  const columnWidth = 220;
-                  const screenWidth =
-                    typeof window !== "undefined" ? window.innerWidth : 1200;
-                  const maxAllowedWidth = Math.max(300, screenWidth - 20);
-
-                  // Fit non-empty columns without gaps
-                  const maxDataBySlots = Math.max(0, maxCols - imageCols);
-                  const maxDataByViewport = Math.max(
-                    0,
-                    Math.floor(maxAllowedWidth / columnWidth) - imageCols
-                  );
-                  const allowedDataCols = Math.max(
-                    0,
-                    Math.min(filteredChunks.length, maxDataBySlots, maxDataByViewport)
-                  );
-
-                  const columns = filteredChunks.slice(0, allowedDataCols);
-
-                  let computedWidth = (columns.length + imageCols) * columnWidth;
-                  if (computedWidth > maxAllowedWidth) computedWidth = maxAllowedWidth;
-
-                  const styleLeft =
-                    dropdownUseTranslate && dropdownCenterX
-                      ? `${dropdownCenterX + 15}px`
-                      : `${dropdownLeft + 15}px`;
-                  const styleTransform =
-                    dropdownUseTranslate && dropdownCenterX ? "translateX(-50%)" : "none";
-
-                  if (columns.length === 0 && imageCols === 0) return null;
-
-                  return (
-                    <div
-                      ref={dropdownRef}
-                      className="fixed z-50 border-t border-gray-200 shadow-xl"
-                      style={{
-                        top: `${dropdownTop}px`,
-                        left: styleLeft,
-                        transform: styleTransform,
-                        width: `${computedWidth}px`,
-                        maxWidth: "calc(100% - 20px)",
-                      }}
-                      onMouseEnter={cancelHide}
-                      onMouseLeave={() => startHide(120)}
-                    >
-                      <div className="flex flex-wrap bg-white h-[390px]" style={{ width: "100%" }}>
-                        {/* Render only non-empty columns in order (gap-free) */}
-                        {columns.map((chunk, index) => {
-                          const bgClass = index % 2 === 0 ? "bg-[#f2f2f2]" : "bg-white";
-                          return (
-                            <div
-                              key={`col-${index}`}
-                              className={`min-w-[220px] max-w-[250px] p-3 flex flex-col justify-start self-start ${bgClass}`}
-                              style={{ height: "100%" }}
-                            >
-                              {chunk.map((item) => renderFlatItem(item, hoveredCategory))}
-                            </div>
-                          );
-                        })}
-
-                        {/* Image columns (unchanged) */}
-                        {Array.isArray(navImages) &&
-                          navImages.length > 0 &&
-                          navImages.map((img, idx) => (
-                            <div
-                              key={`nav-image-panel-${idx}`}
-                              className={`w-[220px] h-[390px] flex items-center justify-center ${
-                                ((columns.length + idx) % 2 === 0) ? "bg-gray-50" : "bg-white"
-                              }`}
-                            >
-                              <Link
-                                href={`/category/${hoveredCategory?.category_slug || ""}`}
-                                className="block w-full h-full"
-                              >
-                                <Image
-                                  src={img}
-                                  alt={hoveredCategory.category_name || "Category Image"}
-                                  width={220}
-                                  height={390}
-                                  className="object-cover w-full h-full"
-                                  style={{ boxShadow: "0px -1px 0px #2453d3" }}
-                                />
-                              </Link>
-                            </div>
-                          ))}
-                      </div>
+                  {/* ALL children - no slice limit */}
+                  {sub.subcategories?.length > 0 && (
+                    <div className="flex flex-col gap-0.5">
+                      {[...sub.subcategories]
+                        .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                        .map((child) => (
+                          <Link
+                            key={child._id}
+                            href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}/${child.category_slug}`}
+                            onClick={() => setHoveredCategory(null)}
+                            className="text-sm text-gray-600 hover:text-blue-600 py-1 px-2 rounded hover:bg-blue-50 transition-colors"
+                          >
+                            {child.category_name}
+                          </Link>
+                        ))}
                     </div>
-                  );
-                })()}
+                  )}
+                </div>
+              ))}
+          </div>
+
+          {/* Brands section */}
+          {hoveredCategory.brands?.length > 0 && (
+            <div className="mt-5 pt-4 border-t border-gray-100">
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                Top Brands
+              </h4>
+              <div className="flex flex-wrap gap-3">
+                {[...hoveredCategory.brands]
+                  .sort((a, b) => alphaSortString(a.brand_name, b.brand_name))
+                  .slice(0, 8)
+                  .map((brand) => (
+                    <Link
+                      key={brand._id || brand.brand_slug}
+                      href={`/category/brand/${hoveredCategory.category_slug}/${brand.brand_slug}`}
+                      onClick={() => setHoveredCategory(null)}
+                      className="px-3 py-1.5 border border-gray-200 rounded-md hover:border-blue-400 hover:bg-blue-50 transition-colors flex items-center justify-center min-w-[80px]"
+                    >
+                      {brand.brand_image ? (
+                        <img
+                          src={brand.brand_image}
+                          alt={brand.brand_name}
+                          className="h-6 object-contain"
+                        />
+                      ) : (
+                        <span className="text-xs font-semibold text-gray-700">
+                          {brand.brand_name}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                {hoveredCategory.brands.length > 8 && (
+                  <Link
+                    href={`/category/${hoveredCategory.category_slug}`}
+                    onClick={() => setHoveredCategory(null)}
+                    className="px-3 py-1.5 text-xs text-blue-600 font-semibold hover:underline flex items-center gap-1"
+                  >
+                    View All Brands <FiChevronRight size={12} />
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT: Nav image - fixed 270px width, full 370px height */}
+        {(() => {
+          const navImgs = hoveredCategory?.navImage
+            ? (typeof hoveredCategory.navImage === 'string'
+                ? hoveredCategory.navImage.split(',').map(s => s.trim()).filter(Boolean)
+                : Array.isArray(hoveredCategory.navImage) ? hoveredCategory.navImage : [])
+            : [];
+          if (!navImgs.length) return null;
+          return (
+            <div className="flex-shrink-0 self-stretch" style={{ width: '270px', minHeight: '200px' }}>
+
+              <Link
+                href={`/category/${hoveredCategory.category_slug}`}
+                onClick={() => setHoveredCategory(null)}
+                className="block w-full h-full"
+              >
+                <img
+                  src={navImgs[0]}
+                  alt={hoveredCategory.category_name}
+                  className="w-full h-full object-cover"
+                />
+              </Link>
+            </div>
+          );
+        })()}
+      </div>
+    </div>
+  </div>
+)}   
             </div>
         </header>
         {/* DESKTOP SUGGESTIONS DROPDOWN */}

@@ -3,147 +3,145 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 
+// ── FAQ DATA (all questions as requested) ──────────────────────────────────
 const faqs = [
   {
     q: "What is BEA Loyalty Programme?",
     a: "BEA Loyalty is a cardless loyalty programme that rewards you with points on every purchase. Use your mobile number as your membership ID — no card needed!",
   },
   {
+    q: "How do I join BEA Loyalty?",
+    a: "You are automatically enrolled when you make your first purchase at BEA. No separate registration required — just shop and you're in!",
+  },
+  {
     q: "How do I earn points?",
     a: "You earn loyalty points automatically on every completed purchase. Points are calculated based on your order value and credited to your account after payment.",
   },
   {
-    q: "How do I redeem my points?",
-    a: "During checkout, click 'Use All Points' to apply your loyalty points as a discount. 1 point = ₹1 discount on your next purchase.",
+    q: "What is the value of 1 point?",
+    a: "1 Point = ₹1. Every point you earn has a direct cash equivalent that can be redeemed on your next purchase.",
   },
   {
-    q: "Is there a minimum points required for redemption?",
-    a: "No minimum balance required! You can redeem any amount of loyalty points during checkout.",
-  },
-  {
-    q: "Is there a registration fee?",
-    a: "Absolutely not! The BEA Loyalty Programme is completely free. Just shop and earn!",
-  },
-  {
-    q: "What is my membership number?",
-    a: "Your registered mobile number is your membership number. No separate card or ID needed.",
+    q: "Where can I redeem my points?",
+    a: "You can redeem your loyalty points directly at checkout — both in-store and online. Simply tap 'Use All Points' to apply your balance as a discount.",
   },
   {
     q: "Do my points expire?",
     a: "Points validity depends on your account activity. Keep shopping to keep your points active!",
   },
-];
-
-const benefits = [
   {
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/><path d="M9 7h6"/><path d="M9 11h6"/>
-      </svg>
-    ),
-    title: "Fully Cardless",
-    desc: "Your mobile number is your membership ID. No cards, no app downloads, no plastic — just your phone number.",
+    q: "Do I need an app or card?",
+    a: "No card and no mandatory app! Your mobile number is your membership ID. However, you can optionally download the BEA TRUCO app for a richer experience.",
   },
   {
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
-      </svg>
-    ),
-    title: "Linear Rewards",
-    desc: "No complex tiers. Every rupee spent earns points at the same rate — straightforward and transparent.",
-  },
-  {
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
-      </svg>
-    ),
-    title: "Zero Minimums",
-    desc: "Redeem even a single point. There are no thresholds, no lock-in periods, no minimum balance requirements.",
-  },
-  {
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-      </svg>
-    ),
-    title: "Free to Join",
-    desc: "Zero entry fee. Your account is created automatically with your first transaction. Just shop and start earning.",
+    q: "How do I check my balance?",
+    a: "Enter your registered mobile number in the 'Check Point Balance' section on this page, or log in to your account to see your full dashboard.",
   },
 ];
 
-const steps = [
+// ── MORE THAN JUST REWARDS (images: image21–image24) ──────────────────────
+const extras = [
+  {
+    img: "/loyalty/image21.png",
+    title: "Personalized Vouchers",
+    desc: "Get exclusive BEA member deals and coupons.",
+  },
+  {
+    img: "/loyalty/image22.png",
+    title: "Warranty Hub",
+    desc: "Manage your product information, warranty and service support.",
+  },
+  {
+    img: "/loyalty/image23.png",
+    title: "Purchase Updates",
+    desc: "Track your orders, delivery updates and service requests easily.",
+  },
+  {
+    img: "/loyalty/image24.png",
+    title: "Member Privileges",
+    desc: "Early access to sales, special events and exclusive product launches.",
+  },
+];
+
+// ── WHY JOIN (images: image1–image4) ─────────────────────────────────────
+const whyJoin = [
+  {
+    img: "/loyalty/image1.png",
+    title: "No Cards Needed",
+    desc: "Your mobile number is your membership ID. Simple, secure and always with you.",
+  },
+  {
+    img: "/loyalty/image2.png",
+    title: "Earn Every Purchase",
+    desc: "Earn reward points on every purchase. 1 Point = ₹1. Always.",
+  },
+  {
+    img: "/loyalty/image3.png",
+    title: "Exclusive Offers",
+    desc: "Get access to special vouchers, birthday treats, and members-only deals.",
+  },
+  {
+    img: "/loyalty/image4.png",
+    title: "Instant Redemption",
+    desc: "Use your points directly during billing. No extra steps, just real savings.",
+  },
+];
+
+// ── HOW IT WORKS STEPS ────────────────────────────────────────────────────
+const howItWorksSteps = [
   {
     num: "01",
-    title: "Shop & Purchase",
-    desc: "Browse our full catalog of products and place your order. Points are automatically linked to your registered mobile number — no sign-up needed.",
-    tag: "Auto-enrollment on first purchase",
-    tagIcon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
-      </svg>
-    ),
-    imgSrc: "/loyalty/image2.png",
-    imgAlt: "Shopping step illustration",
+    title: "Shop at BEA",
+    desc: "Shop your favourite products in-store or online.",
   },
   {
     num: "02",
-    title: "Earn Instantly",
-    desc: "Points are credited automatically after every successful payment. No waiting period. Every rupee spent translates directly into redeemable points.",
-    tag: "Instant post-payment credit",
-    tagIcon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-      </svg>
-    ),
-    imgSrc: "/loyalty/image3.png",
-    imgAlt: "Points earning illustration",
+    title: "Earn Reward Points",
+    desc: "Points are credited instantly after every purchase.",
   },
   {
     num: "03",
-    title: "Redeem at Checkout",
-    desc: "At checkout, tap 'Use All Points' to apply your full balance as a discount. 1 Point = ₹1 — always. No hidden conditions.",
-    tag: "1 Point = ₹1 always",
-    tagIcon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-      </svg>
-    ),
-    imgSrc: "/loyalty/image4.png",
-    imgAlt: "Checkout redemption illustration",
+    title: "Redeem & Save",
+    desc: "Use points during checkout and save more instantly.",
   },
-];
-
-const banners = [
-  { imgSrc: "/loyalty/banner1.png", imgAlt: "Banner 1" },
-  { imgSrc: "/loyalty/banner2.png", imgAlt: "Banner 2" },
-  { imgSrc: "/loyalty/banner3.png", imgAlt: "Banner 3" },
 ];
 
 export default function LoyaltyPage() {
   const router = useRouter();
+
+  // Auth & points state
   const [points, setPoints] = useState(null);
   const [loading, setLoading] = useState(true);
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Phone check (not logged in)
   const [checkPhone, setCheckPhone] = useState("");
   const [checkLoading, setCheckLoading] = useState(false);
   const [checkResult, setCheckResult] = useState(null);
+
+  // FAQ accordion
   const [openFaq, setOpenFaq] = useState(null);
-  const [activeBanner, setActiveBanner] = useState(0);
+
+  // Banner 2 redirect link — operator sets this
+  // TODO: Replace the value below with your actual banner2 destination URL
+  const BANNER2_LINK = "https://your-truco-app-link.com"; // ← set your link here
 
   useEffect(() => {
     const fetchPoints = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) { setIsLoggedIn(false); setLoading(false); return; }
-        const authRes = await fetch("/api/auth/check", { headers: { Authorization: `Bearer ${token}` } });
+        const authRes = await fetch("/api/auth/check", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const authData = await authRes.json();
         if (!authData.loggedIn) { setIsLoggedIn(false); setLoading(false); return; }
         setIsLoggedIn(true);
         const decoded = jwtDecode(token);
         setCustomerName(decoded.name || "Customer");
+        setCustomerPhone(authData.phone || decoded.phone || "");
         const loyaltyRes = await fetch(`/api/award-points?phone=${authData.phone || ""}`);
         const loyaltyData = await loyaltyRes.json();
         setPoints(loyaltyData.success ? loyaltyData.points : 0);
@@ -155,11 +153,6 @@ export default function LoyaltyPage() {
       }
     };
     fetchPoints();
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => setActiveBanner((prev) => (prev + 1) % banners.length), 4000);
-    return () => clearInterval(timer);
   }, []);
 
   const handleCheckPoints = async () => {
@@ -178,483 +171,578 @@ export default function LoyaltyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F4FA] font-sans text-[#1a2236] antialiased">
+    <div className="min-h-screen bg-white font-sans text-[#1a2236] antialiased">
 
-      {/* ── HERO ── */}
-      <section className="h-150 bg-[#0A1628] flex items-center justify-center relative overflow-hidden pt-16 pb-0 px-4">
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`,
-          backgroundSize: "40px 40px"
-        }} />
-        {/* Radial glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-[#1D4ED8]/10 blur-3xl pointer-events-none" />
+   {/* ═══════════════════════════════════════════════════════════════════
+    SECTION 1 — HERO BANNER with overlay content
+    banner1.png as background, left text + right form overlaid
+═══════════════════════════════════════════════════════════════════ */}
+<section
+  className="w-full relative min-h-[550px] flex items-center banner-section"
+  style={{
+    backgroundImage: "url('/loyalty/banner1.png')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  }}
+>
+  {/* Dark overlay for readability (optional, remove if banner is already dark) */}
+  <div className="absolute inset-0 bg-[#0B1D3F]/40 hidden md:block" />
 
-        <div className="relative z-10 max-w-5xl w-full mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+  {/* Mobile background color */}
+  <div className="absolute inset-0 bg-[#0B1D3F] block md:hidden" />
 
-          {/* Left */}
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest bg-[#1D4ED8]/15 text-blue-300 border border-blue-500/20 mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
-              Premium Rewards Programme
+  <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center gap-10">
+
+    {/* ── LEFT: Hero Text ── */}
+    <div className="flex-1 text-white">
+      <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-5 text-xs font-semibold tracking-wider uppercase text-white/90">
+        ★ BEA Loyalty Rewards Programme
+      </div>
+      <h1 className="text-4xl sm:text-5xl font-black leading-tight mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
+        Shop More.<br />
+        Earn <span className="text-[#FBBF24]">More.</span><br />
+        Save <span className="text-[#FBBF24]">More.</span>
+      </h1>
+      <p className="text-white/80 text-sm sm:text-base mb-6 max-w-sm leading-relaxed">
+        Every purchase at BEA earns you rewards. Unlock points, vouchers & exclusive member benefits across 47+ BEA stores.
+      </p>
+      <button
+        onClick={() => router.push("/")}
+        className="inline-flex items-center gap-2 bg-[#FBBF24] text-[#0B1D3F] font-bold px-6 py-3 rounded-full text-sm hover:bg-[#f5b820] transition active:scale-[0.98]"
+      >
+        Start Earning Rewards
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+        </svg>
+      </button>
+
+      {/* Bottom badges */}
+      <div className="flex flex-wrap gap-5 mt-8">
+        {[
+          { icon: "🚫", label: "No Registration Fee" },
+          { icon: "💳", label: "No Physical Card" },
+          { icon: "🪙", label: "1 Point = ₹1 Value" },
+        ].map((b, i) => (
+          <div key={i} className="flex items-center gap-2 text-white/80 text-xs">
+            <span>{b.icon}</span>
+            <span>{b.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* ── RIGHT: Balance Check Form (always visible) ── */}
+    <div className="w-full lg:ml-6 md:pl-6 md:w-[360px] flex-shrink-0">
+      <div className="bg-[#0B1D3F]/90 backdrop-blur-sm border border-white/10 rounded-3xl p-6 shadow-2xl">
+        <h3 className="text-white font-black text-lg mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>
+          Already a BEA Member?
+        </h3>
+        <p className="text-white/60 text-xs mb-5">
+          Enter your mobile number to check your rewards balance.
+        </p>
+
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 text-sm font-semibold">+91</span>
+              <input
+                type="tel"
+                value={checkPhone}
+                onChange={(e) => setCheckPhone(e.target.value.replace(/\D/g, ""))}
+                placeholder="Enter mobile number"
+                maxLength={10}
+                className="w-full bg-white/10 border border-white/20 rounded-xl pl-14 pr-4 py-3 text-sm font-medium text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/40 focus:border-[#FBBF24]/60 transition"
+              />
             </div>
-            <h1 className="font-black text-white leading-[1.05] text-[2.8rem] sm:text-[3.5rem] mb-5 tracking-[-2px]" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Shop More.<br />
-              Earn <span style={{ color: "#60A5FA" }}>Smarter.</span><br />
-              Redeem Freely.
-            </h1>
-            <p className="text-[#94A3C8] text-base leading-relaxed max-w-md mb-8">
-              Every purchase earns you real value — no cards, no minimums, no friction. Your mobile number is all you need.
-            </p>
-            <div className="flex gap-3 flex-wrap">
-              <button
-                onClick={() => router.push("/rewards")}
-                className="inline-flex items-center gap-2.5 bg-[#1D4ED8] text-white font-bold text-sm px-6 py-3.5 rounded-xl hover:bg-[#1a44c4] transition active:scale-[0.98]"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                </svg>
-                Unlock Rewards
-              </button>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center gap-2 bg-transparent text-[#94A3C8] font-semibold text-sm px-5 py-3.5 rounded-xl border border-white/10 hover:border-white/25 hover:text-white transition"
-              >
-                How It Works
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 5v14m7-7-7 7-7-7"/>
-                </svg>
-              </a>
-            </div>
+            <button
+              onClick={handleCheckPoints}
+              disabled={checkLoading || checkPhone.length < 10}
+              className="bg-[#1D4ED8] text-white px-4 py-3 rounded-xl text-sm font-bold hover:bg-[#1a44c4] transition active:scale-[0.97] disabled:bg-white/10 disabled:text-white/30 min-w-[80px] flex items-center justify-center"
+            >
+              {checkLoading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : "Check"}
+            </button>
           </div>
 
-          {/* Right - Card */}
-          <div className="hidden md:block">
-            <div className="bg-white/[0.05] border border-white/[0.1] rounded-3xl p-6 backdrop-blur-xl">
-              <div className="flex justify-between items-center mb-4">
-                <span className="font-black text-white text-sm tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>BEA Loyalty</span>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3.5 h-3.5 rounded-full bg-[#F59E0B]" />
-                  <div className="w-3.5 h-3.5 rounded-full bg-[#F59E0B]/40" />
+          {/* Result */}
+          {checkResult && (
+            <div className={`rounded-xl p-4 text-sm font-medium ${
+              checkResult.success
+                ? "bg-green-900/40 border border-green-400/30 text-green-300"
+                : "bg-red-900/40 border border-red-400/30 text-red-300"
+            }`}>
+              {checkResult.success ? (
+                <div>
+                  <p className="font-bold text-green-200">Account Located!</p>
+                  <p className="text-xs mt-1 text-green-300/80">
+                    You have <strong>{checkResult.points?.toLocaleString()} points</strong> worth <strong>₹{checkResult.points?.toLocaleString()}</strong>.
+                  </p>
                 </div>
-              </div>
-              <div className="w-full h-44 rounded-2xl overflow-hidden mb-5 bg-[#1D4ED8]/10">
-                <img src="/loyalty/image1.png" alt="Loyalty visual" className="w-full h-full object-cover rounded-2xl" />
-              </div>
-              {loading && (
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  <span className="text-blue-200 text-xs">Loading balance...</span>
-                </div>
-              )}
-              {!loading && isLoggedIn && points !== null && (
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-[#64748B] text-[10px] uppercase tracking-widest mb-1">Accrued Points</p>
-                    <p className="text-white font-black text-3xl tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      {points.toLocaleString()} <span className="text-sm font-normal text-[#64748B]">Pts</span>
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-emerald-400 text-[10px] font-semibold uppercase tracking-widest mb-1">Cash Value</p>
-                    <p className="text-emerald-400 font-black text-2xl tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>₹{points.toLocaleString()}</p>
-                  </div>
-                </div>
-              )}
-              {!loading && !isLoggedIn && (
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-[#64748B] text-[10px] uppercase tracking-widest mb-1">Accrued Points</p>
-                    <p className="text-white font-black text-3xl tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      1,240 <span className="text-sm font-normal text-[#64748B]">Pts</span>
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-emerald-400 text-[10px] font-semibold uppercase tracking-widest mb-1">Cash Value</p>
-                    <p className="text-emerald-400 font-black text-2xl tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>₹1,240</p>
-                  </div>
-                </div>
+              ) : (
+                <p>No account found for this mobile number.</p>
               )}
             </div>
+          )}
+
+          {/* If logged in, show points directly */}
+          {!loading && isLoggedIn && points !== null && (
+            <div className="bg-[#FBBF24]/10 border border-[#FBBF24]/30 rounded-xl p-4">
+              <p className="text-[#FBBF24] text-xs font-semibold uppercase tracking-wider mb-1">Your Points</p>
+              <p className="text-white font-black text-2xl">{points.toLocaleString()} <span className="text-sm font-normal text-white/50">= ₹{points.toLocaleString()}</span></p>
+              <button onClick={() => router.push("/checkout")} className="mt-3 w-full bg-[#1D4ED8] text-white text-sm font-bold py-2.5 rounded-xl hover:bg-[#1a44c4] transition">
+                Use at Checkout →
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-white/10 mt-5 pt-4">
+          <p className="text-white/40 text-xs text-center mb-3">New to BEA Loyalty? Download the TRUCO app</p>
+          <div className="flex gap-3 justify-center">
+            <a href={"https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share"} target="_blank" rel="noopener noreferrer">
+              <img src="/loyalty/playstore.jpg" alt="Get it on Google Play" className="h-9 w-auto rounded object-contain" />
+            </a>
+            <a href={"https://apps.apple.com/in/app/bea-truco/id6751942292"} target="_blank" rel="noopener noreferrer">
+              <img src="/loyalty/appstore.jpg" alt="Download on App Store" className="h-9 w-auto rounded object-contain" />
+            </a>
+          </div>
+          {!isLoggedIn && (
+            <button
+              onClick={() => router.push("/")}
+              className="mt-3 w-full text-center text-[#60A5FA] text-xs font-semibold hover:text-white transition"
+            >
+              Login to your account →
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 2 — WHY JOIN BEA LOYALTY  (4 image icons)
+          Images: image1.png  image2.png  image3.png  image4.png
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="py-16 px-4 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-center text-2xl sm:text-3xl font-black text-[#1a2236] mb-2"
+            style={{ fontFamily: "'Syne', sans-serif" }}>
+            Why Join BEA Loyalty?
+          </h2>
+          <div className="flex justify-center mb-10">
+            <div className="w-12 h-1 rounded-full bg-[#1D4ED8]" />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {whyJoin.map((item, i) => (
+              <div key={i} className="flex flex-col items-center text-center p-5 rounded-2xl border border-[#E8EDF5] hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                <div className="w-20 h-20 mb-4 flex items-center justify-center">
+                  <img src={item.img} alt={item.title} className="w-full h-full object-contain" />
+                </div>
+                <h3 className="font-bold text-[#1a2236] text-sm mb-2">{item.title}</h3>
+                <p className="text-[#64748B] text-xs leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── STATS BAR ── */}
-      <div className="bg-[#0A1628] border-b border-white/[0.07]">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4">
-          {[
-            { icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>, num: "1:1", label: "Point to ₹ Ratio" },
-            { icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, num: "₹0", label: "Registration Fee" },
-            { icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>, num: "0 Min", label: "Points for Redemption" },
-            { icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>, num: "Cardless", label: "Mobile Number as ID" },
-          ].map((s, i) => (
-            <div key={i} className={`py-6 px-6 flex flex-col items-center gap-2 ${i < 3 ? "border-r border-white/[0.07]" : ""}`}>
-              <span className="text-[#1D4ED8]">{s.icon}</span>
-              <p className="font-black text-white text-lg tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>{s.num}</p>
-              <p className="text-[#64748B] text-xs text-center">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+{/* ═══════════════════════════════════════════════════════════════════
+          SECTION 3 — DOWNLOAD BEA TRUCO APP BANNER
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="w-full px-4 py-2 bg-white">
+        <div className="max-w-5xl mx-auto">
 
-      {/* ── BANNER SECTION ── */}
-      <div className="max-w-5xl mx-auto px-4 pt-10 pb-2">
-        <div className="relative rounded-2xl overflow-hidden bg-[#1a2236]" style={{ aspectRatio: "3/1" }}>
-          {banners.map((banner, i) => (
+          {/* Banner image with QR + store buttons overlaid */}
+          <div className="relative rounded-2xl overflow-hidden">
             <img
-              key={i}
-              src={banner.imgSrc}
-              alt={banner.imgAlt}
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-              style={{ opacity: activeBanner === i ? 1 : 0 }}
+              src="/loyalty/banner2.png"
+              alt="Download BEA TRUCO App"
+              className="w-full h-auto block"
             />
-          ))}
-          {/* Subtle dark gradient at bottom for dot visibility */}
-          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-            {banners.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveBanner(i)}
-                className={`rounded-full transition-all duration-300 ${activeBanner === i ? "w-5 h-2 bg-white" : "w-2 h-2 bg-white/40 hover:bg-white/70"}`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
 
-      {/* ── LOGGED IN DASHBOARD ── */}
-      {!loading && isLoggedIn && points !== null && (
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="bg-white rounded-3xl border border-[#D1DCF0] shadow-sm p-6 sm:p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#E8EDF5]">
-              <div>
-                <p className="text-[#64748B] text-xs font-semibold uppercase tracking-widest">Club Member</p>
-                <h3 className="text-xl font-bold text-[#1a2236] mt-0.5">
-                  Welcome back, <span className="text-[#1D4ED8] font-black">{customerName}</span>
-                </h3>
-              </div>
-              <button
-                onClick={() => router.push("/checkout")}
-                className="inline-flex items-center gap-2.5 bg-[#1D4ED8] text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-[#1a44c4] transition active:scale-[0.98]"
-              >
-                Use Points at Checkout
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                </svg>
-              </button>
+            {/* QR code — overlaid on right side white space */}
+            <div
+              className="absolute flex items-center justify-center"
+              style={{
+                top: "12%",
+                right: "6.1%",
+                width: "15%",
+                height: "70%",
+              }}
+            >
+              <img
+                src="/loyalty/loyaltyQR.jpeg"
+                alt="Scan QR to download BEA TRUCO"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-              <div className="bg-[#F5F8FF] p-6 rounded-2xl border border-[#DDEAFF]">
-                <p className="text-[#4B6087] text-xs font-semibold uppercase tracking-widest mb-3">Accrued Balance</p>
-                <p className="text-4xl font-black text-[#1a2236] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  {points.toLocaleString()} <span className="text-sm font-medium text-[#64748B]">Pts</span>
-                </p>
-              </div>
-              <div className="bg-[#F0FBF6] p-6 rounded-2xl border border-[#C6EDD9]">
-                <p className="text-[#2D7A52] text-xs font-semibold uppercase tracking-widest mb-3">Cashback Equivalent</p>
-                <p className="text-4xl font-black text-[#1A6640] tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  ₹{points.toLocaleString()}.00
-                </p>
-                <p className="text-[#4B6087] text-[11px] mt-1">1 Point = ₹1</p>
-              </div>
+
+            {/* Store buttons — overlaid bottom left inside banner */}
+            <div
+              className="absolute flex gap-2 items-center"
+              style={{ bottom: "27%", left: "10%" }}
+            >
+              <a
+                href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="/loyalty/playstore.jpg"
+                  alt="Get it on Google Play"
+                  className="h-8 w-auto rounded object-contain"
+                />
+              </a>
+              <a
+                href="https://apps.apple.com/in/app/bea-truco/id6751942292"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="/loyalty/appstore.jpg"
+                  alt="Download on App Store"
+                  className="h-8 w-auto rounded object-contain"
+                />
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 4 — HOW IT WORKS BANNER  →  banner3.png
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="w-full px-4 py-4 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <img
+            src="/loyalty/banner3.png"
+            alt="How It Works"
+            className="w-full h-auto block rounded-2xl"
+          />
+        </div>
+      </section>
+
+       {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 5 — MEMBER DASHBOARD (logged in) OR LOGIN PROMPT (guest)
+      ═══════════════════════════════════════════════════════════════════ */}
+
+      {/* Loading skeleton */}
+      {loading && (
+        <section className="py-10 px-4 bg-[#F0F4FA]">
+          <div className="max-w-4xl mx-auto bg-[#0B1D3F] rounded-[18px] p-6 animate-pulse">
+            <div className="h-4 bg-white/10 rounded w-40 mb-4" />
+            <div className="h-7 bg-white/10 rounded w-56 mb-5" />
+            <div className="flex gap-3">
+              <div className="flex-1 h-24 bg-white/10 rounded-xl" />
+              <div className="flex-1 h-24 bg-white/10 rounded-xl" />
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* ── NOT LOGGED IN - PHONE CHECK ── */}
-      {!loading && !isLoggedIn && (
-        <div className="max-w-lg mx-auto px-4 py-12">
-          <div className="bg-white rounded-3xl border border-[#D1DCF0] shadow-sm p-6 sm:p-8">
-            <h3 className="text-xl font-black text-[#1a2236] text-center" style={{ fontFamily: "'Syne', sans-serif" }}>Check Point Balance</h3>
-            <p className="text-[#4B6087] text-sm text-center mt-1 mb-6">Enter your registered mobile number below</p>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4B6087] text-sm font-semibold">+91</span>
-                  <input
-                    type="tel"
-                    value={checkPhone}
-                    onChange={(e) => setCheckPhone(e.target.value.replace(/\D/g, ""))}
-                    placeholder="Mobile number"
-                    maxLength={10}
-                    className="w-full border border-[#D1DCF0] bg-[#F5F8FF] rounded-xl pl-14 pr-4 py-3 text-sm font-medium text-[#1a2236] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#1D4ED8]/20 focus:border-[#1D4ED8] transition"
-                  />
+      {/* ── LOGGED IN: Full Member Dashboard ── */}
+      {!loading && isLoggedIn && points !== null && (
+        <section className="py-10 px-4 bg-[#F0F4FA]">
+          <div className="max-w-4xl mx-auto">
+            <div
+              className="rounded-[18px] px-7 py-6"
+              style={{ background: "#0B1D3F" }}
+            >
+              {/* Row 1: label + button */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-[#94A3B8] text-xs font-semibold tracking-wide">
+                  <span className="text-[#FBBF24] text-base leading-none">★</span>
+                  Your BEA Rewards Wallet
                 </div>
+                <button
+                  onClick={() => router.push("/checkout")}
+                  className="flex items-center gap-2 bg-[#1D4ED8] text-white text-[13px] font-bold px-5 py-2.5 rounded-[10px] hover:bg-[#1e45c2] transition active:scale-[0.98]"
+                >
+                  Use Points at Checkout
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Name */}
+              <h3 className="text-[22px] font-black text-white mb-5 tracking-tight">
+                Welcome back, <span className="text-[#FBBF24]">{customerName}!</span>
+              </h3>
+
+              {/* Main row: cards + right col */}
+              <div className="flex items-stretch gap-4 flex-col sm:flex-row">
+
+                {/* Cards */}
+                <div className="flex gap-3 flex-1">
+
+                  {/* Available Points */}
+                  <div
+                    className="flex-1 rounded-[12px] px-[18px] py-4 flex items-center justify-between"
+                    style={{ background: "#0D2150" }}
+                  >
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748B] mb-1">
+                        Available Points
+                      </p>
+                      <p className="text-[28px] font-black text-white leading-none flex items-baseline gap-1">
+                        {points.toLocaleString()}
+                        <span className="text-xs font-normal text-[#64748B]">Pts</span>
+                      </p>
+                    </div>
+                    <div className="w-[46px] h-[46px] rounded-[10px] bg-[#1D4ED8]/20 flex items-center justify-center flex-shrink-0">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Savings Value */}
+                  <div
+                    className="flex-1 rounded-[12px] px-[18px] py-4 flex items-center justify-between"
+                    style={{ background: "#0D2150" }}
+                  >
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748B] mb-1">
+                        Savings Value
+                      </p>
+                      <p className="text-[28px] font-black text-[#FBBF24] leading-none">
+                        ₹{points.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-[#64748B] mt-1">1 Point = ₹1</p>
+                    </div>
+                    <div className="w-[46px] h-[46px] rounded-[10px] bg-white/5 flex items-center justify-center flex-shrink-0">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <path d="M16 12h.01" />
+                        <path d="M2 10h20" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right col: Membership ID + Member Since */}
+                <div className="flex flex-col justify-center gap-4 sm:pl-3 sm:min-w-[160px]">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748B] mb-1">
+                      Membership ID
+                    </p>
+                    <p className="text-[16px] font-bold text-white tracking-wider">
+                      {customerPhone
+                        ? customerPhone.replace(/(\d{5})(\d{5})/, "$1 $2")
+                        : "—"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-[34px] h-[34px] rounded-full bg-[#1D4ED8] flex items-center justify-center text-sm flex-shrink-0">
+                      🏅
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748B] mb-0.5">
+                        Member Since
+                      </p>
+                      <p className="text-[14px] font-bold text-white">
+                        May 2025
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── GUEST: Login prompt + phone check ── */}
+      {!loading && !isLoggedIn && (
+        <section className="py-10 px-4 bg-[#F0F4FA]">
+          <div className="max-w-4xl mx-auto">
+            <div
+              className="rounded-[18px] px-7 py-8 text-center"
+              style={{ background: "#0B1D3F" }}
+            >
+              <div className="text-3xl mb-3">★</div>
+              <h3 className="text-[18px] font-black text-white mb-2">
+                Your BEA Rewards Wallet
+              </h3>
+              <p className="text-[#94A3B8] text-sm mb-5">
+                Login to view your points, savings value and membership details.
+              </p>
+              <button
+                onClick={() => router.push("/")}
+                className="bg-[#1D4ED8] text-white text-sm font-bold px-7 py-3 rounded-[10px] hover:bg-[#1e45c2] transition"
+              >
+                Login to Your Account →
+              </button>
+
+              <div className="text-[#64748B] text-xs my-4">— or check your balance as guest —</div>
+
+              <div className="flex gap-2 justify-center flex-wrap">
+                <input
+                  type="tel"
+                  value={checkPhone}
+                  onChange={(e) => setCheckPhone(e.target.value.replace(/\D/g, ""))}
+                  placeholder="Enter mobile number"
+                  maxLength={10}
+                  className="bg-white/10 border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white placeholder-[#4B5563] outline-none w-52 focus:border-[#FBBF24]/40 transition"
+                />
                 <button
                   onClick={handleCheckPoints}
                   disabled={checkLoading || checkPhone.length < 10}
-                  className="bg-[#1D4ED8] text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-[#1a44c4] transition active:scale-[0.97] disabled:bg-[#CBD5E1] disabled:text-[#94A3B8]"
+                  className="bg-[#1D4ED8] text-white text-sm font-bold px-5 py-2.5 rounded-[10px] hover:bg-[#1e45c2] transition disabled:bg-white/10 disabled:text-white/30"
                 >
                   {checkLoading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
                   ) : "Check"}
                 </button>
               </div>
+
               {checkResult && (
-                <div className={`rounded-xl p-4 text-sm font-medium ${checkResult.success ? "bg-[#F0FBF6] border border-[#C6EDD9] text-[#1A6640]" : "bg-[#FFF5F5] border border-[#FED7D7] text-[#C53030]"}`}>
+                <div className={`mt-3 mx-auto max-w-sm rounded-[10px] px-4 py-3 text-sm font-medium ${
+                  checkResult.success
+                    ? "bg-green-900/40 border border-green-400/20 text-green-300"
+                    : "bg-red-900/40 border border-red-400/20 text-red-300"
+                }`}>
                   {checkResult.success ? (
-                    <div className="flex gap-2.5 items-start">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0">
-                        <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
-                      </svg>
-                      <div>
-                        <p className="font-bold">Account Located!</p>
-                        <p className="font-normal text-[#2D7A52] text-xs mt-0.5">
-                          You have <strong>{checkResult.points.toLocaleString()} loyalty points</strong> worth <strong>₹{checkResult.points.toLocaleString()}</strong>.
-                        </p>
-                      </div>
-                    </div>
+                    <>
+                      <strong className="text-green-200">Account located!</strong>
+                      <span className="text-green-300/80 ml-1">
+                        You have <strong>{checkResult.points?.toLocaleString()} points</strong> worth <strong>₹{checkResult.points?.toLocaleString()}</strong>.
+                      </span>
+                    </>
                   ) : (
-                    <div className="flex gap-2.5 items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                      </svg>
-                      No account found for this mobile number.
-                    </div>
+                    "No account found for this mobile number."
                   )}
                 </div>
               )}
             </div>
-            <div className="mt-6 pt-5 border-t border-[#E8EDF5] text-center">
-              <p className="text-[#64748B] text-xs">Want full dashboard access?</p>
-              <button
-                onClick={() => router.push("/")}
-                className="mt-1 text-[#1D4ED8] text-sm font-bold hover:text-[#1a44c4] transition inline-flex items-center gap-1.5"
-              >
-                Login to your account
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                </svg>
-              </button>
-            </div>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="max-w-5xl mx-auto px-4 py-24">
-        <div className="mb-16">
-          <span className="inline-flex items-center gap-1.5 bg-[#EBF0FF] text-[#1D4ED8] text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-3 border border-[#C7D7FF]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
-            </svg>
-            How It Works
-          </span>
-          <h2 className="font-black text-[#1a2236] tracking-tight text-3xl sm:text-4xl" style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-1px" }}>
-            Three steps to rewards
+      {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 6 — MORE THAN JUST REWARDS (images: image21–image24)
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="py-16 px-4 bg-white border-t border-[#E8EDF5]">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-center text-2xl sm:text-3xl font-black text-[#1a2236] mb-2"
+            style={{ fontFamily: "'Syne', sans-serif" }}>
+            More Than Just Rewards
           </h2>
-          <p className="text-[#4B6087] text-sm mt-2 max-w-sm">
-            Designed for zero friction — from your first purchase to your first redemption.
-          </p>
-        </div>
-        <div className="space-y-16">
-          {steps.map((step, i) => (
-            <div key={i} className={`grid grid-cols-1 md:grid-cols-2 gap-10 items-center ${i % 2 !== 0 ? "md:[direction:rtl]" : ""}`}>
-              {/* Image — no overlay text */}
-              <div className={`relative rounded-2xl overflow-hidden aspect-[4/3] bg-[#E8EDF5] border border-[#D1DCF0] ${i % 2 !== 0 ? "md:[direction:ltr]" : ""}`}>
-                <img src={step.imgSrc} alt={step.imgAlt} className="w-full h-full object-cover" />
-              </div>
-              {/* Content */}
-              <div className={i % 2 !== 0 ? "md:[direction:ltr]" : ""}>
-                <div className="text-6xl font-black text-[#D1DCF0] leading-none mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  {step.num}
-                </div>
-                <h3 className="font-black text-[#1a2236] text-2xl mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  {step.title}
-                </h3>
-                <p className="text-[#4B6087] text-sm leading-relaxed mb-4">{step.desc}</p>
-                <span className="inline-flex items-center gap-1.5 bg-[#EBF0FF] border border-[#C7D7FF] text-[#1D4ED8] text-xs font-semibold px-3 py-2 rounded-full">
-                  {step.tagIcon}
-                  {step.tag}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── BENEFITS ── */}
-      <section className="bg-[#0A1628] py-24 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E\")" }} />
-        <div className="max-w-5xl mx-auto relative z-10">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div>
-              <span className="inline-flex items-center gap-1.5 bg-[#1D4ED8]/15 text-blue-300 border border-blue-500/20 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                Programme Benefits
-              </span>
-              <h2 className="font-black text-white text-3xl sm:text-4xl tracking-tight" style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-1px" }}>
-                Everything you need,<br />nothing you don't.
-              </h2>
-            </div>
-            <p className="text-[#64748B] text-sm max-w-xs">
-              Built around simplicity — your loyalty should feel like a reward, not a chore.
-            </p>
+          <div className="flex justify-center mb-10">
+            <div className="w-12 h-1 rounded-full bg-[#1D4ED8]" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {benefits.map((b, i) => (
-              <div key={i} className="flex gap-4 items-start bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 hover:bg-white/[0.07] hover:-translate-y-0.5 transition-all duration-200">
-                <div className="w-12 h-12 rounded-2xl bg-[#1D4ED8]/20 border border-[#1D4ED8]/30 flex items-center justify-center text-[#60A5FA] flex-shrink-0">
-                  {b.icon}
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {extras.map((item, i) => (
+              <div key={i}
+                className="flex flex-col items-center text-center p-5 rounded-2xl border border-[#E8EDF5] hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                <div className="w-16 h-16 mb-4 flex items-center justify-center">
+                  <img src={item.img} alt={item.title} className="w-full h-full object-contain" />
                 </div>
-                <div>
-                  <h3 className="font-black text-white text-base mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>{b.title}</h3>
-                  <p className="text-[#64748B] text-sm leading-relaxed">{b.desc}</p>
-                </div>
+                <h3 className="font-bold text-[#1a2236] text-sm mb-2">{item.title}</h3>
+                <p className="text-[#64748B] text-xs leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── UNLOCK REWARDS ── */}
-      <section className="py-24 px-4 bg-[#F0F4FA]">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div>
-            <span className="inline-flex items-center gap-1.5 bg-[#EBF0FF] text-[#1D4ED8] text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-4 border border-[#C7D7FF]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/>
-              </svg>
-              Start Redeeming
-            </span>
-            <h2 className="font-black text-[#1a2236] text-3xl sm:text-4xl tracking-tight mb-4" style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-1px" }}>
-              Your points are<br />ready to be used.
-            </h2>
-            <p className="text-[#4B6087] text-sm leading-relaxed mb-6">
-              You've been earning with every order. Now it's time to redeem. Check your balance and apply it to your next purchase in seconds.
-            </p>
-            <ul className="space-y-0 mb-8 divide-y divide-[#E8EDF5]">
-              {[
-                "Instant balance lookup with your mobile number",
-                "Apply points directly at checkout",
-                "Real ₹1 value for every point",
-                "No expiry while your account is active",
-              ].map((item, i) => (
-                <li key={i} className="flex items-center gap-3 py-3 text-[#2D3A52] text-sm font-medium">
-                  <span className="w-5 h-5 rounded-full bg-[#EBF0FF] border border-[#C7D7FF] text-[#1D4ED8] flex items-center justify-center flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => router.push("/rewards")}
-              className="inline-flex items-center gap-3 bg-[#1D4ED8] text-white font-bold text-sm px-7 py-4 rounded-2xl hover:bg-[#1a44c4] hover:-translate-y-0.5 transition-all active:scale-[0.98]"
-            >
-              Unlock Rewards
-              <span className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                </svg>
-              </span>
-            </button>
+     {/* ═══════════════════════════════════════════════════════════════════
+          SECTION 7 — FREQUENTLY ASKED QUESTIONS (all 8 questions)
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="bg-[#F8FAFD] border-t border-[#E8EDF5] py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-center text-2xl sm:text-3xl font-black text-[#1a2236] mb-2"
+            style={{ fontFamily: "'Syne', sans-serif" }}>
+            Frequently Asked Questions
+          </h2>
+          <div className="flex justify-center mb-10">
+            <div className="w-12 h-1 rounded-full bg-[#1D4ED8]" />
           </div>
 
-          <div className="relative">
-            <div className="w-full aspect-square rounded-3xl overflow-hidden bg-[#E8EDF5]">
-              <img src="/loyalty/image5.png" alt="Rewards visual" className="w-full h-full object-cover rounded-3xl" />
-            </div>
-            <div className="absolute -bottom-5 -left-5 bg-white border border-[#D1DCF0] rounded-2xl px-5 py-3.5 shadow-lg flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#EBF0FF] border border-[#C7D7FF] flex items-center justify-center text-[#1D4ED8]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                </svg>
-              </div>
-              <div>
-                <p className="text-[#64748B] text-[10px] mb-0.5">Your balance is worth</p>
-                <p className="text-[#1D4ED8] font-black text-base tracking-tight" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  {isLoggedIn && points ? `₹${points.toLocaleString()} Savings` : "₹1,240 Savings"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+          {/* Two independent columns — opening one won't affect the other */}
+          <div className="flex flex-col md:flex-row gap-3 items-start">
 
-      {/* ── FAQ ── */}
-      <section id="faq" className="bg-white border-t border-[#E8EDF5] py-24 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="inline-flex items-center gap-1.5 bg-[#EBF0FF] text-[#1D4ED8] text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-3 border border-[#C7D7FF]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              FAQ
-            </span>
-            <h2 className="font-black text-[#1a2236] text-3xl tracking-tight" style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-1px" }}>
-              Common Questions
-            </h2>
-            <p className="text-[#4B6087] text-sm mt-2">Everything you need to know about the BEA Loyalty Programme</p>
-          </div>
-          <div className="space-y-2.5">
-            {faqs.map((faq, i) => {
-              const isOpen = openFaq === i;
-              return (
-                <div key={i} className={`border rounded-2xl overflow-hidden transition-all duration-200 ${isOpen ? "border-[#1D4ED8] shadow-sm shadow-[#1D4ED8]/10" : "border-[#D1DCF0] hover:border-[#B0C4E8]"}`}>
-                  <button
-                    onClick={() => setOpenFaq(isOpen ? null : i)}
-                    className="w-full flex justify-between items-center px-5 py-4 text-left gap-4"
-                  >
-                    <span className="font-semibold text-[#1a2236] text-sm">{faq.q}</span>
-                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isOpen ? "bg-[#EBF0FF] text-[#1D4ED8] rotate-45" : "bg-[#F0F4FA] text-[#4B6087]"}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                      </svg>
-                    </span>
-                  </button>
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-40" : "max-h-0"}`}>
-                    <p className="px-5 pb-4 pt-3 text-[#4B6087] text-sm leading-relaxed border-t border-[#E8EDF5] bg-[#F8FAFD]">
-                      {faq.a}
-                    </p>
+            {/* Left column — even indexed faqs: 0,2,4,6 */}
+            <div className="flex flex-col gap-3 flex-1">
+              {faqs.filter((_, i) => i % 2 === 0).map((faq) => {
+                const i = faqs.indexOf(faq);
+                const isOpen = openFaq === i;
+                return (
+                  <div key={i}
+                    className={`border rounded-2xl overflow-hidden transition-all duration-200 bg-white ${isOpen
+                      ? "border-[#1D4ED8] shadow-sm shadow-[#1D4ED8]/10"
+                      : "border-[#D1DCF0] hover:border-[#B0C4E8]"}`}>
+                    <button
+                      onClick={() => setOpenFaq(isOpen ? null : i)}
+                      className="w-full flex justify-between items-center px-5 py-4 text-left gap-4"
+                    >
+                      <span className="font-semibold text-[#1a2236] text-sm">{faq.q}</span>
+                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isOpen
+                        ? "bg-[#EBF0FF] text-[#1D4ED8] rotate-45"
+                        : "bg-[#F0F4FA] text-[#4B6087]"}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </span>
+                    </button>
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-40" : "max-h-0"}`}>
+                      <p className="px-5 pb-4 pt-3 text-[#4B6087] text-sm leading-relaxed border-t border-[#E8EDF5] bg-[#F8FAFD]">
+                        {faq.a}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+
+            {/* Right column — odd indexed faqs: 1,3,5,7 */}
+            <div className="flex flex-col gap-3 flex-1">
+              {faqs.filter((_, i) => i % 2 !== 0).map((faq) => {
+                const i = faqs.indexOf(faq);
+                const isOpen = openFaq === i;
+                return (
+                  <div key={i}
+                    className={`border rounded-2xl overflow-hidden transition-all duration-200 bg-white ${isOpen
+                      ? "border-[#1D4ED8] shadow-sm shadow-[#1D4ED8]/10"
+                      : "border-[#D1DCF0] hover:border-[#B0C4E8]"}`}>
+                    <button
+                      onClick={() => setOpenFaq(isOpen ? null : i)}
+                      className="w-full flex justify-between items-center px-5 py-4 text-left gap-4"
+                    >
+                      <span className="font-semibold text-[#1a2236] text-sm">{faq.q}</span>
+                      <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isOpen
+                        ? "bg-[#EBF0FF] text-[#1D4ED8] rotate-45"
+                        : "bg-[#F0F4FA] text-[#4B6087]"}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </span>
+                    </button>
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-40" : "max-h-0"}`}>
+                      <p className="px-5 pb-4 pt-3 text-[#4B6087] text-sm leading-relaxed border-t border-[#E8EDF5] bg-[#F8FAFD]">
+                        {faq.a}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
           </div>
         </div>
       </section>
-
-      {/* ── BOTTOM CTA ── */}
-      {!isLoggedIn && (
-        <section className="relative bg-[#0A1628] border-t border-white/[0.07] py-16 text-center px-4 overflow-hidden">
-          <div className="absolute inset-0 opacity-[0.04]" style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`,
-            backgroundSize: "40px 40px"
-          }} />
-          <div className="relative max-w-xl mx-auto">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1D4ED8]/15 border border-[#1D4ED8]/25 mb-5 mx-auto">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-              </svg>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Begin Accumulating Value
-            </h2>
-            <p className="text-[#64748B] text-sm mb-6 max-w-sm mx-auto">
-              Shop now and start earning real rewards on every purchase.
-            </p>
-            <button
-              onClick={() => router.push("/")}
-              className="inline-flex items-center gap-2.5 bg-white text-[#1a2236] font-bold text-sm px-6 py-3 rounded-xl hover:bg-[#F0F4FA] transition active:scale-[0.98]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-              </svg>
-              Shop Inventory Now
-            </button>
-          </div>
-        </section>
-      )}
 
     </div>
   );

@@ -1107,9 +1107,9 @@ const handleRemovePoints = async () => {
    const loyaltyData = await loyaltyRes.json();
 
   if (loyaltyData.success && loyaltyData.points_awarded > 0) {
-    // toast.success(`🎉 You earned ${loyaltyData.points_awarded} loyalty points!`, {
-    //   autoClose: 5000
-    // });
+    toast.success(`🎉 You earned ${loyaltyData.points_awarded} loyalty points!`, {
+      autoClose: 5000
+    });
      window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
   }
 } catch (loyaltyErr) {
@@ -1162,8 +1162,8 @@ const handleRemovePoints = async () => {
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
-          // const emailadmin = ['hariharan.g@eywamedia.com'];
+          //  const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
+           const emailadmin = ['hariharann2026@gmail.com'];
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -1738,11 +1738,8 @@ const handleRemovePoints = async () => {
                   <span>-₹{orderSummary.discount.toFixed(2)}</span>
                 </div>
               )}
-          
-          
                 {/* Loyalty Points Section */}
-                
-  {/* {loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
+  {loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
   <div className="border rounded-lg p-3 mb-3 bg-blue-50">
     <div className="flex justify-between items-center">
       <div>
@@ -1759,6 +1756,7 @@ const handleRemovePoints = async () => {
           Use Points
         </button>
       )}
+   
       {pointsApplied && (
         <button
           onClick={handleRemovePoints}
@@ -1768,8 +1766,7 @@ const handleRemovePoints = async () => {
         </button>
       )}
     </div>
-
-  
+    {/* ✅ Input box — 5% exceed ஆனா காட்டும் */}
     {showPointsInput && !pointsApplied && (
       <div className="mt-3 bg-white rounded-lg p-3 border border-blue-200">
         <p className="text-xs text-gray-500 mb-2">
@@ -1820,11 +1817,12 @@ const handleRemovePoints = async () => {
         ✅ ₹{loyaltyDiscount.toFixed(2)} discount applied!
       </p>
     )}
+    
   </div>
   
-)} */}
+)}
 
-
+  <h6>Download the BEA Truco App for more rewards.<span className="text-blue-500"><a  href={"https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"}>click here</a></span></h6>
               {/* Subtotal */}
               <div className="flex justify-between text-gray-800 font-semibold  pt-2 mt-2">
                 <span>Subtotal:</span>
