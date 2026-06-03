@@ -1,7 +1,12 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 export default function WhatsAppFloat() {
+  const pathname = usePathname();
   const whatsappUrl = "https://wa.me/919585685500?text=hello";
+
+  if (pathname !== "/") return null;
 
   return (
     <a
