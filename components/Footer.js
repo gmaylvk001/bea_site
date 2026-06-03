@@ -11,7 +11,14 @@ import { MdAccountCircle } from "react-icons/md";
 import { FaShoppingBag } from "react-icons/fa";
 import { IoLogOut } from "react-icons/io5";
 import OurLocations from '@/components/OurLocations';
-
+import {
+  Tv,
+  Laptop,
+  Smartphone,
+  WashingMachine,
+  Refrigerator,
+  MapPin,
+} from "lucide-react";
 const Footer = () => {
   const [categories, setCategories] = useState([]);
   const [groupedCategories, setGroupedCategories] = useState({ main: [], subs: {} });
@@ -115,6 +122,14 @@ const Footer = () => {
   fetchStores();
 }, []);
 
+const categoryIcons = {
+  "TELEVISIONS": Tv,
+  "COMPUTERS & LAPTOPS": Laptop,
+  "MOBILES & ACCESSORIES": Smartphone,
+  "LARGE APPLIANCES": Refrigerator,
+  "SMALL APPLIANCES": WashingMachine,
+  "OUR LOCATION": MapPin,
+};
 
   const checkAuthStatus = async () => {
     try {
@@ -551,42 +566,48 @@ const capitalizeFirstLetter = (str) =>
 
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 text-sm">
 
-                {groupedCategories.main.slice(0, 5).map((main) => (
-                  <div
-                    key={main._id}
-                    className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0"
-                  >
-                    <h4 className="font-semibold uppercase mb-4 break-words">
-                      {main.category_name}
-                    </h4>
+                {groupedCategories.main.slice(0, 5).map((main) => {
+  const Icon =
+    categoryIcons[main.category_name?.toUpperCase()] || MapPin;
 
-                    <ul className="space-y-2 text-gray-300 text-sm">
-                      {(groupedCategories.subs[main._id] || [])
-                        .slice(0, 5)
-                        .map((sub) => (
-                          <li
-                            key={sub._id}
-                            className="whitespace-nowrap overflow-hidden text-ellipsis"
-                          >
-                            <Link
-                              href={`/category/${main.category_slug}/${sub.category_slug}`}
-                            >
-                              {sub.category_name}
-                            </Link>
-                          </li>
-                        ))}
+  return (
+    <div
+      key={main._id}
+      className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0"
+    >
+      <h4 className="flex items-center gap-2 font-semibold uppercase mb-4 whitespace-nowrap overflow-hidden text-ellipsis">
+        <Icon size={18} className="shrink-0" />
+        <span className="text-[13px]">{main.category_name}</span>
+      </h4>
 
-                      <li className="whitespace-nowrap">
-                        <Link
-                          href={`/category/${main.category_slug}`}
-                          className="text-blue-300"
-                        >
-                          View All →
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                ))}
+      <ul className="space-y-2 text-gray-300 text-sm">
+        {(groupedCategories.subs[main._id] || [])
+          .slice(0, 5)
+          .map((sub) => (
+            <li
+              key={sub._id}
+              className="whitespace-nowrap overflow-hidden text-ellipsis"
+            >
+              <Link
+                href={`/category/${main.category_slug}/${sub.category_slug}`}
+              >
+                {sub.category_name}
+              </Link>
+            </li>
+          ))}
+
+        <li className="whitespace-nowrap">
+          <Link
+            href={`/category/${main.category_slug}`}
+            className="text-blue-300"
+          >
+            View All →
+          </Link>
+        </li>
+      </ul>
+    </div>
+  );
+})}
 
                 {/* Top Brands */}
                 <div className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0">
