@@ -2,7 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "@/app/ClientLayout";
 import Script from "next/script";
-// import HomeOnlyScripts from "@/app/HomeOnlyScripts";
+import HomeOnlyScripts from "@/app/HomeOnlyScripts";
 import WhatsAppFloat from "@/app/WhatsappFloat";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -105,6 +105,7 @@ export default function RootLayout({ children }) {
 
 
         <ClientLayout>{children}</ClientLayout>
+        <HomeOnlyScripts/>
        <WhatsAppFloat/>   
       </body>
     </html>

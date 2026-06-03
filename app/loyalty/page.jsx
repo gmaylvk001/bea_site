@@ -90,10 +90,10 @@ export default function LoyaltyPage() {
         className="w-full relative min-h-[520px] flex items-center"
         style={{ backgroundImage: "url('/loyalty/banner1.png')", backgroundSize: "cover", backgroundPosition: "center" }}
       >
-        <div className="absolute inset-0 bg-[#0B1D3F]/50 hidden md:block" />
+        <div className="absolute inset-0 bg-[#0B1D3F]/50 hidden lg:block" />
         <div className="absolute inset-0 bg-[#0B1D3F] block md:hidden" />
 
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center gap-10">
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-12 flex flex-col lg:flex-row items-center gap-10">
 
           {/* LEFT */}
           <div className="flex-1 text-white">
@@ -118,7 +118,7 @@ export default function LoyaltyPage() {
               </svg>
             </button>
             <div className="flex flex-wrap gap-5 mt-8">
-              {[{ icon: "🚫", label: "No Registration Fee" }, { icon: "💳", label: "No Physical Card" }, { icon: "🪙", label: "1 Point = ₹1 Value" }].map((b, i) => (
+              {[{ icon: "🚫", label: "No Registration Fee" }, { icon: "💳", label: "No Physical Card" }, { icon: "🥇", label: "1 Point = ₹1 Value" }].map((b, i) => (
                 <div key={i} className="flex items-center gap-2 text-white/80 text-xs">
                   <span>{b.icon}</span><span>{b.label}</span>
                 </div>
@@ -127,7 +127,7 @@ export default function LoyaltyPage() {
           </div>
 
           {/* RIGHT — Balance Check Form */}
-          <div className="w-full md:w-[340px] flex-shrink-0">
+          <div className="w-full lg:w-[340px] flex-shrink-0">
             <div className="bg-[#0B1D3F]/90 backdrop-blur-sm border border-white/10 rounded-2xl p-6 shadow-2xl">
               <h3 className="text-white font-black text-lg mb-1">Already a BEA Member?</h3>
               <p className="text-white/60 text-xs mb-4">Enter your mobile number to check your rewards balance.</p>
@@ -146,7 +146,7 @@ export default function LoyaltyPage() {
                   <button
                     onClick={handleCheckPoints}
                     disabled={checkLoading || checkPhone.length < 10}
-                    className="bg-[#F0F4FA] text-[#1a2236] px-4 text-sm font-bold hover:bg-[#E8EDF5] transition disabled:text-[#94A3B8]"
+                    className="bg-[#1D4ED8] text-white px-4 text-sm font-bold hover:bg-[#1a44c4] transition disabled:bg-[#94A3B8] disabled:text-white"
                   >
                     {checkLoading ? <div className="w-4 h-4 border-2 border-[#94A3B8] border-t-[#1D4ED8] rounded-full animate-spin" /> : "Check"}
                   </button>
@@ -220,10 +220,10 @@ export default function LoyaltyPage() {
         <div className="max-w-5xl mx-auto">
           <div className="relative rounded-2xl overflow-hidden">
             <img src="/loyalty/banner2.png" alt="Download BEA TRUCO App" className="w-full h-auto block" />
-            <div className="absolute flex items-center justify-center" style={{ top: "12%", right: "3.5%", width: "15%", height: "70%" }}>
+            <div className="absolute  flex  items-center justify-center" style={{ top: "12.5%", right: "6%", width: "15%", height: "70%" }}>
               <img src="/loyalty/loyaltyQR.jpeg" alt="Scan QR" className="w-full h-full object-contain" />
             </div>
-            <div className="absolute flex gap-2 items-center" style={{ bottom: "27%", left: "10%" }}>
+            <div className="absolute hidden md:flex gap-2 items-center" style={{ bottom: "27%", left: "10%" }}>
               <a href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">
                 <img src="/loyalty/playstore.jpg" alt="Google Play" className="h-8 w-auto rounded object-contain" />
               </a>
