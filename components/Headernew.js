@@ -10,10 +10,9 @@ import { useWishlist } from "@/context/WishlistContext";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
-import 'swiper/css/scrollbar';
 import { useRouter } from 'next/navigation';
 import { Play } from "lucide-react";
-import { Navigation, Scrollbar } from 'swiper/modules';
+import { Navigation } from 'swiper/modules';
 import { useHeaderdetails } from "@/context/HeaderContext"; 
 import { getProducts } from '@/lib/productApi';
 
@@ -2148,18 +2147,17 @@ const Header = () => {
 {hoveredCategory && hoveredCategory.subcategories?.length > 0 && (
 <div
   ref={dropdownRef}
-  className="fixed z-50 bg-white shadow-2xl border border-gray-200 overflow-hidden"
+  className="fixed z-50 bg-white shadow-2xl border border-gray-200"
   style={{
     top: `${dropdownTop}px`,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: 'fit-content',
-    maxWidth: '95vw',
+    left: 0,
+    right: 0,
+    width: '100%',
   }}
   onMouseEnter={cancelHide}
   onMouseLeave={() => startHide(120)}
 >
-  <div className="flex" style={{ alignItems: 'flex-start', minHeight: '420px' }}>
+<div className="mx-auto flex" style={{ width: 'fit-content', maxWidth: '100%', alignItems: 'stretch', minHeight: '200px', maxHeight: '370px' }}>
            
       {/* COLUMN 1: Left sidebar - subcategory list */}
       <div className="w-[220px] flex-shrink-0 bg-white border-r border-gray-100 flex flex-col overflow-hidden">
@@ -2220,65 +2218,42 @@ const Header = () => {
       </div>
 
       {/* COLUMN 2+: ALL subcategories shown at once as columns */}
-<div className="flex-1 flex overflow-hidden" style={{ minWidth: 0, width: '860px', maxWidth: 'calc(95vw - 220px)' }}>
-  <div className="flex-1 p-5 overflow-hidden">
-<Swiper
-  modules={hoveredCategory.subcategories.length > 4 ? [Scrollbar] : []}
-  spaceBetween={24}
-  slidesPerView={4}
-breakpoints={{
-  0: { slidesPerView: 2 },
-  600: { slidesPerView: 3 },
-  900: { slidesPerView: 4 },
-}}
-  watchOverflow={true}
-  grabCursor={hoveredCategory.subcategories.length > 4}
-  allowTouchMove={hoveredCategory.subcategories.length > 4}
-  scrollbar={hoveredCategory.subcategories.length > 4 ? { draggable: true } : false}
-  style={{ width: '100%', paddingBottom: hoveredCategory.subcategories.length > 4 ? '20px' : '8px' }}
->
-
-  {[...hoveredCategory.subcategories]
-    .sort((a, b) => alphaSortString(a.category_name, b.category_name))
-    .map((sub) => (
-           <SwiperSlide key={sub._id}>
-             <div>
-          <Link
-            href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
-            onClick={() => setHoveredCategory(null)}
-            className="block text-sm font-bold text-blue-700 mb-2 pb-1 border-b border-gray-100 hover:text-blue-900 uppercase tracking-wide"
-          >
-            {sub.category_name}
-          </Link>
-          {sub.subcategories?.length > 0 && (
-            <div
-              className="flex flex-col gap-0.5"
-              style={{
-                maxHeight: '180px',
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#2453D3 #f1f1f1',
-              }}
-            >
-              {[...sub.subcategories]
-                .sort((a, b) => alphaSortString(a.category_name, b.category_name))
-                .map((child) => (
+      <div className="flex-1 flex overflow-hidden" style={{ minWidth: 0 }}>
+        <div className="flex-1 p-5 overflow-y-auto">
+          <div className="flex gap-8 flex-wrap">
+            {[...hoveredCategory.subcategories]
+              .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+              .map((sub) => (
+                <div key={sub._id} className="min-w-[160px]">
+                  {/* Subcategory heading */}
                   <Link
-                    key={child._id}
-                    href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}/${child.category_slug}`}
+                    href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
                     onClick={() => setHoveredCategory(null)}
-                    className="text-sm text-gray-600 hover:text-blue-600 py-1 px-2 rounded hover:bg-blue-50 transition-colors"
+                    className="block text-sm font-bold text-blue-700 mb-2 pb-1 border-b border-gray-100 hover:text-blue-900 uppercase tracking-wide"
                   >
-                    {child.category_name}
+                    {sub.category_name}
                   </Link>
-                ))}
-            </div>
-          )}
-        </div>
-      </SwiperSlide>
-    ))}
-</Swiper>
+
+                  {/* ALL children - no slice limit */}
+                  {sub.subcategories?.length > 0 && (
+                    <div className="flex flex-col gap-0.5">
+                      {[...sub.subcategories]
+                        .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                        .map((child) => (
+                          <Link
+                            key={child._id}
+                            href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}/${child.category_slug}`}
+                            onClick={() => setHoveredCategory(null)}
+                            className="text-sm text-gray-600 hover:text-blue-600 py-1 px-2 rounded hover:bg-blue-50 transition-colors"
+                          >
+                            {child.category_name}
+                          </Link>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
 
           {/* Brands section */}
           {hoveredCategory.brands?.length > 0 && (
@@ -2286,18 +2261,7 @@ breakpoints={{
               <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
                 Top Brands
               </h4>
-                <div 
-style={{
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gridAutoFlow: 'row',
-  gap: '6px',
-  maxHeight: '180px',
-  overflowY: 'auto',
-  scrollbarWidth: 'thin',
-  scrollbarColor: '#2453D3 #f1f1f1',
-}}
-               >
+              <div className="flex flex-wrap gap-3">
                 {[...hoveredCategory.brands]
                   .sort((a, b) => alphaSortString(a.brand_name, b.brand_name))
                   .slice(0, 8)
