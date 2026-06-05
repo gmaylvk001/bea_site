@@ -263,9 +263,8 @@ export default function LoyaltyPage() {
       {!loading && isLoggedIn && points !== null && (
         <section className="py-10 px-4 bg-[#F0F4FA]">
           <div className="max-w-4xl mx-auto">
-            <div className="rounded-[18px] px-7 py-6" style={{ background: "#0B1D3F" }}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-[#94A3B8] text-xs font-semibold tracking-wide">
+            <div className="rounded-[18px] px-7 py-6 sm:pr-7 pr-4" style={{ background: "#0B1D3F" }}>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">                <div className="flex items-center gap-2 text-[#94A3B8] text-xs font-semibold tracking-wide">
                   <span className="text-[#FBBF24] text-base leading-none">★</span>
                   Your BEA Rewards Wallet
                 </div>
@@ -279,10 +278,10 @@ export default function LoyaltyPage() {
               <h3 className="text-[22px] font-black text-white mb-5 tracking-tight">
                 Welcome back, <span className="text-[#FBBF24]">{customerName}!</span>
               </h3>
-              <div className="flex flex-col sm:flex-row items-stretch gap-4">
-                <div className="flex gap-3 flex-1">
-                  {/* Available Points */}
-                  <div className="flex-1 rounded-[12px] px-[18px] py-4 flex items-center justify-between" style={{ background: "#0D2150" }}>
+             <div className="flex flex-col sm:flex-row items-stretch gap-4">
+                   <div className="flex flex-col xs:flex-row gap-3 flex-1">
+                     {/* Available Points */}
+               <div className="flex-1 rounded-[12px] px-[18px] py-4 flex items-center justify-between" style={{ background: "#0D2150" }}>
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748B] mb-1">Available Points</p>
                       <p className="text-[28px] font-black text-white leading-none flex items-baseline gap-1">
@@ -310,8 +309,7 @@ export default function LoyaltyPage() {
                   </div>
                 </div>
                 {/* Right col — below on mobile, right on desktop */}
-                <div className="flex flex-row sm:flex-col justify-between sm:justify-center gap-4 sm:pl-3 sm:min-w-[160px] pt-1 sm:pt-0">
-                  <div>
+               <div className="flex flex-row sm:flex-col justify-between sm:justify-center gap-4 sm:pl-3 sm:min-w-[160px] pt-1 sm:pt-0 border-t border-white/10 sm:border-t-0 sm:border-l sm:border-white/10 sm:pl-4">
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748B] mb-1">Membership ID</p>
                     <p className="text-[15px] font-bold text-white tracking-wider">
                       {customerPhone ? customerPhone.replace(/(\d{5})(\d{5})/, "$1 $2") : "—"}
@@ -327,7 +325,6 @@ export default function LoyaltyPage() {
                 </div>
               </div>
             </div>
-          </div>
         </section>
       )}
 
