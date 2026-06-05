@@ -1162,8 +1162,8 @@ const handleRemovePoints = async () => {
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-           const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
-          //  const emailadmin = ['hariharann2026@gmail.com'];
+          //  const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
+            const emailadmin = ['hariharann2026@gmail.com'];
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -1739,7 +1739,7 @@ const handleRemovePoints = async () => {
                 </div>
               )}
                 {/* Loyalty Points Section */}
-  {loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
+{loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
   <div className="border rounded-lg p-3 mb-3 bg-blue-50">
     <div className="flex justify-between items-center">
       <div>
@@ -1748,26 +1748,36 @@ const handleRemovePoints = async () => {
           {loyaltyBalance} pts ≈ ₹{loyaltyBalance.toFixed(2)}
         </p>
       </div>
-      {!pointsApplied && !showPointsInput && (
-        <button
-          onClick={handleUseAllPoints}
-          className="bg-[#2453D3] text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
-        >
-          Use Points
-        </button>
-      )}
-   
-      {pointsApplied && (
-        <button
-          onClick={handleRemovePoints}
-          className="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-600 transition"
-        >
-          Remove
-        </button>
+
+      {/* ✅ 10k+ இருந்தா button, இல்லன்னா message */}
+      {orderSummary.total >= 10000 ? (
+        <>
+          {!pointsApplied && !showPointsInput && (
+            <button
+              onClick={handleUseAllPoints}
+              className="bg-[#2453D3] text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+            >
+              Use Points
+            </button>
+          )}
+          {pointsApplied && (
+            <button
+              onClick={handleRemovePoints}
+              className="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-600 transition"
+            >
+              Remove
+            </button>
+          )}
+        </>
+      ) : (
+        <span className="text-xs text-orange-500 font-medium">
+          Min ₹10,000 order required
+        </span>
       )}
     </div>
-    {/* ✅ Input box — 5% exceed ஆனா காட்டும் */}
-    {showPointsInput && !pointsApplied && (
+
+    {/* Input box — 5% */}
+    {orderSummary.total >= 10000 && showPointsInput && !pointsApplied && (
       <div className="mt-3 bg-white rounded-lg p-3 border border-blue-200">
         <p className="text-xs text-gray-500 mb-2">
           Max <span className="font-semibold text-[#2453D3]">{maxUsablePoints} pts</span> use (₹{maxUsablePoints})
@@ -1817,11 +1827,8 @@ const handleRemovePoints = async () => {
         ✅ ₹{loyaltyDiscount.toFixed(2)} discount applied!
       </p>
     )}
-    
   </div>
-  
 )}
-
   <h6>Download the BEA Truco App for more rewards.<span className="text-blue-500"><a  href={"https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"}>click here</a></span></h6>
               {/* Subtotal */}
               <div className="flex justify-between text-gray-800 font-semibold  pt-2 mt-2">
