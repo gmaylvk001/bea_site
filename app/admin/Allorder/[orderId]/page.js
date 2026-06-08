@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
-import { FaPhoneAlt, FaStore } from "react-icons/fa";
+import { FaPhoneAlt, FaStore, FaCommentDots  } from "react-icons/fa";
 import { MdDateRange } from "react-icons/md";
 import { IoWalletSharp } from "react-icons/io5";
 import { IoMdMail } from "react-icons/io";
@@ -209,12 +209,21 @@ const OrderDetails = () => {
                 </td>
 
               </tr>
-              <tr>
+              <tr className={order.customer_comments?.trim() ? "border-b" : ""}>
                 <td className="p-2 flex items-center gap-2 font-semibold text-gray-700">
                   <IoMdMail className="bg-red-500 text-white p-1 rounded-md w-6 h-6" />
                   email:</td>
                 <td className="p-2">{order.email_address}</td>
               </tr>
+              {order.customer_comments?.trim() && (
+                <tr className="border-b">
+                  <td className="p-2 flex items-center gap-2 font-semibold text-gray-700">
+                    <FaCommentDots className="bg-red-500 text-white p-1 rounded-md w-6 h-6" />
+                    Comments:
+                  </td>
+                  <td className="p-2">{order.customer_comments}</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

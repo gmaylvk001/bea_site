@@ -55,6 +55,11 @@ const OrderSchema = new mongoose.Schema(
   }],
    order_amount:{ type: String, required: true},
   order_deliveryaddress:{ type: String},
+  customer_comments: {
+  type: String,
+  default: "",
+},
+
   payment_method:{ type: String},
   payment_type:{ type: String},
   delivery_type: { 
