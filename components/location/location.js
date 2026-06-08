@@ -44,8 +44,9 @@ const [branches, setBranches] = useState([]);
   key={branch._id || idx}
   className="border border-blue-300 rounded-lg shadow-sm p-4 hover:shadow-md transition"
 >
+  {/* <h2 className="text-md font-semibold text-gray-800 mb-2">{branch.title}</h2> */}
   <h2 className="text-md font-semibold text-gray-800 mb-2">
-    {branch.title}
+    {branch.organisation_name}
   </h2>
   {/* <p className="text-sm text-gray-700 mb-1">{branch.address}</p> */}
   <p className="text-sm text-gray-700 mb-1">
@@ -80,7 +81,10 @@ const [branches, setBranches] = useState([]);
   {/* Google Maps Embed */}
   <div className="mt-3">
     <iframe
-      src={`https://www.google.com/maps?q=${encodeURIComponent(branch.address)}&output=embed`}
+      // src={`https://www.google.com/maps?q=${encodeURIComponent(branch.address)}&output=embed`}
+      src={`https://www.google.com/maps?q=${encodeURIComponent(
+  `${branch.organisation_name} ${branch.website}`
+)}&output=embed`}
       width="100%"
       height="200"
       style={{ border: 0 }}
