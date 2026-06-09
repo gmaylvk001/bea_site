@@ -101,6 +101,10 @@ const items = order_new_vk.order_details.map(item => ({
   const DocDate = order_new_vk.created_at_formatted;
   const DocDueDate = order_new_vk.created_at_formatted;
 
+  const fullAddress = address_new_vk.landmark
+  ? `${address_new_vk.address}, ${address_new_vk.landmark}`
+  : address_new_vk.address;
+
   // API Payload (Converted)
   const data = {
     data: {
@@ -117,11 +121,11 @@ const items = order_new_vk.order_details.map(item => ({
       FreightCode: "Free Shipping - Free",
       FreightCharges: 0,
       PaymentRef: payment_ref,
-      ShipToStreetAddress: address_new_vk.address,
+      ShipToStreetAddress: fullAddress,
       ShipToZipCode: address_new_vk.postCode,
       ShipToCity: address_new_vk.city,
       ShipToState: formatState(address_new_vk.state),
-      BillToStreetAddress: address_new_vk.address,
+      BillToStreetAddress: fullAddress,
       BillToZipCode: address_new_vk.postCode,
       BillToCity: address_new_vk.city,
       BillToState: formatState(address_new_vk.state),
