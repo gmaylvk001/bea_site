@@ -18,6 +18,7 @@ export async function POST(req) {
       order_item,
       order_amount,
       order_deliveryaddress,
+      customer_comments, // IMPORTANT
       payment_method,
       payment_type,
       order_status,
@@ -42,6 +43,7 @@ export async function POST(req) {
       order_item,
       order_amount,
       order_deliveryaddress,
+      customer_comments, // IMPORTANT
       payment_method,
       payment_type,
       delivery_type,

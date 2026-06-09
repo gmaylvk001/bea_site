@@ -940,7 +940,11 @@ const Header = () => {
         const sortedSubs = [...(cat.subcategories || [])]
      .sort((a, b) => alphaSortString(a.category_name, b.category_name));
 <<<<<<< HEAD
+<<<<<<< HEAD
       setActiveSubCategory(null);
+=======
+      setActiveSubCategory(sortedSubs[0] || null);
+>>>>>>> 9ce3c7027013917886358bb107b01d712ad56ae8
 =======
       setActiveSubCategory(sortedSubs[0] || null);
 >>>>>>> 9ce3c7027013917886358bb107b01d712ad56ae8
@@ -2142,6 +2146,7 @@ const Header = () => {
   </Link>
 </SwiperSlide>
 <<<<<<< HEAD
+<<<<<<< HEAD
  </Swiper>
   </div>
        </div>
@@ -2568,6 +2573,10 @@ const Header = () => {
 =======
                             </Swiper>
 
+=======
+                            </Swiper>
+
+>>>>>>> 9ce3c7027013917886358bb107b01d712ad56ae8
       </div>
            </div>
                 </div>
@@ -2757,6 +2766,9 @@ const Header = () => {
     </div>
   </div>
 )}   
+<<<<<<< HEAD
+>>>>>>> 9ce3c7027013917886358bb107b01d712ad56ae8
+=======
 >>>>>>> 9ce3c7027013917886358bb107b01d712ad56ae8
             </div>
         </header>

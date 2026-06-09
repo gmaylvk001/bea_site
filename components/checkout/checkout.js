@@ -801,7 +801,7 @@ const handleRemovePoints = async () => {
         ? [
           useraddress[selectedAddress].address,
           useraddress[selectedAddress].landmark,
-          useraddress[selectedAddress].additionalInfo,
+          // useraddress[selectedAddress].additionalInfo,
           useraddress[selectedAddress].businessName,
           useraddress[selectedAddress].city,
           useraddress[selectedAddress].state,
@@ -811,13 +811,20 @@ const handleRemovePoints = async () => {
         : [
           addressData.address,
           addressData.landmark,
-          addressData.additionalInfo,
+          // addressData.additionalInfo,
           addressData.businessName,
           addressData.city,
           addressData.state,
           addressData.country,
           addressData.postCode
         ].filter(Boolean).join(", ");
+        
+        const comments =
+  useSavedAddress && selectedAddress !== null
+    ? (useraddress[selectedAddress]?.additionalInfo || "")
+    : (addressData.additionalInfo || "");
+
+console.log("comments:", comments);
 
       let order_number ="ORD" + Date.now();
       let paymentId = "";
@@ -849,6 +856,8 @@ const handleRemovePoints = async () => {
            })),
               order_amount: totalAmount,
               order_deliveryaddress: deliveryAddress,
+              // COMMENT SAVE
+              customer_comments: comments,
               payment_method: paymentMethod,
               payment_type:  "online",
               order_status: order_status,
@@ -981,6 +990,8 @@ const handleRemovePoints = async () => {
           })),
           order_amount: totalAmount,
           order_deliveryaddress: deliveryAddress,
+          // COMMENT SAVE
+          customer_comments: comments,
           payment_method: paymentMethod,
           payment_type: paymentMode,
           order_status: "pending",
@@ -1163,7 +1174,7 @@ const handleRemovePoints = async () => {
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
            const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
-            // const emailadmin = [''];
+            // const emailadmin = ['sorambeeviuit@gmail.com'];
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -1575,7 +1586,7 @@ const handleRemovePoints = async () => {
                 {/* Additional Info Section */}
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Additional Information
+                    Comments(Optional)
                   </h3>
                   <textarea
                     name="additionalInfo"
