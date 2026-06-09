@@ -153,7 +153,7 @@ if (iconFile && typeof iconFile !== "string" && iconFile.name && iconFile.size >
             CategoryFilter.create({
               filter_id: filterId,
               category_id: _id
-            })
+            })  
           );
           await Promise.all(filterPromises);
           console.log(`Updated ${filterIds.length} filters for category ${_id}`);

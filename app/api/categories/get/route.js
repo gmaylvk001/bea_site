@@ -75,10 +75,11 @@ export async function GET() {
           brands,
         }; */
 
+         
         // fetch all descendant IDs (including itself)
         const categoryIds = await getDescendantCategoryIds(cat._id);
 
-        // fetch products within these categories
+        // fetch products within these categories 
 
         const brandIds = await Product.distinct("brand", {
           category: { $in: categoryIds },
