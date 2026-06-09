@@ -209,6 +209,22 @@ export async function POST(req) {
       }
     }
 
+    // Handle icon image upload
+let icon_url = "";
+const iconFile = formData.get("icon_image");
+if (iconFile && typeof iconFile !== "string" && iconFile.name && iconFile.size > 0) {
+  try {
+    const bytes = await iconFile.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const uploadDir = path.join(process.cwd(), "public/uploads/categories");
+    const filename = `${Date.now()}-icon-${iconFile.name}`;
+    await writeFile(path.join(uploadDir, filename), buffer);
+    icon_url = `/uploads/categories/${filename}`;
+  } catch (fileError) {
+    console.error("Error processing icon image file:", fileError);
+  }
+}
+
     // ✅ Create category with content field
     const newCategory = new Category({
       category_name,
@@ -224,6 +240,7 @@ export async function POST(req) {
       content, // ✅ Add content field here
       image: image_url,
       navImage: nav_image_url,
+      icon_url: icon_url,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

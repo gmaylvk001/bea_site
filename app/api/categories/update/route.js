@@ -34,6 +34,8 @@ export async function PUT(req) {
     const existingImage = formData.get("existingImage")?.replace(/^https?:\/\/[^/]+/, "") || null;
      const navFile = formData.get("navImage");
      const existingNavImage = formData.get("existingNavImage")?.replace(/^https?:\/\/[^/]+/, "") || null;
+     const iconFile = formData.get("icon_image");
+    const existingIconImage = formData.get("existingIconImage") || null;
     const selectedFilters = formData.get("selectedFilters"); // Get selected filters
 
     if (!_id || !category_name) {
@@ -119,7 +121,23 @@ export async function PUT(req) {
       nav_image_url = `/uploads/categories/${fileName}`;
       console.log('nav_image_url:',nav_image_url);
     }
-
+       // Handle icon image upload/update
+let icon_url = existingIconImage;
+if (iconFile && typeof iconFile !== "string" && iconFile.name && iconFile.size > 0) {
+  if (existingIconImage) {
+    try {
+      const oldIconPath = path.join(process.cwd(), "public", existingIconImage);
+      await unlink(oldIconPath);
+    } catch (err) {
+      console.error("Error deleting old icon image:", err);
+    }
+  }
+  const buffer = Buffer.from(await iconFile.arrayBuffer());
+  const uploadDir = path.join(process.cwd(), "public/uploads/categories");
+  const fileName = `category_icon_${Date.now()}${path.extname(iconFile.name)}`;
+  await writeFile(path.join(uploadDir, fileName), buffer);
+  icon_url = `/uploads/categories/${fileName}`;
+}
     // UPDATE FILTERS LOGIC - Same as product filters
     let filterIds = [];
     if (selectedFilters) {
@@ -166,6 +184,7 @@ export async function PUT(req) {
         content, // ✅ Add content field here
         image: image_url,
         navImage: nav_image_url,
+        icon_url: icon_url,
         updatedAt: new Date(),
       },
       { new: true }

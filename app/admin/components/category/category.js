@@ -43,7 +43,8 @@ export default function CategoryComponent() {
     image: null,
     navImage: null,
     selectedFilters: [],
-    content: "", // Add this line
+    content: "", 
+    icon_image: null,
   });
   const [categoryToUpdate, setCategoryToUpdate] = useState({
     _id: "",
@@ -59,8 +60,10 @@ export default function CategoryComponent() {
     existingNavImage: null,
     selectedFilters: [],
     existingFilters: [],
-    content: "", // Add this line
-    existingContent: "", // Add this line
+    content: "", 
+    existingContent: "", 
+    icon_image: null,
+    existingIconImage: null,
   });
   const [errorMessage, setErrorMessage] = useState("");
   const [dateFilter, setDateFilter] = useState({
@@ -226,8 +229,9 @@ export default function CategoryComponent() {
         existingNavImage: category.navImage?.replace(/^https?:\/\/[^/]+/, "") || null,
         selectedFilters: [], // Initialize as empty
         existingFilters: [],
-        content: category.content || "", // Add this line
-        existingContent: category.content || "", // Add this line
+        content: category.content || "", 
+        existingContent: category.content || "", 
+        existingIconImage: category.icon_url || null,
       });
 
       setIsUpdateModalOpen(true);
@@ -361,6 +365,7 @@ export default function CategoryComponent() {
     formData.append("meta_title", newCategory.meta_title);
     formData.append("meta_description", newCategory.meta_description);
     formData.append("meta_keyword", newCategory.meta_keyword);
+    formData.append("icon_image", newCategory.icon_image);
 
     // Send selected filters as JSON string
     formData.append(
@@ -514,6 +519,10 @@ export default function CategoryComponent() {
     formData.append("meta_title", categoryToUpdate.meta_title);
     formData.append("meta_description", categoryToUpdate.meta_description);
     formData.append("meta_keyword", categoryToUpdate.meta_keyword);
+    if (categoryToUpdate.icon_image instanceof File) {
+    formData.append("icon_image", categoryToUpdate.icon_image);
+   }
+   formData.append("existingIconImage", categoryToUpdate.existingIconImage || "");
 
     // Send selected filters as JSON string
     formData.append(
@@ -1429,7 +1438,24 @@ export default function CategoryComponent() {
                     placeholder="Enter category description or content..."
                   />
                 </div>
-
+                     <div>
+       <label className="block mb-1 text-sm font-semibold text-gray-700">
+    Icon Image (optional)
+  </label>
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) => {
+      const file = e.target.files[0];
+      if (file) setNewCategory((prev) => ({ ...prev, icon_image: file }));
+    }}
+    className="block w-full text-sm text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+  />
+  {newCategory.icon_image && (
+    <img src={URL.createObjectURL(newCategory.icon_image)} className="mt-2 h-10 w-10 object-contain rounded" />
+  )}
+</div> 
+      
                 <div>
                   <label
                     htmlFor="status"
@@ -1795,6 +1821,28 @@ export default function CategoryComponent() {
                     placeholder="Enter category description or content..."
                   />
                 </div>
+     <div>
+  <label className="block mb-1 text-sm font-semibold text-gray-700">
+    Icon Image (optional)
+  </label>
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) => {
+      const file = e.target.files[0];
+      if (file) setCategoryToUpdate((prev) => ({ ...prev, icon_image: file }));
+    }}
+    className="block w-full text-sm text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+  />
+  {(categoryToUpdate.existingIconImage || categoryToUpdate.icon_image) && (
+    <img
+      src={categoryToUpdate.icon_image instanceof File
+        ? URL.createObjectURL(categoryToUpdate.icon_image)
+        : categoryToUpdate.existingIconImage}
+      className="mt-2 h-10 w-10 object-contain rounded"
+    />
+  )}
+</div>
 
                 {/* Status */}
                 <div>

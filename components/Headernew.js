@@ -10,9 +10,9 @@ import { useWishlist } from "@/context/WishlistContext";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import 'swiper/css/scrollbar';
 import { useRouter } from 'next/navigation';
-import { Play } from "lucide-react";
-import { Navigation } from 'swiper/modules';
+import { Navigation, Scrollbar } from 'swiper/modules';
 import { useHeaderdetails } from "@/context/HeaderContext"; 
 import { getProducts } from '@/lib/productApi';
 
@@ -24,76 +24,18 @@ const alphaSortString = (a, b) => {
   return sa.localeCompare(sb, undefined, { sensitivity: 'base' });
 };
 
-// ADD: prepareFlatListAlpha - level-aware alphabetical ordering
-const prepareFlatListAlpha = (flatList = []) => {
-  const list = Array.isArray(flatList) ? flatList.filter(Boolean) : [];
 
-  // Split into categories vs brands
-  const brandsHeader = list.find((i) => i.type === 'brands-header');
-  const brands = list.filter((i) => i.type === 'brand');
-  const categories = list.filter((i) => i.type !== 'brand' && i.type !== 'brands-header');
-
-  // Headers are top-level categories (level 0)
-  const headers = categories.filter((i) => Number(i.level) === 0);
-
-  // Group by rootCategory (slug of the top-level)
-  const byRoot = new Map();
-  categories.forEach((item) => {
-    const root = item.rootCategory || item.category_slug || '';
-    if (!byRoot.has(root)) byRoot.set(root, []);
-    byRoot.get(root).push(item);
-  });
-
-  const result = [];
-
-  // Sort headers A-Z and then their children by (level asc, name A-Z)
-  headers
-    .sort((a, b) => alphaSortString(a.category_name, b.category_name))
-    .forEach((header) => {
-      const root = header.rootCategory || header.category_slug || '';
-      const group = (byRoot.get(root) || []).filter((i) => i !== header);
-
-      group.sort((a, b) => {
-        const la = Number(a.level) || 0;
-        const lb = Number(b.level) || 0;
-        if (la !== lb) return la - lb;
-        return alphaSortString(a.category_name, b.category_name);
-      });
-
-      result.push(header, ...group);
-    });
-
-  // Append any leftover categories (edge cases)
-  const used = new Set(result.map((i) => i.uniqueKey || i._id));
-  const leftovers = categories.filter((i) => !used.has(i.uniqueKey || i._id));
-  if (leftovers.length) {
-    leftovers.sort((a, b) => {
-      const la = Number(a.level) || 0;
-      const lb = Number(b.level) || 0;
-      if (la !== lb) return la - lb;
-      return alphaSortString(a.category_name, b.category_name);
-    });
-    result.push(...leftovers);
-  }
-
-  // Brands section at the end
-  if (brandsHeader) result.push(brandsHeader);
-  if (brands.length) {
-    brands.sort((a, b) => alphaSortString(a.brand_name, b.brand_name));
-    result.push(...brands);
-  }
-
-  return result;
-};
 
 const Header = () => {
     const router = useRouter();
     // REMOVED: unused pathname
     // const pathname = usePathname();
     const [category, setCategory] = useState('All Category');
+    const [activeSubCategory, setActiveSubCategory] = useState(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { wishlistCount } = useWishlist();
     const { cartCount, updateCartCount } = useCart();
+    const [loyaltyPoints, setLoyaltyPoints] = useState(0);
 
     // ADD: Cross-tab cart sync helpers
     const CART_COUNT_KEY = 'cartCount';
@@ -368,7 +310,6 @@ const Header = () => {
           if (mounted) setWords(ensureWordsNotEmpty([]));
         }
       };
-
       useCachedOrFetch();
       return () => { mounted = false; };
     }, []);
@@ -567,6 +508,19 @@ const Header = () => {
                     setIsAdmin(false);
                 }
                 setUserData(data.user);
+                console.log("user data:", data.user);
+                console.log("phone:", data.phone);
+                
+                try {
+                const loyaltyRes = await fetch(`/api/award-points?phone=${data.phone || ''}`);
+              const loyaltyData = await loyaltyRes.json();
+             if (loyaltyData.success) {
+
+             setLoyaltyPoints(loyaltyData.points);
+              }
+             } catch (e) {
+            console.error('Loyalty fetch failed:', e);
+             }
             } else {
                 localStorage.removeItem('token');
                 setIsLoggedIn(false);
@@ -752,16 +706,6 @@ const Header = () => {
     const [loginData, setLoginData] = useState({ email: "", password: "" });
     const [registerData, setRegisterData] = useState({ name: "", email: "", mobile: "", password: "" });
 
-    // OTP / Guest flow state
-    const [showOtpFlow, setShowOtpFlow] = useState(false);
-    const [guestStep, setGuestStep] = useState(1);
-    const [guestMobile, setGuestMobile] = useState('');
-    const [guestOtp, setGuestOtp] = useState(['', '', '', '']);
-    const [guestError, setGuestError] = useState('');
-    const [resendTimer, setResendTimer] = useState(0);
-    const otpInputRefs = useRef([]);
-    const otpTimerRef = useRef(null);
-
     const handleAuthSubmit = async (e) => {
       e.preventDefault();
       setLoadingAuth(false);
@@ -895,157 +839,6 @@ const Header = () => {
         return;
       }
     };
-    // OTP / Guest handler functions
-    const startResendTimer = () => {
-      setResendTimer(30);
-      otpTimerRef.current = setInterval(() => {
-        setResendTimer((prev) => {
-          if (prev <= 1) { clearInterval(otpTimerRef.current); return 0; }
-          return prev - 1;
-        });
-      }, 1000);
-    };
-    /* const handleSendOtp = async () => {
-      alert("First_step=1");
-      setGuestError('');
-      const mobileRegex = /^[6-9]\d{9}$/;
-      if (!mobileRegex.test(guestMobile)) { setGuestError('Enter a valid 10-digit mobile number.'); return; }
-      setLoadingAuth(true);
-      try {
-        const res = await fetch('/api/auth/send-sms-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: guestMobile }) });
-        const data = await res.json();
-        if (!res.ok) { setGuestError(data.error || 'Failed to send OTP.'); return; }
-        setGuestStep(2);
-        startResendTimer();
-        setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
-      } catch { setGuestError('Failed to send OTP. Please try again.'); }
-      finally { setLoadingAuth(false); }
-    }; */
-
-    const handleSendOtp = async () => {
-      setGuestError('');
-
-      const mobileRegex = /^[6-9]\d{9}$/;
-      if (!mobileRegex.test(guestMobile)) {
-        setGuestError('Enter a valid 10-digit mobile number.');
-        return;
-      }
-
-      setLoadingAuth(true);
-
-      try {
-        const res = await fetch('/api/auth/send-sms-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mobile: guestMobile })
-        });
-        console.log("dsafasdf",res);
-        const data = await res.json();
-
-        if (!res.ok) {
-          setGuestError(data.error || 'Failed to send OTP.');
-          return;
-        }
-
-        setGuestStep(2);
-        startResendTimer();
-
-      } catch {
-        setGuestError('Failed to send OTP.');
-      } finally {
-        setLoadingAuth(false);
-      }
-    };
-    const handleOtpChange = (index, value) => {
-      if (!/^\d?$/.test(value)) return;
-      const updated = [...guestOtp]; updated[index] = value; setGuestOtp(updated);
-      if (value && index < 5) otpInputRefs.current[index + 1]?.focus();
-    };
-    const handleOtpKeyDown = (index, e) => {
-      if (e.key === 'Backspace' && !guestOtp[index] && index > 0) otpInputRefs.current[index - 1]?.focus();
-    };
-    const handleOtpPaste = (e) => {
-      const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
-      if (pasted.length === 4) { setGuestOtp(pasted.split('')); otpInputRefs.current[3]?.focus(); }
-    };
-    const handleVerifyOtp = async () => {
-      setGuestError('');
-      const otpValue = guestOtp.join('');
-      if (otpValue.length !== 4) { setGuestError('Enter the 4-digit OTP.'); return; }
-      setLoadingAuth(true);
-      /* try {
-        const res = await fetch('/api/auth/verify-sms-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: guestMobile, otp: otpValue }) });
-        const data = await res.json();
-        if (!res.ok) { setGuestError(data.error || 'Invalid OTP.'); return; }
-
-        // ✅ Step 2: Save Guest User in DB (ONLY MOBILE)
-        await fetch('/api/auth/register-guest', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mobile: guestMobile
-          }),
-        });
-        localStorage.setItem('token', data.token);
-        updateHeaderdetails({ user: data.user });
-        setIsLoggedIn(true);
-        setShowAuthModal(false);
-        location.reload();
-      } */ 
-     
-     try {
-  const res = await fetch('/api/auth/verify-sms-otp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mobile: guestMobile, otp: otpValue })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    setGuestError(data.error || 'Invalid OTP.');
-    return;
-  }
-  // ✅ Step 2: Register Guest (SAFE)
-  const guestRes = await fetch('/api/auth/register-guest', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mobile: guestMobile })
-  });
-  const guestData = await guestRes.json();
-  console.log("data_check:",guestData);
-  if (!guestRes.ok) {
-    console.error('Guest API Error:', guestData);
-    setGuestError(guestData.error || 'Guest registration failed');
-    return;
-  }
-
-  // ✅ Continue login flow
-  localStorage.setItem('token', data.token);
-  updateHeaderdetails({ user: data.user });
-  setIsLoggedIn(true);
-  setShowAuthModal(false);
-
-  location.reload();
-
-}catch { setGuestError('Verification failed. Please try again.'); }
-      finally { setLoadingAuth(false); }
-    };
-    const handleResendOtp = async () => {
-      if (resendTimer > 0) return;
-      setGuestOtp(['', '', '', '']);
-      setGuestError('');
-      setLoadingAuth(true);
-      try {
-        const res = await fetch('/api/auth/send-sms-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mobile: guestMobile }) });
-        const data = await res.json();
-        if (!res.ok) { setGuestError(data.error || 'Failed to resend OTP.'); return; }
-        startResendTimer();
-        setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
-      } catch { setGuestError('Failed to resend OTP.'); }
-      finally { setLoadingAuth(false); }
-    };
-
     useEffect(() => {
         setHasMounted(true);
     }, []);
@@ -1125,86 +918,8 @@ const Header = () => {
         
         return result;
     };
-    // Flatten all starting from actual visible categories (like Refrigerator, AC…)
-    const flattenAllCategories = (cats) => {
-        let result = [];
-        let brandCounter = 0; // Counter for unique keys
+ 
 
-        // Use a Map to dedupe brands by a normalized key (slug/name/id)
-        const brandMap = new Map();
-
-        const normalizeKey = (s) => {
-            if (!s && s !== 0) return '';
-            return String(s).toLowerCase().replace(/\s+/g, ' ').trim().replace(/[^a-z0-9]/g, '');
-        };
-
-        cats.forEach(cat => {
-            // Add the category and its subcategories
-            result = result.concat(flattenTree(cat, cat.category_slug, 0));
-
-            // Collect brands for this category and add to map if unique
-            if (Array.isArray(cat.brands) && cat.brands.length > 0) {
-                cat.brands.forEach(brand => {
-                    // try multiple fields for a stable identifier
-                    const candidate = brand.brand_slug || brand.slug || brand.brand_name || brand.name || brand._id || '';
-                    const key = normalizeKey(candidate);
-                    if (!key) return; // skip invalid
-
-                    if (!brandMap.has(key)) {
-                        // store first occurrence and include a stable uniqueKey
-                        brandMap.set(key, {
-                            ...brand,
-                            type: 'brand',
-                            sourceCategory: cat.category_name,
-                            uniqueKey: `${brand._id || key}-${brandCounter++}`
-                        });
-                    } else {
-                        // already present: optionally we could merge sourceCategory info
-                        const existing = brandMap.get(key);
-                        if (existing && existing.sourceCategory !== cat.category_name) {
-                            existing.sourceCategory = existing.sourceCategory + ", " + cat.category_name;
-                        }
-                    }
-                });
-            }
-        });
-
-        const allBrands = Array
-          .from(brandMap.values())
-          // ADDED: alphabetical sort (case-insensitive) for brand listing
-          .sort((a, b) =>
-            (a.brand_name || '').localeCompare(b.brand_name || '', undefined, { sensitivity: 'base' })
-          );
-
-        // Add a single brands header at the end
-        if (allBrands.length > 0) { 
-            result.push({
-                _id: 'all-brands-header',
-                type: 'brands-header',
-                category_name: 'Brands',
-                level: 0,
-                uniqueKey: 'all-brands-header'
-            });
-
-            result = result.concat(allBrands.map(brand => ({
-                ...brand,
-                level: 1,
-                uniqueKey: brand.uniqueKey
-            })));
-        }
-
-        return result;
-    };
-    const chunkFlatList = (flatList, size = 11) => {
-        const chunks = [];
-        if (!Array.isArray(flatList) || flatList.length === 0) return chunks;
-
-        for (let i = 0; i < flatList.length; i += size) {
-            chunks.push(flatList.slice(i, i + size));
-        }
-
-        return chunks;
-    };
     const cancelHide = () => {
         if (hideTimeout.current) {
             clearTimeout(hideTimeout.current);
@@ -1222,6 +937,9 @@ const Header = () => {
         const cat = categories.find((c) => c._id === categoryId);
         if (!cat) return;
         setHoveredCategory(cat);
+        const sortedSubs = [...(cat.subcategories || [])]
+     .sort((a, b) => alphaSortString(a.category_name, b.category_name));
+      setActiveSubCategory(null);
 
         const el = slideRefs.current[categoryId];
         if (!el) return;
@@ -1300,62 +1018,7 @@ const Header = () => {
             setForgotPasswordLoading(false);
         }
     };
-    // Render flattened category/brand item
-    const renderFlatItem = (item, hoveredCategory) => {
-        const itemKey = item.uniqueKey || item._id;
-        const paddingLeft = `${(item.level || 0) * 12}px`;
-        let content = null;
-        if (item.type === "brands-header") {
-          content = (
-              <h3 className="flex items-center justify-between mb-1 text-sm font-semibold text-blue-600 ml-1">
-                  {item.category_name}
-              </h3>
-          );
-        }else if (item.type === "brand") {
-          const href = `/category/brand/${encodeURIComponent(hoveredCategory.category_slug)}/${encodeURIComponent(item.brand_slug)}`;
-              
-
-          content = (
-            <Link
-              href={href}
-              className="flex items-center mb-1 text-sm text-[#8c8c8c] p-[5px] hover:text-[#0e54e6]"
-            >
-              <span className="font-normal">{item.brand_name}</span>
-            </Link>
-          );
-        }else {
-          const href =
-            item.level === 0
-              ? `/category/${encodeURIComponent(hoveredCategory?.category_slug || "")}/${encodeURIComponent(item.category_slug || "")}`
-              : `/category/${encodeURIComponent(hoveredCategory?.category_slug || "")}/${encodeURIComponent(item.rootCategory || "")}/${encodeURIComponent(item.category_slug || "")}`;
-            content = (
-              <Link
-                href={href}
-                className={`flex items-center justify-between mb-1 text-sm ${
-                  item.level === 0
-                    ? "font-semibold text-blue-600"
-                    : "text-[#8c8c8c] !p-[5px] hover:text-[#0e54e6]"
-                }`}
-              >
-                <span className={item.level === 0 ? "font-bold" : "font-normal"}>
-                  {item.category_name}
-                </span>
-                {item.level === 0 && (
-                  <Play
-                    size={14}
-                    strokeWidth={0}
-                    className="text-blue-600 fill-blue-600"
-                  />
-                )}
-              </Link>
-            );
-        }
-        return (
-          <div key={itemKey} style={{ paddingLeft }}>
-            {content}
-          </div>
-        );
-    };
+  
 
     // Price formatter
     const formatPrice = (value) => {
@@ -1806,8 +1469,11 @@ const Header = () => {
                         {categories.map((cat) => (
                           <option key={cat._id} value={cat.category_name} title={cat.category_name}>
                             {cat.category_name}
+                               
                           </option>
+                       
                         ))}
+                      
                       </select>
                       <div className="flex-1 relative h-full flex items-center">
                         <input
@@ -1925,6 +1591,7 @@ const Header = () => {
                               </option>
                             ))}
                           </select>
+                         
                         </div>
                         {/* input wrapper with absolute overlay */}
                         <div className="relative flex-1">
@@ -1985,7 +1652,8 @@ const Header = () => {
 							{/* <Link href="/feedback" className="hidden sm:flex items-center relative">
                             <FiMessageSquare size={18} className="text-customBlue" />
 							</Link> */}
-						
+               {/* Loyalty Points */}
+              
 						<Link href="/feedback" className="hidden sm:flex items-center relative group z-50">
 						  <FiMessageSquare size={18} className="text-customBlue" />
 
@@ -2063,6 +1731,16 @@ const Header = () => {
                                                         </Link>
                                                     </>
                                                 )}
+                                                
+                                                   {isLoggedIn && (
+                                                      <Link href="/loyalty" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                                                   <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
+                                                    🏆
+                                                  </span>
+                                           Loyalty Points
+                                     <span className="ml-auto text-xs font-bold text-customBlue">{loyaltyPoints} pts</span>
+                                                </Link>
+                                          )}
                                                 <Link href="/orders" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
                                                     <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
                                                         <FaShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -2121,24 +1799,23 @@ const Header = () => {
                           )}
                         </div>
                         {/* Open Box Sale - Mobile */}
-                                                   <Link
-                                               href="/open-box"
-                                                className="mt-3 flex items-center justify-between bg-white rounded-md px-4 py-3 text-black font-semibold text-sm"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                                 >
-                                           <span> Open Box Clearance Sale</span>
-                                      <FiChevronRight className="bg-[#2453D3] rounded-full text-white" size={18} />
-                                               </Link>
+                           <Link
+                       href="/open-box"
+                        className="mt-3 flex items-center justify-between bg-white rounded-md px-4 py-3 text-black font-semibold text-sm"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                         >
+                   <span> Open Box Clearance Sale</span>
+              <FiChevronRight className="bg-[#2453D3] rounded-full text-white" size={18} />
+                       </Link>
                   </div>
                 )}
                 {/* Auth Modal */}
                 {showAuthModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white rounded-lg p-8 w-96 max-w-full relative">
-                            <button onClick={() => { setShowAuthModal(false); setFormError(''); setError(''); setErrors({ login: {}, register: {} }); setLoginData({ email: "", password: "" }); setRegisterData({ name: "", email: "", mobile: "", password: "" }); setShowOtpFlow(false); setGuestStep(1); setGuestMobile(''); setGuestOtp(['','','','']); setGuestError(''); clearInterval(otpTimerRef.current); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">
+                            <button onClick={() => { setShowAuthModal(false); setFormError(''); setError(''); setErrors({ login: {}, register: {} }); setLoginData({ email: "", password: "" }); setRegisterData({ name: "", email: "", mobile: "", password: "" }); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">
                                 &times;
                             </button>
-                            {!showOtpFlow && (
                             <div className="flex gap-4 mb-6 border-b">
                                 <button className={`pb-2 px-1 ${activeTab === 'login' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('login')}>
                                     Login
@@ -2147,9 +1824,6 @@ const Header = () => {
                                     Register
                                 </button>
                             </div>
-                             )}
-
-                             {!showOtpFlow && (
                             <form onSubmit={handleAuthSubmit} className="space-y-4">
                               {/* Register Name Field */}
                               {activeTab === "register" && (
@@ -2273,8 +1947,6 @@ const Header = () => {
                                 </div>
                               )}
                             </form>
- )}
-                           
                         </div>
                     </div>
                 )}
@@ -2435,7 +2107,7 @@ const Header = () => {
                 )}
             </div>
             <div className="hidden sm:flex relative p-2 mt-0 px-1 bg-[#2453D3] min-h-[64px] border-gray-200 shadow items-center">
-                {/* <div className="w-full  relative">
+                <div className="w-full  relative">
                     <div className="relative">
                         <div className="flex justify-center overflow-x-auto scrollbar-hide">
                             <Swiper modules={[Navigation]} navigation={{ prevEl: ".custom-swiper-prev", nextEl: ".custom-swiper-next", }} spaceBetween={20} slidesPerView="auto" watchOverflow={true} className="pl-10 pr-14">
@@ -2443,188 +2115,451 @@ const Header = () => {
                                     <SwiperSlide key={category._id} className="!w-auto">
                                         <div ref={(el) => (slideRefs.current[category._id] = el)} onMouseEnter={() => handleMouseEnter(category._id)} onMouseLeave={() => startHide(120)} className="px-5 py-2 flex flex-col items-center text-center" >
                                             <Link href={`/category/${category.category_slug}`} className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap" >
-                                                {category.category_name}
+                                                {category.category_name} 
                                             </Link>
+                                            
                                         </div>
                                     </SwiperSlide>
                                 ))}
-                            </Swiper>
-                        </div>
-                    </div>
-                </div> */}
-
-                <div className="w-full  relative">
-                                    <div className="relative">
-                                        <div className="flex justify-center overflow-x-auto scrollbar-hide">
-                                            <Swiper modules={[Navigation]} navigation={{ prevEl: ".custom-swiper-prev", nextEl: ".custom-swiper-next", }} spaceBetween={20} slidesPerView="auto" watchOverflow={true} className="pl-10 pr-14">
-                                                {categories.map((category) => (
-                                                    <SwiperSlide key={category._id} className="!w-auto">
-                                                        <div ref={(el) => (slideRefs.current[category._id] = el)} onMouseEnter={() => handleMouseEnter(category._id)} onMouseLeave={() => startHide(120)} className="px-5 py-2 flex flex-col items-center text-center" >
-                                                            <Link href={`/category/${category.category_slug}`} className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap" >
-                                                                {category.category_name} 
-                                                            </Link>
-                                                            
-                                                        </div>
-                                                    </SwiperSlide>
-                                                ))}
-                                                <SwiperSlide className="!w-[140px] overflow-visible flex justify-center">
-                  <Link
-                    href="/open-box"
-                    className="relative flex items-center justify-center h-[40px]"
-                  >
-                    <video
-                      src="/assets/open-box-video.mp4"
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      preload="none"
-                      className="h-[110px] w-auto object-contain rounded pointer-events-none"
-                    />
-                  </Link>
-                </SwiperSlide>
-                                            </Swiper>
-                
-                      </div>
-                           </div>
-                                </div>
+                                <SwiperSlide className="!w-[140px] overflow-visible flex justify-center">
+  <Link
+    href="/open-box"
+    className="relative flex items-center justify-center h-[40px]"
+  >
+    <video
+      src="/assets/open-box-video.mp4"
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="none"
+      className="h-[110px] w-auto object-contain rounded pointer-events-none"
+    />
+  </Link>
+</SwiperSlide>
+ </Swiper>
+  </div>
+       </div>
+            </div>
               
-                {/* DROPDOWN OUTSIDE SWIPER (fixed so it won't be clipped) */}
-                {hoveredCategory && hoveredCategory.subcategories?.length > 0 && (() => {
-                  // 1) Strict alphabetical sort for hovered subcategories
-                  const sortedSubcategories = [...hoveredCategory.subcategories]
-                    .filter(Boolean)
-                    .sort((a, b) => alphaSortString(a?.category_name, b?.category_name));
+{hoveredCategory && hoveredCategory.subcategories?.length > 0 && (
+  <div
+    ref={dropdownRef}
+    className="fixed z-50 bg-white"
+    style={{
+      top: `${dropdownTop}px`,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: 'fit-content',
+       minWidth: '800px', 
+      maxWidth: '96vw',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.13)',
+      border: '1px solid #e5e7eb',
+      overflow: 'hidden',
+      minHeight: '420px',
+    }}
+    onMouseEnter={cancelHide}
+    onMouseLeave={() => startHide(120)}
+  >
+    <style>{`
+      .dd-sidebar::-webkit-scrollbar { display: none; }
+      .dd-sidebar { -ms-overflow-style: none; scrollbar-width: none; }
+      .dd-brands::-webkit-scrollbar { width: 3px; }
+      .dd-brands::-webkit-scrollbar-thumb { background: #2453D3; border-radius: 2px; }
+      .dd-brands::-webkit-scrollbar-track { background: #f1f1f1; }
+      .dd-child-link { display:block; font-size:13px; color:#374151; text-decoration:none; padding:5px 8px; border-radius:4px; white-space:nowrap; transition: color 0.1s, background 0.1s; }
+      .dd-child-link:hover { color:#2453D3; background:#EFF6FF; }
+      .dd-brand-item { display:flex; align-items:center; justify-content:center; padding:5px 6px; border:none; border-radius:6px; text-decoration:none; transition: background 0.1s; }
+      .dd-brand-item:hover { background:#EFF6FF; }
+    `}</style>
 
-                  // 2) Flatten (existing logic) then alphabetize the final list
-                  const flatAll = flattenAllCategories(
-                    sortedSubcategories,
-                    hoveredCategory.category_slug
-                  );
+    <div style={{ display: 'flex', alignItems: 'flex-start', minHeight: '420px' }}>
 
-                  // Remove items missing display names
-                  const sanitizedFlat = (flatAll || []).filter((item) =>
-                    item?.type === "brand"
-                      ? !!item?.brand_name
-                      : !!item?.category_name
-                  );
+      {/* ── LEFT SIDEBAR ── */}
+      <div
+        className="dd-sidebar"
+        style={{
+          width: '220px',
+          flexShrink: 0,
+          borderRight: '1px solid #e5e7eb',
+          display: 'flex',
+          flexDirection: 'column',
+          alignSelf: 'stretch',
+          background: '#fff',
+        }}
+      >
+        <div style={{
+          padding: '10px 16px',
+          fontSize: '11px', fontWeight:"bold", color: '#000000',
+          letterSpacing: '0.08em', textTransform: 'uppercase',
+          borderBottom: 'none', flexShrink: 0,
+        }}>
+          Shop by Category
+        </div>
 
-                  // New: level-aware alphabetical output
-                  const flatAlpha = prepareFlatListAlpha(sanitizedFlat);
-
-                  // 3) Chunk and drop empty chunks to avoid gaps
-                  let dropdownChunksLocal = chunkFlatList(flatAlpha, 11);
-                  const filteredChunks = dropdownChunksLocal.filter(
-                    (chunk) =>
-                      Array.isArray(chunk) &&
-                      chunk.length > 0 &&
-                      chunk.some(Boolean)
-                  );
-
-                  // --- Image columns logic (unchanged) ---
-                  let navImages = [];
-                  if (hoveredCategory?.navImage) {
-                    if (typeof hoveredCategory.navImage === "string") {
-                      navImages = hoveredCategory.navImage
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean);
-                    } else if (Array.isArray(hoveredCategory.navImage)) {
-                      navImages = hoveredCategory.navImage.filter(Boolean);
-                    }
-                  }
-                  const imageCols = navImages.length;
-
-                  // Layout constraints
-                  const maxCols = 6;
-                  const columnWidth = 220;
-                  const screenWidth =
-                    typeof window !== "undefined" ? window.innerWidth : 1200;
-                  const maxAllowedWidth = Math.max(300, screenWidth - 20);
-
-                  // Fit non-empty columns without gaps
-                  const maxDataBySlots = Math.max(0, maxCols - imageCols);
-                  const maxDataByViewport = Math.max(
-                    0,
-                    Math.floor(maxAllowedWidth / columnWidth) - imageCols
-                  );
-                  const allowedDataCols = Math.max(
-                    0,
-                    Math.min(filteredChunks.length, maxDataBySlots, maxDataByViewport)
-                  );
-
-                  const columns = filteredChunks.slice(0, allowedDataCols);
-
-                  let computedWidth = (columns.length + imageCols) * columnWidth;
-                  if (computedWidth > maxAllowedWidth) computedWidth = maxAllowedWidth;
-
-                  const styleLeft =
-                    dropdownUseTranslate && dropdownCenterX
-                      ? `${dropdownCenterX + 15}px`
-                      : `${dropdownLeft + 15}px`;
-                  const styleTransform =
-                    dropdownUseTranslate && dropdownCenterX ? "translateX(-50%)" : "none";
-
-                  if (columns.length === 0 && imageCols === 0) return null;
-
-                  return (
-                    <div
-                      ref={dropdownRef}
-                      className="fixed z-50 border-t border-gray-200 shadow-xl"
-                      style={{
-                        top: `${dropdownTop}px`,
-                        left: styleLeft,
-                        transform: styleTransform,
-                        width: `${computedWidth}px`,
-                        maxWidth: "calc(100% - 20px)",
-                      }}
-                      onMouseEnter={cancelHide}
-                      onMouseLeave={() => startHide(120)}
-                    >
-                      <div className="flex flex-wrap bg-white h-[390px]" style={{ width: "100%" }}>
-                        {/* Render only non-empty columns in order (gap-free) */}
-                        {columns.map((chunk, index) => {
-                          const bgClass = index % 2 === 0 ? "bg-[#f2f2f2]" : "bg-white";
-                          return (
-                            <div
-                              key={`col-${index}`}
-                              className={`min-w-[220px] max-w-[250px] p-3 flex flex-col justify-start self-start ${bgClass}`}
-                              style={{ height: "100%" }}
-                            >
-                              {chunk.map((item) => renderFlatItem(item, hoveredCategory))}
-                            </div>
-                          );
-                        })}
-
-                        {/* Image columns (unchanged) */}
-                        {Array.isArray(navImages) &&
-                          navImages.length > 0 &&
-                          navImages.map((img, idx) => (
-                            <div
-                              key={`nav-image-panel-${idx}`}
-                              className={`w-[220px] h-[390px] flex items-center justify-center ${
-                                ((columns.length + idx) % 2 === 0) ? "bg-gray-50" : "bg-white"
-                              }`}
-                            >
-                              <Link
-                                href={`/category/${hoveredCategory?.category_slug || ""}`}
-                                className="block w-full h-full"
-                              >
-                                <Image
-                                  src={img}
-                                  alt={hoveredCategory.category_name || "Category Image"}
-                                  width={220}
-                                  height={390}
-                                  className="object-cover w-full h-full"
-                                  style={{ boxShadow: "0px -1px 0px #2453d3" }}
-                                />
-                              </Link>
-                            </div>
-                          ))}
+        <div className="dd-sidebar" style={{ flex: 1, overflowY: 'auto' }}>
+          {[...hoveredCategory.subcategories]
+            .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+            .map((sub) => {
+              const isActive = activeSubCategory?._id === sub._id;
+              return (
+                <div
+                  key={sub._id}
+                  id={`dd-left-${sub._id}`}
+                  onClick={() => {
+                     setActiveSubCategory(sub);
+                    const el = document.getElementById(`dd-left-${sub._id}`);
+                    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                     }}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 16px',cursor: 'pointer',
+                    background: isActive ? '#EFF6FF' : '#fff',
+                    borderBottom: 'none',
+                    transition: 'background 0.1s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {sub.icon_url ? (
+                     <img   src={sub.icon_url} alt=""  style={{ width: 20, height: 20,  objectFit: 'contain',  flexShrink: 0, filter: isActive   ? 'invert(27%) sepia(95%) saturate(1200%) hue-rotate(204deg) brightness(95%) contrast(95%)'    : 'none',   transition: 'filter 0.15s', }}/>
+                    ) : (
+                      <div style={{
+                        width: 20, height: 20, borderRadius: '4px',
+                        background: '#DBEAFE', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', flexShrink: 0,
+                      }}>
+                        <span style={{ fontSize: '9px', color: '#2453D3', fontWeight: 700 }}>
+                          {(sub.category_name || '').charAt(0)}
+                        </span>
                       </div>
-                    </div>
-                  );
-                })()}
+                    )}
+                 <Link
+          href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
+            style={{
+                 fontSize: '13px',
+                   fontWeight: isActive ? 600 : 400,
+                color: isActive ? '#1d4ed8' : '#374151',
+                textDecoration: 'none', lineHeight: 1.3,
+                   }}
+                  >
+  {sub.category_name}
+</Link>
+                  </div>
+                  <FiChevronRight size={13} style={{ color: isActive ? '#2453D3' : '#d1d5db', flexShrink: 0 }} />
+                </div>
+              );
+            })}
+        </div>
+
+        <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+          <Link
+            href={`/category/${hoveredCategory.category_slug}`}
+            onClick={() => setHoveredCategory(null)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              fontSize: '13px', fontWeight: 600, color: '#2453D3', textDecoration: 'none',
+            }}
+          >
+            View All {hoveredCategory.category_name}
+            <FiChevronRight size={13} />
+          </Link>
+        </div>
+      </div>
+
+      {/* ── RIGHT CONTENT AREA ── */}
+      {(() => {
+        const ROWS_PER_COL = 9;
+        const brands = hoveredCategory.brands || [];
+        const navImgs = hoveredCategory?.navImage
+          ? (typeof hoveredCategory.navImage === 'string'
+              ? hoveredCategory.navImage.split(',').map(s => s.trim()).filter(Boolean)
+              : Array.isArray(hoveredCategory.navImage) ? hoveredCategory.navImage : [])
+          : [];
+
+        const activeSub = activeSubCategory;
+
+        /*
+          MODE A — activeSubCategory is set (user hovered a sub):
+            Show that sub's children as columns of 9
+
+          MODE B — no activeSubCategory (default / first load):
+            Show ALL subs as separate columns (each sub = 1 column header + its children)
+            Image 2 exact layout: AIR CONDITIONERS | REFRIGERATORS | WASHING MACHINES | DISHWASHERS
+        */
+
+        const renderBrands = () => brands.length > 0 && (
+          <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+            <div style={{
+              fontSize: '11px', fontWeight: 700, color: '#6b7280',
+              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px',
+            }}>
+              Top Brands
+            </div>
+            <div className="dd-brands" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, minmax(80px, 1fr))',
+              gap: '6px', maxHeight: '130px', overflowY: 'auto',
+            }}>
+              {[...brands]
+                .sort((a, b) => alphaSortString(a.brand_name, b.brand_name))
+                .slice(0, 9)
+                .map((brand) => (
+                  <Link
+                    key={brand._id || brand.brand_slug}
+                    href={`/category/brand/${hoveredCategory.category_slug}/${brand.brand_slug}`}
+                    onClick={() => setHoveredCategory(null)}
+                    className="dd-brand-item"
+                  >
+                {brand.image ? (
+                <img
+                src={`/uploads/Brands/${brand.image}`}
+                alt={brand.brand_name}
+                style={{ height: '32px', maxWidth: '80px', objectFit: 'contain' }}
+                onError={(e) => {
+      
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling.style.display = 'block';
+                 }}
+               />
+            ) : null}
+           <span
+             style={{
+        display: brand.image ? 'none' : 'block',
+        fontSize: '11px',
+        fontWeight: 600,
+        color: '#374151'
+         }}
+         >
+          {brand.brand_name}
+  </span>
+                  </Link>
+  ))}
+              {brands.length > 9 && (
+                <Link
+                  href={`/category/${hoveredCategory.category_slug}`}
+                  onClick={() => setHoveredCategory(null)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '5px 6px', fontSize: '11px', fontWeight: 600, color: '#2453D3', textDecoration: 'none' }}
+                >
+                  +{brands.length - 9} more <FiChevronRight size={11} />
+                </Link>
+              )}
+            </div>
+          </div>
+        );
+
+        return (
+          <div style={{ display: 'flex', alignItems: 'flex-start', flex: 1, minHeight: '420px' }}>
+
+            <div style={{ flex: 1, padding: '16px 20px', minWidth: 0 }}>
+
+              {activeSub ? (
+                /* ── MODE A: Single sub's children in columns of 9 ── */
+                <>
+                  {/* Sub title */}
+                  <div style={{ marginBottom: '10px', paddingBottom: '8px', borderBottom: 'none' }}>
+                    <Link
+                      href={`/category/${hoveredCategory.category_slug}/${activeSub.category_slug}`}
+                      onClick={() => setHoveredCategory(null)}
+                      style={{
+                        fontSize: '13px', fontWeight: 700, color: '#2453D3',
+                        textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em',
+                      }}
+                    >
+                      {activeSub.category_name}
+                    </Link>
+                  </div>
+
+                  {/* Children split into columns of 9 */}
+                  {(() => {
+                        const children = activeSub?.subcategories
+                      ? [...activeSub.subcategories].sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                     : [];
+                 const activeColsNeeded = Math.max(1, Math.ceil(children.length / ROWS_PER_COL));
+                 const remainingCols = 4 - activeColsNeeded;
+
+                      const otherSubs = [...hoveredCategory.subcategories]
+                         .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                         .filter(s => s._id !== activeSub._id)
+                   .reduce((acc, sub) => {
+                    const need = Math.max(1, Math.ceil((sub.subcategories?.length || 0) / ROWS_PER_COL));
+                 if (acc.usedCols + need > remainingCols) return acc;
+                 return { subs: [...acc.subs, sub], usedCols: acc.usedCols + need };
+                   }, { subs: [], usedCols: 0 }).subs;
+
+                const cols = [];
+            for (let i = 0; i < activeColsNeeded; i++) {
+         cols.push(children.slice(i * ROWS_PER_COL, (i + 1) * ROWS_PER_COL));
+               }
+                    return (
+                    <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+                       {cols.map((col, ci) => (
+                      <div key={ci} style={{
+                      display: 'flex', flexDirection: 'column', minWidth: '170px',
+                      borderRight: ci < cols.length - 1 ? '1px solid #e5e7eb' : 'none',
+                      paddingRight: ci < cols.length - 1 ? '16px' : '0',
+                      paddingLeft: ci > 0 ? '16px' : '0',
+                     alignSelf: 'flex-start',
+                       }}>
+                            {col.map((child, ri) => (
+                              <Link
+                                key={child._id}
+                                href={`/category/${hoveredCategory.category_slug}/${activeSub.category_slug}/${child.category_slug}`}
+                                onClick={() => setHoveredCategory(null)}
+                                className="dd-child-link"
+                                style={{ }}
+                              >
+                                {child.category_name}
+                              </Link>
+                            ))}
+                          </div>
+                        ))}
+{otherSubs.map((sub) => {
+  const subChildren = sub.subcategories
+    ? [...sub.subcategories].sort((a, b) => alphaSortString(a.category_name, b.category_name))
+    : [];
+  const subCols = [];
+  for (let i = 0; i < Math.max(1, Math.ceil(subChildren.length / ROWS_PER_COL)); i++) {
+    subCols.push(subChildren.slice(i * ROWS_PER_COL, (i + 1) * ROWS_PER_COL));
+  }
+  return subCols.map((col, ci) => (
+    <div key={`${sub._id}-${ci}`} style={{
+      display: 'flex', flexDirection: 'column', minWidth: '180px',
+      borderLeft: '1px solid #e5e7eb',
+      paddingLeft: '16px',
+      alignSelf: 'flex-start',
+    }}>
+
+        {ci === 0 && (
+          <Link
+            href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
+            onClick={() => setHoveredCategory(null)}
+            style={{
+              fontSize: '13px', fontWeight: 700, color: '#2453D3',
+              textDecoration: 'none', textTransform: 'uppercase',
+              letterSpacing: '0.04em', marginBottom: '8px',
+              paddingBottom: '6px', borderBottom: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {sub.category_name}
+          </Link>
+        )}
+        {col.map((child, ri) => (
+          <Link
+            key={child._id}
+            href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}/${child.category_slug}`}
+            onClick={() => setHoveredCategory(null)}
+            className="dd-child-link"
+            style={{}}
+          >
+             {child.category_name}
+                        </Link>
+                        ))}
+                         </div>
+                       ));
+                      })}
+                  </div>
+                    );
+                  })()}
+
+                  {renderBrands()}
+                </>
+              ) : (
+                /* ── MODE B: ALL subs as columns — Image 2 exact layout ── */
+                <>
+                 <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+                    {[...hoveredCategory.subcategories]
+                      .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                       .reduce((acc, sub) => {
+                              const usedCols = acc.usedCols;
+                             const colsNeeded = Math.max(1, Math.ceil((sub.subcategories?.length || 0) / 9));
+                             if (usedCols + colsNeeded > 4) return acc;
+                             return { subs: [...acc.subs, sub], usedCols: usedCols + colsNeeded };
+                              }, { subs: [], usedCols: 0 }).subs
+                      .map((sub, si, arr) => {
+                        const children = sub.subcategories
+                          ? [...sub.subcategories].sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                          : [];
+                        // Each sub = 1 column (or more if children > 9)
+                        const subCols = [];
+                        for (let i = 0; i < Math.max(1, Math.ceil(children.length / ROWS_PER_COL)); i++) {
+                          subCols.push(children.slice(i * ROWS_PER_COL, (i + 1) * ROWS_PER_COL));
+                        }
+                        return subCols.map((col, ci) => (
+                          <div key={`${sub._id}-${ci}`} style={{
+                            display: 'flex', flexDirection: 'column', minWidth: '180px',
+                            borderRight: (si < arr.length - 1 || ci < subCols.length - 1) ? '1px solid #e5e7eb' : 'none',
+                            paddingRight: '16px',
+                            paddingLeft: ci > 0 || si > 0 ? '16px' : '0',
+                          }}>
+                            {/* Column header — only on first col of each sub */}
+                            {ci === 0 && (
+                              <Link
+                                href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
+                                onClick={() => setHoveredCategory(null)}
+                                style={{
+                                  display: 'block', fontSize: '13px', fontWeight: 700,
+                                  color: '#2453D3', textDecoration: 'none',
+                                  textTransform: 'uppercase', letterSpacing: '0.04em',
+                                  marginBottom: '8px', paddingBottom: '6px',
+                                  borderBottom: 'none',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {sub.category_name}
+                              </Link>
+                            )}
+
+                            {/* Children */}
+                            {col.map((child, ri) => (
+                              <Link
+                                key={child._id}
+                                href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}/${child.category_slug}`}
+                                onClick={() => setHoveredCategory(null)}
+                                className="dd-child-link"
+                                style={{  }}
+                              >
+                                {child.category_name}
+                              </Link>
+                            ))}
+                          </div>
+                        ));
+                      })}
+                  </div>
+
+                  {renderBrands()}
+                </>
+              )}
+
+            </div>
+
+            {/* Nav image — only if backend set navImage */}
+            {navImgs.length > 0 && (
+              <div style={{
+                flexShrink: 0, width: '250px', alignSelf: 'stretch',
+                borderLeft: '1px solid #e5e7eb', overflow: 'hidden',
+              }}>
+                <Link
+                  href={`/category/${hoveredCategory.category_slug}`}
+                  onClick={() => setHoveredCategory(null)}
+                  style={{ display: 'block', width: '100%', height: '100%' }}
+                >
+                  <img
+                    src={navImgs[0]}
+                    alt={hoveredCategory.category_name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                </Link>
+              </div>
+            )}
+
+          </div>
+        );
+      })()}
+
+    </div>
+  </div>
+)}
             </div>
         </header>
         {/* DESKTOP SUGGESTIONS DROPDOWN */}
