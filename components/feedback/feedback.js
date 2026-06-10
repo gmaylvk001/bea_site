@@ -584,7 +584,7 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
  <div className="grid lg:grid-cols-12 gap-4">
 
   <div className="lg:col-span-5">
-    <div className="bg-white border border-gray-200 rounded-xl p-5 h-full shadow-sm">
+    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm max-h-[270px] overflow-y-auto [&::-webkit-scrollbar]:hidden">
       <h2 className="text-2xl font-bold text-[#2453d3] mb-2">
         Frequently Asked Questions
       </h2>
@@ -593,46 +593,79 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
 
         <details className="border rounded-md px-4 py-3">
           <summary className="cursor-pointer font-medium text-sm">
-            How can I contact BEA customer care?
+            How can I share feedback about my BEA shopping experience?
           </summary>
           <p className="mt-3 text-sm text-gray-600">
-            Call +91 98423 44323 or email customercare@bharathelectronics.in.
+            You can share your feedback about your shopping experience at Bharath Electronics & Appliances through our feedback form, Google reviews, or by contacting our customer care team. Your feedback helps BEA improve our products, services, delivery, and customer experience across all our stores.
           </p>
         </details>
 
         <details className="border rounded-md px-4 py-3">
           <summary className="cursor-pointer font-medium text-sm">
-            Does BEA provide installation support?
+            How do I raise a complaint with BEA?
           </summary>
           <p className="mt-3 text-sm text-gray-600">
-            Yes, installation support is available for eligible products.
+            Customers can raise a complaint by submitting the feedback form on our website or contacting BEA Customer Care. Our support team will review your concern and assist you regarding product, delivery, installation, warranty, or service-related issues.
+          </p>
+          <p className="mt-3 text-sm text-gray-600">
+             9842344323
+          </p>
+          <p className="mt-3 text-sm text-gray-600">
+            customercare@bharathelectronics.in
           </p>
         </details>
 
         <details className="border rounded-md px-4 py-3">
           <summary className="cursor-pointer font-medium text-sm">
-            Where are BEA stores located?
+            Does BEA provide support after purchasing a product?
           </summary>
           <p className="mt-3 text-sm text-gray-600">
-            We have stores across Tamil Nadu.
+            Yes. BEA provides after-sales assistance for products purchased from our stores and website. Our team helps customers with installation guidance, brand warranty support, and service-related queries for appliances and electronics.
           </p>
         </details>
 
         <details className="border rounded-md px-4 py-3">
           <summary className="cursor-pointer font-medium text-sm">
-            Does BEA help with warranty support?
+           Who should I contact for appliance installation support?
           </summary>
           <p className="mt-3 text-sm text-gray-600">
-            Yes, our team assists with warranty claims and service requests.
+            For products like air conditioners, televisions, refrigerators, washing machines and other appliances, installation support is handled as per brand guidelines. BEA assists customers in coordinating with authorized brand service teams for a smooth installation experience.
           </p>
         </details>
 
         <details className="border rounded-md px-4 py-3">
           <summary className="cursor-pointer font-medium text-sm">
-            How long does it take to resolve my complaint?
+           How long does BEA take to respond to customer complaints?
           </summary>
           <p className="mt-3 text-sm text-gray-600">
-            Most complaints receive an initial response within 24 hours.
+            Our customer support team reviews every customer query and works to provide timely assistance. Response time may vary depending on the product category, brand support process, and type of concern raised.
+          </p>
+        </details>
+
+        <details className="border rounded-md px-4 py-3">
+          <summary className="cursor-pointer font-medium text-sm">
+            Can I contact BEA for warranty-related issues?
+          </summary>
+          <p className="mt-3 text-sm text-gray-600">
+            Yes. Products purchased from Bharath Electronics & Appliances come with applicable manufacturer warranty. Customers can contact BEA Customer Care for guidance regarding warranty claims and authorized service support.
+          </p>
+        </details>
+
+        <details className="border rounded-md px-4 py-3">
+          <summary className="cursor-pointer font-medium text-sm">
+           Where are BEA customer support services available?
+          </summary>
+          <p className="mt-3 text-sm text-gray-600">
+            BEA supports customers across Tamil Nadu through our network of 47+ showrooms and online support channels. Customers can reach us for product assistance, delivery support, installation queries, and after-sales service.
+          </p>
+        </details>
+
+        <details className="border rounded-md px-4 py-3">
+          <summary className="cursor-pointer font-medium text-sm">
+            How can I leave a Google review for BEA?
+          </summary>
+          <p className="mt-3 text-sm text-gray-600">
+            Customers can share their experience by leaving a Google review for the BEA showroom they visited. Reviews help us understand customer experiences and continue improving our service quality.
           </p>
         </details>
 
