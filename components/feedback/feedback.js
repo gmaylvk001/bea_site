@@ -351,7 +351,7 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
   </div>
 
   <a
-  href="https://g.page/r/your-google-review-link"
+  href="https://link.reviews/BEA-CBE-TATABAD"
   target="_blank"
   rel="noopener noreferrer"
   className="flex items-center justify-between w-full border border-[#2453d3]/20 bg-transparent rounded-xl px-4 py-3 hover:border-[#2453d3] transition"
@@ -799,7 +799,7 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
 
       {/* Google Review */}
       <a
-        href="#"
+        href="https://link.reviews/BEA-CBE-TATABAD"
         className="bg-white rounded-xl px-4 py-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300"
       >
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
