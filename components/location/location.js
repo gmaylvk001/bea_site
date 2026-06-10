@@ -231,8 +231,8 @@ const filtered = useMemo(() => {
   {/* Left overlay text */}
   <div className="absolute inset-0 flex items-center">
     <div className="ml-14 max-w-[400px]">
-      <p className="text-[30px] font-bold text-blue-900 mb-1 tracking-widest uppercase">
-        BEA Store Network
+      <p className="text-[36px] font-bold text-blue-900 mb-1 ">
+        BEA Store Network.
       </p>
       <div className="leading-tight mb-0.5">
         <span className="text-[48px] font-black text-blue-700">
@@ -288,8 +288,8 @@ const filtered = useMemo(() => {
 
 {/* MOBILE & TABLET — No banner, white bg, stacked */}
 <div className="block sm:hidden bg-white px-5 pt-6 pb-4">
-  <p className="text-[11px] font-semibold text-gray-500 mb-1 tracking-widest uppercase">
-    BEA Store Network
+  <p className="text-[11px] font-semibold text-gray-500 mb-1">
+    BEA Store Network.
   </p>
   <div className="leading-tight mb-0.5">
     <span className="text-[34px] font-black text-blue-700">

@@ -2188,14 +2188,15 @@ const Header = () => {
           background: '#fff',
         }}
       >
-        <div style={{
-          padding: '10px 16px',
-          fontSize: '11px', fontWeight:"bold", color: '#000000',
-          letterSpacing: '0.08em', textTransform: 'uppercase',
-          borderBottom: 'none', flexShrink: 0,
-        }}>
-          Shop by Category
-        </div>
+       <div style={{
+  padding: '10px 16px',
+  fontSize: '13px', fontWeight: 700, color: '#1e3a8a',
+  letterSpacing: '0.04em', textTransform: 'uppercase',
+  borderBottom: 'none', flexShrink: 0,
+  paddingTop:"16px"
+}}>
+  Shop by Category
+</div>
 
         <div className="dd-sidebar" style={{ flex: 1, overflowY: 'auto' }}>
           {[...hoveredCategory.subcategories]
@@ -2236,33 +2237,32 @@ const Header = () => {
                  <Link
           href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
             style={{
-                 fontSize: '13px',
-                   fontWeight: isActive ? 600 : 400,
-                color: isActive ? '#1d4ed8' : '#374151',
-                textDecoration: 'none', lineHeight: 1.3,
-                   }}
+                   fontSize: '13px',
+                   fontWeight: isActive ? 700 : 600,
+                    color: isActive ? '#2453D3' : '#1e3a8a',
+                    textDecoration: 'none', lineHeight: 1.3,
+                      }}
                   >
-  {sub.category_name}
-</Link>
+                   {sub.category_name}
+                     </Link>
                   </div>
                   <FiChevronRight size={13} style={{ color: isActive ? '#2453D3' : '#d1d5db', flexShrink: 0 }} />
                 </div>
               );
             })}
-        </div>
-
-        <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
-          <Link
-            href={`/category/${hoveredCategory.category_slug}`}
-            onClick={() => setHoveredCategory(null)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '4px',
-              fontSize: '13px', fontWeight: 600, color: '#2453D3', textDecoration: 'none',
-            }}
-          >
-            View All {hoveredCategory.category_name}
-            <FiChevronRight size={13} />
-          </Link>
+            <div style={{ padding: '10px 16px' }}>
+  <Link
+    href={`/category/${hoveredCategory.category_slug}`}
+    onClick={() => setHoveredCategory(null)}
+    style={{
+      display: 'flex', alignItems: 'center', gap: '4px',
+      fontSize: '13px', fontWeight: 600, color: '#2453D3', textDecoration: 'none',
+    }}
+  >
+    View All {hoveredCategory.category_name}
+    <FiChevronRight size={13} />
+  </Link>
+</div>
         </div>
       </div>
 
@@ -2287,19 +2287,20 @@ const Header = () => {
             Image 2 exact layout: AIR CONDITIONERS | REFRIGERATORS | WASHING MACHINES | DISHWASHERS
         */
 
-        const renderBrands = () => brands.length > 0 && (
-          <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-            <div style={{
-              fontSize: '11px', fontWeight: 700, color: '#6b7280',
-              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px',
-            }}>
-              Top Brands
-            </div>
-            <div className="dd-brands" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(80px, 1fr))',
-              gap: '6px', maxHeight: '130px', overflowY: 'auto',
-            }}>
+       const renderBrands = () => brands.length > 0 && (
+    <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb', marginLeft: '180px' }}>    <div style={{
+      fontSize: '11px', fontWeight: 700, color: '#1e3a8a',
+      textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px',
+    }}>
+      Top Brands
+    </div>
+    <div className="dd-brands" style={{
+  display: 'grid',
+  gridTemplateColumns: 'repeat(5, auto)',
+  gap: '8px 16px',
+  alignItems: 'center',
+  justifyItems: 'start',
+}}>
               {[...brands]
                 .sort((a, b) => alphaSortString(a.brand_name, b.brand_name))
                 .slice(0, 9)
@@ -2499,7 +2500,7 @@ const Header = () => {
                                 onClick={() => setHoveredCategory(null)}
                                 style={{
                                   display: 'block', fontSize: '13px', fontWeight: 700,
-                                  color: '#2453D3', textDecoration: 'none',
+                                  color: '#1e3a8a', textDecoration: 'none',
                                   textTransform: 'uppercase', letterSpacing: '0.04em',
                                   marginBottom: '8px', paddingBottom: '6px',
                                   borderBottom: 'none',
