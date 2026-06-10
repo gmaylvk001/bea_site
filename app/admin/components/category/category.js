@@ -1676,7 +1676,7 @@ export default function CategoryComponent() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleUpdateImageChange} 
+                    onChange={handleUpdateImageChange}
                     className="block w-full text-sm text-gray-600
                 file:mr-3 file:py-1 file:px-3
                 file:rounded-md file:border-0

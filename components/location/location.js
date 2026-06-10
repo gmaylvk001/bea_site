@@ -135,14 +135,17 @@ function StoreCard({ store }) {
           </button>
         </a>
  
-        <a
-          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address || store.organisation_name + " " + (store.city || ""))}`}
-          target="_blank" rel="noopener noreferrer"
-        >
-          <button className="bg-transparent text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-md py-[7px] px-3 text-[12px] font-semibold cursor-pointer flex items-center gap-1 transition-colors whitespace-nowrap">
-            <DirectionsIcon /> Directions
-          </button>
-        </a>
+      <a
+  href={`https://www.google.com/maps?q=${encodeURIComponent(
+    `${store.organisation_name} ${store.website}`
+  )}`}
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  <button className="bg-transparent text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-md py-[7px] px-3 text-[12px] font-semibold cursor-pointer flex items-center gap-1 transition-colors whitespace-nowrap">
+    <DirectionsIcon /> Get Direction
+  </button>
+</a>
       </div>
     </div>
   );
@@ -252,7 +255,7 @@ const filtered = useMemo(() => {
   </div>
 
   {/* Stats bar — overlapping bottom */}
-  <div className="absolute left-0 right-0 bottom-0 translate-y-1/2 z-10">
+  <div className="absolute left-0 right-0 bottom-[-0px] translate-y-1/2 z-10">
     <div style={{ marginLeft: '2.5rem', marginRight: '30%' }}>
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 grid grid-cols-4 divide-x divide-gray-100">
         {[

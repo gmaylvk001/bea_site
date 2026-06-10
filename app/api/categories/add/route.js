@@ -246,7 +246,7 @@ if (iconFile && typeof iconFile !== "string" && iconFile.name && iconFile.size >
     });
     console.log("newCat", newCategory);
 
-    await newCategory.save(); 
+    await newCategory.save();
 
     // HANDLE FILTERS FOR NEW CATEGORY
     let filterIds = [];

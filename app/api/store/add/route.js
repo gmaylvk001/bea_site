@@ -131,12 +131,12 @@ export async function POST(req) {
           });
         });
       // process in index order
-      for (const k of indexedStoreImageKeys.sort((a, b) => Number(a.split("_").pop()) - Number(b.split("_").pop()))) {
-        for (const f of filesMap[k]) {
-          const url = await saveFileToUploads(f, "storeimg");
-          newStoreData.store_images.push(url);
-        }
-      }
+     for (const k of indexedStoreImageKeys.sort((a, b) => Number(a.split("_").pop()) - Number(b.split("_").pop()))) {
+  for (const f of filesMap[k]) {
+    const url = await saveFileToUploads(f, "storeimg");
+    newStoreData.store_images.push(url);
+  }
+}
     } else if (filesMap.store_images) {
       for (const f of filesMap.store_images) {
         const url = await saveFileToUploads(f, "storeimg");
@@ -195,6 +195,16 @@ export async function POST(req) {
       newStoreData.banners = newStoreData.banners || [];
     }
 
+     // ---------- CUSTOMER IMAGES ----------
+          newStoreData.customer_images = [];
+          console.log("filesMap keys:", Object.keys(filesMap)); 
+          console.log("customer_images files:", filesMap.customer_images);
+            if (filesMap.customer_images) {
+             for (const f of filesMap.customer_images) {
+         newStoreData.customer_images.push(await saveFileToUploads(f, "custimg"));
+       }
+       }
+      console.log("final customer_images:", newStoreData.customer_images); 
     // -----------------------
     // FEATURED PRODUCTS
     // - payload could come as featuredPayload (client created) or featuredProducts (legacy)
@@ -280,7 +290,7 @@ export async function POST(req) {
     // -----------------------
     newStoreData.nearbyStores = Array.isArray(newStoreData.nearbyStores) ? newStoreData.nearbyStores : safeParseJSON(newStoreData.nearbyStores, []);
     newStoreData.businessHours = Array.isArray(newStoreData.businessHours) ? newStoreData.businessHours : safeParseJSON(newStoreData.businessHours, []);
-
+     
     // -----------------------
     // SOCIAL TIMELINE
     // - payload may be 'socialPayload' or 'socialTimeline'
@@ -349,9 +359,15 @@ export async function POST(req) {
     newStoreData.nearbyStores = Array.isArray(newStoreData.nearbyStores) ? newStoreData.nearbyStores : [];
     newStoreData.businessHours = Array.isArray(newStoreData.businessHours) ? newStoreData.businessHours : [];
     newStoreData.socialTimeline = Array.isArray(newStoreData.socialTimeline) ? newStoreData.socialTimeline : [];
-
+    newStoreData.customer_images = Array.isArray(newStoreData.customer_images) ? newStoreData.customer_images : [];
     // FINAL SAVE
-    const record = await store.create(newStoreData);
+    
+     const saveData = {
+    ...newStoreData,
+    customer_images: newStoreData.customer_images || [],
+        };
+
+    const record = await store.create(saveData);
 
     return new Response(JSON.stringify({ success: true, data: record }), {
       status: 201,

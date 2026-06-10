@@ -152,7 +152,12 @@ socialPayload.forEach((item, i) => {
 
     // ---------- STORE IMAGES ----------
     const storeImages = [];
-    for (let i = 0; i < 3; i++) {
+    const maxImages = Math.max(
+  ...Object.keys(files).filter(k => /^store_image_\d+$/.test(k)).map(k => Number(k.split("_").pop()) + 1),
+  ...Object.keys(fields).filter(k => /^existing_store_image_\d+$/.test(k)).map(k => Number(k.split("_").pop()) + 1),
+  0
+);
+for (let i = 0; i < maxImages; i++) {
       if (files[`store_image_${i}`]?.[0]) {
         storeImages[i] = `/uploads/${path.basename(files[`store_image_${i}`][0].filepath)}`;
       } else if (fields[`existing_store_image_${i}`]?.[0]) {
@@ -182,7 +187,15 @@ socialPayload.forEach((item, i) => {
       const banners = Array.isArray(files.banners) ? files.banners : [files.banners];
       banners.forEach(f => updateData.banners.push(`/uploads/${path.basename(f.filepath)}`));
     }
-
+     // ---------- CUSTOMER IMAGES ----------
+updateData.customer_images = [];
+if (fields.existing_customer_images?.[0]) {
+  updateData.customer_images.push(...JSON.parse(fields.existing_customer_images[0]));
+}
+if (files.customer_images) {
+  const imgs = Array.isArray(files.customer_images) ? files.customer_images : [files.customer_images];
+  imgs.forEach(f => updateData.customer_images.push(`/uploads/${path.basename(f.filepath)}`));
+}
     // ---------- FEATURED PRODUCTS ----------
     updateData.featuredProducts = [];
     const featuredPayload = fields.featuredPayload
