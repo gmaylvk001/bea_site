@@ -91,12 +91,12 @@ export default function LoyaltyPage() {
         style={{ backgroundImage: "url('/loyalty/banner1.png')", backgroundSize: "cover", backgroundPosition: "center" }}
       >
         <div className="absolute inset-0 bg-[#0B1D3F]/50 hidden lg:block" />
-        <div className="absolute inset-0 bg-[#0B1D3F] block md:hidden" />
+       <div className="absolute inset-0 bg-[#0B1D3F] block lg:hidden" />
 
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-12 flex flex-col lg:flex-row items-center gap-10">
+       <div className="relative z-10 w-full px-10 xl:px-20 py-12 flex flex-col lg:flex-row items-center justify-between gap-10">
 
           {/* LEFT */}
-          <div className="flex-1 text-white">
+          <div className="flex-1 text-white max-w-[600px]">
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-5 text-xs font-semibold tracking-wider uppercase text-white/90">
               ★ BEA Loyalty Rewards Programme
             </div>
