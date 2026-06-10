@@ -84,7 +84,7 @@ const StoreSchema = new mongoose.Schema(
         thumbnail: String, // <--- NEW
       },
     ],
-
+    customer_images: [{ type: String }],
     location: { type: String, maxlength: 100 },
     location_map: { lat: Number, lng: Number, address: String },
     zipcode: { type: String },
