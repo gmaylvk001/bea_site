@@ -1,6 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  FaChartLine,
+  FaStore,
+  FaGraduationCap,
+  FaArrowTrendUp,
+  FaUserTie,
+  FaUsersGear,
+  FaHeadset,
+  FaCalculator,
+} from "react-icons/fa6";
 
 export default function ContactBEA() {
   const [form, setForm] = useState({
@@ -12,6 +22,65 @@ export default function ContactBEA() {
     resume: null,
     _hp: "",
   });
+
+  const whyWork = [
+  {
+    icon: FaChartLine,
+    title: "Growth Opportunities",
+    desc: "Learn, grow and build your career with a fast-growing retail brand.",
+    color: "text-blue-500",
+    bg: "bg-blue-50",
+  },
+  {
+    icon: FaStore,
+    title: "47+ Store Network",
+    desc: "Be part of one of Tamil Nadu's leading electronics retail chains.",
+    color: "text-green-500",
+    bg: "bg-green-50",
+  },
+  {
+    icon: FaGraduationCap,
+    title: "Training & Development",
+    desc: "Regular product, sales and leadership training to help you excel.",
+    color: "text-orange-500",
+    bg: "bg-orange-50",
+  },
+  {
+    icon: FaArrowTrendUp,
+    title: "Career Progression",
+    desc: "From sales executive to future leaders – we grow together.",
+    color: "text-purple-500",
+    bg: "bg-purple-50",
+  },
+];
+
+const opportunities = [
+  {
+    icon: FaUserTie,
+    title: "Sales Executive",
+    dept: "Retail Sales",
+    color: "text-blue-600",
+  },
+  {
+    icon: FaUsersGear,
+    title: "Store Manager",
+    dept: "Store Operations",
+    color: "text-green-600",
+  },
+  {
+    icon: FaHeadset,
+    title: "Customer Support",
+    dept: "Service & Experience",
+    color: "text-orange-600",
+  },
+  {
+    icon: FaCalculator,
+    title: "Accounts & Operations",
+    dept: "Finance & Admin",
+    color: "text-purple-600",
+  },
+];
+
   const [formLoadTime] = useState(() => Date.now());
 
   const [errors, setErrors] = useState({});
@@ -169,106 +238,301 @@ export default function ContactBEA() {
 
   return (
     <>
-      {/* 🔥 PROFESSIONAL CONTACT BEA BANNER */}
-      <section className="relative w-full h-[220px] md:h-[300px] lg:h-[260px] flex items-center justify-center">
-        <img
-          src="/uploads/about-bea.png"
-          alt="Contact BEA"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/50"></div>
+      <section className="relative overflow-hidden bg-gradient-to-r from-[#001b5e] via-[#002b8f] to-[#003ccf]">
+  <div className="max-w-[1400px] mx-auto px-4 lg:px-10">
 
-        <div className="relative text-center px-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-wide text-white drop-shadow-lg">
-            BEA Careers
-          </h1>
-          <p className="mt-2 text-white/90 text-lg">
-            Submit your details & upload your resume
-          </p>
+    <div className="grid lg:grid-cols-2 items-center min-h-[480px]">
+
+      {/* LEFT CONTENT */}
+      <div className="relative z-10 py-12 lg:py-0">
+
+        <span className="inline-block px-4 py-1 text-xs font-semibold text-white border border-white/30 rounded-full mb-6">
+          #BEA CAREERS
+        </span>
+
+        <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold text-white leading-tight">
+          Build Your Future
+          <br />
+          With
+          <span className="text-[#2f7cff]"> BEA</span>
+        </h1>
+
+        <p className="mt-1 text-lg text-white/80 max-w-xl">
+          Join Tamil Nadu's leading electronics retail chain and grow
+          with a team that believes in innovation, customer service,
+          and career development.
+        </p>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-6 mt-1">
+
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full border border-white/30 flex items-center justify-center text-2xl">
+              🏬
+            </div>
+            <div>
+              <h4 className="text-3xl font-bold text-white">47+</h4>
+              <p className="text-sm text-white/70">
+                Stores Across
+                <br />
+                Tamil Nadu
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full border border-white/30 flex items-center justify-center text-2xl">
+              🛡️
+            </div>
+            <div>
+              <h4 className="text-3xl font-bold text-white">25+</h4>
+              <p className="text-sm text-white/70">
+                Years
+                <br />
+                Of Trust
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full border border-white/30 flex items-center justify-center text-2xl">
+              👥
+            </div>
+            <div>
+              <h4 className="text-3xl font-bold text-white">1000+</h4>
+              <p className="text-sm text-white/70">
+                Team Members
+                <br />
+                Growing
+              </p>
+            </div>
+          </div>
+
         </div>
-      </section>
 
-      {/* 🔥 MAIN FORM */}
-      <div className="max-w-xl mx-auto my-12 bg-white shadow-md rounded-lg p-8">
-        <h2 className="text-2xl font-bold text-center mb-6">
-          Share Your Details
+        <button className="mt-10 bg-[#2f7cff] hover:bg-[#2465db] text-white font-semibold px-8 py-4 rounded-xl transition">
+          Apply Now →
+        </button>
+
+      </div>
+
+      {/* RIGHT IMAGE */}
+      <div className="relative flex justify-center lg:justify-end">
+
+        {/* Curve Background */}
+        <div className="absolute border border-blue-400/40"></div>
+
+        <div className="relative flex justify-end">
+  <img
+    src="/uploads/career.png"
+    alt="BEA Team"
+    className="w-full max-w-[700px] h-auto object-cover"
+    style={{
+      clipPath: "ellipse(50% 48% at 50% 50%)",
+    }}
+  />
+</div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<section className="py-3 bg-white">
+  <div className="container mx-auto px-4">
+
+    <h2 className="text-center text-2xl font-bold text-[#001B5E]">
+      Why Work With BEA?
+    </h2>
+
+    <div className="w-20 h-1 bg-blue-600 mx-auto mt-3 mb-5 rounded-full"></div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      {whyWork.map((item, index) => {
+        const Icon = item.icon;
+
+        return (
+          <div
+            key={index}
+            className="bg-white border rounded-2xl p-8 text-center hover:shadow-xl transition"
+          >
+            <div
+              className={`w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center ${item.bg}`}
+            >
+              <Icon className={`${item.color} text-4xl`} />
+            </div>
+
+            <h3 className="font-bold text-md text-[#001B5E] mb-2">
+              {item.title}
+            </h3>
+
+            <p className="text-gray-600 leading-7">
+              {item.desc}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<section className="py-3 bg-[#f8faff]">
+  <div className="container mx-auto px-4">
+
+    <h2 className="text-center text-2xl font-bold text-[#001B5E]">
+      Explore Opportunities
+    </h2>
+
+    <div className="w-20 h-1 bg-blue-600 mx-auto mt-3 mb-5 rounded-full"></div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      {opportunities.map((job, index) => {
+        const Icon = job.icon;
+
+        return (
+          <div
+            key={index}
+            className="bg-white rounded-2xl border p-8 text-center hover:shadow-xl transition"
+          >
+            <Icon
+              className={`${job.color} text-6xl mx-auto mb-5`}
+            />
+
+            <h3 className="font-bold text-xl text-[#001B5E] mb-1">
+              {job.title}
+            </h3>
+
+            <p className="text-gray-500 mb-3">
+              {job.dept}
+            </p>
+
+            <div className="flex justify-center gap-2 mb-3 flex-wrap">
+              <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-medium">
+                Full Time
+              </span>
+
+              <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
+                Multiple Locations
+              </span>
+            </div>
+
+            <button className="font-semibold text-blue-600 hover:text-blue-800">
+              Apply Now →
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+
+<section className="py-5 bg-white">
+  <div className="container mx-auto px-4">
+
+    <div className="grid lg:grid-cols-2 gap-8">
+
+      {/* LIFE AT BEA */}
+      <div className="bg-white border rounded-2xl p-6">
+
+        <h2 className="text-3xl font-bold text-[#001B5E] mb-2">
+          Life at BEA
         </h2>
+
+        <div className="w-16 h-1 bg-blue-600 rounded-full mb-4"></div>
+
+        <p className="text-gray-600 mb-6">
+          More than a workplace — <br/>a team growing together.
+        </p>
+
+        <div className="mt-4">
+  <img
+    src="/uploads/aboutus-all-own-created-images.png"
+    alt="Life at BEA"
+    className="w-full rounded-xl object-cover"
+  />
+          {/* <img
+            src="/uploads/life2.jpg"
+            alt=""
+            className="rounded-xl h-[180px] w-full object-cover"
+          />
+
+          <img
+            src="/uploads/life3.jpg"
+            alt=""
+            className="rounded-xl h-[180px] w-full object-cover"
+          />
+
+          <img
+            src="/uploads/life4.jpg"
+            alt=""
+            className="rounded-xl h-[180px] w-full object-cover"
+          /> */}
+        </div>
+
+      </div>
+
+      {/* START YOUR JOURNEY */}
+      <div className="bg-white border rounded-2xl p-6 shadow-sm overflow-hidden">
+
+        <h2 className="text-3xl font-bold text-center text-[#001B5E] mb-2">
+          Start Your BEA Journey
+        </h2>
+
+        <div className="w-16 h-1 bg-blue-600 rounded-full mx-auto mb-8"></div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Honeypot — hidden from humans, bots fill it */}
-          <input
-            type="text"
-            name="_hp"
-            value={form._hp}
-            onChange={handleChange}
-            style={{ display: "none" }}
-            tabIndex={-1}
-            autoComplete="off"
-          />
+          <input type="text" name="_hp" value={form._hp} onChange={handleChange} style={{ display: "none" }} tabIndex={-1} autoComplete="off" />
 
-          {/* Name */}
-          <div>
-            <label className="block font-medium mb-1">
-              Full Name <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={inputClass("name")}
-            />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-            )}
-          </div>
+          <div className="grid md:grid-cols-2 gap-4">
 
-          {/* Contact Number */}
-          <div>
-            <label className="block font-medium mb-1">
-              Contact Number <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="text"
-              name="mobile_number"
-              value={form.mobile_number}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={inputClass("mobile_number")}
-            />
-            {errors.mobile_number && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.mobile_number}
-              </p>
-            )}
-          </div>
+            {/* Full Name */}
+            <div>
+              <label className="text-sm font-medium">
+                Full Name <span className="text-red-500">*</span>
+              </label>
 
-          {/* Email */}
-          <div>
-            <label className="block font-medium mb-1">
-              Email <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={inputClass("email")}
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
-          </div>
+              <input type="text" name="name" value={form.name} onChange={handleChange} onBlur={handleBlur} className={inputClass("name")} />
+              {errors.name && ( <p className="text-red-500 text-sm mt-1">{errors.name}</p>)}
+            </div>
 
-          {/* City */}
-          <div>
-            <label className="block font-medium mb-1">
-              City <span className="text-red-600">*</span>
-            </label>
-            <input
+            {/* Mobile */}
+            <div>
+              <label className="text-sm font-medium">
+                Mobile Number <span className="text-red-500">*</span>
+              </label>
+
+              <div className="flex gap-2">
+                <select className="border rounded-lg px-2">
+                  <option>+91</option>
+                </select>
+                 <input type="text" name="mobile_number" value={form.mobile_number} onChange={handleChange} onBlur={handleBlur} className={inputClass("mobile_number")}/>
+              </div>
+              {errors.mobile_number && (<p className="text-red-500 text-sm mt-1">{errors.mobile_number}</p>)}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="text-sm font-medium">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <input type="email" name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} className={inputClass("email")}/>
+              {errors.email && (<p className="text-red-500 text-sm mt-1">{errors.email}</p>)}
+            </div>
+
+            {/* City */}
+            <div>
+              <label className="text-sm font-medium">
+                City <span className="text-red-500">*</span>
+              </label>
+
+              <input
               type="text"
               name="city"
               value={form.city}
@@ -279,16 +543,44 @@ export default function ContactBEA() {
             {errors.city && (
               <p className="text-red-500 text-sm mt-1">{errors.city}</p>
             )}
-          </div>
+            </div>
 
-          {/* Job Post Dropdown */}
-         {/* Job Position Dropdown */}
-<div>
-  <label className="block font-medium mb-1">
-    Job Position <span className="text-red-600">*</span>
-  </label>
+            {/* Preferred Location
+            <div>
+              <label className="text-sm font-medium">
+                Preferred Location
+              </label>
 
-  <select
+              <select className="w-full border rounded-lg px-3 py-2">
+                <option>-- Select Preferred Location --</option>
+                <option>Chennai</option>
+                <option>Coimbatore</option>
+                <option>Madurai</option>
+              </select>
+            </div>
+
+            Department
+            <div>
+              <label className="text-sm font-medium">
+                Department
+              </label>
+
+              <select className="w-full border rounded-lg px-3 py-2">
+                <option>-- Select Department --</option>
+                <option>Sales</option>
+                <option>Operations</option>
+                <option>Support</option>
+              </select>
+            </div> */}
+
+            {/* Job Position */}
+            <div>
+              <label className="text-sm font-medium">
+                Job Position
+                <span className="text-red-500">*</span>
+              </label>
+
+              <select
     name="job_post"
     value={form.job_post}
     onChange={handleChange}
@@ -312,52 +604,112 @@ export default function ContactBEA() {
   {errors.job_post && (
     <p className="text-red-500 text-sm mt-1">{errors.job_post}</p>
   )}
-</div>
+            </div>
 
+            <div>
 
-          {/* Resume Upload */}
-          <div>
-            <label className="block font-medium mb-1">
-              Upload Resume (PDF/DOCX) <span className="text-red-600">*</span>
+            <label className="text-sm font-medium">
+              Upload Resume (PDF/DOCX)
+              <span className="text-red-500">*</span>
             </label>
+
             <input
               key={fileKey}
               type="file"
-              accept=".pdf,.docx"
+              accept=".pdf,.doc,.docx"
               onChange={handleFileChange}
-              className={`w-full rounded-md ${errors.resume ? "border border-red-500" : ""}`}
+              className="p-2"
             />
 
-            {errors.resume && (
-              <p className="text-red-500 text-sm mt-1">{errors.resume}</p>
-            )}
 
             {form.resume && (
-              <p className="text-green-600 mt-1 text-sm">
-                Selected: {form.resume.name}
+              <p className="text-green-600 text-sm mt-1">
+                {form.resume.name}
               </p>
             )}
+          </div>
+
+            {/* Experience */}
+            {/* <div>
+              <label className="text-sm font-medium">
+                Experience
+              </label>
+
+              <select className="w-full border rounded-lg px-3 py-2">
+                <option>-- Select Experience --</option>
+                <option>Fresher</option>
+                <option>1-3 Years</option>
+                <option>3-5 Years</option>
+                <option>5+ Years</option>
+              </select>
+            </div> */}
+
+          </div>
+
+          {/* Resume */}
+          {/* <div className="mt-5">
+
+            <label className="text-sm font-medium">
+              Upload Resume (PDF/DOCX)
+              <span className="text-red-500">*</span>
+            </label>
+
+            <input
+              key={fileKey}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={handleFileChange}
+              className="w-full mt-2 border rounded-lg p-2"
+            />
+
+            <p className="text-xs text-gray-500 mt-1">
+              Max size: 5MB
+            </p>
+
+            {form.resume && (
+              <p className="text-green-600 text-sm mt-1">
+                {form.resume.name}
+              </p>
+            )}
+          </div> */}
+
+          {/* Declaration */}
+          <div className="flex items-start gap-2 mt-5">
+
+            <input type="checkbox" />
+
+            <label className="text-sm text-gray-600">
+              I hereby declare that the above information is
+              true to the best of my knowledge.
+            </label>
+
           </div>
 
           {/* Submit */}
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-green-600 text-white py-2 rounded-md font-semibold text-lg"
-            >
-              {loading ? "Submitting..." : "Submit"}
-            </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full mt-6 bg-[#0A46D8] hover:bg-[#0839b2] text-white py-3 rounded-lg font-semibold"
+          >
+            {loading
+              ? "Submitting..."
+              : "Submit Application"}
+          </button>
 
-            {responseMsg && (
-              <p className="text-center mt-3 font-medium text-green-600">
-                {responseMsg}
-              </p>
-            )}
-          </div>
+          {responseMsg && (
+            <p className="text-center mt-3 text-green-600">
+              {responseMsg}
+            </p>
+          )}
 
         </form>
+
       </div>
+
+    </div>
+
+  </div>
+</section>
     </>
   );
 }
