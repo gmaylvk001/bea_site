@@ -5,367 +5,462 @@ import { BsFillAwardFill } from "react-icons/bs";
 import { FaUserGroup } from "react-icons/fa6";
 import { GiNetworkBars } from "react-icons/gi";
 import { FaThumbsUp } from "react-icons/fa";
-import { FiHeadphones,  FiSettings,FiTag, FiTarget, FiMapPin, FiAward, FiUsers,FiUser,  FiMonitor, FiSpeaker, FiShoppingCart, FiStar } from 'react-icons/fi';
-
-
-
+import { FiHeadphones,  FiSettings,FiTag, FiTarget, FiMapPin, FiAward, FiUsers,FiUser,  FiMonitor, FiSpeaker, FiShoppingCart, FiStar, FiHome, FiBriefcase, FiPackage, FiCreditCard, FiTrendingUp, FiGift } from 'react-icons/fi';
+import { useRouter } from "next/navigation";
 
 const AboutUs = () => {
+    const router = useRouter();
+    const chooseData = [{
+        image: "/uploads/customer.png",
+        icon: <FiMapPin />,
+        title: "100% Genuine Products",
+        desc: "Authorized retailer for leading electronics and home appliance brands."
+    },
+    {
+        image: "/uploads/customer.png",
+        icon: <FiShoppingCart />,
+        title: "Wide Product Range",
+        desc: "5000+ products including TVs, refrigerators, ACs and mobiles."
+    },
+    {
+        image: "/uploads/customer.png",
+        icon: <FiUsers />,
+        title: "Customer First Approach",
+        desc: "Trusted by families for honest advice and better service."
+    },
+    {
+        image: "/uploads/customer.png",
+        icon: <FiHome />,
+        title: "47+ Store Network",
+        desc: "Always near you with 47+ showrooms across Tamil Nadu."
+    },
+    {
+        image: "/uploads/customer.png",
+        icon: <FiCreditCard />,
+        title: "Flexible Finance Options",
+        desc: "Easy EMI & finance solutions from leading banks."
+    },
+    {
+        image: "/uploads/customer.png",
+        icon: <FiHeadphones />,
+        title: "Reliable Support",
+        desc: "Before & after purchase support, installation & service."
+    }];
 
+    const storeExperience = [{
+        image: "/uploads/aboutus_experience.png",
+        title: "TV Experience Zone",
+        },
+        {
+            image: "/uploads/aboutus_experience.png",
+            title: "Kitchen Appliance Zone",
+        },
+        {
+            image: "/uploads/aboutus_experience.png",
+            title: "Refrigerator Zone",
+        },
+        {
+            image: "/uploads/aboutus_experience.png",
+            title: "AC Experience Zone",
+        },
+        {
+            image: "/uploads/aboutus_experience.png",
+            title: "Customer Interaction",
+        },
+        {
+            image: "/uploads/aboutus_experience.png",
+            title: "Fast & Safe Delivery",
+        },
+    ];
 
-  return (
-    <div className="text-[#1d1d1f]">
+    const brands = [
+        "/uploads/Brands/brand_1778758654308.png",
+        "/uploads/Brands/brand_1778764524439.png",
+        "/uploads/Brands/brand_1778994553980.png",
+        "/uploads/Brands/brand_1778996291806.png",
+        "/uploads/Brands/brand_1779078793650.png",
+        "/uploads/Brands/panasonic.jpg",
+        "/uploads/Brands/brand_1778764090037.png",
+        "/uploads/Brands/brand-1754720247059.webp",
+        "/uploads/Brands/VIw4LetLiEoOuqOk.webp",
+        "/uploads/Brands/brand-1754545986132.webp",
+    ];
 
-         {/* 🟠 About us Header Bar */}
-              <div className="bg-blue-50 py-6 px-8 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-800">About us</h2>
+    return (
+        <div className="text-[#1d1d1f]">
+            {/* 🟠 About us Header Bar */}
+            <div className="bg-blue-50 py-6 px-8 flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <Link href="/" className="text-gray-600 hover:text-blue-600">🏠 Home</Link>
-                  <span className="text-gray-500">›</span>
-                  <span className="text-blue-600 font-semibold">About us</span>
+                <Link href="/" className="text-gray-600 hover:text-blue-600">🏠 Home</Link>
+                <span className="text-gray-500">›</span>
+                <span className="text-blue-600 font-semibold">About us</span>
                 </div>
-              </div>
-      {/* Hero Section */}
-      <section className="relative py-24 overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute top-0 left-0 w-full h-full opacity-20">
-                <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-blue-200 blur-3xl"></div>
-                <div className="absolute bottom-1/3 right-1/4 w-72 h-72 rounded-full bg-indigo-200 blur-3xl"></div>
             </div>
-    
-            {/* Floating electronics icons */}
-            <FiMonitor className="absolute top-20 left-10 text-blue-100 text-6xl animate-float-slow" />
-            <FiSpeaker className="absolute bottom-20 right-10 text-indigo-100 text-5xl animate-float-slow-delay" />
-    
-            <div className="relative z-10 max-w-5xl mx-auto px-6">
-                {/* Animated title */}
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-gray-800 animate-fade-in-up text-center">
-            <span className="relative inline-block">
-                House of Consumer Electronics
-            </span>
-            <br />
-            <span className="text-customBlue inline-block mt-2">
-                &amp; Home Appliances
-            </span>
-            </h1>
-
-                
-                {/* Animated description */}
-                <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed animate-fade-in-up delay-100">
-                <span className="font-semibold text-gray-700">BEA (Bharath Electronics Appliances)</span> is the premier chain of consumer electronics & home appliances in Tamil Nadu with over{" "}
-                <span className="relative inline-block font-bold text-customBlue">
-                    26 Multi-branded stores
-                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-200/50"></span>
-                </span>.
-                </p>
-                
-                {/* Animated button with floating effect */}
-                <div className="animate-bounce-in delay-300 text-center">
-                <Link 
-                    href="#" 
-                    className="relative inline-flex items-center justify-center px-8 py-3 overflow-hidden font-medium text-white bg-gradient-to-r from-customBlue to-blue-600 rounded-lg group shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                >
-                    <span className="relative z-10 flex items-center">
-                    Shop Now
-                    <FiShoppingCart className="ml-2" />
-                    </span>
-                    <span className="absolute -bottom-0 -right-0 w-full h-10 bg-blue-700 opacity-10 group-hover:w-0 group-hover:h-0 transition-all duration-500"></span>
-                    <span className="absolute -top-0 -left-0 w-10 h-10 bg-white opacity-10 group-hover:w-60 group-hover:h-60 group-hover:opacity-0 rounded-full transition-all duration-700"></span>
-                </Link>
+            {/* HERO SECTION */}
+            <section className="bg-gradient-to-r from-[#f5f8ff] to-white py-16">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid lg:grid-cols-2 gap-10 items-center">
+                        {/* Left Content */}
+                        <div>
+                            <p className="text-sm text-gray-500 mb-1">Tamil Nadu's</p>
+                            <h1 className="text-3xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
+                            <h2 className="text-3xl font-bold text-[#2453d3] mt-2">Since 2000</h2>
+                            <p className="mt-1 text-gray-600 leading-8">From our first electronics showroom in Coimbatore in 2000 to 47+ stores across Tamil Nadu, Bharath Electronics & Appliances (BEA) has growth into one of Tamil Nadu's most trusted destination for home appliances, electronics and smart living solutions.</p>
+                            <div className="flex gap-4 mt-8">
+                                <button onClick={() => router.push("/location")}  className="bg-[#2453d3] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1d45b8] transition">
+                                    <FiMapPin size={18} />
+                                    Explore Our Stores
+                                </button>
+                                <button onClick={() => router.push("/")} className="border border-[#2453d3] text-[#2453d3] px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#2453d3] hover:text-white transition">
+                                    <FiShoppingCart size={18} />
+                                    Shop Now
+                                </button>
+                            </div>
+                        </div>
+                        {/* Right Image */}
+                        <div>
+                            <Image src="/uploads/aboutus-banner.png" width={900} height={650} alt="BEA Store" className="rounded-2xl shadow-2xl w-full"/>
+                        </div>
+                    </div>
                 </div>
-                
-            
-            </div>
-      </section>
-
-      {/* Our Key to Success Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50 overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            {/* Animated Header */}
-            <div className="text-center mb-16 animate-fade-in-up">
-            <h2 className="text-4xl md:text-5xl font-bold text-customBlue mb-6 relative">
-                <span className="relative z-10">Our Key to Success </span>
-                <span className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-blue-200 animate-underline-expand"></span>
-            </h2>
-            
-            <p className="text-xl text-gray-700 leading-relaxed max-w-3xl mx-auto mb-8">
-                The perfect blend of <span className="font-semibold text-blue-600">quality</span>, <span className="font-semibold text-blue-600">service</span>, and <span className="font-semibold text-blue-600">value</span> that keeps customers coming back
-            </p>
-            </div>
-
-            {/* Success Pillars - Animated Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-            {[
-                {
-                icon: <FiAward className="text-3xl text-blue-600" />,
-                title: "Premium Products",
-                desc: "Only the finest quality electronics from trusted global brands"
-                },
-                {
-                icon: <FiHeadphones className="text-3xl text-blue-600" />,
-                title: "Exceptional Service",
-                desc: "24/7 customer support with knowledgeable representatives"
-                },
-                {
-                icon: <FiSettings className="text-3xl text-blue-600" />,
-                title: "After-Sales Care",
-                desc: "Comprehensive warranty and maintenance services"
-                },
-                {
-                icon: <FiTag className="text-3xl text-blue-600" />,
-                title: "Fair Pricing",
-                desc: "Competitive value-based pricing with no hidden costs"
-                },
-                {
-                icon: <FiUsers className="text-3xl text-blue-600" />,
-                title: "Friendly Staff",
-                desc: "Well-trained, customer-first employees ready to assist"
-                },
-                {
-                icon: <FiMapPin className="text-3xl text-blue-600" />,
-                title: "Prime Locations",
-                desc: "Modern showrooms with excellent accessibility"
-                }
-            ].map((item, index) => (
-                <div 
-                key={index}
-                className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-white hover:border-blue-100 animate-card-enter"
-                style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
-                    {item.icon}
+            </section>
+            {/* Statistics Bar */}
+            <section className="-mt-8 relative z-20">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="bg-white rounded-2xl shadow-lg p-3">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+                            {[{
+                                count: "25+",
+                                label: (<>Years of <br />Excellence</>),
+                                icon: <FiAward size={32} className="text-[#2453d3]" />
+                            },
+                            {
+                                count: "47+",
+                                label: (<>Showrooms <br />Across Tamil Nadu </>),
+                                icon: <FiHome size={32} className="text-[#2453d3]" />
+                            },
+                            {
+                                count: "17+",
+                                label: (<>Cities <br /> We Serve</>),
+                                icon: <FiMapPin size={32} className="text-[#2453d3]" />
+                            },
+                            {
+                                count: "50 Lakh+",
+                                label: (<>Happy <br /> Customers</>),
+                                icon: <FiUsers size={32} className="text-[#2453d3]" />
+                            },
+                            {
+                                count: "30+",
+                                label: (<>Leading <br />Brand Partners</>),
+                                icon: <FiBriefcase size={32} className="text-[#2453d3]" />
+                            },
+                            {
+                                count: "5000+",
+                                label: (<>Products <br /> Across Categories</>),
+                                icon: <FiPackage size={32} className="text-[#2453d3]" />
+                            },].map((item, i) => (
+                                <div key={i} className={`flex items-center gap-4 px-4 py-0 ${ i !== 5 ? "lg:border-r border-gray-200" : ""}`}>
+                                    {/* Left Icon */}
+                                    <div className="flex-shrink-0">{item.icon}</div>
+                                    {/* Right Content */}
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-[#2453d3]">{item.count}</h3>
+                                        <p className="text-gray-600 text-sm leading-5">{item.label}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">{item.title}</h3>
-                <p className="text-gray-600">{item.desc}</p>
-                </div>
-            ))}
-            </div>
+            </section>
+            {/* Why Choose BEA */}
+            <section className="py-6 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-10">
+                        <h2 className="text-2xl font-bold text-[#2b3a79]">Why Customers Choose BEA?</h2>
+                        <div className="w-12 h-1 bg-[#2453d3] mx-auto mt-2 rounded-full"></div>
+                    </div>
+                    <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        {chooseData.map((item, i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition duration-300">
+                                {/* Image */}
+                                <div className="relative">
+                                    <img src={item.image} alt={item.title} className="w-full h-28 object-cover"/>
+                                    {/* Floating Icon */}
+                                    <div className="absolute -bottom-4 left-4 w-9 h-9 rounded-full bg-white border-2 border-[#2453d3] flex items-center justify-center text-[#2453d3] shadow-md">{item.icon}</div>
+                                </div>
 
-        
+                                {/* Content */}
+                                <div className="pt-7 px-3 pb-4 text-center">
+                                    <h3 className="font-bold text-[#2b3a79] text-sm leading-5 min-h-[40px]">{item.title}</h3>
+                                    <p className="text-[12px] text-gray-600 mt-1 leading-5">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+            {/* Store Experience Section */}
+            <section className="pb-8 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-5">
+                        <h2 className="text-2xl font-bold text-[#2b3a79]">Experience BEA Stores</h2>
+                        <div className="w-12 h-1 bg-[#2453d3] mx-auto mt-2 rounded-full"></div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+                    {storeExperience.map((item, i) => (
+                        <div
+                        key={i}
+                        className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition"
+                        >
+
+                        {/* Image */}
+                        <div className="overflow-hidden">
+                            <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-full h-20 object-cover hover:scale-105 transition duration-300"
+                            />
+                        </div>
+
+                        {/* Title */}
+                        <div className="py-2 px-2">
+                            <h3 className="text-[12px] font-semibold text-center text-[#2b3a79] leading-4">
+                            {item.title}
+                            </h3>
+                        </div>
+
+                        </div>
+                    ))}
+
+                    </div>
+                </div>
+            </section>
+            {/* Company Journey Timeline */}
+            <section className="py-12">
+                <div className="max-w-7xl mx-auto px-4">
+                    {/* Row 1 */}
+                    <div className="grid lg:grid-cols-[60%_40%] gap-5 mb-5">
+                        {/* Journey */}
+                        <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                            <h2 className="text-2xl font-bold text-[#1f3bb3] mb-8">Our Journey</h2>
+                            <div className="relative">
+                                {/* Connecting Line */}
+                                <div className="absolute top-7 left-[8%] right-[8%] h-[3px] bg-gradient-to-r from-blue-400 via-purple-400 to-orange-400"></div>
+                                <div className="grid grid-cols-6 gap-2 relative z-10">
+                                    {[
+                                        {
+                                            year: "2000",
+                                            title: "Our First Store",
+                                            desc: "Started our journey With the first BEA showroom in Coimbatore.",
+                                            icon: <FiHome size={22} />,
+                                            color: "bg-blue-500",
+                                        },
+                                        {
+                                            year: "2005",
+                                            title: "Expanding Presence",
+                                            desc: "Opened multiple showrooms in key cities across TN.",
+                                            icon: <FiBriefcase size={22} />,
+                                            color: "bg-orange-500",
+                                        },
+                                        {
+                                            year: "2010",
+                                            title: "Growing Strong",
+                                            desc: "Expanded to more location and became a trusted retail name.",
+                                            icon: <FiTrendingUp size={22} />,
+                                            color: "bg-green-500",
+                                        },
+                                        {
+                                            year: "2015",
+                                            title: "Customer Trust Milestone",
+                                            desc: "Crossed 20+ stores and millions of happy customers.",
+                                            icon: <FiAward size={22} />,
+                                            color: "bg-purple-500",
+                                        },
+                                        {
+                                            year: "2020",
+                                            title: "Digital Transformation",
+                                            desc: "Enhanced Online presence & better customer experience.",
+                                            icon: <FiMapPin size={22} />,
+                                            color: "bg-blue-600",
+                                        },
+                                        {
+                                            year: "2025",
+                                            title: "Silver Jubilee",
+                                            desc: "Celebrating 25 years of trust, service and innovation.",
+                                            icon:  <FiGift size={22} />,
+                                            color: "bg-orange-500",
+                                        },
+                                    ].map((item, i) => (
+                                        <div key={i} className="text-center">
+                                            <div className={`w-14 h-14 mx-auto rounded-full ${item.color} border-4 border-white shadow-lg flex items-center justify-center text-white`}>
+                                                {item.icon}
+                                            </div>
+                                            <h4 className="text-[#1f3bb3] font-bold mt-3">{item.year}</h4>
+                                            <p className="text-[12px] font-semibold">{item.title}</p>
+                                            <p className="text-[10px] text-gray-500 mt-1">{item.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        {/* Vision */}
+                        <div className="bg-[#f7f9ff] rounded-xl border overflow-hidden">
+                            <div className="grid grid-cols-[1fr_170px] h-full">
+                                <div className="p-5">
+                                    <h3 className="text-xl font-bold text-[#2b3a79] mb-3">The Vision Behind BEA</h3>
+                                    <p className="text-[13px] text-gray-600 leading-6">Founded by R. Raja Ravichandran in 2000, BEA started with a vision to bring world-class electronics and appliances closer to every home.</p>
+                                    <p className="text-[13px] text-gray-600 leading-6 mt-3">Today, under the next generation leadership, we continue our journey combining trust, technology and customer experience.</p>
+                                    <div className="mt-5">
+                                        <p className="font-semibold text-[#1f3bb3]">R. Raja Ravichandran</p>
+                                        <p className="text-xs text-gray-500">Founder</p>
+                                    </div>
+                                </div>
+                                <img src="/uploads/vision_aboutus.png" alt="" className="h-full w-full object-cover"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Row 2 */}
+                    <div className="grid lg:grid-cols-2 gap-5 mb-5">
+                        {/* Tamil Nadu */}
+                        <div className="bg-[#f7f9ff] rounded-xl border border-gray-200 p-2">
+                            <h3 className="text-xl font-bold text-[#1f3bb3] mb-1">BEA Across Tamil Nadu</h3>
+                            <p className="text-sm text-gray-600 mb-4">Serving customers across</p>
+                            <div className="grid grid-cols-[140px_420px] gap-4 items-start">
+                                {/* Locations */}
+                                <div>
+                                    <ul className="space-y-3 text-sm text-gray-700">
+                                        <li className="flex items-center gap-2">
+                                            <span className="text-[#2453d3]">📍</span>Coimbatore
+                                        </li>
+
+                                        <li className="flex items-center gap-2">
+                                            <span className="text-[#2453d3]">📍</span>Salem
+                                        </li>
+
+                                        <li className="flex items-center gap-2">
+                                            <span className="text-[#2453d3]">📍</span>Erode
+                                        </li>
+
+                                        <li className="flex items-center gap-2">
+                                            <span className="text-[#2453d3]">📍</span>Tirupur
+                                        </li>
+
+                                        <li className="flex items-center gap-2">
+                                            <span className="text-[#2453d3]">📍</span>Namakkal
+                                        </li>
+
+                                        <li className="flex items-center gap-2">
+                                            <span className="text-[#2453d3]">📍</span>Trichy
+                                        </li>
+
+                                        <li className="flex items-center gap-2">
+                                            <span className="text-[#2453d3]">📍</span>Dharmapuri
+                                        </li>
+
+                                        <li className="flex items-center gap-2">
+                                            <span className="text-[#2453d3]">📍</span>Krishnagiri
+                                        </li>
+
+                                        <li className="text-[#2453d3] font-medium text-sm pt-1">
+                                            <a href="/location">and many more...</a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* Map */}
+                                <div className="flex justify-center -mt-12">
+                                    <img src="/uploads/aboutus-map.png" alt="BEA Across Tamil Nadu" className="w-full max-w-[280px] object-contain -mt-16" />
+                                </div>
+                            </div>
+                        </div>
+                        {/* Brand Partners */}
+                        <div className="bg-white rounded-2xl border shadow-sm p-6">
+                            <h3 className="text-2xl font-bold text-[#1f3bb3] mb-2">Our Premium Brand Partners</h3>
+                            <p className="text-gray-500 text-sm mb-5">BEA brings together the world's leading electronics and home appliance brands under one roof.</p>
+                            <div className="grid grid-cols-5 gap-3">
+                                {brands.map((logo, i) => (
+                                    <div key={i} className="h-16 bg-white border rounded-xl flex items-center justify-center hover:shadow-md transition">
+                                        <img src={logo} alt="" className="max-h-8 object-contain"/>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="text-center mt-6">
+                                <button className="bg-[#1f3bb3] text-white px-6 py-2 rounded-lg">View All Brands →</button>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Row 3 */}
+                    <div className="grid lg:grid-cols-2 gap-5">
+                        {/* Team Banner */}
+                        <div className="relative rounded-2xl overflow-hidden ">
+                            <img src="/uploads/aboutus-banner.png" alt="" className="w-full h-[260px] object-cover"/>
+
+                            <div className="absolute inset-0 bg-gradient-to-r from-[#001854] to-transparent"></div>
+
+                            <div className="absolute left-6 top-6 text-white max-w-md ">
+                            <h3 className="text-3xl font-bold mb-2">
+                                Built on Trust. Driven by People.
+                            </h3>
+
+                            <p className="text-sm">
+                                Meet the people behind BEA who believe
+                                in customer happiness, innovation and excellence.
+                            </p>
+                            </div>
+                        </div>
+                        {/* Testimonials */}
+                        <div className="bg-[#f7f9ff] rounded-2xl border shadow-sm p-3">
+                            <h3 className="text-xl font-bold text-center text-[#2b3a79] mb-1">What Our Customers Say</h3>
+                            <div className="grid md:grid-cols-3 gap-4">
+                                {[
+                                    {
+                                        name: "Ramesh Kumar",
+                                        city: "Coimbatore",
+                                        review: "Best place to buy electronics.",
+                                        image: "/uploads/user1.jpg",
+                                    },
+                                    {
+                                        name: "Priya Natarajan",
+                                        city: "Chennai",
+                                        review: "Wide range of products.",
+                                        image: "/uploads/user2.jpg",
+                                    },
+                                    {
+                                        name: "Karthik Vel",
+                                        city: "Madurai",
+                                        review: "Finance options are easy.",
+                                        image: "/uploads/user3.jpg",
+                                    },
+                                ].map((item, i) => (
+                                    <div key={i} className="border rounded-xl p-4 hover:shadow-md transition">
+                                        <div className="text-yellow-500 mb-2 text-lg">★★★★★</div>
+                                        <p className="text-sm text-gray-600 mb-5">"{item.review}"</p>
+                                        {/* User Info */}
+                                        <div className="flex items-center gap-3">
+                                            {/* Option 1: User Image
+                                            <img src={item.image} alt={item.name} className="w-12 h-12 rounded-full object-cover border" /> */}
+
+                                            {/* Option 2: If no image, use icon */}
+                                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-[#1f3bb3]">
+                                                <FiUser size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-[#1f3bb3] text-sm">{item.name}</p>
+                                                <p className="text-xs text-gray-500 flex items-center gap-1">📍 {item.city}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-      </section>
-
-
-      {/* Mission + BEA Stores Combined Section */}
-      <section className="py-20 relative overflow-hidden  bg-gradient-to-br from-blue-50 to-indigo-50" style={{ backgroundColor: '#f0f4ff' }}>
-        {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-10">
-            <div className="absolute top-20 left-10 w-40 h-40 rounded-full bg-blue-400 blur-3xl"></div>
-            <div className="absolute bottom-10 right-20 w-60 h-60 rounded-full bg-indigo-300 blur-3xl"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center px-6 relative z-10">
-            {/* Content Column */}
-            <div className="space-y-10 animate-fade-in-up">
-            {/* Mission Card */}
-            <div className="bg-white p-8 rounded-2xl shadow-xl border border-white/20 backdrop-blur-sm transform transition-all hover:scale-[1.01] hover:shadow-2xl">
-                <div className="flex items-start gap-4 mb-6">
-                <div className="bg-blue-100 p-3 rounded-full">
-                    <FiTarget className="text-blue-600 text-2xl" />
-                </div>
-                <h2 className="text-3xl font-bold text-customBlue">Our Mission</h2>
-                </div>
-                <div className="space-y-4 text-gray-700 leading-relaxed">
-                <p>
-                    To expand our branches across Tamil Nadu while delivering an unparalleled shopping experience that combines convenience, quality, and exceptional service.
-                </p>
-                <p className="bg-blue-50/50 p-4 rounded-lg border-l-4 border-blue-400 italic">
-                    "Well-located showrooms with premium infrastructure make it effortless for customers to discover and enjoy our offerings."
-                </p>
-                </div>
-            </div>
-
-            {/* Presence Card */}
-            <div className="bg-white p-8 rounded-2xl shadow-xl border border-white/20 backdrop-blur-sm transform transition-all hover:scale-[1.01] hover:shadow-2xl animate-fade-in-up delay-100">
-                <div className="flex items-start gap-4 mb-6">
-                <div className="bg-blue-100 p-3 rounded-full">
-                    <FiMapPin className="text-blue-600 text-2xl" />
-                </div>
-                <h2 className="text-3xl font-bold text-customBlue">BEA's Tamil Nadu Presence</h2>
-                </div>
-                <div className="space-y-4 text-gray-700 leading-relaxed">
-                <p>
-                    <span className="font-semibold text-blue-600">34 branches</span> strong - 26 Multi-brand stores and 8 exclusive Brand outlets across the state.
-                </p>
-                
-                
-                
-                <p className="pt-4">
-                    From our first store in <span className="font-semibold">Coimbatore (2000)</span> to our newest branches, we continue to set industry standards with crowd-favorite offers and services.
-                </p>
-                </div>
-            </div>
-            </div>
-
-            {/* Image Column */}
-            <div className="relative animate-fade-in-up delay-200">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl transform transition-all hover:scale-[1.02]">
-                <Image 
-                src="/user/bea_store_img.jpg" 
-                alt="BEA Storefront" 
-                width={600} 
-                height={500} 
-                className="w-full h-auto object-cover"
-                priority
-                />
-                {/* Decorative frame */}
-                <div className="absolute inset-0 border-8 border-white/30 pointer-events-none"></div>
-            </div>
-            
-            {/* Stats overlay */}
-            <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-xl border border-gray-100 w-64">
-                <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">34+</div>
-                <p className="text-sm uppercase tracking-wider text-gray-600 font-medium">Branches</p>
-                <div className="mt-3 w-full bg-blue-100 h-1 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 animate-progress-grow"></div>
-                </div>
-                </div>
-            </div>
-            
-            {/* Anniversary badge */}
-            <div className="absolute -top-5 -left-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center animate-float-slow">
-                <FiAward className="mr-2" />
-                <span className="text-sm font-medium">22 Years Excellence</span>
-            </div>
-            </div>
-        </div>
-      </section>
-
-      {/* Brands + Awards + Team + Turnover + Key to Success Combined Section */}
-      <section className="py-16 bg-white overflow-hidden  bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            {/* Brands Section with Floating Animation */}
-            <div className="text-center mb-16 animate-fade-in-up">
-            <h2 className="text-3xl md:text-4xl font-bold text-customBlue mb-6">
-                <span className="inline-block relative">
-                <span className="relative z-10">Our Premium Brands</span>
-                <span className="absolute bottom-0 left-0 w-full h-2 bg-blue-100/70 -z-0 animate-underline-expand"></span>
-                </span>
-            </h2>
-            
-            <div className="relative max-w-4xl mx-auto">
-                <p className="text-gray-700 mb-8 leading-relaxed animate-fade-in-up delay-100">
-                BEA sells leading Brands in Consumer Electronics and Home Appliances like Sony, LG, Samsung, Philips, Bosch, Godrej, Bajaj, Onida, Whirlpool, Panasonic, Haier, Siemens, Crompton, V Guard, Ultra, Eureka, AO-Smith, Preethi, Butterfly, O-general, Daikin, Voltas and Carrier, Hitachi, Faber, Kent are available for best price possible in the industry
-                </p>
-                
-                <p className="text-gray-700 leading-relaxed animate-fade-in-up delay-200">
-                Moreover, BEA has the best disciplined industry with latest technology products like LED TV, 4K LED TV, OLED TV, QLED TV, curved TV, Side by Side Refrigerator, Single Door Refrigerator, Double Door Refrigerator, Top Load Washing Machine, Frontload Washing Machine, Semi-Automatic Washing Machine, Dishwasher are displayed in the wide range.
-                </p>
-                
-                {/* Floating brand logos (visual representation) */}
-                <div className="absolute -top-10 -left-10 w-20 h-20 rounded-full bg-blue-50/50 animate-float-slow"></div>
-                <div className="absolute -bottom-5 -right-5 w-16 h-16 rounded-full bg-orange-50/50 animate-float-slow-delay"></div>
-            </div>
-            </div>
-
-            {/* Grid Section with Animated Cards */}
-        <div className="grid md:grid-cols-2 gap-8">
-        {[ // All 4 cards in a single array for symmetrical layout
-            {
-            icon: <BsFillAwardFill className="text-yellow-500 text-2xl" />,
-            title: 'Awards & Recognition',
-            content: 'Awarded Number one in performance in our area many times by most of the world admired brands we deal. Marketing done regularly through leading newspapers, satellite channels, local cables, hoardings, flex displays, theatres, SMS blasting, and of course on all social media like Facebook, WhatsApp, Twitter, Instagram, etc.',
-            delay: ''
-            },
-            {
-            icon: <GiNetworkBars className="text-yellow-500 text-2xl" />,
-            title: 'Remarkable Sales Growth',
-            content: 'Started with ₹5 Cr in the first year and achieved a tremendous turnover of nearly ₹300 Cr in just 17 years. BEA caters to all customer needs in consumer electronics & home appliances — and now, BEA has also started its online business through their official website for customer convenience.',
-            delay: 'delay-100'
-            },
-            {
-            icon: <FaUserGroup className="text-yellow-500 text-2xl" />,
-            title: 'Dedicated Team',
-            content: 'A separate team is dedicated to promoting institutional/bulk orders for hospitals, hotels, apartments, government & private sectors, factories. Our major clients include PRICOL, LMW, Lakshmi Mills, Sharp, KSB Pumps, Daksha Properties, KMCH, GEM, Lotus Hospitals & many more.',
-            delay: 'delay-200'
-            },
-            {
-            icon: <FaThumbsUp className="text-yellow-500 text-2xl" />,
-            title: 'Our Success Formula',
-            content: 'The key to success, according to BEA: Best Showrooms, Best Service, Best Price, Best Products, Best Brands, and Best Hospitality. Attractive finance schemes with EMI options are available for customer convenience. After-sales service is handled by a well-experienced support team.',
-            delay: 'delay-300'
-            }
-        ].map(({ icon, title, content, delay }, i) => (
-            <div key={i} className={`bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 animate-card-enter ${delay} flex flex-col justify-between`}>
-            <div className="flex items-start gap-4 mb-4">
-                <div className="bg-blue-100 p-3 rounded-full animate-pulse-slow">{icon}</div>
-                <div>
-                <h3 className="text-xl font-bold text-customBlue mb-3">{title}</h3>
-                <p className="text-gray-700 leading-relaxed">{content}</p>
-                </div>
-            </div>
-            </div>
-        ))}
-        </div>
-        </div>
-      </section>
-      
-      
-      <section className="relative min-h-[700px] w-full overflow-hidden">
-
-  {/* Background Image */}
-  <div className="absolute inset-0 z-0">
-    <Image
-      src="/user/Dinamalar-Smart-Shopper-Expo-30.jpg"
-      alt="Happy Customers Across TamilNadu"
-      fill
-      className="object-cover"
-      priority
-    />
-
-    {/* Bottom Dark Gradient */}
-    <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
-  </div>
-
-  {/* Bottom Content */}
- {/* Bottom Content */}
-<div className="relative z-10 flex items-end min-h-[700px]">
-  <div className="max-w-7xl mx-auto w-full px-6 pb-16 flex flex-col md:flex-row justify-between items-end gap-10">
-
-    {/* Left Side Heading */}
-    <div className="max-w-3xl">
-      <h2 className="text-3xl md:text-5xl font-semibold text-white leading-snug">
-        Trusted by over{" "}
-        <span className="text-sky-400 font-bold">
-          50 Lakh
-        </span>{" "}
-        happy customers across TamilNadu
-      </h2>
-    </div>
-
-    {/* Right Side Glass Stats */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-md">
-
-      <div className="bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-2xl border border-white/20 shadow-xl">
-        <div className="text-4xl md:text-5xl font-bold text-sky-400 mb-2">
-          46
-        </div>
-        <p className="uppercase tracking-widest text-gray-200 text-sm">
-          Branches
-        </p>
-      </div>
-
-      <div className="bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-2xl border border-white/20 shadow-xl">
-        <div className="text-4xl md:text-5xl font-bold text-sky-400 mb-2">
-          17
-        </div>
-        <p className="uppercase tracking-widest text-gray-200 text-sm">
-          Cities
-        </p>
-      </div>
-
-    </div>
-
-  </div>
-</div>
-
-
-</section>
-
-
-</div>
-  );
+    );
 };
 
 export default AboutUs;
