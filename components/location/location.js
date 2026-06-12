@@ -122,30 +122,34 @@ function StoreCard({ store }) {
       </div>
 
       {/* Action buttons */}
-    <div className="flex items-center justify-between px-3.5 pt-2.5 pb-3.5 mt-auto gap-2">
-        <Link href={`/store/${store.slug}`}>
-          <button className="bg-blue-600 ms-4 hover:bg-blue-700 text-white border-none rounded-md py-[7px] px-3 text-[12px] font-semibold cursor-pointer transition-colors whitespace-nowrap">
+      <div className="flex items-center   px-3.5 pt-2.5 pb-3.5 mt-auto gap-2">
+        {/* View Details — takes remaining space */}
+        <Link href={`/store/${store.slug}`} className="flex-1">
+          <button className="w-[100px] lg:ml-[10px] bg-blue-600 hover:bg-blue-700 text-white border-none rounded-md py-[7px] px-3 text-[12px] font-semibold cursor-pointer transition-colors whitespace-nowrap">
             View Details
           </button>
         </Link>
- 
+
+        {/* WhatsApp — icon only */}
         <a href={`https://wa.me/?text=${whatsappMsg}`} target="_blank" rel="noopener noreferrer">
           <button className="bg-[#25D366] hover:bg-[#1ebe5a] text-white border-none rounded-md py-[7px] px-2.5 cursor-pointer flex items-center justify-center transition-colors">
             <WhatsAppIcon />
           </button>
         </a>
- 
-      <a
-  href={`https://www.google.com/maps?q=${encodeURIComponent(
-    `${store.organisation_name} ${store.website}`
-  )}`}
-  target="_blank"
-  rel="noopener noreferrer"
->
-  <button className="bg-transparent text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-md py-[7px] px-3 text-[12px] font-semibold cursor-pointer flex items-center gap-1 transition-colors whitespace-nowrap">
-    <DirectionsIcon /> Get Direction
-  </button>
-</a>
+
+        {/* Get Direction — icon only on mobile, text on sm+ */}
+        <a
+          href={`https://www.google.com/maps?q=${encodeURIComponent(
+            `${store.organisation_name} ${store.website}`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <button className="bg-transparent text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-md py-[7px] px-2 sm:px-3 cursor-pointer flex items-center justify-center gap-1 transition-colors">
+            <DirectionsIcon />
+            <span className="hidden sm:inline text-[12px] font-semibold whitespace-nowrap">Get Direction</span>
+          </button>
+        </a>
       </div>
     </div>
   );
@@ -160,7 +164,8 @@ export default function BEABranchesPage() {
   const [selectedType, setSelectedType] = useState("All Store Types");
   const [showAll, setShowAll] = useState(false);
   const [appliedCity, setAppliedCity] = useState("All Cities");
- const [appliedType, setAppliedType] = useState("All Store Types");
+  const [appliedType, setAppliedType] = useState("All Store Types");
+
   useEffect(() => {
     async function fetchStores() {
       try {
@@ -188,16 +193,16 @@ export default function BEABranchesPage() {
     return ["All Store Types", ...unique];
   }, [stores]);
 
-const filtered = useMemo(() => {
-  return stores.filter((s) => {
-    const cityMatch = appliedCity === "All Cities" || s.city === appliedCity;
-    const typeMatch =
-      appliedType === "All Store Types" ||
-      s.category === appliedType ||
-      s.service_area === appliedType;
-    return cityMatch && typeMatch;
-  });
-}, [stores, appliedCity, appliedType]);
+  const filtered = useMemo(() => {
+    return stores.filter((s) => {
+      const cityMatch = appliedCity === "All Cities" || s.city === appliedCity;
+      const typeMatch =
+        appliedType === "All Store Types" ||
+        s.category === appliedType ||
+        s.service_area === appliedType;
+      return cityMatch && typeMatch;
+    });
+  }, [stores, appliedCity, appliedType]);
 
   const INITIAL_COUNT = 8;
   const visibleStores = showAll ? filtered : filtered.slice(0, INITIAL_COUNT);
@@ -208,131 +213,146 @@ const filtered = useMemo(() => {
 
   return (
     <div className="font-sans bg-[#f8fafc] text-gray-900">
-{/* ── Hero Banner ── */}
 
-{/* DESKTOP — overlay layout */}
-<div className="relative w-full hidden sm:block">
-  <img
-    src="/location/LocationBanner1.png"
-    alt="BEA Store Network"
-    className="w-full block object-cover"
-    style={{ minHeight: '340px', maxHeight: '480px' }}
-    onError={(e) => { e.target.style.display = "none"; }}
-  />
+      {/* ── Hero Banner ── */}
 
-  {/* White gradient overlay */}
-  <div
-    className="absolute inset-0"
-    style={{
-      background: 'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 25%, rgba(255,255,255,0.3) 42%, rgba(255,255,255,0) 58%)',
-    }}
-  />
-
-  {/* Left overlay text */}
-  <div className="absolute inset-0 flex items-center">
-    <div className="ml-14 max-w-[400px]">
-      <p className="text-[36px] font-bold text-blue-900 mb-1 ">
-        BEA Store Network.
-      </p>
-      <div className="leading-tight mb-0.5">
-        <span className="text-[48px] font-black text-blue-700">
-          {totalStores > 0 ? `${totalStores}+` : "47+"}
-        </span>
-        <span className="text-[48px] font-bold text-blue-900 ml-2">Showrooms.</span>
-      </div>
-      <div className="leading-tight mb-0.5">
-        <span className="text-[48px] font-black text-blue-700">
-          {totalCities > 0 ? `${totalCities}+` : "17+"}
-        </span>
-        <span className="text-[48px] font-bold text-blue-900 ml-2">Cities.</span>
-      </div>
-      <div className="text-[38px] font-black text-blue-900 mb-3">One Trusted Name.</div>
-      <p className="text-[14.5px] text-blue-900 leading-relaxed max-w-[300px]">
-        Find your nearest BEA showroom and experience Tamil Nadu&apos;s favourite
-        destination for electronics &amp; home appliances.
-      </p>
-    </div>
-  </div>
-
-  {/* Stats bar — overlapping bottom */}
-  <div className="absolute left-0 right-0 bottom-[-0px] translate-y-1/2 z-10">
-    <div style={{ marginLeft: '2.5rem', marginRight: '30%' }}>
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 grid grid-cols-4 divide-x divide-gray-100">
-        {[
-          { icon: "/location/ShowRoom.png", value: `${totalStores > 0 ? totalStores : 47}+`, label: "Showrooms", sub: "Across Tamil Nadu" },
-          { icon: "/location/Location.png", value: `${totalCities > 0 ? totalCities : 17}+`, label: "Cities",    sub: "Strong Presence" },
-          { icon: "/location/HappyCustomer.png", value: "50 Lakh+",                               label: "Happy",     sub: "Customers" },
-          { icon: "/location/25Years.png", value: "25+",                                    label: "Years of",  sub: "Trust & Excellence" },
-        ].map((stat, i) => (
-          <div key={i} className="flex items-center gap-3 px-5 py-4">
-            <img
-              src={stat.icon}
-              alt={stat.label}
-              className="w-[55px] h-[55px] object-contain flex-shrink-0"
-              onError={(e) => { e.target.style.display = "none"; }}
-            />
-            <div>
-              <div className="text-[20px] font-black text-blue-700 leading-none">{stat.value}</div>
-              <div className="text-[15px] font-semibold text-gray-800">{stat.label}</div>
-              <div className="text-[10.5px] text-gray-500">{stat.sub}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-</div>
-
-{/* Desktop spacer */}
-<div className="hidden sm:block h-[70px] bg-[#f8fafc]" />
-
-{/* MOBILE & TABLET — No banner, white bg, stacked */}
-<div className="block sm:hidden bg-white px-5 pt-6 pb-4">
-  <p className="text-[11px] font-semibold text-gray-500 mb-1">
-    BEA Store Network.
-  </p>
-  <div className="leading-tight mb-0.5">
-    <span className="text-[34px] font-black text-blue-700">
-      {totalStores > 0 ? `${totalStores}+` : "47+"}
-    </span>
-    <span className="text-[26px] font-black text-gray-900 ml-1.5">Showrooms.</span>
-  </div>
-  <div className="leading-tight mb-0.5">
-    <span className="text-[34px] font-black text-blue-700">
-      {totalCities > 0 ? `${totalCities}+` : "17+"}
-    </span>
-    <span className="text-[26px] font-black text-gray-900 ml-1.5">Cities.</span>
-  </div>
-  <div className="text-[20px] font-black text-gray-900 mb-2">One Trusted Name.</div>
-  <p className="text-[12px] text-gray-600 leading-relaxed mb-5">
-    Find your nearest BEA showroom and experience Tamil Nadu&apos;s favourite
-    destination for electronics &amp; home appliances.
-  </p>
-
-  {/* Stats — 2x2 grid on mobile */}
-  <div className="grid grid-cols-2 gap-3">
-    {[
-      { icon: "/location/ShowRoom.png", value: `${totalStores > 0 ? totalStores : 47}+`, label: "Showrooms", sub: "Across Tamil Nadu" },
-      { icon: "/location/AuthraizedBrand.png", value: `${totalCities > 0 ? totalCities : 17}+`, label: "Cities",    sub: "Strong Presence" },
-      { icon: "/location/FastDelivery.png", value: "50 Lakh+",                               label: "Happy",     sub: "Customers" },
-      { icon: "/location/EasyEMI.png", value: "25+",                                    label: "Years of",  sub: "Trust & Excellence" },
-    ].map((stat, i) => (
-      <div key={i} className="flex items-center gap-3 bg-[#f8fafc] rounded-xl px-4 py-3 border border-gray-100">
+      {/* DESKTOP — overlay layout (unchanged) */}
+      <div className="relative w-full hidden sm:block">
         <img
-          src={stat.icon}
-          alt={stat.label}
-          className="w-8 h-8 object-contain flex-shrink-0"
+          src="/location/LocationBanner1.png"
+          alt="BEA Store Network"
+          className="w-full block object-cover"
+          style={{ minHeight: '340px', maxHeight: '480px' }}
           onError={(e) => { e.target.style.display = "none"; }}
         />
-        <div>
-          <div className="text-[16px] font-black text-blue-700 leading-none">{stat.value}</div>
-          <div className="text-[11px] font-semibold text-gray-800">{stat.label}</div>
-          <div className="text-[10px] text-gray-500">{stat.sub}</div>
+
+        {/* White gradient overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 25%, rgba(255,255,255,0.3) 42%, rgba(255,255,255,0) 58%)',
+          }}
+        />
+
+        {/* Left overlay text */}
+        <div className="absolute inset-0 flex items-center">
+          <div className="ml-14 max-w-[400px]">
+            <p className="text-[36px] font-bold text-blue-900 mb-1">
+              BEA Store Network.
+            </p>
+            <div className="leading-tight mb-0.5">
+              <span className="text-[48px] font-black text-blue-700">
+                {totalStores > 0 ? `${totalStores}+` : "47+"}
+              </span>
+              <span className="text-[48px] font-bold text-blue-900 ml-2">Showrooms.</span>
+            </div>
+            <div className="leading-tight mb-0.5">
+              <span className="text-[48px] font-black text-blue-700">
+                {totalCities > 0 ? `${totalCities}+` : "17+"}
+              </span>
+              <span className="text-[48px] font-bold text-blue-900 ml-2">Cities.</span>
+            </div>
+            <div className="text-[38px] font-black text-blue-900 mb-3">One Trusted Name.</div>
+            <p className="text-[14.5px] text-blue-900 leading-relaxed max-w-[300px]">
+              Find your nearest BEA showroom and experience Tamil Nadu&apos;s favourite
+              destination for electronics &amp; home appliances.
+            </p>
+          </div>
+        </div>
+
+        {/* Stats bar — overlapping bottom */}
+        <div className="absolute left-0 right-0 bottom-[-0px] translate-y-1/2 z-10">
+          <div style={{ marginLeft: '2.5rem', marginRight: '30%' }}>
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 grid grid-cols-4 divide-x divide-gray-100">
+              {[
+                { icon: "/location/ShowRoom.png", value: `${totalStores > 0 ? totalStores : 47}+`, label: "Showrooms", sub: "Across Tamil Nadu" },
+                { icon: "/location/Location.png", value: `${totalCities > 0 ? totalCities : 17}+`, label: "Cities",    sub: "Strong Presence" },
+                { icon: "/location/HappyCustomer.png", value: "50 Lakh+",                           label: "Happy",     sub: "Customers" },
+                { icon: "/location/25Years.png", value: "25+",                                      label: "Years of",  sub: "Trust & Excellence" },
+              ].map((stat, i) => (
+                <div key={i} className="flex items-center gap-3 px-5 py-4">
+                  <img
+                    src={stat.icon}
+                    alt={stat.label}
+                    className="w-[55px] h-[55px] object-contain flex-shrink-0"
+                    onError={(e) => { e.target.style.display = "none"; }}
+                  />
+                  <div>
+                    <div className="text-[20px] font-black text-blue-700 leading-none">{stat.value}</div>
+                    <div className="text-[15px] font-semibold text-gray-800">{stat.label}</div>
+                    <div className="text-[10.5px] text-gray-500">{stat.sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-    ))}
-  </div>
-</div>
+
+      {/* Desktop spacer */}
+      <div className="hidden sm:block h-[70px] bg-[#f8fafc]" />
+
+      {/* MOBILE & TABLET — banner image top, content stacked below */}
+      <div className="block sm:hidden">
+        {/* Banner image */}
+        <div className="w-full overflow-hidden" style={{ maxHeight: '200px' }}>
+          <img
+            src="/location/LocationBanner1.png"
+            alt="BEA Store Network"
+            className="w-full object-cover block"
+            style={{ maxHeight: '200px' }}
+            onError={(e) => { e.target.style.display = "none"; }}
+          />
+        </div>
+
+        {/* Content below banner */}
+        <div className="bg-white px-5 pt-5 pb-4">
+          <p className="text-[11px] font-semibold text-gray-500 mb-1">
+            BEA Store Network.
+          </p>
+          <div className="leading-tight mb-0.5">
+            <span className="text-[34px] font-black text-blue-700">
+              {totalStores > 0 ? `${totalStores}+` : "47+"}
+            </span>
+            <span className="text-[26px] font-black text-gray-900 ml-1.5">Showrooms.</span>
+          </div>
+          <div className="leading-tight mb-0.5">
+            <span className="text-[34px] font-black text-blue-700">
+              {totalCities > 0 ? `${totalCities}+` : "17+"}
+            </span>
+            <span className="text-[26px] font-black text-gray-900 ml-1.5">Cities.</span>
+          </div>
+          <div className="text-[20px] font-black text-gray-900 mb-2">One Trusted Name.</div>
+          <p className="text-[12px] text-gray-600 leading-relaxed mb-5">
+            Find your nearest BEA showroom and experience Tamil Nadu&apos;s favourite
+            destination for electronics &amp; home appliances.
+          </p>
+
+          {/* Stats — 2x2 grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { icon: "/location/ShowRoom.png",      value: `${totalStores > 0 ? totalStores : 47}+`, label: "Showrooms", sub: "Across Tamil Nadu" },
+              { icon: "/location/Location.png",       value: `${totalCities > 0 ? totalCities : 17}+`, label: "Cities",    sub: "Strong Presence" },
+              { icon: "/location/HappyCustomer.png",  value: "50 Lakh+",                               label: "Happy",     sub: "Customers" },
+              { icon: "/location/25Years.png",         value: "25+",                                    label: "Years of",  sub: "Trust & Excellence" },
+            ].map((stat, i) => (
+              <div key={i} className="flex items-center gap-3 bg-[#f8fafc] rounded-xl px-4 py-3 border border-gray-100">
+                <img
+                  src={stat.icon}
+                  alt={stat.label}
+                  className="w-8 h-8 object-contain flex-shrink-0"
+                  onError={(e) => { e.target.style.display = "none"; }}
+                />
+                <div>
+                  <div className="text-[16px] font-black text-blue-700 leading-none">{stat.value}</div>
+                  <div className="text-[11px] font-semibold text-gray-800">{stat.label}</div>
+                  <div className="text-[10px] text-gray-500">{stat.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* ── Find Store Section ── */}
       <div id="find-store-section" className="bg-white px-6 sm:px-10 pt-10 pb-8">
@@ -373,17 +393,17 @@ const filtered = useMemo(() => {
             <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm">▾</span>
           </div>
 
-          {/* Find Store Button — same height as dropdowns */}
-<button
-  onClick={() => {
-    setAppliedCity(selectedCity);
-    setAppliedType(selectedType);
-    setShowAll(false);
-  }}
-  className="h-[44px] w-[400px] bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg px-6 text-[13.5px] font-bold cursor-pointer flex items-center justify-center gap-2 transition-colors sm:flex-shrink-0"
->
-  Find Store <SearchIcon />
-</button>
+          {/* Find Store Button — full width on mobile, auto on sm+ */}
+          <button
+            onClick={() => {
+              setAppliedCity(selectedCity);
+              setAppliedType(selectedType);
+              setShowAll(false);
+            }}
+            className="h-[44px] w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg px-6 text-[13.5px] font-bold cursor-pointer flex items-center justify-center gap-2 transition-colors sm:flex-shrink-0"
+          >
+            Find Store <SearchIcon />
+          </button>
         </div>
 
         {/* Loading */}
@@ -404,7 +424,7 @@ const filtered = useMemo(() => {
                 <StoreCard key={store._id} store={store} />
               ))}
 
-              {/* "And Many More" card — only when not showAll and hasMore */}
+              {/* "And Many More" card */}
               {!showAll && hasMore && (
                 <div className="bg-white border border-gray-200 rounded-[10px] flex flex-col items-center justify-center px-5 py-8 gap-2.5 min-h-[200px]">
                   <img
@@ -458,14 +478,13 @@ const filtered = useMemo(() => {
           Why Shop at BEA?
         </h2>
 
-        {/* ── Why Shop Cards — left icon + right content ── */}
+        {/* ── Why Shop Cards ── */}
         <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 mb-10">
           {WHY_SHOP_ITEMS.map((item, i) => (
             <div
               key={i}
               className="bg-[#f8fafc] border border-gray-200 rounded-xl px-4 py-4 flex items-center gap-3 flex-[1_1_180px] max-w-[220px]"
             >
-              {/* Left: Icon */}
               <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center">
                 <img
                   src={item.icon}
@@ -474,7 +493,6 @@ const filtered = useMemo(() => {
                   onError={(e) => { e.target.style.display = "none"; }}
                 />
               </div>
-              {/* Right: Text */}
               <div className="min-w-0">
                 <div className="font-bold text-[12.5px] text-gray-900 mb-0.5 leading-snug">{item.title}</div>
                 <div className="text-[11px] text-gray-500 leading-relaxed">{item.desc}</div>
@@ -483,67 +501,66 @@ const filtered = useMemo(() => {
           ))}
         </div>
 
-      {/* LocationBanner3 — Desktop: buttons overlay, Mobile: buttons below */}
-<div className="rounded-xl overflow-hidden">
+        {/* LocationBanner3 */}
+        <div className="rounded-xl overflow-hidden">
 
-  {/* DESKTOP — buttons overlay on banner */}
-  <div className="relative hidden sm:block">
-    <img
-      src="/location/LocationBanner3.png"
-      alt="Visit BEA Store"
-      className="w-full max-h-[260px] object-cover block"
-      onError={(e) => { e.target.style.display = "none"; }}
-    />
-    {/* Right side buttons overlay */}
-    <div className="absolute inset-0 flex items-center justify-end pr-10">
-      <div className="flex items-center gap-3">
-        <a href="#find-store-section">
-          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg px-5 py-2.5 text-[13.5px] transition-colors whitespace-nowrap">
-            Find Store
-            <LocationPinIcon color="white" size={15} />
-          </button>
-        </a>
-        <Link href="/">
-          <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-blue-700 font-bold rounded-lg px-5 py-2.5 text-[13.5px] border border-white transition-colors whitespace-nowrap">
-            Shop Online
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-            </svg>
-          </button>
-        </Link>
-      </div>
-    </div>
-  </div>
+          {/* DESKTOP — buttons overlay on banner (unchanged) */}
+          <div className="relative hidden sm:block">
+            <img
+              src="/location/LocationBanner3.png"
+              alt="Visit BEA Store"
+              className="w-full max-h-[260px] object-cover block"
+              onError={(e) => { e.target.style.display = "none"; }}
+            />
+            <div className="absolute inset-0 flex items-center justify-end pr-10">
+              <div className="flex items-center gap-3">
+                <a href="#find-store-section">
+                  <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg px-5 py-2.5 text-[13.5px] transition-colors whitespace-nowrap">
+                    Find Store
+                    <LocationPinIcon color="white" size={15} />
+                  </button>
+                </a>
+                <Link href="/">
+                  <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-blue-700 font-bold rounded-lg px-5 py-2.5 text-[13.5px] border border-white transition-colors whitespace-nowrap">
+                    Shop Online
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                    </svg>
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
 
-  {/* MOBILE & TABLET — banner + buttons below */}
-  <div className="block sm:hidden">
-    <img
-      src="/location/LocationBanner3.png"
-      alt="Visit BEA Store"
-      className="w-full max-h-[200px] object-cover block"
-      onError={(e) => { e.target.style.display = "none"; }}
-    />
-    <div className="flex items-center gap-3 justify-center py-4 bg-[#1e3a8a]">
-      <a href="#find-store-section">
-        <button className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg px-5 py-2.5 text-[13px] transition-colors whitespace-nowrap">
-          Find Store
-          <LocationPinIcon color="white" size={14} />
-        </button>
-      </a>
-      <Link href="/">
-        <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-blue-700 font-bold rounded-lg px-5 py-2.5 text-[13px] border border-white transition-colors whitespace-nowrap">
-          Shop Online
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-          </svg>
-        </button>
-      </Link>
-    </div>
-  </div>
+          {/* MOBILE & TABLET — banner image, then buttons below (no background color) */}
+          <div className="block sm:hidden">
+            <img
+              src="/location/LocationBanner3.png"
+              alt="Visit BEA Store"
+              className="w-full max-h-[200px] object-cover block"
+              onError={(e) => { e.target.style.display = "none"; }}
+            />
+            <div className="flex items-center gap-3 justify-center py-4">
+              <a href="#find-store-section">
+                <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg px-5 py-2.5 text-[13px] transition-colors whitespace-nowrap">
+                  Find Store
+                  <LocationPinIcon color="white" size={14} />
+                </button>
+              </a>
+              <Link href="/">
+                <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-blue-700 font-bold rounded-lg px-5 py-2.5 text-[13px] border border-blue-200 transition-colors whitespace-nowrap">
+                  Shop Online
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                  </svg>
+                </button>
+              </Link>
+            </div>
+          </div>
 
-</div>
+        </div>
       </div>
 
     </div>
