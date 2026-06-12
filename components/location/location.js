@@ -400,7 +400,7 @@ export default function BEABranchesPage() {
       setAppliedType(selectedType);
       setShowAll(false);
     }}
-className="h-[44px]  sm:py-9 flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg px-6 text-[13.5px] font-bold cursor-pointer flex items-center justify-center gap-2 transition-colors"  >
+className="h-[44px]  flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg px-6 text-[13.5px] font-bold cursor-pointer flex items-center justify-center gap-2 transition-colors"  >
     Find Store <SearchIcon />
   </button>
 </div>
