@@ -264,7 +264,7 @@ const CancellationrefundComponent = () => {
             <div className="relative w-full max-w-md aspect-square">
               {/* Replace with final illustration image */}
               <img
-                src="/uploads/cancellation-refund/BEA Care.png"
+                src="/uploads/cancellation-refund/BEA_Care.png"
                 alt="Cancellation and Refund"
                 className="w-full h-full object-contain"
               />
@@ -423,7 +423,7 @@ const CancellationrefundComponent = () => {
           <div className="relative rounded-xl overflow-hidden min-h-[280px]">
             {/* Replace with final team photo */}
             <img
-              src="/uploads/cancellation-refund/BEA Staffs.png"
+              src="/uploads/cancellation-refund/BEA_support.png"
               alt="BEA Support Team"
               className="absolute inset-0 w-full h-full object-cover"
             />

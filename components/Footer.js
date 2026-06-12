@@ -493,6 +493,7 @@ const capitalizeFirstLetter = (str) =>
                       <li><Link href="/blog">Blog</Link></li>
                       <li><Link href="/careers">Careers</Link></li>
                       <li><Link href="/location">Our Stores</Link></li>
+                      <li><Link href="/cancellation-refund-policy">Cancellation & Refund Policy</Link></li>
                     </ul>
                   </div>
 
@@ -655,7 +656,7 @@ const capitalizeFirstLetter = (str) =>
 <div className="hidden lg:flex lg:col-start-9 px-2 lg:px-4 min-w-0 flex-col items-start">
   <div className="relative w-full h-[140px] flex items-start justify-start">
     <Image
-      src="/uploads/TRUCO APP LOYALITY POINTS.png"
+      src="/uploads/Our-app.png"
       alt="BEA Mobile App Mockup"
       width={100}
       height={140}
