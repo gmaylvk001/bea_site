@@ -560,11 +560,11 @@ const capitalizeFirstLetter = (str) =>
             </div>
           </div>
 
-          {/* DARK BLUE CATEGORY FOOTER */}
-          <div className="bg-[#041b4d] text-white py-10">
-            <div className="container mx-auto px-4">
+{/* DARK BLUE CATEGORY FOOTER */}
+<div className="bg-[#041b4d] text-white py-10">
+  <div className="container mx-auto px-4">
 
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 text-sm">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-6 text-sm">
 
                 {groupedCategories.main.slice(0, 5).map((main) => {
   const Icon =
@@ -624,38 +624,48 @@ const capitalizeFirstLetter = (str) =>
                   </ul>
                 </div>
 
-                {/* Our Location */}
-                <div className="px-4 min-w-0">
-                  <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
-                    Our Location
-                  </h4>
+          {/* Our Location */}
+      <div className="lg:col-span-2 px-2 lg:px-4 min-w-0">
+        <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
+          Our Location
+        </h4>
 
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d391.02517849236526!2d76.9626592!3d11.0194039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8585cc4962b87%3A0x38eddb57f0f66203!2sBharath%20Electronics%20%26%20Appliances!5e0!3m2!1sen!2sin!4v1740660808642!5m2!1sen!2sin"
-                    width="100%"
-                    height="120"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Google Maps - Bharath Electronics & Appliances Location"
-                  />
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d391.02517849236526!2d76.9626592!3d11.0194039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8585cc4962b87%3A0x38eddb57f0f66203!2sBharath%20Electronics%20%26%20Appliances!5e0!3m2!1sen!2sin!4v1740660808642!5m2!1sen!2sin"
+          width="100%"
+          height="120"
+          style={{ border: 0 }}
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="no-referrer-when-downgrade"
+          title="Google Maps - Bharath Electronics & Appliances Location"
+        />
 
-                  <a
-                    href="https://maps.app.goo.gl/aceBM5ztAjNQLx217"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-300 text-sm mt-3 inline-block whitespace-nowrap"
-                  >
-                    View on Google Maps →
-                  </a>
-                </div>
+        <a
+          href="https://maps.app.goo.gl/aceBM5ztAjNQLx217"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-300 text-sm mt-3 inline-block whitespace-nowrap"
+        >
+          View on Google Maps →
+        </a>
+      </div>
 
-              </div>
-
-            </div>
-          </div>
-
+{/* Our App Section */}
+<div className="hidden lg:flex lg:col-start-9 px-2 lg:px-4 min-w-0 flex-col items-start">
+  <div className="relative w-full h-[140px] flex items-start justify-start">
+    <Image
+      src="/uploads/TRUCO APP LOYALITY POINTS.png"
+      alt="BEA Mobile App Mockup"
+      width={100}
+      height={140}
+      className="object-contain"
+    />
+  </div>
+</div>
+    </div>
+  </div>
+</div>
           <div className="bg-[#02133a] text-gray-300 py-4">
             <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
 
@@ -691,7 +701,7 @@ const capitalizeFirstLetter = (str) =>
 
               {/* Right Side */}
               <div className="flex items-center gap-4">
-                <img src="/uploads/finale.png" alt="Visa" className="h-6" />
+                <img src="/uploads/payment.png" alt="Visa" className="h-6" />
                 
               </div>
 
