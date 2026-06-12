@@ -363,48 +363,47 @@ export default function BEABranchesPage() {
         {/* ── Filters Row ── */}
         <div className="flex flex-col sm:flex-row gap-3 mb-7">
 
-          {/* City Dropdown */}
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
-              <LocationPinIcon color="#2563EB" size={14} />
-            </span>
-            <select
-              value={selectedCity}
-              onChange={(e) => { setSelectedCity(e.target.value); setShowAll(false); }}
-              className="w-full h-[44px] pl-8 pr-9 border border-gray-300 rounded-lg text-[13.5px] appearance-none bg-white cursor-pointer focus:outline-none focus:border-blue-500"
-            >
-              {cities.map((c) => <option key={c}>{c}</option>)}
-            </select>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm">▾</span>
-          </div>
+  {/* City Dropdown */}
+  <div className="relative flex-1">
+    <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+      <LocationPinIcon color="#2563EB" size={14} />
+    </span>
+    <select
+      value={selectedCity}
+      onChange={(e) => { setSelectedCity(e.target.value); setShowAll(false); }}
+      className="w-full h-[44px] pl-8 pr-9 border border-gray-300 rounded-lg text-[13.5px] appearance-none bg-white cursor-pointer focus:outline-none focus:border-blue-500"
+    >
+      {cities.map((c) => <option key={c}>{c}</option>)}
+    </select>
+    <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm">▾</span>
+  </div>
 
-          {/* Store Type Dropdown */}
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
-              <StoreTypeIcon color="#2563EB" size={14} />
-            </span>
-            <select
-              value={selectedType}
-              onChange={(e) => { setSelectedType(e.target.value); setShowAll(false); }}
-              className="w-full h-[44px] pl-8 pr-9 border border-gray-300 rounded-lg text-[13.5px] appearance-none bg-white cursor-pointer focus:outline-none focus:border-blue-500"
-            >
-              {storeTypes.map((t) => <option key={t}>{t}</option>)}
-            </select>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm">▾</span>
-          </div>
+  {/* Store Type Dropdown */}
+  <div className="relative flex-1">
+    <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+      <StoreTypeIcon color="#2563EB" size={14} />
+    </span>
+    <select
+      value={selectedType}
+      onChange={(e) => { setSelectedType(e.target.value); setShowAll(false); }}
+      className="w-full h-[44px] pl-8 pr-9 border border-gray-300 rounded-lg text-[13.5px] appearance-none bg-white cursor-pointer focus:outline-none focus:border-blue-500"
+    >
+      {storeTypes.map((t) => <option key={t}>{t}</option>)}
+    </select>
+    <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-sm">▾</span>
+  </div>
 
-          {/* Find Store Button — full width on mobile, auto on sm+ */}
-          <button
-            onClick={() => {
-              setAppliedCity(selectedCity);
-              setAppliedType(selectedType);
-              setShowAll(false);
-            }}
-            className="h-[44px] w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg px-6 text-[13.5px] font-bold cursor-pointer flex items-center justify-center gap-2 transition-colors sm:flex-shrink-0"
-          >
-            Find Store <SearchIcon />
-          </button>
-        </div>
+  {/* Find Store Button */}
+  <button
+    onClick={() => {
+      setAppliedCity(selectedCity);
+      setAppliedType(selectedType);
+      setShowAll(false);
+    }}
+className="h-[44px]  sm:py-9 flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg px-6 text-[13.5px] font-bold cursor-pointer flex items-center justify-center gap-2 transition-colors"  >
+    Find Store <SearchIcon />
+  </button>
+</div>
 
         {/* Loading */}
         {loading ? (
@@ -513,9 +512,9 @@ export default function BEABranchesPage() {
               onError={(e) => { e.target.style.display = "none"; }}
             />
             <div className="absolute inset-0 flex items-center justify-end pr-10">
-              <div className="flex items-center gap-3">
+              <div className="flex  items-center gap-3">
                 <a href="#find-store-section">
-                  <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg px-5 py-2.5 text-[13.5px] transition-colors whitespace-nowrap">
+                  <button className="flex  items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg px-5 py-2.5 text-[13.5px] transition-colors whitespace-nowrap">
                     Find Store
                     <LocationPinIcon color="white" size={15} />
                   </button>
