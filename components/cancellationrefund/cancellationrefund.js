@@ -379,81 +379,99 @@ const CancellationrefundComponent = () => {
         </div>
       </div>
 
-      {/* Need Help Section */}
+    {/* Need Help Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left - contact info */}
-          <div className="bg-blue-50 rounded-xl p-8">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
-              Need Help?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Our customer support team is here to make your experience
-              smooth and hassle-free.
-            </p>
+        {/* CHANGED: flex-col on mobile, flex-row on extra-large screens so both cards sit side-by-side */}
+        <div className="flex flex-col xl:flex-row gap-6">
+          
+          {/* Card 1: Contact Info (Left Side) */}
+          <div className="flex-1 bg-[#f8faff] rounded-2xl p-6 lg:p-8 flex flex-col justify-between border border-blue-50 shadow-sm">
+            <div className="mb-6 lg:mb-8">
+              <h3 className="text-xl font-bold text-customBlue mb-2">
+                Need Help?
+              </h3>
+              <p className="text-sm text-gray-600 font-medium leading-relaxed">
+                Our customer support team is here to make your experience smooth and hassle-free.
+              </p>
+            </div>
 
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-customBlue shadow-sm">
-                  <FiPhone />
-                </span>
+            {/* The 3 Contact Sections arranged horizontally */}
+            <div className="flex flex-row items-start justify-between gap-2 sm:gap-4">
+              
+              {/* Call Us */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 flex-1 text-center sm:text-left">
+                <FiPhone className="text-xl sm:text-2xl text-customBlue flex-shrink-0 mt-1" />
                 <div>
-                  <p className="text-sm text-gray-500">Call Us</p>
-                  <p className="font-semibold text-gray-800">9842344323</p>
-                  <p className="text-sm text-gray-500">(9 AM - 9 PM)</p>
+                  <p className="text-[12px] font-bold text-customBlue mb-0.5">Call Us</p>
+                  <p className="font-bold text-gray-900 text-[12px] sm:text-[13px]">9842344323</p>
+                  <p className="text-[10px] text-gray-500 font-semibold whitespace-nowrap">(9 AM - 9 PM)</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-green-500 shadow-sm">
-                  <FaWhatsapp />
-                </span>
+              {/* Vertical Divider */}
+              <div className="w-px h-12 bg-gray-200 self-center hidden sm:block"></div>
+
+              {/* WhatsApp Us */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 flex-1 text-center sm:text-left">
+                <FaWhatsapp className="text-xl sm:text-2xl text-green-500 flex-shrink-0 mt-1" />
                 <div>
-                  <p className="text-sm text-gray-500">WhatsApp Us</p>
-                  <p className="font-semibold text-gray-800">9842344323</p>
-                  <p className="text-sm text-gray-500">Chat on WhatsApp</p>
+                  <p className="text-[12px] font-bold text-green-500 mb-0.5">WhatsApp Us</p>
+                  <p className="font-bold text-gray-900 text-[12px] sm:text-[13px]">9842344323</p>
+                  <p className="text-[10px] text-gray-500 font-semibold whitespace-nowrap">Chat on WhatsApp</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-customBlue shadow-sm">
-                  <FiMail />
-                </span>
+              {/* Vertical Divider */}
+              <div className="w-px h-12 bg-gray-200 self-center hidden sm:block"></div>
+
+              {/* Email Us */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 flex-1 text-center sm:text-left">
+                <FiMail className="text-xl sm:text-2xl text-customBlue flex-shrink-0 mt-1" />
                 <div>
-                  <p className="text-sm text-gray-500">Email Us</p>
-                  <p className="font-semibold text-gray-800">
-                    customercare@bharathelectronics.in
+                  <p className="text-[12px] font-bold text-customBlue mb-0.5">Email Us</p>
+                  <p className="font-bold text-gray-900 text-[11px] sm:text-[12px] break-all">
+                    customercare@<br className="hidden xl:block" />bharathelectronics.in
                   </p>
                 </div>
               </div>
+
             </div>
           </div>
 
-          {/* Right - image + checklist */}
-          <div className="relative rounded-xl overflow-hidden min-h-[280px]">
-            {/* Replace with final team photo */}
-            <img
-              src="/uploads/cancellation-refund/BEA_support.png"
-              alt="BEA Support Team"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6">
-              <h4 className="text-white text-lg font-bold mb-3">
+          {/* Card 2: Team Photo & Checklist (Right Side) */}
+          <div className="flex-1 bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col sm:flex-row">
+            
+            {/* Image Side */}
+            <div className="w-full sm:w-[45%] lg:w-1/2 relative h-48 sm:h-auto">
+              <img
+                src="/uploads/cancellation-refund/BEA_support.png"
+                alt="BEA Support Team"
+                className="w-full h-full object-cover object-top"
+              />
+              {/* Fade gradient to blend image smoothly into the white background */}
+              <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white to-transparent hidden sm:block"></div>
+            </div>
+
+            {/* Checklist Side */}
+            <div className="w-full sm:w-[55%] lg:w-1/2 p-6 sm:p-4 lg:p-8 flex flex-col justify-center">
+              <h4 className="text-customBlue text-lg font-bold mb-4 lg:mb-5">
                 We&apos;re here to help you!
               </h4>
-              <ul className="space-y-1">
+              <ul className="space-y-3">
                 {helpPoints.map((point, idx) => (
                   <li
                     key={idx}
-                    className="flex items-center gap-2 text-white text-sm"
+                    className="flex items-center gap-3 text-gray-800 text-[13px] font-semibold"
                   >
-                    <FiCheck className="text-green-400" />
+                    <FiCheck className="text-green-500 text-lg flex-shrink-0" strokeWidth={3} />
                     {point}
                   </li>
                 ))}
               </ul>
             </div>
+            
           </div>
+
         </div>
       </div>
 
