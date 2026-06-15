@@ -19,6 +19,8 @@ import {
   MdCurrencyRupee,
   MdOutlineEventAvailable,
   MdOutlinePayments,
+  MdOutlinePublishedWithChanges,
+  MdOutlineShield,
   MdVerified,
   MdSecurity,
   MdLocalShipping,
@@ -259,47 +261,55 @@ const CancellationrefundComponent = () => {
             )}
           </div>
 
-          {/* Right illustration */}
-          <div className="relative flex items-center justify-center">
-            <div className="relative w-full max-w-md aspect-square">
-              {/* Replace with final illustration image */}
+           {/* Right illustration */}
+          <div className="relative flex flex-row items-center justify-center gap-4 sm:gap-8 w-full">
+            
+            {/* 1. Image Container (Left side) */}
+            <div className="relative w-3/4 max-w-[480px] flex-shrink-0">
               <img
                 src="/uploads/cancellation-refund/BEA_Care.png"
                 alt="Cancellation and Refund"
-                className="w-full h-full object-contain"
+                className="w-full h-auto object-contain"
               />
+            </div>
 
-              {/* Floating mini cards */}
-              <div className="absolute top-4 right-0 sm:right-4 bg-white shadow-md rounded-xl px-4 py-3 flex items-center gap-2">
-                <span className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-50 text-customBlue">
-                  <MdVerifiedUser className="text-lg" />
+            {/* 2. Vertical Features List (Right side) */}
+            <div className="flex flex-col gap-4 sm:gap-6 flex-shrink-0">
+              
+              {/* Feature 1 */}
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className="flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-blue-50 border border-blue-100 text-blue-600 shadow-sm flex-shrink-0">
+                  <MdVerifiedUser className="text-base sm:text-xl" />
                 </span>
-                <span className="text-sm font-medium text-gray-700">
-                  Easy Cancellations
+                <span className="text-[11px] sm:text-sm font-semibold text-gray-800 leading-tight">
+                  Easy<br />Cancellations
                 </span>
               </div>
 
-              <div className="absolute top-1/2 -translate-y-1/2 right-0 sm:-right-6 bg-white shadow-md rounded-xl px-4 py-3 flex items-center gap-2">
-                <span className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-50 text-customBlue">
-                  <BsArrowRepeat className="text-lg" />
+              {/* Feature 2 */}
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className="flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-blue-50 border border-blue-100 text-blue-600 shadow-sm flex-shrink-0">
+                  <MdOutlinePublishedWithChanges className="text-base sm:text-xl" />
                 </span>
-                <span className="text-sm font-medium text-gray-700">
-                  Secure Refunds
+                <span className="text-[11px] sm:text-sm font-semibold text-gray-800 leading-tight">
+                  Secure<br />Refunds
                 </span>
               </div>
 
-              <div className="absolute bottom-4 right-0 sm:right-4 bg-white shadow-md rounded-xl px-4 py-3 flex items-center gap-2">
-                <span className="flex items-center justify-center w-9 h-9 rounded-full bg-blue-50 text-customBlue">
-                  <FiShield className="text-lg" />
+              {/* Feature 3 */}
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className="flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-blue-50 border border-blue-100 text-blue-600 shadow-sm flex-shrink-0">
+                  <MdOutlineShield className="text-base sm:text-xl" />
                 </span>
-                <span className="text-sm font-medium text-gray-700">
-                  Reliable Support
+                <span className="text-[11px] sm:text-sm font-semibold text-gray-800 leading-tight">
+                  Reliable<br />Support
                 </span>
               </div>
+
             </div>
           </div>
-        </div>
-      </div>
+          </div>
+          </div>
 
       {/* Feature cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
