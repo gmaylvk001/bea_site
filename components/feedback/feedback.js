@@ -688,15 +688,15 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
 
         {[
           {
-            image: "/uploads/customer.png",
+            image: "/uploads/COIMBATORE_HAPPY_CUSTOMER.png",
             city: "Coimbatore",
           },
           {
-            image: "/uploads/customer.png",
+            image: "/uploads/SALEM_HAPPY_CUSTOMER.png",
             city: "Salem",
           },
           {
-            image: "/uploads/customer.png",
+            image: "/uploads/ERODE_HAPPY_CUSTOMER.png",
             city: "Erode",
           },
           {
@@ -711,7 +711,7 @@ const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
             <img
               src={item.image}
               alt={item.city}
-              className="w-full h-36 object-cover"
+              className="w-full h-36 object-fill"
             />
 
             <div className="py-2 text-center text-sm font-medium">
