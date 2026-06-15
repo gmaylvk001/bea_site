@@ -206,29 +206,11 @@ export async function POST(req) {
        }
       console.log("final customer_images:", newStoreData.customer_images); 
     // -----------------------
-    // FEATURED PRODUCTS
-    // - payload could come as featuredPayload (client created) or featuredProducts (legacy)
-    // - images may be files 'featured_image_<i>' or existing urls in payload
+    // FEATURED PRODUCTS — ID array only
     // -----------------------
-    const featuredPayload = newStoreData.featuredPayload?.length ? newStoreData.featuredPayload : (newStoreData.featuredProducts || []);
-    newStoreData.featuredProducts = [];
-
-    for (let i = 0; i < featuredPayload.length; i++) {
-      const item = featuredPayload[i] || {};
-      // file key name
-      const fileKey = `featured_image_${i}`;
-      let imageUrl = item.image || null;
-
-      if (filesMap[fileKey] && filesMap[fileKey][0]) {
-        imageUrl = await saveFileToUploads(filesMap[fileKey][0], `featured-${i}`);
-      }
-
-      newStoreData.featuredProducts.push({
-        title: item.title || item.name || "",
-        image: imageUrl,
-      });
-    }
-
+    newStoreData.featuredProducts = Array.isArray(newStoreData.featuredProducts)
+      ? newStoreData.featuredProducts
+      : safeParseJSON(newStoreData.featuredProducts || "[]", []);
     // -----------------------
     // OFFERS
     // - payload: offersPayload or offers

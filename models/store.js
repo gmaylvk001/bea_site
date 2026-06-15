@@ -30,12 +30,13 @@ const StoreSchema = new mongoose.Schema(
     images: [{ type: String }],
     banners: [{ type: String }],
 
-    featuredProducts: [
-      {
-        image: String,
-        title: String,
-      },
-    ],
+featuredProducts: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+    default: [],
+  }
+],
 
     offers: [
       {

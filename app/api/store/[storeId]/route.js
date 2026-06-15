@@ -196,21 +196,10 @@ if (files.customer_images) {
   const imgs = Array.isArray(files.customer_images) ? files.customer_images : [files.customer_images];
   imgs.forEach(f => updateData.customer_images.push(`/uploads/${path.basename(f.filepath)}`));
 }
-    // ---------- FEATURED PRODUCTS ----------
-    updateData.featuredProducts = [];
-    const featuredPayload = fields.featuredPayload
-      ? JSON.parse(fields.featuredPayload[0])
+// ---------- FEATURED PRODUCTS ----------
+    updateData.featuredProducts = fields.featuredProducts?.[0]
+      ? JSON.parse(fields.featuredProducts[0])
       : [];
-
-    featuredPayload.forEach((item, i) => {
-      const newImage = files[`featured_image_${i}`]?.[0];
-      updateData.featuredProducts.push({
-        title: item.title,
-        image: newImage
-          ? `/uploads/${path.basename(newImage.filepath)}`
-          : item.image,
-      });
-    });
 
     // ---------- OFFERS ----------
     updateData.offers = [];

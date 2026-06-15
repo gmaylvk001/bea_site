@@ -7,8 +7,69 @@ import { FaPlus, FaMinus, FaTimes } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Avoid SSR issues for react-select
+// Avoid SSR issues for react-selec
 const Select = dynamic(() => import("react-select"), { ssr: false });
+
+
+function ProductSearchInput({ onSelect }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (query.length < 2) { setResults([]); return; }
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/product/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        setResults(data);
+      } catch (e) { setResults([]); }
+      setLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        placeholder="Search product by name or item code..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="w-full p-2 border rounded text-sm"
+      />
+      {loading && <div className="text-xs text-gray-400 mt-1">Searching...</div>}
+      {results.length > 0 && (
+        <div className="absolute z-50 w-full bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto mt-1">
+          {results.map((prod) => (
+            <div
+              key={prod._id}
+              className="flex items-center gap-2 px-3 py-2 hover:bg-blue-50 cursor-pointer"
+              onClick={() => {
+                onSelect(prod);
+                setQuery("");
+                setResults([]);
+              }}
+            >
+              {prod.images?.[0] && (
+                <img
+                  src={`/uploads/products/${prod.images[0]}`}
+                  className="w-8 h-8 object-contain rounded"
+                  alt={prod.name}
+                />
+              )}
+              <div>
+                <div className="text-[12px] font-semibold text-gray-800">{prod.name}</div>
+                <div className="text-[10px] text-gray-400">{prod.item_code}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CreateStoreForm({ storeId = null }) {
   const router = useRouter();
@@ -25,6 +86,7 @@ export default function CreateStoreForm({ storeId = null }) {
     nearbyStores: [], // { name, address, rating }
     businessHours: [], // { day, timing }
     socialTimeline: [], // { media, text, postedOn, thumbnail, thumbnailPreview, thumbnailFile }
+    customer_images: [],
     keyHighlights: [], // same as highlights
     location: "",
     zipcode: "",
@@ -52,6 +114,7 @@ export default function CreateStoreForm({ storeId = null }) {
   const [storeImagePreviews, setStoreImagePreviews] = useState([null, null, null]);
   const [generalImagePreviews, setGeneralImagePreviews] = useState([]);
   const [bannerPreviews, setBannerPreviews] = useState([]);
+  const [customerImagePreviews, setCustomerImagePreviews] = useState([]);
   const [featuredPreviews, setFeaturedPreviews] = useState([]); // array of urls
   const [offerPreviews, setOfferPreviews] = useState([]);
   const [highlightPreviews, setHighlightPreviews] = useState([]);
@@ -85,6 +148,7 @@ export default function CreateStoreForm({ storeId = null }) {
           nearbyStores: result.nearbyStores || [],
           businessHours: result.businessHours || [],
           socialTimeline: result.socialTimeline || [],
+          customer_images: result.customer_images || [],
           keyHighlights: result.keyHighlights || [],
           location: result.location || "",
           zipcode: result.zipcode || "",
@@ -112,9 +176,25 @@ export default function CreateStoreForm({ storeId = null }) {
         setStoreImagePreviews(result.store_images || [null, null, null]);
         setGeneralImagePreviews(result.images || []);
         setBannerPreviews(result.banners || []);
+        setCustomerImagePreviews(result.customer_images || []);
         setFeaturedPreviews((result.featuredProducts || []).map((p) => p.image || null));
         setOfferPreviews((result.offers || []).map((o) => o.image || null));
         setHighlightPreviews((result.highlights || []).map((h) => h.image || null));
+
+         if (result.featuredProducts?.length > 0) {
+  try {
+    const featRes = await fetch("/api/product/featured", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: result.featuredProducts }),
+    });
+    const featData = await featRes.json();
+    setNewStore((prev) => ({ ...prev, featuredProducts: featData }));
+  } catch (e) {
+    console.error("Failed to fetch featured products", e);
+  }
+}
+
       } else {
         toast.error(result.error || "Failed to fetch store data for editing.");
         router.push("/admin/store");
@@ -179,6 +259,12 @@ export default function CreateStoreForm({ storeId = null }) {
       setBannerPreviews((prev) => [...prev, ...fileList.map((f) => URL.createObjectURL(f))]);
       return;
     }
+      if (fieldName === "customer_images") {
+  const fileArray = Array.from(files);
+  setNewStore((prev) => ({ ...prev, customer_images: [...prev.customer_images, ...fileArray] }));
+  setCustomerImagePreviews((prev) => [...prev, ...fileArray.map((f) => URL.createObjectURL(f))]);
+  return;
+}
 
     if (fieldName === "featured_image") {
       const newFeatured = [...newStore.featuredProducts];
@@ -277,7 +363,10 @@ export default function CreateStoreForm({ storeId = null }) {
         newSocial[index].thumbnail = "";
       }
       setNewStore((prev) => ({ ...prev, socialTimeline: newSocial }));
-    }
+    }else if (fieldName === "customer_images") {
+  setNewStore((prev) => ({ ...prev, customer_images: prev.customer_images.filter((_, i) => i !== index) }));
+  setCustomerImagePreviews((prev) => prev.filter((_, i) => i !== index));
+}
   };
 
   const addListItem = (key, template = {}) => {
@@ -405,16 +494,13 @@ export default function CreateStoreForm({ storeId = null }) {
     });
     formData.append("existing_banners", JSON.stringify(bannerExisting));
 
-    // featuredProducts -> images + titles
-    const featuredPayload = (newStore.featuredProducts || []).map((p, idx) => {
-      if (p?.image instanceof File) {
-        formData.append(`featured_image_${idx}`, p.image);
-        return { title: p.title || "", image: null, imageIndex: idx };
-      } else {
-        return { title: p?.title || "", image: p?.image || null };
-      }
-    });
-    formData.append("featuredPayload", JSON.stringify(featuredPayload));
+     // featuredProducts — product IDs only
+    formData.append(
+      "featuredProducts",
+      JSON.stringify(
+        (newStore.featuredProducts || []).map((p) => p._id || p)
+      )
+    );
 
     // offers -> images + structured
     const offersPayload = (newStore.offers || []).map((o, idx) => {
@@ -449,6 +535,17 @@ export default function CreateStoreForm({ storeId = null }) {
       }
     });
     formData.append("socialPayload", JSON.stringify(socialPayload));
+
+     // customer_images
+const customerExisting = [];
+(newStore.customer_images || []).forEach((img, i) => {
+  if (img instanceof File) {
+    formData.append("customer_images", img);
+  } else if (typeof img === "string") {
+    customerExisting.push(img);
+  }
+});
+formData.append("existing_customer_images", JSON.stringify(customerExisting));
 
     // nearbyStores, businessHours, keyHighlights -> send as JSON
     formData.append("nearbyStores", JSON.stringify(newStore.nearbyStores || []));
@@ -510,23 +607,55 @@ export default function CreateStoreForm({ storeId = null }) {
               {errors.logo && <span className="text-red-500 text-sm">{errors.logo}</span>}
             </div>
 
-            <div>
-              <label className="block mb-1 text-sm font-semibold text-gray-700">Store Images (Max 3)</label>
-              {[0, 1, 2].map((index) => (
-                <div key={index} className="flex items-center space-x-2 mb-2">
-                  <input type="file" onChange={(e) => handleFileChange(e, "store_images", index)} accept="image/*"
-                    className="block w-full text-sm text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100" />
-                  {storeImagePreviews[index] && (
-                    <div className="relative">
-                      <img src={storeImagePreviews[index]} className="h-20 w-20 object-cover rounded-md" alt={`Store Image ${index + 1}`} />
-                      <button type="button" onClick={() => handleRemoveImage("store_images", index)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs">
-                        <FaTimes />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+           <div>
+  <div className="flex items-center justify-between mb-2">
+    <label className="block text-sm font-semibold text-gray-700">Store Images</label>
+    <button
+      type="button"
+      onClick={() => {
+        setNewStore((prev) => ({ ...prev, store_images: [...prev.store_images, null] }));
+        setStoreImagePreviews((prev) => [...prev, null]);
+      }}
+      className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition"
+    >
+      <FaPlus size={11} /> Add Image
+    </button>
+  </div>
+   {/*max image 3 changed part*/}
+  <div className="flex flex-wrap gap-3 mt-1">
+    {newStore.store_images.map((_, index) => (
+      <div key={index} className="relative">
+        {storeImagePreviews[index] ? (
+          <>
+            <img
+              src={storeImagePreviews[index]}
+              className="h-24 w-24 object-cover rounded-md border border-gray-200"
+              alt={`Store Image ${index + 1}`}
+            />
+            <button
+              type="button"
+              onClick={() => handleRemoveImage("store_images", index)}
+              className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs"
+            >
+              <FaTimes />
+            </button>
+          </>
+        ) : (
+          <label className="h-24 w-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-red-400 hover:bg-red-50 transition">
+            <FaPlus className="text-gray-400 mb-1" size={16} />
+            <span className="text-[10px] text-gray-400">Upload</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFileChange(e, "store_images", index)}
+            />
+          </label>
+        )}
+      </div>
+    ))}
+  </div>
+</div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
@@ -687,30 +816,56 @@ export default function CreateStoreForm({ storeId = null }) {
               </div>
             </section>
 
-            {/* FEATURED PRODUCTS */}
-            <section className="border rounded p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold">Featured Products</h3>
-                <button
-                  type="button"
-                  onClick={() => addListItem("featuredProducts", { image: null, title: "" })}
-                  className="px-3 py-1 bg-blue-600 text-white rounded"
-                >
-                  + Add
-                </button>
-              </div>
+{/* FEATURED PRODUCTS — Product Search */}
+<section className="border rounded p-4">
+  <div className="flex justify-between items-center mb-3">
+    <h3 className="text-lg font-semibold">Featured Products</h3>
+  </div>
 
-              {(newStore.featuredProducts || []).map((p, idx) => (
-                <div key={idx} className="grid grid-cols-3 gap-3 items-center mb-2">
-                  <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, "featured_image", idx)} />
-                  <input type="text" placeholder="Product Title" value={p.title} onChange={(e) => updateListField("featuredProducts", idx, "title", e.target.value)} className="p-2 border rounded" />
-                  <div className="flex items-center">
-                    {featuredPreviews[idx] && <img src={featuredPreviews[idx]} className="h-16 w-16 rounded object-cover" />}
-                    <button type="button" onClick={() => handleRemoveImage("featured", idx)} className="ml-2 bg-red-600 text-white rounded p-2"><FaTimes /></button>
-                  </div>
-                </div>
-              ))}
-            </section>
+  {/* Search Input */}
+  <ProductSearchInput
+    onSelect={(product) => {
+      // duplicate check
+      const alreadyAdded = newStore.featuredProducts.some(
+        (p) => p._id === product._id
+      );
+      if (!alreadyAdded) {
+        setNewStore((prev) => ({
+          ...prev,
+          featuredProducts: [...prev.featuredProducts, product],
+        }));
+      }
+    }}
+  />
+
+  {/* Selected Products */}
+  <div className="flex flex-wrap gap-2 mt-3">
+    {newStore.featuredProducts.map((prod, idx) => (
+      <div key={prod._id || idx} className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
+        {prod.images?.[0] && (
+          <img
+            src={`/uploads/products/${prod.images[0]}`}
+            className="w-8 h-8 object-contain rounded"
+            alt={prod.name}
+          />
+        )}
+        <span className="text-[12px] font-medium text-gray-800">{prod.name}</span>
+        <button
+          type="button"
+          onClick={() => {
+            setNewStore((prev) => ({
+              ...prev,
+              featuredProducts: prev.featuredProducts.filter((_, i) => i !== idx),
+            }));
+          }}
+          className="text-red-500 ml-1"
+        >
+          <FaTimes size={10} />
+        </button>
+      </div>
+    ))}
+  </div>
+</section>
 
             {/* OFFERS */}
             <section className="border rounded p-4">
@@ -816,6 +971,32 @@ export default function CreateStoreForm({ storeId = null }) {
                 </div>
               ))}
             </section>
+
+              {/* CUSTOMER IMAGES */}
+<section className="border rounded p-4">
+  <h3 className="text-lg font-semibold mb-3">Customer Images</h3>
+  <input
+    type="file"
+    multiple
+    accept="image/*"
+    onChange={(e) => handleFileChange(e, "customer_images")}
+    className="block w-full text-sm text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+  />
+  <div className="flex flex-wrap gap-2 mt-3">
+    {customerImagePreviews.map((preview, index) => (
+      <div key={index} className="relative">
+        <img src={preview} className="h-20 w-20 object-cover rounded-md" alt={`Customer ${index + 1}`} />
+        <button
+          type="button"
+          onClick={() => handleRemoveImage("customer_images", index)}
+          className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs"
+        >
+          <FaTimes />
+        </button>
+      </div>
+    ))}
+  </div>
+</section>
           </div>
         )}
 
