@@ -11,64 +11,64 @@ import { useRouter } from "next/navigation";
 const AboutUs = () => {
     const router = useRouter();
     const chooseData = [{
-        image: "/uploads/customer.png",
+        image: "/uploads/products.png",
         icon: <FiMapPin />,
         title: "100% Genuine Products",
         desc: "Authorized retailer for leading electronics and home appliance brands."
     },
     {
-        image: "/uploads/customer.png",
+        image: "/uploads/wide_product.png",
         icon: <FiShoppingCart />,
         title: "Wide Product Range",
         desc: "5000+ products including TVs, refrigerators, ACs and mobiles."
     },
     {
-        image: "/uploads/customer.png",
+        image: "/uploads/customer_first_approach.png",
         icon: <FiUsers />,
         title: "Customer First Approach",
         desc: "Trusted by families for honest advice and better service."
     },
     {
-        image: "/uploads/customer.png",
+        image: "/uploads/47_store.png",
         icon: <FiHome />,
         title: "47+ Store Network",
         desc: "Always near you with 47+ showrooms across Tamil Nadu."
     },
     {
-        image: "/uploads/customer.png",
+        image: "/uploads/flexiable_finance_options.png",
         icon: <FiCreditCard />,
         title: "Flexible Finance Options",
         desc: "Easy EMI & finance solutions from leading banks."
     },
     {
-        image: "/uploads/customer.png",
+        image: "/uploads/realiable_support.png",
         icon: <FiHeadphones />,
         title: "Reliable Support",
         desc: "Before & after purchase support, installation & service."
     }];
 
     const storeExperience = [{
-        image: "/uploads/aboutus_experience.png",
+        image: "/uploads/tv_zone.png",
         title: "TV Experience Zone",
         },
         {
-            image: "/uploads/aboutus_experience.png",
+            image: "/uploads/kitchen_appliances.png",
             title: "Kitchen Appliance Zone",
         },
         {
-            image: "/uploads/aboutus_experience.png",
+            image: "/uploads/ref_zone.png",
             title: "Refrigerator Zone",
         },
         {
-            image: "/uploads/aboutus_experience.png",
+            image: "/uploads/ac_zone.png",
             title: "AC Experience Zone",
         },
         {
-            image: "/uploads/aboutus_experience.png",
+            image: "/uploads/customer_interaction.png",
             title: "Customer Interaction",
         },
         {
-            image: "/uploads/aboutus_experience.png",
+            image: "/uploads/fast_safe_delivery.png",
             title: "Fast & Safe Delivery",
         },
     ];
@@ -317,7 +317,7 @@ const AboutUs = () => {
                                         <p className="text-xs text-gray-500">Founder</p>
                                     </div>
                                 </div>
-                                <img src="/uploads/vision_aboutus.png" alt="" className="h-full w-full object-cover"/>
+                                <img src="/uploads/visio_n.png" alt="" className="h-full w-full object-cover"/>
                             </div>
                         </div>
                     </div>
@@ -396,7 +396,7 @@ const AboutUs = () => {
                     <div className="grid lg:grid-cols-2 gap-5">
                         {/* Team Banner */}
                         <div className="relative rounded-2xl overflow-hidden ">
-                            <img src="/uploads/aboutus-banner.png" alt="" className="w-full h-[260px] object-cover"/>
+                            <img src="/uploads/47_store.png" alt="" className="w-full h-[300px] object-fill"/>
 
                             <div className="absolute inset-0 bg-gradient-to-r from-[#001854] to-transparent"></div>
 
@@ -413,7 +413,7 @@ const AboutUs = () => {
                         </div>
                         {/* Testimonials */}
                         <div className="bg-[#f7f9ff] rounded-2xl border shadow-sm p-3">
-                            <h3 className="text-xl font-bold text-center text-[#2b3a79] mb-1">What Our Customers Say</h3>
+                            <h3 className="text-xl font-bold text-center text-[#2b3a79] mb-6">What Our Customers Say</h3>
                             <div className="grid md:grid-cols-3 gap-4">
                                 {[
                                     {
