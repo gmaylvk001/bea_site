@@ -269,17 +269,17 @@ export default function ContactForm() {
   return (
     <>
       {/* HERO SECTION */}
-      <section 
+      {/* <section 
         className="relative overflow-hidden bg-cover bg-center text-white" 
         style={{ backgroundImage: "url('/uploads/customer__support.png')" }}
       >
-        {/* Background Gradient Overlay */}
+     
         <div className="absolute inset-0 bg-gradient-to-r from-[#022A6E] via-[#0000]/50 to-transparent z-0"></div>
 
         <div className="relative max-w-7xl mx-auto px-8 z-10">
           <div className="grid lg:grid-cols-[60%_40%] items-center min-h-[420px]">
 
-            {/* LEFT CONTENT */}
+           
             <div className="py-10 lg:py-0 text-white">
 
               <h1 className="text-4xl lg:text-[42px] leading-tight font-bold mb-2">
@@ -293,7 +293,7 @@ export default function ContactForm() {
                 purchase, delivery, installation and service support.
               </p>
 
-              {/* STATS BOX */}
+              
               <div className="border border-white/20 rounded-2xl overflow-hidden mt-6">
                 <div className="grid grid-cols-2 md:grid-cols-4">
 
@@ -340,16 +340,26 @@ export default function ContactForm() {
 
             </div>
 
-            {/* RIGHT IMAGE (Hidden, using background image overlay effect) */}
+            
             <div className="hidden lg:block h-full"></div>
 
           </div>
         </div>
+      </section> */}
+{/* HERO SECTION - REPLACED WITH RESPONSIVE IMAGE BANNER */}
+      <section className="w-full">
+        <img 
+          src="/uploads/customer_SUPPORTT.png" 
+          alt="Customer Support & Feedback Centre" 
+          className="w-full h-auto object-contain block"
+        />
       </section>
+      
 
       {/* FORM + SUPPORT SECTION */}
       <section className="max-w-7xl mx-auto px-6 py-10">
         <div className="grid lg:grid-cols-12 gap-8">
+          
 
           {/* LEFT (Match Image styling) */}
           <div className="lg:col-span-5">
