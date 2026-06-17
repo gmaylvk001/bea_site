@@ -51,7 +51,7 @@ const faqs = [
   {
     question: "Does BEA deliver outside Coimbatore?",
     answer:
-      "Yes, we deliver across Tamil Nadu through our network of 47+ showrooms, covering major cities and surrounding areas.",
+      "Yes, we deliver across Tamil Nadu through our network of stores, covering major cities and surrounding areas.",
   },
   {
     question: "Which areas does BEA deliver in Tamil Nadu?",
@@ -69,7 +69,7 @@ const ShippingPolicy = () => {
   const [lastUpdated, setLastUpdated] = useState("");
   const [openFaq, setOpenFaq] = useState(null);
   
-  // Dynamic database states matching your store layout architecture
+  // Dynamic database states
   const [storesList, setStoresList] = useState([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
   const [showAllCities, setShowAllCities] = useState(false);
@@ -103,12 +103,15 @@ const ShippingPolicy = () => {
   // Dynamically computes unique, clean, sorted city profiles directly from the DB response
   const dbCities = useMemo(() => {
     return [...new Set(storesList.map((s) => s.city).filter(Boolean))]
-      .filter((city) => city.toUpperCase().trim() !== "AMBASAMUTHIRAM") // Case-insensitive exclusion for inactive branch
+      .filter((city) => city.toUpperCase().trim() !== "AMBASAMUTHIRAM") // Case-insensitive exclusion
       .sort();
   }, [storesList]);
 
   const visibleCities = showAllCities ? dbCities : dbCities.slice(0, 8);
   const hasMoreCities = dbCities.length > 8;
+  
+  // Calculates the dynamic store count based on active database rows (fallback to 47)
+  const storeCount = storesList.length > 0 ? storesList.length : 47;
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -147,7 +150,7 @@ const ShippingPolicy = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Bharath Electronics &amp; Appliances (BEA) delivers televisions,
               refrigerators, washing machines, air conditioners and home
-              appliances across Tamil Nadu through our 47+ showroom network.
+              appliances across Tamil Nadu through our {storeCount}+ showroom network.
             </p>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <FiCalendar />
@@ -175,7 +178,7 @@ const ShippingPolicy = () => {
               1. Delivery Coverage
             </h3>
             <p className="text-gray-600 mb-4">
-              We deliver across Tamil Nadu through our extensive 47+ showroom
+              We deliver across Tamil Nadu through our extensive {storeCount}+ showroom
               network. Our major service locations include:
             </p>
             <div className="flex flex-wrap gap-2">
@@ -364,7 +367,7 @@ const ShippingPolicy = () => {
               </div>
             </div>
 
-            {/* Middle Column: Benefits List (Span 3) with subtle left border */}
+            {/* Middle Column: Benefits List (Span 3) */}
             <div className="lg:col-span-3 flex flex-col justify-center border-t border-gray-100 pt-6 lg:pt-0 lg:border-t-0 lg:border-l lg:border-gray-100 lg:pl-8 mt-4 lg:mt-0">
               <ul className="space-y-5 text-gray-700 font-medium text-sm">
                 <li className="flex items-center gap-3">
@@ -409,7 +412,7 @@ const ShippingPolicy = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="border border-gray-100 rounded-lg p-4 text-center">
                 <FaStore className="text-blue-600 text-xl mx-auto mb-2" />
-                <p className="font-bold text-gray-800">47+</p>
+                <p className="font-bold text-gray-800">{storeCount}+</p>
                 <p className="text-xs text-gray-500">Stores Across Tamil Nadu</p>
               </div>
               <div className="border border-gray-100 rounded-lg p-4 text-center">
@@ -480,7 +483,7 @@ const ShippingPolicy = () => {
             <FiHelpCircle className="text-blue-600" />
             8. Frequently Asked Questions
           </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
             {faqs.map((faq, idx) => (
               <div
                 key={idx}

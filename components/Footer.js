@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { FaFacebookF, FaInstagram, FaYoutube, FaWhatsapp } from "react-icons/fa";
 import { FiMail, FiPhone, FiMapPin, FiClock } from "react-icons/fi";
@@ -19,10 +20,12 @@ import {
   Refrigerator,
   MapPin,
 } from "lucide-react";
+
 const Footer = () => {
   const [categories, setCategories] = useState([]);
   const [groupedCategories, setGroupedCategories] = useState({ main: [], subs: {} });
-    const [stores, setStores] = useState([]);
+  const [stores, setStores] = useState([]);
+  
   // Auth state
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
@@ -39,97 +42,97 @@ const Footer = () => {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-  const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+    const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
-  const getCached = (key) => {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (!parsed || !parsed.__ts) return null;
-      if (Date.now() - parsed.__ts > CACHE_TTL) {
-        localStorage.removeItem(key);
+    const getCached = (key) => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.__ts) return null;
+        if (Date.now() - parsed.__ts > CACHE_TTL) {
+          localStorage.removeItem(key);
+          return null;
+        }
+        return parsed.data;
+      } catch (e) {
         return null;
       }
-      return parsed.data;
-    } catch (e) {
-      return null;
-    }
-  };
+    };
 
-  const setCached = (key, data) => {
-    try {
-      localStorage.setItem(key, JSON.stringify({ __ts: Date.now(), data }));
-    } catch (e) {
-      // ignore
-    }
-  };
-
-  const makeGrouped = (data) => {
-    const activeCategories = Array.isArray(data) ? data.filter(cat => cat.status === 'Active') : [];
-    const main = activeCategories.filter(cat => cat.parentid === 'none');
-    const subs = {};
-    activeCategories.forEach(cat => {
-      if (cat.parentid !== 'none') {
-        if (!subs[cat.parentid]) subs[cat.parentid] = [];
-        subs[cat.parentid].push(cat);
+    const setCached = (key, data) => {
+      try {
+        localStorage.setItem(key, JSON.stringify({ __ts: Date.now(), data }));
+      } catch (e) {
+        // ignore
       }
-    });
-    return { main, subs };
-  };
+    };
 
-  const fetchCategories = async () => {
-    const key = 'cache_footer_categories_v1';
-    const cached = getCached(key);
-    if (cached) {
-      setGroupedCategories(makeGrouped(cached));
-      return;
-    }
+    const makeGrouped = (data) => {
+      const activeCategories = Array.isArray(data) ? data.filter(cat => cat.status === 'Active') : [];
+      const main = activeCategories.filter(cat => cat.parentid === 'none');
+      const subs = {};
+      activeCategories.forEach(cat => {
+        if (cat.parentid !== 'none') {
+          if (!subs[cat.parentid]) subs[cat.parentid] = [];
+          subs[cat.parentid].push(cat);
+        }
+      });
+      return { main, subs };
+    };
 
-    try {
-      const res = await fetch('/api/categories/get');
-      const data = await res.json();
-      if (data) {
-        setGroupedCategories(makeGrouped(data));
-        setCached(key, data);
+    const fetchCategories = async () => {
+      const key = 'cache_footer_categories_v1';
+      const cached = getCached(key);
+      if (cached) {
+        setGroupedCategories(makeGrouped(cached));
+        return;
       }
-    } catch (err) {
-      console.error('Error fetching categories:', err);
-    }
-  };
 
-  const fetchStores = async () => {
-    const key = 'cache_footer_stores_v1';
-    const cached = getCached(key);
-    if (cached) {
-      setStores(cached);
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/store/get');
-      const data = await res.json();
-      if (data && data.success) {
-        setStores(data.data);
-        setCached(key, data.data);
+      try {
+        const res = await fetch('/api/categories/get');
+        const data = await res.json();
+        if (data) {
+          setGroupedCategories(makeGrouped(data));
+          setCached(key, data);
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
       }
-    } catch (err) {
-      console.error('Error fetching stores:', err);
-    }
+    };
+
+    const fetchStores = async () => {
+      const key = 'cache_footer_stores_v1';
+      const cached = getCached(key);
+      if (cached) {
+        setStores(cached);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/store/get');
+        const data = await res.json();
+        if (data && data.success) {
+          setStores(data.data);
+          setCached(key, data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching stores:', err);
+      }
+    };
+
+    fetchCategories();
+    fetchStores();
+  }, []);
+
+  const categoryIcons = {
+    "TELEVISIONS": Tv,
+    "COMPUTERS & LAPTOPS": Laptop,
+    "MOBILES & ACCESSORIES": Smartphone,
+    "LARGE APPLIANCES": Refrigerator,
+    "SMALL APPLIANCES": WashingMachine,
+    "OUR LOCATION": MapPin,
   };
-
-  fetchCategories();
-  fetchStores();
-}, []);
-
-const categoryIcons = {
-  "TELEVISIONS": Tv,
-  "COMPUTERS & LAPTOPS": Laptop,
-  "MOBILES & ACCESSORIES": Smartphone,
-  "LARGE APPLIANCES": Refrigerator,
-  "SMALL APPLIANCES": WashingMachine,
-  "OUR LOCATION": MapPin,
-};
 
   const checkAuthStatus = async () => {
     try {
@@ -201,16 +204,19 @@ const categoryIcons = {
     setIsLoggedIn(false);
     setUserData(null);
   };
+  
   const groupedStores = stores.reduce((acc, store) => {
-  const city = store.city; // or store.store_city based on your API
-  if (!acc[city]) {
-    acc[city] = [];
-  }
-  acc[city].push(store.organisation_name);
-  return acc;
-}, {});
-const capitalizeFirstLetter = (str) =>
-  str.charAt(0).toUpperCase() + str.slice(1);
+    const city = store.city; // or store.store_city based on your API
+    if (!acc[city]) {
+      acc[city] = [];
+    }
+    acc[city].push(store.organisation_name);
+    return acc;
+  }, {});
+
+  const capitalizeFirstLetter = (str) =>
+    str.charAt(0).toUpperCase() + str.slice(1);
+    
   // Case-insensitive membership helper
   const inSetCI = (name, arr) => arr.includes(String(name || '').toLowerCase());
 
@@ -296,7 +302,7 @@ const capitalizeFirstLetter = (str) =>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
 
                   {/* Item 1 */}
-                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
                     <IoShieldCheckmark className="text-3xl text-blue-600 flex-shrink-0" />
                     <div>
                       <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
@@ -309,7 +315,7 @@ const capitalizeFirstLetter = (str) =>
                   </div>
 
                   {/* Item 2 */}
-                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
                     <IoShieldCheckmark className="text-3xl text-blue-600 flex-shrink-0" />
                     <div>
                       <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
@@ -322,7 +328,7 @@ const capitalizeFirstLetter = (str) =>
                   </div>
 
                   {/* Item 3 */}
-                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
                     <TbTruckDelivery className="text-3xl text-blue-600 flex-shrink-0" />
                     <div>
                       <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
@@ -335,7 +341,7 @@ const capitalizeFirstLetter = (str) =>
                   </div>
 
                   {/* Item 4 */}
-                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
                     <IoReload className="text-3xl text-blue-600 flex-shrink-0" />
                     <div>
                       <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
@@ -348,7 +354,7 @@ const capitalizeFirstLetter = (str) =>
                   </div>
 
                   {/* Item 5 */}
-                  <div className="flex items-center gap-3 px-6 border-r border-gray-200">
+                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
                     <IoStorefront className="text-3xl text-blue-600 flex-shrink-0" />
                     <div>
                       <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
@@ -382,10 +388,10 @@ const capitalizeFirstLetter = (str) =>
 
           {/* WHITE FOOTER */}
           <div className="container mx-auto px-4 py-3">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
               {/* LEFT LOGO SECTION */}
-              <div className="md:col-span-3 md:border-r border-gray-200 md:pr-8">
+              <div className="lg:col-span-3 lg:border-r border-gray-200 lg:pr-8">
                 <Image
                   src="/logo.png"
                   alt="Logo"
@@ -399,55 +405,55 @@ const capitalizeFirstLetter = (str) =>
 
                 <div className="mt-5 space-y-3 text-sm text-gray-600">
 
-            <div className="flex items-start gap-3">
-              <FiMapPin className="text-blue-600 text-lg mt-1 shrink-0" />
-              <p>
-                26/1 Dr. Alagappa Chettiyar Rd, Tatabad,
-                Near Kovai Scan Centre, Coimbatore - 641012,
-                Tamil Nadu
-              </p>
-            </div>
+                  <div className="flex items-start gap-3">
+                    <FiMapPin className="text-blue-600 text-lg mt-1 shrink-0" />
+                    <p>
+                      26/1 Dr. Alagappa Chettiyar Rd, Tatabad,
+                      Near Kovai Scan Centre, Coimbatore - 641012,
+                      Tamil Nadu
+                    </p>
+                  </div>
 
-            <div className="flex items-center gap-3">
-              <FiPhone className="text-blue-600 text-lg" />
-              <a
-                href="tel:9842344323"
-                className="text-blue-600 hover:text-blue-600"
-              >
-                9842344323
-              </a>
-            </div>
+                  <div className="flex items-center gap-3">
+                    <FiPhone className="text-blue-600 text-lg" />
+                    <a
+                      href="tel:9842344323"
+                      className="text-blue-600 hover:text-blue-600"
+                    >
+                      9842344323
+                    </a>
+                  </div>
 
-          <div className="flex items-center gap-3">
-            <FiMail className="text-blue-600 text-lg shrink-0" />
+                  <div className="flex items-center gap-3">
+                    <FiMail className="text-blue-600 text-lg shrink-0" />
 
-            <a
-              href="mailto:customercare@bharathelectronics.in"
-              className="text-blue-600 hover:text-blue-600 break-all"
-            >
-              customercare@bharathelectronics.in
-            </a>
-          </div>
+                    <a
+                      href="mailto:customercare@bharathelectronics.in"
+                      className="text-blue-600 hover:text-blue-600 break-all"
+                    >
+                      customercare@bharathelectronics.in
+                    </a>
+                  </div>
 
-            <div className="flex items-center gap-3">
-              <FiClock className="text-blue-600 text-lg" />
-              <p>Mon - Sun : 09:30 AM - 09:30 PM</p>
-            </div>
+                  <div className="flex items-center gap-3">
+                    <FiClock className="text-blue-600 text-lg" />
+                    <p>Mon - Sun : 09:30 AM - 09:30 PM</p>
+                  </div>
 
-          </div>
+                </div>
               </div>
 
               {/* MIDDLE SECTION */}
-              <div className="md:col-span-7 md:border-r border-gray-200 md:pr-8">
+              <div className="lg:col-span-7 lg:border-r border-gray-200 lg:pr-8">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
                   {/* SHOP BY CATEGORY */}
                   <div>
                     <h3 className="font-bold text-[#041b4d] text-sm uppercase">
-            SHOP BY CATEGORY
-          </h3>
+                      SHOP BY CATEGORY
+                    </h3>
 
-          <div className="w-8 h-[2px] bg-blue-600 mt-2 mb-3"></div>
+                    <div className="w-8 h-[2px] bg-blue-600 mt-2 mb-3"></div>
 
                     <ul className="space-y-2 text-gray-600 text-sm">
                       {groupedCategories.main.slice(0,8).map((cat) => (
@@ -458,10 +464,10 @@ const capitalizeFirstLetter = (str) =>
                         </li>
                       ))}
                       <li>
-              <Link href="/open-box">
-                Open Box Deal
-              </Link>
-            </li>
+                        <Link href="/open-box">
+                          Open Box Deal
+                        </Link>
+                      </li>
                     </ul>
                   </div>
 
@@ -476,7 +482,6 @@ const capitalizeFirstLetter = (str) =>
                       <li><Link href="/shipping">Shipping Policy</Link></li>
                       <li><Link href="/cancellation-refund-policy">Returns</Link></li>
                       <li><Link href="/feedback">Feedback</Link></li>
-                      {/* <li><Link href="/faq">FAQs</Link></li> */}
                       <li><Link href="/contact">Contact</Link></li>
                       <li><Link href="/bulk-orders-and-gift-card-enquiry">B2B / Corporate Enquiries</Link></li>
                     </ul>
@@ -529,7 +534,7 @@ const capitalizeFirstLetter = (str) =>
               </div>
 
               {/* RIGHT SOCIAL SECTION */}
-              <div className="md:col-span-2">
+              <div className="lg:col-span-2">
                 <h3 className="font-bold text-[#041b4d] mb-4">
                   CONNECT WITH US
                 </h3>
@@ -537,7 +542,7 @@ const capitalizeFirstLetter = (str) =>
                   Stay Connected for the latest offers & updates
                 </p>
                 <div className="flex gap-4 text-xl mb-6 mt-5">
-                  <Link href="https://web.whatsapp.com/send?phone=919842344323&amp;text=Hi">
+                  <Link href="https://web.whatsapp.com/send?phone=919842344323&text=Hi">
                     <FaWhatsapp className="text-green-500" />
                   </Link>
                   <Link href="https://www.facebook.com/BharathElectronics/">
@@ -562,71 +567,72 @@ const capitalizeFirstLetter = (str) =>
           </div>
 
 {/* DARK BLUE CATEGORY FOOTER */}
-<div className="bg-[#041b4d] text-white py-10">
+<div className="bg-[#041b4d] text-white py-10 overflow-hidden">
   <div className="container mx-auto px-4">
 
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-6 text-sm">
+    {/* Changed to 1 column on mobile, 4 on tablet, 10 on desktop */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-y-10 gap-x-4 text-sm">
 
-                {groupedCategories.main.slice(0, 5).map((main) => {
-  const Icon =
-    categoryIcons[main.category_name?.toUpperCase()] || MapPin;
+      {groupedCategories.main.slice(0, 5).map((main) => {
+        const Icon =
+          categoryIcons[main.category_name?.toUpperCase()] || MapPin;
 
-  return (
-    <div
-      key={main._id}
-      className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0"
-    >
-      <h4 className="flex items-center gap-2 font-semibold uppercase mb-4 whitespace-nowrap overflow-hidden text-ellipsis">
-        <Icon size={18} className="shrink-0" />
-        <span className="text-[13px]">{main.category_name}</span>
-      </h4>
-
-      <ul className="space-y-2 text-gray-300 text-sm">
-        {(groupedCategories.subs[main._id] || [])
-          .slice(0, 5)
-          .map((sub) => (
-            <li
-              key={sub._id}
-              className="whitespace-nowrap overflow-hidden text-ellipsis"
-            >
-              <Link
-                href={`/category/${main.category_slug}/${sub.category_slug}`}
-              >
-                {sub.category_name}
-              </Link>
-            </li>
-          ))}
-
-        <li className="whitespace-nowrap">
-          <Link
-            href={`/category/${main.category_slug}`}
-            className="text-blue-300"
+        return (
+          <div
+            key={main._id}
+            className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0"
           >
-            View All →
-          </Link>
-        </li>
-      </ul>
-    </div>
-  );
-})}
+            <h4 className="flex items-center gap-2 font-semibold uppercase mb-4 whitespace-nowrap overflow-hidden text-ellipsis">
+              <Icon size={18} className="shrink-0" />
+              <span className="text-[13px]">{main.category_name}</span>
+            </h4>
 
-                {/* Top Brands */}
-                <div className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0">
-                  <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
-                    Top Brands
-                  </h4>
+            <ul className="space-y-2 text-gray-300 text-sm">
+              {(groupedCategories.subs[main._id] || [])
+                .slice(0, 5)
+                .map((sub) => (
+                  <li
+                    key={sub._id}
+                    className="whitespace-nowrap overflow-hidden text-ellipsis hover:text-white transition-colors"
+                  >
+                    <Link
+                      href={`/category/${main.category_slug}/${sub.category_slug}`}
+                    >
+                      {sub.category_name}
+                    </Link>
+                  </li>
+                ))}
 
-                  <ul className="space-y-2 text-gray-300 text-sm">
-                    <li className="whitespace-nowrap">LG</li>
-                    <li className="whitespace-nowrap">Samsung</li>
-                    <li className="whitespace-nowrap">Sony</li>
-                    <li className="whitespace-nowrap">Whirlpool</li>
-                    <li className="whitespace-nowrap">Bosch</li>
-                  </ul>
-                </div>
+              <li className="whitespace-nowrap">
+                <Link
+                  href={`/category/${main.category_slug}`}
+                  className="text-blue-300 hover:text-white transition-colors"
+                >
+                  View All →
+                </Link>
+              </li>
+            </ul>
+          </div>
+        );
+      })}
 
-          {/* Our Location */}
-      <div className="lg:col-span-2 px-2 lg:px-4 min-w-0">
+      {/* Top Brands */}
+      <div className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0">
+        <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
+          Top Brands
+        </h4>
+
+        <ul className="space-y-2 text-gray-300 text-sm">
+          <li className="whitespace-nowrap hover:text-white transition-colors cursor-pointer">LG</li>
+          <li className="whitespace-nowrap hover:text-white transition-colors cursor-pointer">Samsung</li>
+          <li className="whitespace-nowrap hover:text-white transition-colors cursor-pointer">Sony</li>
+          <li className="whitespace-nowrap hover:text-white transition-colors cursor-pointer">Whirlpool</li>
+          <li className="whitespace-nowrap hover:text-white transition-colors cursor-pointer">Bosch</li>
+        </ul>
+      </div>
+
+      {/* Our Location */}
+      <div className="sm:col-span-2 lg:col-span-2 lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0">
         <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
           Our Location
         </h4>
@@ -635,7 +641,7 @@ const capitalizeFirstLetter = (str) =>
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d391.02517849236526!2d76.9626592!3d11.0194039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8585cc4962b87%3A0x38eddb57f0f66203!2sBharath%20Electronics%20%26%20Appliances!5e0!3m2!1sen!2sin!4v1740660808642!5m2!1sen!2sin"
           width="100%"
           height="120"
-          style={{ border: 0 }}
+          style={{ border: 0, borderRadius: '6px' }}
           loading="lazy"
           allowFullScreen
           referrerPolicy="no-referrer-when-downgrade"
@@ -646,24 +652,59 @@ const capitalizeFirstLetter = (str) =>
           href="https://maps.app.goo.gl/aceBM5ztAjNQLx217"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-300 text-sm mt-3 inline-block whitespace-nowrap"
+          className="text-blue-300 text-sm mt-3 inline-block whitespace-nowrap hover:text-white transition-colors"
         >
           View on Google Maps →
         </a>
       </div>
 
-{/* Our App Section */}
-<div className="hidden lg:flex lg:col-start-9 px-2 lg:px-4 min-w-0 flex-col items-start">
-  <div className="relative w-full h-[140px] flex items-start justify-start">
-    <Image
-      src="/uploads/Our-app.png"
-      alt="BEA Mobile App Mockup"
-      width={100}
-      height={140}
-      className="object-contain"
-    />
-  </div>
-</div>
+      {/* Our App Section */}
+      <div className="sm:col-span-2 lg:col-span-2 flex px-2 lg:px-4 min-w-0 relative h-[140px] items-center">
+        
+        {/* Text & Badges */}
+        <div className="relative z-10 flex flex-col pt-0.5 w-[60%] sm:w-[50%] lg:w-[65%]">
+          <h4 className="font-bold text-white text-[14px] mb-1 leading-tight">
+            Download BEA<br/>TRUCO App
+          </h4>
+          <p className="text-gray-300 text-[10px] leading-snug mb-2">
+            Your rewards, always<br/>in your pocket.
+          </p>
+
+          <div className="flex flex-col gap-1.5 mt-1">
+            <Link href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-[110px]">
+              <Image
+                src="/uploads/Play_Store.png" 
+                alt="Get it on Google Play"
+                width={100}
+                height={70}
+                className="object-contain"
+              />
+             
+            </Link>
+            <Link href="https://apps.apple.com/in/app/bea-truco/id6751942292" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-[110px]">
+              <Image
+                src="/uploads/App_Store.png" 
+                alt="Download on the App Store"
+                width={100}
+                height={70}
+                className="object-contain"
+              />
+             
+            </Link>
+          </div>
+        </div>
+
+        {/* Phone Image at the end (right) - hidden on very small screens, visible from sm up */}
+        <div className="absolute right-0 bottom-0 z-0 pointer-events-none flex items-end lg:right-[-20px]">
+          <Image
+            src="/uploads/truco_app_phone.png"
+            alt="BEA Mobile App Mockup"
+            width={100}
+            height={140}
+            className="object-contain drop-shadow-xl"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -720,7 +761,7 @@ const capitalizeFirstLetter = (str) =>
                   setError('');
                 }}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">
-              &times;
+              ×
             </button>
             <div className="flex gap-4 mb-6 border-b">
               <button

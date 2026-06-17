@@ -399,6 +399,8 @@ const CancellationrefundComponent = () => {
             <div className="flex flex-row items-start justify-between gap-2 sm:gap-4">
               
               {/* Call Us */}
+               <a
+                href="tel:9842344323">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 flex-1 text-center sm:text-left">
                 <FiPhone className="text-xl sm:text-2xl text-customBlue flex-shrink-0 mt-1" />
                 <div>
@@ -407,11 +409,16 @@ const CancellationrefundComponent = () => {
                   <p className="text-[10px] text-gray-500 font-semibold whitespace-nowrap">(9 AM - 9 PM)</p>
                 </div>
               </div>
+              </a>
 
               {/* Vertical Divider */}
               <div className="w-px h-12 bg-gray-200 self-center hidden sm:block"></div>
 
               {/* WhatsApp Us */}
+               <a
+                href="https://wa.me/919842344323"
+                target="_blank"
+                rel="noopener noreferrer">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 flex-1 text-center sm:text-left">
                 <FaWhatsapp className="text-xl sm:text-2xl text-green-500 flex-shrink-0 mt-1" />
                 <div>
@@ -420,11 +427,14 @@ const CancellationrefundComponent = () => {
                   <p className="text-[10px] text-gray-500 font-semibold whitespace-nowrap">Chat on WhatsApp</p>
                 </div>
               </div>
+              </a>
 
               {/* Vertical Divider */}
               <div className="w-px h-12 bg-gray-200 self-center hidden sm:block"></div>
 
               {/* Email Us */}
+              <a
+                href="mailto:customercare@bharathelectronics.in">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 flex-1 text-center sm:text-left">
                 <FiMail className="text-xl sm:text-2xl text-customBlue flex-shrink-0 mt-1" />
                 <div>
@@ -434,7 +444,7 @@ const CancellationrefundComponent = () => {
                   </p>
                 </div>
               </div>
-
+             </a>
             </div>
           </div>
 
@@ -480,7 +490,7 @@ const CancellationrefundComponent = () => {
         <h2 className="text-2xl font-bold text-customBlue mb-6">
           Frequently Asked Questions – BEA Cancellation & Refund
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
           {faqs.map((faq, idx) => (
             <div
               key={idx}
