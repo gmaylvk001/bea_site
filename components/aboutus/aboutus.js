@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 const AboutUs = () => {
     const router = useRouter();
     const chooseData = [{
-        image: "/uploads/products.png",
+        image: "/uploads/productss.png",
         icon: <FiMapPin />,
         title: "100% Genuine Products",
         desc: "Authorized retailer for leading electronics and home appliance brands."
