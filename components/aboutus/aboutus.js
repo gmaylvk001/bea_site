@@ -158,7 +158,7 @@ const AboutUs = () => {
     {/* Tablet/Mobile - stacked layout */}
     <div className="lg:hidden">
         <Image 
-            src="/uploads/aboutus-banner.png" 
+            src="/uploads/aboutus-banner.webp" 
             width={1920}
             height={650}
             alt="BEA Store" 
@@ -376,7 +376,7 @@ const AboutUs = () => {
                                         <p className="text-xs text-gray-500">Founder</p>
                                     </div>
                                 </div>
-                                <img src="/uploads/visio_n.png" alt="" className="h-full w-full object-cover"/>
+                                <img src="/uploads/RajaRavichandran.png" alt="" className="h-full w-full object-cover"/>
                             </div>
                         </div>
                     </div>

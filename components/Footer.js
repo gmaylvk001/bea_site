@@ -659,14 +659,14 @@ const Footer = () => {
       </div>
 
       {/* Our App Section */}
-      <div className="sm:col-span-2 lg:col-span-2 flex px-2 lg:px-4 min-w-0 relative h-[140px] items-center">
+      <div className="sm:col-span-2 lg:col-span-2 bottom-0 xl:bottom-6 flex px-2 lg:px-4 min-w-0 relative h-[196px] lg:h-[210px] items-center">
         
         {/* Text & Badges */}
-        <div className="relative z-10 flex flex-col pt-0.5 w-[60%] sm:w-[50%] lg:w-[65%]">
-          <h4 className="font-bold text-white text-[14px] mb-1 leading-tight">
-            Download BEA<br/>TRUCO App
+        <div className="relative z-10 flex flex-col pt-0.5 w-[60%] sm:w-[50%] md:w-[90%] lg:w-[90%]">
+          <h4 className="font-bold text-white mb-6 text-[14px] mb-1 leading-tight">
+            Download BEA TRUCO App
           </h4>
-          <p className="text-gray-300 text-[10px] leading-snug mb-2">
+          <p className="text-gray-300  text-[10px] leading-snug mb-2">
             Your rewards, always<br/>in your pocket.
           </p>
 
@@ -677,7 +677,7 @@ const Footer = () => {
                 alt="Get it on Google Play"
                 width={100}
                 height={70}
-                className="object-contain"
+                className="object-contain rounded"
               />
              
             </Link>
@@ -687,7 +687,7 @@ const Footer = () => {
                 alt="Download on the App Store"
                 width={100}
                 height={70}
-                className="object-contain"
+                className="object-contain rounded"
               />
              
             </Link>
@@ -695,15 +695,15 @@ const Footer = () => {
         </div>
 
         {/* Phone Image at the end (right) - hidden on very small screens, visible from sm up */}
-        <div className="absolute right-0 bottom-0 z-0 pointer-events-none flex items-end lg:right-[-20px]">
-          <Image
-            src="/uploads/truco_app_phone.png"
-            alt="BEA Mobile App Mockup"
-            width={100}
-            height={140}
-            className="object-contain drop-shadow-xl"
-          />
-        </div>
+        <div className="absolute right-[-2px]  md:right-[90px] top-[80px] right-[70px] md:top-[80px] top-5 xl:top-[80px] bottom-4 xl:bottom-[-2px] z-0 pointer-events-none flex items-center lg:right-[-20px]">
+  <Image
+    src="/uploads/truco_app_phone.png"
+    alt="BEA Mobile App Mockup"
+    width={110}
+    height={140}
+    className="object-contain drop-shadow-xl"
+  />
+</div>
       </div>
     </div>
   </div>
