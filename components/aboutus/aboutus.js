@@ -97,10 +97,10 @@ const AboutUs = () => {
                 </div>
             </div>
             {/* HERO SECTION */}
-            <section className="bg-gradient-to-r from-[#f5f8ff] to-white py-16">
+             {/* <section className="bg-gradient-to-r from-[#f5f8ff] to-white py-16">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid lg:grid-cols-2 gap-10 items-center">
-                        {/* Left Content */}
+                      
                         <div>
                             <p className="text-sm text-gray-500 mb-1">Tamil Nadu's</p>
                             <h1 className="text-3xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
@@ -117,13 +117,72 @@ const AboutUs = () => {
                                 </button>
                             </div>
                         </div>
-                        {/* Right Image */}
+                        
                         <div>
                             <Image src="/uploads/aboutus-banner.png" width={900} height={650} alt="BEA Store" className="rounded-2xl shadow-2xl w-full"/>
                         </div>
                     </div>
                 </div>
-            </section>
+            </section>  */}
+<section className="w-full">
+    {/* Desktop/Laptop - overlay layout */}
+    <div className="relative w-full hidden lg:block">
+        <Image 
+            src="/uploads/aboutus-banner1.png" 
+            width={1920}
+            height={650}
+            alt="BEA Store" 
+            className="w-full h-auto object-cover"
+            priority
+        />
+        <div className="absolute inset-0 flex items-center">
+            <div className="w-[32%] pl-8 lg:pl-12">
+                <p className="text-sm text-gray-500 mb-1">Tamil Nadu's</p>
+                <h1 className="text-2xl lg:text-3xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
+                <h2 className="text-2xl lg:text-3xl font-bold text-[#2453d3] mt-2">Since 2000</h2>
+                <p className="mt-2 text-gray-600 text-sm leading-7">From our first showroom in Coimbatore in 2000 to 47+ stores across Tamil Nadu, BEA has grown into Tamil Nadu's most trusted destination for home appliances & electronics.</p>
+                <div className="flex flex-wrap gap-3 mt-6">
+                    <button onClick={() => router.push("/location")} className="bg-[#2453d3] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#1d45b8] transition">
+                        <FiMapPin size={16} />
+                        Explore Our Stores
+                    </button>
+                    <button onClick={() => router.push("/")} className="border border-[#2453d3] text-[#2453d3] px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#2453d3] hover:text-white transition">
+                        <FiShoppingCart size={16} />
+                        Shop Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Tablet/Mobile - stacked layout */}
+    <div className="lg:hidden">
+        <Image 
+            src="/uploads/aboutus-banner.png" 
+            width={1920}
+            height={650}
+            alt="BEA Store" 
+            className="w-full h-auto object-cover"
+            priority
+        />
+        <div className="px-6 py-10 bg-gradient-to-b from-[#f5f8ff] to-white">
+            <p className="text-sm text-gray-500 mb-1">Tamil Nadu's</p>
+            <h1 className="text-2xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
+            <h2 className="text-2xl font-bold text-[#2453d3] mt-2">Since 2000</h2>
+            <p className="mt-2 text-gray-600 text-sm leading-7">From our first showroom in Coimbatore in 2000 to 47+ stores across Tamil Nadu, BEA has grown into Tamil Nadu's most trusted destination for home appliances & electronics.</p>
+            <div className="flex flex-wrap gap-3 mt-6">
+                <button onClick={() => router.push("/location")} className="bg-[#2453d3] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#1d45b8] transition">
+                    <FiMapPin size={16} />
+                    Explore Our Stores
+                </button>
+                <button onClick={() => router.push("/")} className="border border-[#2453d3] text-[#2453d3] px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#2453d3] hover:text-white transition">
+                    <FiShoppingCart size={16} />
+                    Shop Now
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
             {/* Statistics Bar */}
             <section className="-mt-8 relative z-20">
                 <div className="max-w-7xl mx-auto px-6">
@@ -241,14 +300,14 @@ const AboutUs = () => {
             <section className="py-12">
                 <div className="max-w-7xl mx-auto px-4">
                     {/* Row 1 */}
-                    <div className="grid lg:grid-cols-[60%_40%] gap-5 mb-5">
+                   <div className="grid grid-cols-1 lg:grid-cols-[60%_40%] gap-5 mb-5">
                         {/* Journey */}
                         <div className="bg-white rounded-2xl p-6 border shadow-sm">
                             <h2 className="text-2xl font-bold text-[#1f3bb3] mb-8">Our Journey</h2>
                             <div className="relative">
                                 {/* Connecting Line */}
-                                <div className="absolute top-7 left-[8%] right-[8%] h-[3px] bg-gradient-to-r from-blue-400 via-purple-400 to-orange-400"></div>
-                                <div className="grid grid-cols-6 gap-2 relative z-10">
+                               <div className="hidden md:block absolute top-7 left-[8%] right-[8%] h-[3px] bg-gradient-to-r from-blue-400 via-purple-400 to-orange-400"></div>
+                               <div className="grid grid-cols-3 md:grid-cols-6 gap-2 relative z-10">
                                     {[
                                         {
                                             year: "2000",
@@ -307,7 +366,7 @@ const AboutUs = () => {
                         </div>
                         {/* Vision */}
                         <div className="bg-[#f7f9ff] rounded-xl border overflow-hidden">
-                            <div className="grid grid-cols-[1fr_170px] h-full">
+                        <div className="grid grid-cols-[1fr_120px] sm:grid-cols-[1fr_170px] h-full">
                                 <div className="p-5">
                                     <h3 className="text-xl font-bold text-[#2b3a79] mb-3">The Vision Behind BEA</h3>
                                     <p className="text-[13px] text-gray-600 leading-6">Founded by R. Raja Ravichandran in 2000, BEA started with a vision to bring world-class electronics and appliances closer to every home.</p>
@@ -323,12 +382,12 @@ const AboutUs = () => {
                     </div>
 
                     {/* Row 2 */}
-                    <div className="grid lg:grid-cols-2 gap-5 mb-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
                         {/* Tamil Nadu */}
                         <div className="bg-[#f7f9ff] rounded-xl border border-gray-200 p-2">
                             <h3 className="text-xl font-bold text-[#1f3bb3] mb-1">BEA Across Tamil Nadu</h3>
                             <p className="text-sm text-gray-600 mb-4">Serving customers across</p>
-                            <div className="grid grid-cols-[140px_420px] gap-4 items-start">
+                           <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-4 items-start">
                                 {/* Locations */}
                                 <div>
                                     <ul className="space-y-3 text-sm text-gray-700">
@@ -371,16 +430,16 @@ const AboutUs = () => {
                                 </div>
 
                                 {/* Map */}
-                                <div className="flex justify-center -mt-12">
-                                    <img src="/uploads/aboutus-map.png" alt="BEA Across Tamil Nadu" className="w-full max-w-[280px] object-contain -mt-16" />
-                                </div>
+                                <div className="flex justify-center">
+                                <img src="/uploads/aboutus-map.png" alt="BEA Across Tamil Nadu" className="w-full max-w-[280px] object-contain" />
+                                          </div>
                             </div>
                         </div>
                         {/* Brand Partners */}
                         <div className="bg-white rounded-2xl border shadow-sm p-6">
                             <h3 className="text-2xl font-bold text-[#1f3bb3] mb-2">Our Premium Brand Partners</h3>
                             <p className="text-gray-500 text-sm mb-5">BEA brings together the world's leading electronics and home appliance brands under one roof.</p>
-                            <div className="grid grid-cols-5 gap-3">
+                            <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                                 {brands.map((logo, i) => (
                                     <div key={i} className="h-16 bg-white border rounded-xl flex items-center justify-center hover:shadow-md transition">
                                         <img src={logo} alt="" className="max-h-8 object-contain"/>
@@ -393,7 +452,7 @@ const AboutUs = () => {
                         </div>
                     </div>
                     {/* Row 3 */}
-                    <div className="grid lg:grid-cols-2 gap-5">
+                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                         {/* Team Banner */}
                         <div className="relative rounded-2xl overflow-hidden ">
                             <img src="/uploads/47_store.png" alt="" className="w-full h-[300px] object-fill"/>
@@ -414,7 +473,7 @@ const AboutUs = () => {
                         {/* Testimonials */}
                         <div className="bg-[#f7f9ff] rounded-2xl border shadow-sm p-3">
                             <h3 className="text-xl font-bold text-center text-[#2b3a79] mb-6">What Our Customers Say</h3>
-                            <div className="grid md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {[
                                     {
                                         name: "Ramesh Kumar",
