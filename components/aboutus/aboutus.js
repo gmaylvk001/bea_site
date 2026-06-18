@@ -96,64 +96,36 @@ const AboutUs = () => {
                 <span className="text-blue-600 font-semibold">About us</span>
                 </div>
             </div>
-            {/* HERO SECTION */}
-             {/* <section className="bg-gradient-to-r from-[#f5f8ff] to-white py-16">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid lg:grid-cols-2 gap-10 items-center">
-                      
-                        <div>
-                            <p className="text-sm text-gray-500 mb-1">Tamil Nadu's</p>
-                            <h1 className="text-3xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
-                            <h2 className="text-3xl font-bold text-[#2453d3] mt-2">Since 2000</h2>
-                            <p className="mt-1 text-gray-600 leading-8">From our first electronics showroom in Coimbatore in 2000 to 47+ stores across Tamil Nadu, Bharath Electronics & Appliances (BEA) has growth into one of Tamil Nadu's most trusted destination for home appliances, electronics and smart living solutions.</p>
-                            <div className="flex gap-4 mt-8">
-                                <button onClick={() => router.push("/location")}  className="bg-[#2453d3] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1d45b8] transition">
-                                    <FiMapPin size={18} />
-                                    Explore Our Stores
-                                </button>
-                                <button onClick={() => router.push("/")} className="border border-[#2453d3] text-[#2453d3] px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#2453d3] hover:text-white transition">
-                                    <FiShoppingCart size={18} />
-                                    Shop Now
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <Image src="/uploads/aboutus-banner.png" width={900} height={650} alt="BEA Store" className="rounded-2xl shadow-2xl w-full"/>
-                        </div>
-                    </div>
-                </div>
-            </section>  */}
 <section className="w-full">
     {/* Desktop/Laptop - overlay layout */}
     <div className="relative w-full hidden lg:block">
-        <Image 
-            src="/uploads/aboutus-banner1.png" 
-            width={1920}
-            height={650}
-            alt="BEA Store" 
-            className="w-full h-auto object-cover"
-            priority
-        />
-        <div className="absolute inset-0 flex items-center">
-            <div className="w-[32%] pl-8 lg:pl-12">
-                <p className="text-sm text-gray-500 mb-1">Tamil Nadu's</p>
-                <h1 className="text-2xl lg:text-3xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
-                <h2 className="text-2xl lg:text-3xl font-bold text-[#2453d3] mt-2">Since 2000</h2>
-                <p className="mt-2 text-gray-600 text-sm leading-7">From our first showroom in Coimbatore in 2000 to 47+ stores across Tamil Nadu, BEA has grown into Tamil Nadu's most trusted destination for home appliances & electronics.</p>
-                <div className="flex flex-wrap gap-3 mt-6">
-                    <button onClick={() => router.push("/location")} className="bg-[#2453d3] text-white px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#1d45b8] transition">
-                        <FiMapPin size={16} />
-                        Explore Our Stores
-                    </button>
-                    <button onClick={() => router.push("/")} className="border border-[#2453d3] text-[#2453d3] px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-[#2453d3] hover:text-white transition">
-                        <FiShoppingCart size={16} />
-                        Shop Now
-                    </button>
-                </div>
+    <Image 
+        src="/uploads/aboutus-banner1.png" 
+        width={1920}
+        height={650}
+        alt="BEA Store" 
+        className="w-full h-auto object-cover"
+        priority
+    />
+    <div className="absolute inset-0 flex items-center">
+        <div className="w-[32%] xl:w-[35%] 2xl:w-[45%] pl-8 lg:pl-12 2xl:pl-24">
+            <p className="text-sm xl:text-base 2xl:text-lg text-gray-500 mb-1">Tamil Nadu's</p>
+            <h1 className="text-2xl lg:text-3xl xl:text-4xl 2xl:text-6xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
+           <h2 className="text-2xl lg:text-3xl xl:text-4xl 2xl:text-6xl font-bold text-[#2453d3] mt-2">Since 2000</h2>
+            <p className="mt-2 text-gray-600 text-sm xl:text-base 2xl:text-xl leading-7 2xl:leading-9">From our first showroom in Coimbatore in 2000 to 47+ stores across Tamil Nadu, BEA has grown into Tamil Nadu's most trusted destination for home appliances & electronics.</p>
+            <div className="flex flex-wrap gap-3 mt-6">
+                <button onClick={() => router.push("/location")} className="bg-[#2453d3] text-white px-5 py-2.5 2xl:px-7 2xl:py-3 rounded-lg font-semibold text-sm 2xl:text-base flex items-center gap-2 hover:bg-[#1d45b8] transition">
+                    <FiMapPin size={16} />
+                    Explore Our Stores
+                </button>
+                <button onClick={() => router.push("/")} className="border border-[#2453d3] text-[#2453d3] px-5 py-2.5 2xl:px-7 2xl:py-3 rounded-lg font-semibold text-sm 2xl:text-base flex items-center gap-2 hover:bg-[#2453d3] hover:text-white transition">
+                    <FiShoppingCart size={16} />
+                    Shop Now
+                </button>
             </div>
         </div>
     </div>
+</div>
 
     {/* Tablet/Mobile - stacked layout */}
     <div className="lg:hidden">
