@@ -89,7 +89,7 @@ const AboutUs = () => {
     return (
         <div className="text-[#1d1d1f]">
             {/* 🟠 About us Header Bar */}
-            <div className="bg-blue-50 py-6 px-8 flex justify-between items-center">
+            <div className="bg-blue-50 py-6 px-4 md:px-8 lg:px-10 flex justify-between items-center">
                 <div className="flex items-center space-x-2">
                 <Link href="/" className="text-gray-600 hover:text-blue-600">🏠 Home</Link>
                 <span className="text-gray-500">›</span>
@@ -107,8 +107,9 @@ const AboutUs = () => {
         className="w-full h-auto object-cover"
         priority
     />
-    <div className="absolute inset-0 flex items-center">
-        <div className="w-[32%] xl:w-[35%] 2xl:w-[45%] pl-8 lg:pl-12 2xl:pl-24">
+    {/* Adjusted padding to pull content directly to the margin edge */}
+    <div className="absolute inset-0 flex items-center px-4 md:px-8 lg:px-10">
+        <div className="w-[50%] lg:w-[45%] xl:w-[40%] 2xl:w-[35%]">
             <p className="text-sm xl:text-base 2xl:text-lg text-gray-500 mb-1">Tamil Nadu's</p>
             <h1 className="text-2xl lg:text-3xl xl:text-4xl 2xl:text-6xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
            <h2 className="text-2xl lg:text-3xl xl:text-4xl 2xl:text-6xl font-bold text-[#2453d3] mt-2">Since 2000</h2>
@@ -137,7 +138,8 @@ const AboutUs = () => {
             className="w-full h-auto object-cover"
             priority
         />
-        <div className="px-6 py-10 bg-gradient-to-b from-[#f5f8ff] to-white">
+        {/* Matched responsive padding */}
+        <div className="px-4 md:px-8 py-10 bg-gradient-to-b from-[#f5f8ff] to-white">
             <p className="text-sm text-gray-500 mb-1">Tamil Nadu's</p>
             <h1 className="text-2xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
             <h2 className="text-2xl font-bold text-[#2453d3] mt-2">Since 2000</h2>
@@ -155,7 +157,7 @@ const AboutUs = () => {
         </div>
     </div>
 </section>
-            {/* Statistics Bar */}
+            {/* Statistics Bar (Kept constraints strictly as requested) */}
             <section className="-mt-8 relative z-20">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="bg-white rounded-2xl shadow-lg p-3">
@@ -204,9 +206,10 @@ const AboutUs = () => {
                     </div>
                 </div>
             </section>
-            {/* Why Choose BEA */}
+            
+            {/* Why Choose BEA (Stretched to margins) */}
             <section className="py-6 bg-white">
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="w-full px-4 md:px-8 lg:px-10">
                     <div className="text-center mb-10">
                         <h2 className="text-2xl font-bold text-[#2b3a79]">Why Customers Choose BEA?</h2>
                         <div className="w-12 h-1 bg-[#2453d3] mx-auto mt-2 rounded-full"></div>
@@ -216,7 +219,7 @@ const AboutUs = () => {
                             <div key={i} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition duration-300">
                                 {/* Image */}
                                 <div className="relative">
-                                    <img src={item.image} alt={item.title} className="w-full h-28 object-cover"/>
+                                    <img src={item.image} alt={item.title} className="w-full h-30 object-cover"/>
                                     {/* Floating Icon */}
                                     <div className="absolute -bottom-4 left-4 w-9 h-9 rounded-full bg-white border-2 border-[#2453d3] flex items-center justify-center text-[#2453d3] shadow-md">{item.icon}</div>
                                 </div>
@@ -231,9 +234,10 @@ const AboutUs = () => {
                     </div>
                 </div>
             </section>
-            {/* Store Experience Section */}
+            
+            {/* Store Experience Section (Stretched to margins) */}
             <section className="pb-8 bg-white">
-                <div className="max-w-7xl mx-auto px-6">
+                <div className="w-full px-4 md:px-8 lg:px-10">
                     <div className="text-center mb-5">
                         <h2 className="text-2xl font-bold text-[#2b3a79]">Experience BEA Stores</h2>
                         <div className="w-12 h-1 bg-[#2453d3] mx-auto mt-2 rounded-full"></div>
@@ -251,7 +255,7 @@ const AboutUs = () => {
                             <img
                             src={item.image}
                             alt={item.title}
-                            className="w-full h-20 object-cover hover:scale-105 transition duration-300"
+                            className="w-full h-30 object-cover hover:scale-105 transition duration-300"
                             />
                         </div>
 
@@ -268,13 +272,15 @@ const AboutUs = () => {
                     </div>
                 </div>
             </section>
-            {/* Company Journey Timeline */}
+
+            {/* Company Journey Timeline & Subsequent Blocks (Stretched to margins) */}
             <section className="py-12">
-                <div className="max-w-7xl mx-auto px-4">
+                <div className="w-full px-4 md:px-8 lg:px-10">
+                    
                     {/* Row 1 */}
                    <div className="grid grid-cols-1 lg:grid-cols-[60%_40%] gap-5 mb-5">
-                        {/* Journey */}
-                        <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                        {/* Journey (Added shadow-lg) */}
+                        <div className="bg-white rounded-2xl p-6 border shadow-lg">
                             <h2 className="text-2xl font-bold text-[#1f3bb3] mb-8">Our Journey</h2>
                             <div className="relative">
                                 {/* Connecting Line */}
@@ -336,34 +342,50 @@ const AboutUs = () => {
                                 </div>
                             </div>
                         </div>
-                        {/* Vision */}
-                        <div className="bg-[#f7f9ff] rounded-xl border overflow-hidden">
-                        <div className="grid grid-cols-[1fr_120px] sm:grid-cols-[1fr_170px] h-full">
-                                <div className="p-5">
-                                    <h3 className="text-xl font-bold text-[#2b3a79] mb-3">The Vision Behind BEA</h3>
-                                    <p className="text-[13px] text-gray-600 leading-6">Founded by R. Raja Ravichandran in 2000, BEA started with a vision to bring world-class electronics and appliances closer to every home.</p>
-                                    <p className="text-[13px] text-gray-600 leading-6 mt-3">Today, under the next generation leadership, we continue our journey combining trust, technology and customer experience.</p>
-                                    <div className="mt-5">
-                                        <p className="font-semibold text-[#1f3bb3]">R. Raja Ravichandran</p>
-                                        <p className="text-xs text-gray-500">Founder</p>
-                                    </div>
-                                </div>
-                                <img src="/uploads/RajaRavichandran.png" alt="" className="h-full w-full object-cover"/>
+
+                        {/* Vision (Added shadow-lg) */}
+                        <div className="bg-[#f7f9ff] rounded-xl border overflow-hidden shadow-lg">
+                          <div className="flex flex-col sm:grid sm:grid-cols-[1fr_200px] h-full">
+                            
+                            {/* Image: Top on mobile, Right on larger screens */}
+                            <div className="w-full flex justify-center sm:hidden pt-4 bg-[#f0f4f8]">
+                              <img src="/uploads/RajaRavichandran.png" alt="R. Raja Ravichandran" className="w-[180px] h-auto object-contain object-bottom" />
                             </div>
+
+                            {/* Content */}
+                            <div className="p-4 md:p-5 order-2 sm:order-1 flex flex-col justify-center">
+                              <h3 className="text-xl font-bold text-[#2b3a79] mb-3">The Vision Behind BEA</h3>
+                              <p className="text-[12px] text-gray-600 leading-6">Founded by R. Raja Ravichandran in 2000, BEA started with a vision to bring world-class electronics and appliances closer to every home.</p>
+                              <p className="text-[12px] text-gray-600 leading-6 mt-3">Today, under the next generation leadership, we continue our journey combining trust, technology and customer experience.</p>
+                              <div className="mt-5">
+                                <p className="font-semibold text-[#1f3bb3]">R. Raja Ravichandran</p>
+                                <p className="text-xs text-gray-500">Founder</p>
+                              </div>
+                            </div>
+
+                            {/* Image: Hidden on mobile, original layout for desktop */}
+                            <img 
+                              src="/uploads/RajaRavichandran.png" 
+                              alt="R. Raja Ravichandran" 
+                              className="hidden sm:block h-full object-cover order-2"
+                            />
+
+                          </div>
                         </div>
                     </div>
 
                     {/* Row 2 */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-                        {/* Tamil Nadu */}
-                        <div className="bg-[#f7f9ff] rounded-xl border border-gray-200 p-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5 items-start">
+                        
+                        {/* Tamil Nadu (Added shadow-lg) */}
+                        <div className="bg-[#f7f9ff] rounded-xl border border-gray-200 p-4 lg:p-6 shadow-lg">
                             <h3 className="text-xl font-bold text-[#1f3bb3] mb-1">BEA Across Tamil Nadu</h3>
                             <p className="text-sm text-gray-600 mb-4">Serving customers across</p>
                            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-4 items-start">
                                 {/* Locations */}
                                 <div>
                                     <ul className="space-y-3 text-sm text-gray-700">
-                                        <li className="flex items-center gap-2">
+                                        <li className="flex gap-2">
                                             <span className="text-[#2453d3]">📍</span>Coimbatore
                                         </li>
 
@@ -403,12 +425,13 @@ const AboutUs = () => {
 
                                 {/* Map */}
                                 <div className="flex justify-center">
-                                <img src="/uploads/aboutus-map.png" alt="BEA Across Tamil Nadu" className="w-full max-w-[280px] object-contain" />
+                                <img src="/uploads/aboutus-map.png" alt="BEA Across Tamil Nadu" className="max-w-[200px] object-cover" />
                                           </div>
                             </div>
                         </div>
-                        {/* Brand Partners */}
-                        <div className="bg-white rounded-2xl border shadow-sm p-6">
+
+                        {/* Brand Partners (Added shadow-lg) */}
+                        <div className="bg-white rounded-2xl border shadow-lg p-6 lg:p-9 h-full">
                             <h3 className="text-2xl font-bold text-[#1f3bb3] mb-2">Our Premium Brand Partners</h3>
                             <p className="text-gray-500 text-sm mb-5">BEA brings together the world's leading electronics and home appliance brands under one roof.</p>
                             <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
@@ -419,19 +442,21 @@ const AboutUs = () => {
                                 ))}
                             </div>
                             <div className="text-center mt-6">
-                                <button className="bg-[#1f3bb3] text-white px-6 py-2 rounded-lg">View All Brands →</button>
+                                <button className="bg-[#1f3bb3] text-white px-6 py-3 rounded-lg">View All Brands →</button>
                             </div>
                         </div>
                     </div>
+
                     {/* Row 3 */}
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                        {/* Team Banner */}
-                        <div className="relative rounded-2xl overflow-hidden ">
-                            <img src="/uploads/47_store.png" alt="" className="w-full h-[300px] object-fill"/>
+                        
+                        {/* Team Banner (Added shadow-lg) */}
+                        <div className="relative rounded-2xl overflow-hidden shadow-lg">
+                            <img src="/uploads/driven_by_people.png" alt="" className="w-full object-cover h-[320px]"/>
 
-                            <div className="absolute inset-0 bg-gradient-to-r from-[#001854] to-transparent"></div>
+                            <div className="absolute inset-0 to-transparent"></div>
 
-                            <div className="absolute left-6 top-6 text-white max-w-md ">
+                            <div className="absolute left-6 top-6 text-[#0a1d56] max-w-md ">
                             <h3 className="text-3xl font-bold mb-2">
                                 Built on Trust. Driven by People.
                             </h3>
@@ -442,8 +467,9 @@ const AboutUs = () => {
                             </p>
                             </div>
                         </div>
-                        {/* Testimonials */}
-                        <div className="bg-[#f7f9ff] rounded-2xl border shadow-sm p-3">
+
+                        {/* Testimonials (Added shadow-lg) */}
+                        <div className="bg-[#f7f9ff] rounded-2xl border shadow-lg p-4 lg:p-6 h-full">
                             <h3 className="text-xl font-bold text-center text-[#2b3a79] mb-6">What Our Customers Say</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {[
@@ -466,16 +492,13 @@ const AboutUs = () => {
                                         image: "/uploads/user3.jpg",
                                     },
                                 ].map((item, i) => (
-                                    <div key={i} className="border rounded-xl p-4 hover:shadow-md transition">
+                                    <div key={i} className="border bg-white rounded-xl p-4 hover:shadow-md transition">
                                         <div className="text-yellow-500 mb-2 text-lg">★★★★★</div>
                                         <p className="text-sm text-gray-600 mb-5">"{item.review}"</p>
                                         {/* User Info */}
                                         <div className="flex items-center gap-3">
-                                            {/* Option 1: User Image
-                                            <img src={item.image} alt={item.name} className="w-12 h-12 rounded-full object-cover border" /> */}
-
                                             {/* Option 2: If no image, use icon */}
-                                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-[#1f3bb3]">
+                                            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-[#1f3bb3]">
                                                 <FiUser size={20} />
                                             </div>
                                             <div>
@@ -488,6 +511,7 @@ const AboutUs = () => {
                             </div>
                         </div>
                     </div>
+
                 </div>
             </section>
         </div>
