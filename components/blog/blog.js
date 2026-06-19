@@ -447,7 +447,7 @@ export default function BlogComponent() {
 
 
 
-        <div className="relative z-10 max-w-[1400px] mx-auto flex flex-col md:flex-row items-center gap-10">
+        <div className="relative z-10 max-w-12xl mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center gap-10">
 
           <div className="flex-1">
 
@@ -531,7 +531,7 @@ export default function BlogComponent() {
 
 
 
-      <div className="max-w-[1400px] mx-auto px-6 py-10">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 py-10">
 
 
 

@@ -120,7 +120,7 @@ const ShippingPolicy = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto  pt-6">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 pt-6">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Link href="/" className="hover:text-blue-600 flex items-center gap-1">
             <span>🏠</span> Home
@@ -135,7 +135,7 @@ const ShippingPolicy = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto  pt-8 pb-12">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 pt-8 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div>
             <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-4">
@@ -168,7 +168,7 @@ const ShippingPolicy = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="max-w-7xl mx-auto  pb-16 space-y-6">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 pb-16 space-y-6">
         {/* Row 1: Delivery Coverage + Delivery Timeline */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 1. Delivery Coverage */}
@@ -291,13 +291,13 @@ const ShippingPolicy = () => {
                   Our team will keep your product ready for collection
                 </li>
               </ul>
-              <div className="h-40 rounded-xl overflow-hidden">
-                <img
-                  src="/store/BEA_Store.png"
-                  alt="BEA store pickup"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+             <div className="rounded-xl overflow-hidden">
+  <img
+    src="/store/BEA_Store.png"
+    alt="BEA store pickup"
+    className="w-full h-auto object-cover"
+  />
+</div>
             </div>
           </div>
 

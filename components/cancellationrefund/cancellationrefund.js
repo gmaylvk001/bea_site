@@ -214,7 +214,7 @@ const CancellationrefundComponent = () => {
   return (
     <div className="bg-gray-50">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 pt-6">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Link href="/" className="hover:text-customBlue">
             Home
@@ -231,7 +231,7 @@ const CancellationrefundComponent = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
           {/* Left content */}
           <div>
@@ -312,7 +312,7 @@ const CancellationrefundComponent = () => {
           </div>
 
       {/* Feature cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 pb-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, idx) => (
             <div
@@ -334,7 +334,7 @@ const CancellationrefundComponent = () => {
       </div>
 
       {/* Policy Sections */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-4">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 pb-12 space-y-4">
         {policySections.map((section, idx) => (
           <div
             key={idx}
@@ -356,7 +356,7 @@ const CancellationrefundComponent = () => {
       </div>
 
       {/* Applicable Product Categories */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 pb-12">
         <h2 className="text-2xl font-bold text-customBlue mb-2">
           Applicable Product Categories
         </h2>
@@ -380,7 +380,7 @@ const CancellationrefundComponent = () => {
       </div>
 
     {/* Need Help Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+     <div className="max-w-12xl mx-auto px-4 md:px-6 pb-12">
         {/* CHANGED: flex-col on mobile, flex-row on extra-large screens so both cards sit side-by-side */}
         <div className="flex flex-col xl:flex-row gap-6">
           
@@ -486,7 +486,7 @@ const CancellationrefundComponent = () => {
       </div>
 
       {/* FAQ Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-12xl mx-auto px-4 md:px-6 pb-12">
         <h2 className="text-2xl font-bold text-customBlue mb-6">
           Frequently Asked Questions – BEA Cancellation & Refund
         </h2>

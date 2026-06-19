@@ -407,7 +407,7 @@ const results = stores.filter(
           SECTION 2 — 3 SUPPORT CARDS
       ══════════════════════════════════════════════════ */}
       <section className="bg-white px-0 sm:px-1 py-7">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="max-w-12xl mx-auto px-4 md:px-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
 
           {/* Talk to Experts */}
           <div className="border border-gray-200 rounded-xl p-5 flex items-start gap-4">
@@ -464,7 +464,7 @@ const results = stores.filter(
           SECTION 3 — FORM (left) + MAP (right)
       ══════════════════════════════════════════════════ */}
       <section className="bg-[#f8fafc] px-0 sm:px-1 py-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-8 items-start">
+        <div className="max-w-12xl mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-8 items-start">
 
           {/* Left — Form */}
           <div>
@@ -522,7 +522,7 @@ const results = stores.filter(
           SECTION 4 — FIND NEAREST STORE
       ══════════════════════════════════════════════════ */}
       <section className="bg-white px-0 sm:px-1 py-10">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-12xl mx-auto px-4 md:px-6">
 
           <h2 className="text-center text-[22px] font-bold text-gray-900 mb-1">
             Find Your Nearest Store

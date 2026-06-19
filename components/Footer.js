@@ -479,9 +479,9 @@ const Footer = () => {
                     <div className="w-8 h-[2px] bg-blue-600 mt-2 mb-3"></div>
 
                     <ul className="space-y-2 text-gray-600 text-sm">
-                      <li><Link href="/shipping">Shipping Policy</Link></li>
+                      <li><Link href="/shipping">Shipping & Delivery Policy</Link></li>
                       <li><Link href="/cancellation-refund-policy">Returns</Link></li>
-                      <li><Link href="/feedback">Feedback</Link></li>
+                      <li><Link href="/feedback">Customer support & Feedback centre</Link></li>
                       <li><Link href="/contact">Contact</Link></li>
                       <li><Link href="/bulk-orders-and-gift-card-enquiry">B2B / Corporate Enquiries</Link></li>
                     </ul>

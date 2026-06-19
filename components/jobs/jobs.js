@@ -239,7 +239,7 @@ const opportunities = [
   return (
     <>
       <section className="relative overflow-hidden bg-gradient-to-r from-[#001b5e] via-[#002b8f] to-[#003ccf]">
-  <div className="max-w-[1400px] mx-auto px-4 lg:px-10">
+  <div className="max-w-12xl mx-auto px-4 md:px-6">
 
     <div className="grid lg:grid-cols-2 items-center min-h-[480px]">
 
@@ -341,7 +341,7 @@ const opportunities = [
 </section>
 
 <section className="py-3 bg-white">
-  <div className="container mx-auto px-4 lg:px-1">
+<div className="max-w-12xl mx-auto px-4 md:px-6">
 
     <h2 className="text-center text-2xl font-bold text-[#001B5E]">
       Why Work With BEA?
@@ -380,7 +380,7 @@ const opportunities = [
 </section>
 
 <section className="py-3 bg-[#f8faff]">
-  <div className="container mx-auto px-4 lg:px-1">
+  <div className="max-w-12xl mx-auto px-4 md:px-6">
 
     <h2 className="text-center text-2xl font-bold text-[#001B5E]">
       Explore Opportunities
@@ -432,7 +432,7 @@ const opportunities = [
 
 
 <section className="py-5 bg-white">
-  <div className="container mx-auto px-4 lg:px-1">
+ <div className="max-w-12xl mx-auto px-4 md:px-6">
 
     <div className="grid lg:grid-cols-2 gap-8">
 
