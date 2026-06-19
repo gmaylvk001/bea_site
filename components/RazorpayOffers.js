@@ -39,10 +39,9 @@ const RazorpayOffers = ({ amount }) => {
     }
   }, [amount]);
 
-  return (
-    <div>
-     <h4 className="py-3"> AVAILABLE OFFERS</h4>
-      <div id="razorpay-affordability-widget"></div>
+ return (
+    <div className="w-full overflow-hidden">
+      <div id="razorpay-affordability-widget" className="w-full overflow-hidden"></div>
     </div>
   );
 };

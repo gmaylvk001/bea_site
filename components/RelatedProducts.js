@@ -133,16 +133,9 @@ import Link from "next/link";
 
   
 
-  if (!relatedProducts.length) {
-    return (
-     <div className="py-8">
-  <h2 className="text-lg sm:text-xl font-semibold text-center text-gray-600 bg-gray-50 border border-gray-200 rounded-lg py-4">
-    No related products for this product
-  </h2>
-</div>
-
-    );
-  }
+ if (!relatedProducts.length) {
+  return null;
+}
 
   return (
 <>
