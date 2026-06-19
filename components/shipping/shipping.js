@@ -120,7 +120,7 @@ const ShippingPolicy = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <div className="max-w-7xl mx-auto  pt-6">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Link href="/" className="hover:text-blue-600 flex items-center gap-1">
             <span>🏠</span> Home
@@ -135,7 +135,7 @@ const ShippingPolicy = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+      <div className="max-w-7xl mx-auto  pt-8 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div>
             <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mb-4">
@@ -168,7 +168,7 @@ const ShippingPolicy = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-6">
+      <div className="max-w-7xl mx-auto  pb-16 space-y-6">
         {/* Row 1: Delivery Coverage + Delivery Timeline */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 1. Delivery Coverage */}

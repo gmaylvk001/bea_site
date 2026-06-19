@@ -3,7 +3,8 @@
 
 import ProductDetailsSection from "@/components/ProductDetailsSection";
 // import RelatedProducts from "@/components/RelatedProducts";
-import {  useEffect, useState, useRef, useCallback } from "react";
+import {  useEffect, useState, useRef,useMemo, useCallback } from "react";
+
 import { ShieldHalf } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { useParams } from "next/navigation";
@@ -26,6 +27,31 @@ import RelatedProducts from "@/components/RelatedProducts";
 import RazorpayOffers from "@/components/RazorpayOffers";
 import { v4 as uuidv4 } from "uuid";
 
+
+function FaqItem({ question, answer }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="bg-white">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition"
+      >
+        <span className="text-sm text-gray-700 pr-4">{question}</span>
+        <span className={`text-gray-400 text-xl transition-transform duration-200 flex-shrink-0 ${open ? "rotate-45" : ""}`}>
+          +
+        </span>
+      </button>
+      {open && (
+        <div className="px-4 pb-3 text-sm text-gray-500 leading-relaxed">
+          {answer}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 export default function ProductClient() {
   const router = useRouter(); 
   const { slug } = useParams();
@@ -45,7 +71,9 @@ export default function ProductClient() {
   const [selectedWarrantyAmount, setSelectedWarrantyAmount] = useState(0);
   const [showNoWarrantyModal, setShowNoWarrantyModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-
+  const [faqs, setFaqs] = useState([]);
+  const [recentlyViewedProducts, setRecentlyViewedProducts] = useState([]);
+  const [isDesktop, setIsDesktop] = useState(false);
 const [addOnProducts, setAddOnProducts] = useState([]);
 
 const addOnIds = Array.isArray(product?.add_ons)
@@ -57,6 +85,19 @@ const addOnIds = Array.isArray(product?.add_ons)
   console.log("useEffect triggered", product?._id, addOnIds);
 }, [product?._id]);
 
+useEffect(() => {
+  const fetchFaqs = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/product/faq/${product._id}`);
+      const data = await res.json();
+      setFaqs(data.faqs || []);
+    } catch (err) {
+      console.error("FAQ fetch error:", err);
+    }
+  };
+
+  if (product?._id) fetchFaqs();
+}, [product?._id]); 
 
 useEffect(() => {
   if (!Array.isArray(product?.add_ons) || product.add_ons.length === 0) return;
@@ -81,7 +122,56 @@ useEffect(() => {
   fetchAddOnProducts();
 }, [product?.add_ons]);
 
+useEffect(() => {
+  const fetchRecentlyViewed = async () => {
+    // Step 1: localStorage safe read
+    const storedString = localStorage.getItem("recentlyViewed");
+    let stored = [];
+    try {
+      stored = JSON.parse(storedString) || [];
+    } catch {
+      stored = [];
+    }
 
+    // Step 2: array check + quantity filter
+    if (!Array.isArray(stored)) stored = [];
+    stored = stored.filter((p) => p.quantity > 0);
+
+    if (stored.length === 0) return;
+
+    // Step 3: fetch brands and map
+    try {
+      const response = await fetch("/api/brand");
+      const result = await response.json();
+
+      if (!result.error) {
+        const brandMap = {};
+        result.data.forEach((b) => {
+          brandMap[b._id] = b.brand_name;
+        });
+
+        const productsWithBrands = stored.map((p) => ({
+          ...p,
+          brand: brandMap[p.brand] || p.brand,
+        }));
+
+        setRecentlyViewedProducts(productsWithBrands);
+      } else {
+        setRecentlyViewedProducts(stored);
+      }
+    } catch {
+      setRecentlyViewedProducts(stored);
+    }
+  };
+
+  fetchRecentlyViewed();
+}, []);
+ useEffect(() => {
+  const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+  handleResize(); // run initial check
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
 const handleDecrease = () => {
   setQuantity(Math.max(1, quantity - 1));
   setQuantityWarning(false); // clear warning when decreasing
@@ -95,7 +185,68 @@ const handleIncrease = () => {
   }
 };
 
+const RecentlyViewedCard = ({ product }) => {
+  const imgSrc = product.images?.[0]
+    ? product.images[0].startsWith("http")
+      ? product.images[0]
+      : `/uploads/products/${product.images[0]}`
+    : "/uploads/products/placeholder.jpg";
 
+  const price =
+    product.special_price &&
+    Number(product.special_price) > 0 &&
+    Number(product.special_price) < Number(product.price)
+      ? product.special_price
+      : product.price;
+
+  return (
+    <Link
+      href={`/product/${product.slug || product._id}`}
+      className="flex items-center gap-4 p-4 w-full min-w-0 h-full bg-white hover:bg-gray-50/50 transition-colors duration-200"
+    >
+      {/* Image Container - Fixed 16x16 box to avoid squeezing */}
+      <div className="flex-shrink-0 w-16 h-16 rounded-md bg-white flex items-center justify-center overflow-hidden">
+        <img
+          src={imgSrc}
+          alt={product.name}
+          className="max-w-full max-h-full object-contain p-1"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/uploads/products/placeholder.jpg";
+          }}
+        />
+      </div>
+
+      {/* Info Content - min-w-0 stops width expansion */}
+      <div className="flex flex-col flex-1 min-w-0 justify-center">
+        {product.brand && (
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide truncate mb-0.5">
+            {product.brand}
+          </p>
+        )}
+        
+        {/* Title styled with blue/dark tone from layout */}
+        <h4 className="text-xs font-semibold text-gray-800 break-words line-clamp-2 leading-snug mb-1">
+          {product.name}
+        </h4>
+        
+        {/* Price Structure matched to blue-theme image palette */}
+        <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
+          <span className="text-sm font-bold text-blue-900">
+            ₹{Number(price).toLocaleString('en-IN')}
+          </span>
+          {product.special_price &&
+            Number(product.special_price) > 0 &&
+            Number(product.special_price) < Number(product.price) && (
+              <span className="text-[10px] text-gray-400 line-through">
+                ₹{Number(product.price).toLocaleString('en-IN')}
+              </span>
+            )}
+        </div>
+      </div>
+    </Link>
+  );
+};
 
 
 // // Function to fetch category products
@@ -755,16 +906,6 @@ const fetchBrand = async () => {
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
-      {/* 🟠 Wishlist Header Bar */}
-      {/* <div className="bg-blue-50 py-6 px-8 flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">Shop Details</h2>
-        <div className="flex items-center space-x-2">
-          <Link href="/" className="text-gray-600 hover:text-blue-600">🏠 Home</Link>
-          <span className="text-gray-500">›</span>
-          <span className="text-blue-600 font-semibold">Shop Details</span>
-        </div>
-      </div> */}
-
       {errorMessage && (
   <div className="text-center mt-10">
     <p className="text-red-600 text-lg mb-3">{errorMessage}</p>
@@ -780,1467 +921,862 @@ const fetchBrand = async () => {
 )}
 
 
-      <div className="container mx-auto px-4 py-8">
+       <div className="container mx-auto px-2 md:px-4 py-8">
          {/* Breadcrumb - moved outside the grid but inside container */}
-         <ProductBreadcrumb product={product} />
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Left Section - Product Image with Zoom */}
-          <div className="md:col-span-4 relative sticky top-20">
-           <div className="border border-gray-400 rounded-lg">
-              {/* Main Image with fixed aspect ratio */}
-              <div 
-                className="relative aspect-square w-full px-7"
-                onMouseMove={handleMouseMove}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            onClick={() => openLightbox(0)}
-            ref={zoomContainerRef}
-              >
-                <img
-                  src={resolveImagePath(mainImage) || "/no-image.jpg"}
-                  alt={product?.name || "Product"}
-                  className="w-full h-full object-contain rounded-xl"
-                  ref={imgRef}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/no-image.jpg";
-                  }}
-                />
+       <ProductBreadcrumb product={product} />
+{/* ===== MOBILE & TABLET VIEW (hidden on desktop) ===== */}
+<div className="block lg:hidden w-full">
 
-                {/* 🔹 Lens Overlay */}
-           {/* Zoom lens (shown on hover) */}
-            {showZoomLens && (
-              <div 
-                className="absolute border-2 border-white bg-white bg-opacity-30 pointer-events-none"
-                style={{
-                  width: '150px',
-                  height: '150px',
-                  left: 0,
-                  top: 0,
-                  borderRadius: '50%',
-                  transform: 'translateZ(0)',
-                  zIndex: 10,
-                  display: 'block'
-                }}
-                ref={zoomLensRef}
-              />
-            )}
-            
-
-
-              </div>
-
-              {/* Zoom Box */}
-              {/* Zoom Box */}
-{/* Zoom result (shown on hover) */}
-           {showZoomLens && (
-  <div 
-    className="absolute hidden md:block left-full ml-4 top-0 w-full bg-no-repeat bg-white border rounded-lg overflow-hidden"
-    style={{
-      backgroundImage: `url(${resolveImagePath(product.images[selectedImageIndex])})`,
-      backgroundSize: '200%',
-      backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-      zIndex: 20,
-      height: '400px',
-      width: '525px'
-    }}
-    ref={zoomResultRef}
-  />
-)}
-
-
-
-
-{/* {showZoomLens && (
-  <div 
-    className="absolute hidden md:block left-full ml-4 top-0 w-full h-3/4 bg-no-repeat bg-white border rounded-lg overflow-hidden"
-    style={{
-      backgroundImage: `url(${selectedImage})`,
-      backgroundSize: '200%',
-      backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-      zIndex: 20,
-      maxHeight: '300px' // Added max height limit
-    }}
-    ref={zoomResultRef}
-  />
-)} */}
-            {/* {showZoomLens && (
-              <div 
-                className="absolute hidden md:block left-full ml-4 top-0 w-full h-full bg-no-repeat bg-white  rounded-lg overflow-hidden"
-                style={{
-                  backgroundImage: `url(${selectedImage})`,
-                  backgroundSize: '200%',
-                  backgroundPosition: '0% 0%',
-                  zIndex: 20
-                }}
-                ref={zoomResultRef}
-              />
-            )} */}
-            </div>
-
-            
-           
-        
-
-        {/* Thumbnails */}
-       {/* Thumbnails */}
-<div className="flex gap-2 mt-3 overflow-x-auto pb-2 -mt-1">
-  {product.images && product.images.filter(img => img && img.trim() !== "").length > 0 && (
-  <div className="flex gap-2 mt-3 overflow-x-auto pb-2 -mt-1">
-    {product.images
-      .filter(img => img && img.trim() !== "") // remove empty or invalid entries
-      .map((image, index) => (
-        <div key={index} className="flex-shrink-0">
-          <img
-            src={resolveImagePath(image)}
-            alt={`Thumbnail ${index + 1}`}
-            className="w-20 h-20 border border-gray-400 rounded-lg cursor-pointer hover:scale-110 transition-transform duration-300 object-cover"
-            onClick={() => setSelectedImageIndex(index)}
-            onError={(e) => {
-              e.currentTarget.style.display = "none"; // hide if broken
-            }}
-          />
-        </div>
-      ))}
-  </div>
-)}
-
-</div>
-
-{/* Lightbox Modal */}
-{lightboxOpen && (
-  <div
-    className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm p-2 sm:p-6 overflow-y-auto"
-    onClick={closeLightbox}
-  >
-    <div
-      className="relative bg-white rounded-lg shadow-2xl w-full max-w-md sm:max-w-2xl mx-auto flex flex-col items-center max-h-[80vh] sm:max-h-[70vh] p-3 sm:p-6 mt-[10rem] sm:mt-32"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Close button */}
-      <button
-        className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 transition-colors duration-200 z-50"
-        onClick={closeLightbox}
+  {/* 1. Product Image */}
+  <div className="w-full relative">
+    <div className="border border-gray-400 rounded-lg">
+      <div
+        className="relative aspect-square w-full px-4"
+        onClick={() => openLightbox(0)}
+        ref={zoomContainerRef}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-5 h-5 sm:w-6 sm:h-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+        <img
+          src={resolveImagePath(mainImage) || "/no-image.jpg"}
+          alt={product?.name || "Product"}
+          className="w-full h-full object-contain rounded-xl"
+          ref={imgRef}
+          onError={(e) => { e.target.onerror = null; e.target.src = "/no-image.jpg"; }}
+        />
+      </div>
+    </div>
 
-      {/* Main Image */}
-     <div className="relative w-full flex items-center justify-center"> 
-    <img 
-    src={resolveImagePath(product.images[selectedImageIndex])} alt={product?.name || "Product"} 
-    className="object-contain max-h-[60vh] sm:max-h-[50vh] w-full  rounded-md" /> 
-</div>
-
-      {/* Divider line */}
-      <div className="w-full border-t border-gray-300 my-3"></div>
-
-      {/* Thumbnails */}
-      {product.images &&
-        product.images.filter(
-          (img) => img && img.trim() !== '' && img.trim().toLowerCase() !== 'null'
-        ).length > 0 && (
-          <div className="flex justify-center flex-wrap gap-2 sm:gap-3">
-            {product.images
-              .filter(
-                (img) => img && img.trim() !== '' && img.trim().toLowerCase() !== 'null'
-              )
-              .map((image, index) => {
-                const imgPath =
-                  image.startsWith('http') ||
-                  image.startsWith('blob:') ||
-                  image.startsWith('data:')
-                    ? image
-                    : `/uploads/products/${image}`;
-
-                return (
-                  <img
-                    key={index}
-                    src={imgPath}
-                    alt={`Thumbnail ${index + 1}`}
-                    className={`object-cover w-14 h-14 sm:w-16 sm:h-16 rounded-sm cursor-pointer transition-transform duration-300 hover:scale-105 ${
-                      selectedImageIndex === index ? 'ring-2 ring-blue-400' : ''
-                    }`}
-                    onClick={() => setSelectedImageIndex(index)}
-                    onError={(e) => e.currentTarget.remove()}
-                  />
-                );
-              })}
+    {/* Thumbnails */}
+    {product.images && product.images.filter(img => img && img.trim() !== "").length > 0 && (
+      <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+        {product.images.filter(img => img && img.trim() !== "").map((image, index) => (
+          <div key={index} className="flex-shrink-0">
+            <img
+              src={resolveImagePath(image)}
+              alt={`Thumbnail ${index + 1}`}
+              className="w-16 h-16 border border-gray-400 rounded-lg cursor-pointer object-cover"
+              onClick={() => setSelectedImageIndex(index)}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
           </div>
-        )}
+        ))}
+      </div>
+    )}
+
+    {/* 360 / View in space / Customer Images */}
+    <div className="flex items-center justify-between mt-3 border border-gray-200 rounded-lg py-2 px-3 bg-gray-50">
+      <button className="flex items-center gap-1 text-gray-600" onClick={() => alert("360° View — Coming Soon")}>
+        <img src="/images/icon/view360.png" alt="360 View" className="w-5 h-5 object-contain" />
+        <span className="text-[10px] font-medium">360° View</span>
+      </button>
+      <div className="w-px h-5 bg-gray-300" />
+      <button className="flex items-center gap-1 text-gray-600" onClick={() => alert("View in Your Space — Coming Soon")}>
+        <img src="/images/icon/viewinspace.png" alt="View in Your Space" className="w-5 h-5 object-contain" />
+        <span className="text-[10px] font-medium">View in your space</span>
+      </button>
+      <div className="w-px h-5 bg-gray-300" />
+      <button className="flex items-center gap-1 text-gray-600" onClick={() => alert("Customer Images — Coming Soon")}>
+        <img src="/images/icon/customerimage.png" alt="Customer Images" className="w-5 h-5 object-contain" />
+        <span className="text-[10px] font-medium">Customer Images</span>
+      </button>
     </div>
   </div>
-)}
 
+  {/* 2. Brand + Name + Price */}
+  <div className="mt-4">
+    <p className="text-blue-600 font-semibold text-sm uppercase tracking-wide">
+      {brand.find((b) => b.value === product.brand)?.label || ""}
+    </p>
+    <h1 className="text-lg font-bold text-gray-900 leading-snug mt-1">{product.name}</h1>
+    <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+      {product.model_number && <span>Model: {product.model_number}</span>}
+      {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
+      {product.item_code && <span>SKU: {product.item_code}</span>}
+    </div>
+    {avgRating > 0 && (
+      <div className="flex items-center gap-1 mt-2">
+        <span className="text-yellow-400 text-sm">★</span>
+        <span className="text-sm font-semibold text-gray-800">{avgRating}</span>
+        <span className="text-xs text-blue-600 underline">({reviewCount} Reviews)</span>
+      </div>
+    )}
 
+    {/* Price */}
+    <div className="mt-3 border-t border-gray-200 pt-3">
+      <div className="flex items-baseline gap-3 flex-wrap">
+        <span className="text-2xl font-bold text-blue-800">
+          ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
+        </span>
+        {product.special_price > 0 && product.price > 0 && (
+          <span className="text-sm text-gray-400 line-through">₹ {Number(product.price).toLocaleString()}</span>
+        )}
+        {product.special_price > 0 && product.price > 0 && (
+          <span className="text-sm font-bold text-green-600">
+            {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
+          </span>
+        )}
+      </div>
+      {product.special_price > 0 && product.price > product.special_price && (
+        <p className="text-green-600 font-semibold text-sm mt-1">
+          You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
+        </p>
+      )}
+    </div>
 
+    {/* Stock */}
+    <div className="mt-2">
+      {product.stock_status === "In Stock" && product.quantity > 0 ? (
+        <span className="text-green-600 font-semibold text-sm">✓ In Stock</span>
+      ) : (
+        <span className="text-red-600 font-semibold text-sm">Out of Stock</span>
+      )}
+      <p className="text-xs text-gray-600 mt-1">
+        Sold by <span className="font-semibold">Bharath Electronics & Appliances</span>
+      </p>
+    </div>
 
+    {/* Delivery Check */}
+    <div className="border border-gray-200 rounded-lg p-3 mt-3">
+      <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+        Check delivery, installation & store availability
+      </div>
+      <div className="flex gap-2">
+        <input type="text" placeholder="641012" className="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500" />
+        <button className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm font-medium">Check</button>
+      </div>
+      <p className="text-xs text-gray-500 mt-1.5">Delivery available by <span className="text-blue-600 font-medium">Tomorrow</span></p>
+    </div>
 
+    {/* Quantity + Buy Now + Add to Cart */}
+    <div className="mt-3">
+      <div className="flex items-center gap-3 mb-3">
+        <span className="text-sm font-medium text-gray-700">Quantity:</span>
+        <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">
+          <button onClick={handleDecrease} className="text-gray-600 font-bold text-base">−</button>
+          <span className="text-sm font-semibold w-5 text-center">{quantity}</span>
+          <button onClick={handleIncrease} className="text-gray-600 font-bold text-base">+</button>
+        </div>
+        {quantityWarning && <p className="text-red-500 text-xs">Max {product.quantity} only</p>}
+      </div>
 
-
-
-
-
-
-
-
-
-
+      {product.stock_status === "In Stock" && product.quantity > 0 && (
+        <div className="flex gap-3">
+          <button onClick={handleBuyNow} className="flex-1 bg-blue-700 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm">
+            <FaStore className="w-4 h-4" />
+            Buy Now
+          </button>
+          <div className="flex-1">
+            <ProductAddtoCart
+              productId={product._id}
+              stockQuantity={product.quantity}
+              quantity={quantity}
+              additionalProducts={[...selectedFrequentProducts.map((p) => p._id), ...selectedRelatedProducts.map((p) => p._id)]}
+              extendedWarranty={selectedWarrantyAmount}
+              selectedFrequentProducts={selectedFrequentProducts}
+              selectedRelatedProducts={selectedRelatedProducts}
+              buttonLabel="Add to Cart"
+              buttonClassName="bg-white hover:bg-blue-50 text-blue-700"
+            />
           </div>
+        </div>
+      )}
+    </div>
+  </div>
 
+{/* Standard Mobile/Desktop Shared Wrapper Container */}
+<div className="w-full block">
+  {!isDesktop && (
+  <div className="mt-4 border border-gray-300 rounded-lg p-4 bg-white">
+    <h3 className="font-semibold text-gray-800 text-sm mb-3">Available Offers</h3>
+    <RazorpayOffers amount={Number(product.special_price) || Number(product.price)} />
+  </div>
+)}
+</div>
+  {/* 4. ProductDetailsSection (Highlights, Overview, Specs, Reviews, FAQ) */}
+  <div className="mt-4">
+    <ProductDetailsSection
+      product={product}
+      reviews={reviews}
+      avgRating={avgRating}
+      reviewCount={reviewCount}
+    />
+  </div> 
+   
+  {/* 5. Frequently Bought Together */}
+  {featuredProducts?.filter(item => item.stock_status === "In Stock").length > 0 && (
+    <div className="mt-4 border border-gray-300 rounded-lg bg-white">
+      <div className="px-4 py-4">
+        <h3 className="font-semibold text-sm text-gray-800 underline mb-4">Frequently Bought Together:</h3>
+        {featuredProducts.map((item) => (
+          <div key={item._id} className="flex items-start mb-4">
+            <input type="checkbox" className="mt-2 mr-3"
+              checked={selectedFrequentProducts.some(p => p._id === item._id)}
+              onChange={() => toggleFrequentProduct(item)} />
+            <div className="flex items-start gap-3">
+              {item.images?.[0] && (
+                <img src={'/uploads/products/' + item.images[0]} alt={item.name} className="w-14 h-14 object-contain" />
+              )}
+              <div className="text-sm">
+                <Link href={`/product/${item.slug}`} className="block mb-1">
+                  <h3 className="text-xs font-medium text-[#0069c6] line-clamp-2">{item.name}</h3>
+                </Link>
+                <span className="text-sm font-semibold text-red-600">
+                  ₹ {Number(item?.special_price && item?.special_price > 0 && item?.special_price < item?.price ? item?.special_price : item?.price || 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
 
-          {/* Middle Section */}
-          <div className="md:col-span-5">
-            <h1 className="text-1xl font-semibold">{product.name}</h1>
-           <div className="mt-2 pb-3 border-b border-gray-400">
-                 {/* Top Row - Item Code and Quantity Label */}
-                <div className="flex items-center space-x-2 text-sm mb-1">
-                  <span className="text-gray-500 text-xs">{product.item_code}</span>
-                </div>
+  {/* 6. Add Ons */}
+  {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
+    <div className="mt-4 border border-gray-300 rounded-lg" style={{background:"#eaeaea"}}>
+      <div className="px-4 py-4">
+        <h2 className="text-sm font-bold text-customBlue underline mb-2">Add Ons</h2>
+        {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
+          <div key={item._id} className="flex items-start mb-4">
+            <input type="checkbox" className="mt-2 mr-3"
+              checked={selectedRelatedProducts.some(p => p._id === item._id)}
+              onChange={() => toggleRelatedProduct(item)} />
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              {item.images?.[0] && (
+                <img src={`/uploads/products/${item.images[0]}`} alt={item.name} className="w-14 h-14 object-contain" />
+              )}
+              <div className="text-sm flex-1 min-w-0">
+                <Link href={`/product/${item.slug}`}>
+                  <h3 className="text-xs font-medium text-[#0069c6] line-clamp-2">{item.name}</h3>
+                </Link>
+                <span className="text-sm font-semibold text-red-600">
+                  ₹ {(item.special_price > 0 ? item.special_price : item.price).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
 
-                {/* Bottom Row - All elements in one line */}
-                <div className="flex items-center gap-2">
-                  {/* Price Section */}
-                  <div className="flex items-baseline gap-2">
-                    {(Number(product.special_price) > 0 || Number(product.price) > 0) && (
-                      <>
-                        <span className="text-2xl font-bold text-blue-800">
-                          Rs.{Math.round(Number(product.special_price) || Number(product.price))}
-                        </span>
+  {/* 7. Similar Products */}
+  {relatedProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
+    <div className="mt-4 border border-gray-300 rounded-lg bg-white">
+      <div className="px-4 py-4">
+        <h2 className="text-sm font-bold text-customBlue underline mb-2">Similar Products</h2>
+        {relatedProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
+          <div key={item._id} className="flex items-start mb-4">
+            <input type="checkbox" className="mt-2 mr-3"
+              checked={selectedRelatedProducts.some(p => p._id === item._id)}
+              onChange={() => toggleRelatedProduct(item)} />
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              {item.images?.[0] && (
+                <img src={'/uploads/products/' + item.images[0]} alt={item.name} className="w-14 h-14 object-contain" />
+              )}
+              <div className="text-sm flex-1 min-w-0">
+                <Link href={`/product/${item.slug}`} className="block mb-1">
+                  <h3 className="text-xs font-medium text-[#0069c6] line-clamp-2">{item.name}</h3>
+                </Link>
+                <span className="text-sm font-semibold text-red-600">
+                  ₹ {(item.special_price && item.special_price > 0 && item.special_price < item.price ? item.special_price : item.price).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
 
-                        {Number(product.special_price) > 0 && Number(product.price) > 0 && (
-                          <span className="text-gray-800 line-through text-sm">
-                            Rs.{Math.round(Number(product.price))}
-                          </span>
-                        )}
-                      </>
+  {/* 8. Add Selected to Cart */}
+  {(selectedRelatedProducts.length > 0 || selectedFrequentProducts.length > 0) && (
+    <div className="mt-4 sticky bottom-0 bg-white border-t border-gray-200 pt-3 pb-3 z-10">
+      {(selectedRelatedProducts.length > 0 || selectedFrequentProducts.length > 0) && (
+        <div className="w-full bg-customBlue text-white font-semibold py-2 rounded-md flex items-center justify-between px-4 mb-2">
+          <div className="flex items-center gap-2">
+            <FaCartPlus className="text-white w-5 h-5" />
+            <span className="text-sm font-semibold">Cart Total</span>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="text-sm font-semibold">₹{cartTotal.toLocaleString()}</span>
+            <Link href="/cart" className="text-[11px] text-white hover:underline">View Cart</Link>
+          </div>
+        </div>
+      )}
+      <ProductAddtoCart
+        productId={product._id}
+        stockQuantity={product.quantity}
+        quantity={quantity}
+        additionalProducts={[...selectedFrequentProducts.map((p) => p._id), ...selectedRelatedProducts.map((p) => p._id)]}
+        extendedWarranty={selectedWarrantyAmount}
+        selectedFrequentProducts={selectedFrequentProducts}
+        selectedRelatedProducts={selectedRelatedProducts}
+        buttonLabel="Add Selected to Cart"
+        buttonClassName="bg-blue-700 text-white"
+      />
+    </div>
+  )}
+  
+{/* MOBILE VIEW */}
+<div className="flex flex-col gap-6 my-8 md:hidden">
+  {/* FAQ — Mobile */}
+  {faqs.length > 0 && (
+    <div>
+      <h2 className="text-base font-bold text-blue-700 mb-3">
+        Frequently Asked Questions
+      </h2>
+      <div className="border border-gray-200 rounded-sm overflow-hidden divide-y divide-gray-200">
+        {faqs.map((faq, i) => (
+          <FaqItem key={i} question={faq.question} answer={faq.answer} />
+        ))}
+      </div>
+    </div>
+  )}
+
+  {/* Exchange — Mobile */}
+  <div className="border border-gray-200 rounded-sm p-4 bg-white">
+    <div className="flex flex-col gap-3">
+      <h3 className="text-base font-bold text-blue-700">Exchange Your Old Appliance</h3>
+      <p className="text-sm text-gray-500 leading-relaxed">
+        Upgrade to a new product and get the best value for your old one.
+      </p>
+      <div className="flex items-center gap-3 justify-center my-2">
+        <img
+          src={product.images?.[0]?.startsWith("http") ? product.images[0] : `/uploads/products/${product.images?.[0]}`}
+          alt="old product"
+          className="w-16 h-24 object-contain opacity-40"
+        />
+        <span className="text-gray-400 text-xl">→</span>
+        <img
+          src={product.images?.[0]?.startsWith("http") ? product.images[0] : `/uploads/products/${product.images?.[0]}`}
+          alt="new product"
+          className="w-16 h-24 object-contain"
+        />
+      </div>
+      <button className="w-fit border border-blue-600 text-blue-600 text-sm font-semibold px-4 py-2 rounded hover:bg-blue-50 transition">
+        Check Exchange Value
+      </button>
+    </div>
+  </div>
+
+</div>
+  
+</div>
+{/* ===== END MOBILE & TABLET VIEW ===== */}
+
+{/* ===== DESKTOP VIEW (hidden on mobile/tablet) ===== */}
+<div className="hidden lg:flex flex-row gap-6 items-start mt-4"></div>
+        {/* OUTER FLEX: Left 70% + Right 30% */}
+<div className="hidden lg:flex flex-row gap-6 items-start mt-4 w-full">
+
+          {/* LEFT 70% */}
+      <div className="w-full lg:w-[75%] flex flex-col gap-6 min-w-0">
+
+            {/* Image + Info Row */}
+<div className="flex flex-col lg:flex-row gap-4 lg:items-start">
+              {/* Image - left half */}
+             <div className="w-full lg:w-1/2 relative">
+                <div className="border border-gray-400 rounded-lg">
+                  <div
+                    className="relative aspect-square w-full px-7"
+                    onMouseMove={handleMouseMove}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    onClick={() => openLightbox(0)}
+                    ref={zoomContainerRef}
+                  >
+                    <img
+                      src={resolveImagePath(mainImage) || "/no-image.jpg"}
+                      alt={product?.name || "Product"}
+                      className="w-full h-full object-contain rounded-xl"
+                      ref={imgRef}
+                      onError={(e) => { e.target.onerror = null; e.target.src = "/no-image.jpg"; }}
+                    />
+                    {showZoomLens && (
+                      <div
+                        className="absolute border-2 border-white bg-white bg-opacity-30 pointer-events-none"
+                        style={{ width: '150px', height: '150px', left: 0, top: 0, borderRadius: '50%', transform: 'translateZ(0)', zIndex: 10 }}
+                        ref={zoomLensRef}
+                      />
                     )}
                   </div>
+                  {showZoomLens && (
+                    <div
+                      className="absolute hidden md:block left-full ml-4 top-0 bg-no-repeat bg-white border rounded-lg overflow-hidden"
+                      style={{
+                        backgroundImage: `url(${resolveImagePath(product.images[selectedImageIndex])})`,
+                        backgroundSize: '200%',
+                        backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                        zIndex: 20, height: '400px', width: '525px'
+                      }}
+                      ref={zoomResultRef}
+                    />
+                  )}
+                </div>
 
-
-                  {/* Quantity Selector */}
-                  <div className="flex items-center border border-gray-300 rounded-full h-8 w-max">
-                    <button 
-                      onClick={handleDecrease} 
-                      className="px-2 py-1 border-r text-xs"
-                    >
-                      -
-                    </button>
-                    <span className="px-2 py-1 text-xs w-6 text-center">{quantity}</span>
-                    <button 
-                      onClick={handleIncrease} 
-                      className="px-2 py-1 border-l text-xs"
-                    >
-                      +
-                    </button>
+                {/* Thumbnails */}
+                {product.images && product.images.filter(img => img && img.trim() !== "").length > 0 && (
+                  <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+                    {product.images.filter(img => img && img.trim() !== "").map((image, index) => (
+                      <div key={index} className="flex-shrink-0">
+                        <img
+                          src={resolveImagePath(image)}
+                          alt={`Thumbnail ${index + 1}`}
+                          className="w-20 h-20 border border-gray-400 rounded-lg cursor-pointer hover:scale-110 transition-transform duration-300 object-cover"
+                          onClick={() => setSelectedImageIndex(index)}
+                          onError={(e) => { e.currentTarget.style.display = "none"; }}
+                        />
+                      </div>
+                    ))}
                   </div>
+                )}
 
-      
-                  {/* Add to Cart Button */}
-                  <div className="flex gap-4 flex-wrap items-start">
-                    {/* <div className="flex-shrink-0">
-                      <Addtocart
+                {/* 360 / View in space / Customer Images */}
+                <div className="flex items-center justify-between mt-3 border border-gray-200 rounded-lg py-2 px-3 bg-gray-50">
+                  <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600" onClick={() => alert("360° View — Coming Soon")}>
+                    <img src="/images/icon/view360.png" alt="360 View" className="w-6 h-6 object-contain" />
+                    <span className="text-[11px] font-medium">360° View</span>
+                  </button>
+                  <div className="w-px h-5 bg-gray-300" />
+                  <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600" onClick={() => alert("View in Your Space — Coming Soon")}>
+                    <img src="/images/icon/viewinspace.png" alt="View in Your Space" className="w-6 h-6 object-contain" />
+                    <span className="text-[11px] font-medium">View in your space</span>
+                  </button>
+                  <div className="w-px h-5 bg-gray-300" />
+                  <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600" onClick={() => alert("Customer Images — Coming Soon")}>
+                    <img src="/images/icon/customerimage.png" alt="Customer Images" className="w-6 h-6 object-contain" />
+                    <span className="text-[11px] font-medium">Customer Images</span>
+                  </button>
+                </div>
+
+                {/* Lightbox */}
+                {lightboxOpen && (
+                  <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm p-2 sm:p-6 overflow-y-auto" onClick={closeLightbox}>
+                    <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-md sm:max-w-2xl mx-auto flex flex-col items-center max-h-[80vh] sm:max-h-[70vh] p-3 sm:p-6 mt-[10rem] sm:mt-32" onClick={(e) => e.stopPropagation()}>
+                      <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 z-50" onClick={closeLightbox}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <div className="relative w-full flex items-center justify-center">
+                        <img src={resolveImagePath(product.images[selectedImageIndex])} alt={product?.name || "Product"} className="object-contain max-h-[60vh] sm:max-h-[50vh] w-full rounded-md" />
+                      </div>
+                      <div className="w-full border-t border-gray-300 my-3"></div>
+                      {product.images && product.images.filter(img => img && img.trim() !== '' && img.trim().toLowerCase() !== 'null').length > 0 && (
+                        <div className="flex justify-center flex-wrap gap-2 sm:gap-3">
+                          {product.images.filter(img => img && img.trim() !== '' && img.trim().toLowerCase() !== 'null').map((image, index) => {
+                            const imgPath = image.startsWith('http') || image.startsWith('blob:') || image.startsWith('data:') ? image : `/uploads/products/${image}`;
+                            return (
+                              <img key={index} src={imgPath} alt={`Thumbnail ${index + 1}`}
+                                className={`object-cover w-14 h-14 sm:w-16 sm:h-16 rounded-sm cursor-pointer hover:scale-105 ${selectedImageIndex === index ? 'ring-2 ring-blue-400' : ''}`}
+                                onClick={() => setSelectedImageIndex(index)}
+                                onError={(e) => e.currentTarget.remove()}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* END Image */}
+
+              {/* Product Info - right half */}
+              <div className="w-full lg:w-1/2">
+                <p className="text-blue-600 font-semibold text-sm mb-1 uppercase tracking-wide">
+                  {brand.find((b) => b.value === product.brand)?.label || ""}
+                </p>
+                <h1 className="text-xl font-bold text-gray-900 leading-snug mb-2">{product.name}</h1>
+                <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+                  {product.model_number && <span>Model: {product.model_number}</span>}
+                  {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
+                  {product.item_code && <span>SKU: {product.item_code}</span>}
+                </div>
+                <div className="flex items-center gap-3 mb-3">
+                  {avgRating > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-yellow-400 text-sm">★</span>
+                      <span className="text-sm font-semibold text-gray-800">{avgRating}</span>
+                      <span className="text-xs text-blue-600 underline cursor-pointer">({reviewCount} Reviews)</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Verified Purchase
+                  </div>
+                </div>
+                <div className="border-t border-gray-200 pt-3 mb-3">
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-3xl font-bold text-blue-800">
+                      ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
+                    </span>
+                    {product.special_price > 0 && product.price > 0 && (
+                      <span className="text-base text-gray-400 line-through">₹ {Number(product.price).toLocaleString()}</span>
+                    )}
+                    {product.special_price > 0 && product.price > 0 && (
+                      <span className="text-sm font-bold text-green-600">
+                        {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
+                      </span>
+                    )}
+                  </div>
+                  {product.special_price > 0 && product.price > product.special_price && (
+                    <p className="text-green-600 font-semibold text-sm mt-1">
+                      You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+                <div className="mb-3 space-y-1">
+                  <div className="flex items-center gap-2">
+                    {product.stock_status === "In Stock" && product.quantity > 0 ? (
+                      <span className="flex items-center gap-1 text-green-600 font-semibold text-sm">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        In Stock
+                      </span>
+                    ) : (
+                      <span className="text-red-600 font-semibold text-sm">Out of Stock</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Sold by <span className="font-semibold">Bharath Electronics & Appliances</span>
+                    <svg className="w-3.5 h-3.5 inline ml-1 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-3 mb-3">
+                  <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Check delivery, installation & store availability
+                  </div>
+                  <div className="flex gap-2">
+                    <input type="text" placeholder="641012" className="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500" />
+                    <button className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-blue-700">Check</button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1.5">Delivery available by <span className="text-blue-600 font-medium">Tomorrow</span></p>
+                </div>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-sm font-medium text-gray-700">Quantity:</span>
+                  <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">
+                    <button onClick={handleDecrease} className="text-gray-600 font-bold text-base hover:text-blue-600">−</button>
+                    <span className="text-sm font-semibold w-5 text-center">{quantity}</span>
+                    <button onClick={handleIncrease} className="text-gray-600 font-bold text-base hover:text-blue-600">+</button>
+                  </div>
+                  {quantityWarning && <p className="text-red-500 text-xs">Max {product.quantity} only</p>}
+                </div>
+                {product.stock_status === "In Stock" && product.quantity > 0 && (
+                  <div className="flex gap-3 mb-3">
+                    <button onClick={handleBuyNow} className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 text-sm whitespace-nowrap">
+                      <FaStore className="w-4 h-4 flex-shrink-0" />
+                      Buy Now
+                    </button>
+                    <div className="flex-1">
+                      <ProductAddtoCart
                         productId={product._id}
                         stockQuantity={product.quantity}
                         quantity={quantity}
-                        additionalProducts={selectedFrequentProducts.map(p => p._id)}
-                        warranty={selectedWarranty}
-                        extendedWarranty={selectedExtendedWarranty}
+                        additionalProducts={[...selectedFrequentProducts.map((p) => p._id), ...selectedRelatedProducts.map((p) => p._id)]}
+                        extendedWarranty={selectedWarrantyAmount}
                         selectedFrequentProducts={selectedFrequentProducts}
+                        selectedRelatedProducts={selectedRelatedProducts}
+                        buttonLabel="Add to Cart"
+                        buttonClassName="bg-white hover:bg-blue-50 text-blue-700"
                       />
-                    </div> */}
-
-                    {product.quantity > 0 && (
-                    <div className="flex-grow mt-2">
-                      <ProductCard productId={product._id} />
                     </div>
-                  )}
-
                   </div>
-
-                
-                </div>
-                {quantityWarning && (
-                <p className="text-red-600 text-xs font-medium"> 
-                  ⚠ You can't order more than {product.quantity} item{product.quantity > 1 ? "s" : ""}.(Stock only {product.quantity} items)
-                </p>
-                )} 
-            </div>
-            {/* <p className="text-gray-700 text-sm mt-3 font-medium">
-              {product.sku || "N/A"}
-            </p> */}
-            
-            {/* Color Variant Section */}
-            {/* <div className="p-3">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Colour Variant:</h3>
-              <div className="flex gap-[10px] mt-1">
-              {product.variants && product.variants.length > 0 ? (
-                  product.variants.slice(0, 3).map((variant, index) => (
-                    <div key={index} className="w-[80px] h-[80px] flex items-center justify-center">
-                      <img 
-                        src={variant.image} 
-                        alt={`Variant ${index + 1}`} 
-                        className="w-full h-full object-cover border border-gray-300 rounded-md"
-                        
-                      />
+                )}
+                <div className="border-b border-gray-400 mt-2"></div>
+                {showReplacementModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl relative p-6">
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <h2 className="text-lg font-semibold text-blue-800">Replacement</h2>
+                        <button className="text-gray-500 hover:text-gray-700 text-xl" onClick={() => setShowReplacementModal(false)}>&times;</button>
+                      </div>
+                      <div className="mt-4 text-sm text-gray-700 space-y-2 max-h-[60vh] overflow-y-auto">
+                        <p>Please go through the mentioned Replacement policy before placing an order.</p>
+                      </div>
+                      <div className="mt-6 flex justify-end border-t pt-3">
+                        <a href="/cancellation-refund-policy" className="text-sm text-blue-600 font-medium hover:underline">Know More</a>
+                      </div>
                     </div>
-                  ))
-                ) : (
-                  [...Array(3)].map((_, i) => (
-                    <div key={i} className="w-[80px] h-[80px] bg-gray-200 rounded-md" />
-                  ))
+                  </div>
                 )}
               </div>
-            </div> */}
+              {/* END Product Info */}
 
-            {product.variants && product.variants.length > 0 && (
-              <div className="p-3">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Colour Variant:</h3>
-                <div className="flex gap-[10px] mt-1">
-                  {product.variants.slice(0, 3).map((variant, index) => (
-                    <div key={index} className="w-[80px] h-[80px] flex items-center justify-center">
-                      <img 
-                        src={variant.image} 
-                        alt={`Variant ${index + 1}`} 
-                        className="w-full h-full object-cover border border-gray-300 rounded-md"
-                      />
+            </div>
+            {/* END Image + Info Row */}
+
+            {/* ProductDetailsSection - full width inside left 70% */}
+            <div className="w-full">
+              <ProductDetailsSection
+                product={product}
+                reviews={reviews}
+                avgRating={avgRating}
+                reviewCount={reviewCount}
+              />
+            </div>
+
+          </div>
+          {/* END Left 70% */}
+
+          {/* RIGHT 30% - Sidebar */}
+<div className="hidden lg:flex lg:w-[25%] flex-col space-y-4 lg:self-start lg:sticky lg:top-4">
+{isDesktop && (
+  <div className="border border-gray-300 rounded-lg shadow-sm bg-white p-4 overflow-hidden w-full">
+    <h3 className="font-semibold text-gray-800 text-sm mb-3">Available Offers</h3>
+    <RazorpayOffers amount={Number(product.special_price) || Number(product.price)} />
+  </div>
+)}
+            {featuredProducts?.filter(item => item.stock_status === "In Stock").length > 0 && (
+              <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
+                <div className="px-4 py-4 border-b border-gray-300">
+                  <h3 className="font-semibold text-sm text-gray-800 underline mb-4">Frequently Bought Together:</h3>
+                  {featuredProducts.map((item) => (
+                    <div key={item._id} className="flex items-start mb-4">
+                      <input type="checkbox" className="mt-2 mr-3"
+                        checked={selectedFrequentProducts.some(p => p._id === item._id)}
+                        onChange={() => toggleFrequentProduct(item)} />
+                      <div className="flex items-start gap-3">
+                        {item.images?.[0] && (
+                          <img src={'/uploads/products/' + item.images[0]} alt={item.name} className="w-16 h-16 object-contain" />
+                        )}
+                        <div className="text-sm">
+                          <Link href={`/product/${item.slug}`} className="block mb-1">
+                            <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">{item.name}</h3>
+                          </Link>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base font-semibold text-red-600">
+                              ₹ {Number(item?.special_price && item?.special_price > 0 && item?.special_price !== "0" && item?.special_price < item?.price ? item?.special_price : item?.price || 0).toLocaleString()}
+                            </span>
+                            {item?.special_price && item?.special_price > 0 && item?.special_price !== "0" && item?.special_price < item?.price && (
+                              <span className="text-xs text-gray-500 line-through">₹ {Number(item?.price || 0).toLocaleString()}</span>
+                            )}
+                          </div>
+                          <h4 className={`text-xs ${item.stock_status === "In Stock" ? "text-green-600" : "text-red-600"}`}>
+                            {item.stock_status}{item.stock_status === "In Stock" && item.quantity ? `, ${item.quantity} units` : ""}
+                          </h4>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-
-            {/* Stock Alert */}
-            <div className="mt-4">
-              {/* <p className="font-semibold">⚠ Products are almost sold out</p> */}
-
-              {product.quantity < 5 ? (
-                <p className="font-semibold text-red-600">⚠ Products are almost sold out</p>
-              ) : (
-                <p className="font-semibold text-green-600">✅ In stock. Order anytime.</p>
-              )}
-              <p className="text-gray-600 text-sm mt-1">
-  {product.quantity && product.quantity > 0 ? (
-    <>Available only: <span className="font-bold">{product.quantity}</span></>
-  ) : (
-    <span className="text-red-600 font-bold">No stock</span>
-  )}
-</p>
-
-            </div>
-
-            {/* Add this code right after the Stock Alert section */}
-              {/* <div className="border-2 border-customBlue rounded-lg overflow-hidden bg-blue-50 shadow-md mt-4">
-              
-                <div className="bg-customBlue px-4 py-3 rounded-t-lg">
-                  <h3 className="text-base font-semibold text-white">
-                    EMI OPTIONS AVAILABLE
-                  </h3>
-                </div>
-
-               
-                <div className="p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src="/emi-bank-logos.png" 
-                        alt="Bank Logos" 
-                        className="h-6 w-auto"
-                      />
-                      <span className="text-sm text-blue-700">
-                        From <span className="font-bold">₹{Math.floor((product.special_price || product.price) / 6)}</span>/month
-                      </span>
-                    </div>
-                    <button className="text-sm font-semibold text-blue-700 hover:underline">
-                      View Plans
-                    </button>
-                  </div>
-                  <p className="text-xs text-blue-600">
-                    Credit Card EMI available on orders above ₹5,000
-                  </p>
-                </div>
-              </div> */}
-
-{/* <h4><b>Available offers</b></h4> */}
-                  
-                           
-                           <RazorpayOffers amount={product.special_price} />
- 
- 
-
-
-{/* EMI Modal */}
-{showEMIModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div className="bg-white rounded-lg w-full max-w-md mx-4">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h3 className="font-semibold">EMI Options</h3>
-        <button 
-          onClick={() => setShowEMIModal(false)}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          &times;
-        </button>
-      </div>
-      
-      <div className="p-4 max-h-[60vh] overflow-y-auto">
-        <div className="mb-4">
-          <h4 className="font-medium text-sm mb-2">Credit Card EMI</h4>
-          <div className="space-y-3">
-            {[
-              { bank: 'HDFC Bank', tenure: '3 Months', emi: Math.floor((product.special_price || product.price) / 3) },
-              { bank: 'ICICI Bank', tenure: '6 Months', emi: Math.floor((product.special_price || product.price) / 6) },
-              { bank: 'SBI Card', tenure: '9 Months', emi: Math.floor((product.special_price || product.price) / 9) },
-              { bank: 'Axis Bank', tenure: '12 Months', emi: Math.floor((product.special_price || product.price) / 12) },
-            ].map((option, index) => (
-              <div key={index} className="flex justify-between items-center p-2 border rounded">
-                <div>
-                  <div className="font-medium text-sm">{option.bank}</div>
-                  <div className="text-xs text-gray-500">{option.tenure}</div>
-                </div>
-                <div className="font-semibold">₹{option.emi}/month</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        <div className="mt-4">
-          <h4 className="font-medium text-sm mb-2">Debit Card EMI</h4>
-          <div className="space-y-3">
-            {[
-              { bank: 'Kotak Bank', tenure: '6 Months', emi: Math.floor((product.special_price || product.price) / 6) },
-              { bank: 'IndusInd Bank', tenure: '9 Months', emi: Math.floor((product.special_price || product.price) / 9) },
-            ].map((option, index) => (
-              <div key={index} className="flex justify-between items-center p-2 border rounded">
-                <div>
-                  <div className="font-medium text-sm">{option.bank}</div>
-                  <div className="text-xs text-gray-500">{option.tenure}</div>
-                </div>
-                <div className="font-semibold">₹{option.emi}/month</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-4 border-t text-sm">
-        <p className="text-gray-600 mb-2">* Interest rates may vary based on your bank's policies</p>
-        <button 
-          className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium"
-          onClick={() => setShowEMIModal(false)}
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-{/* Extended Warranty Section */}
-
-{/* Extended Warranty Section */}
-{Array.isArray(product.extend_warranty) &&
- product.extend_warranty.some(w => w.year > 0 || w.amount > 0) && (
-  <div className="mt-4 bg-white p-4 border border-gray-300 rounded-md shadow-sm">
-    {/* Top heading section */}
-    <div className="flex items-center text-lg text-blue-800 font-bold mb-4 gap-2">
-      <FaShield className="w-6 h-6 text-blue-800" />
-      <span className="font-bold">BEA Care</span>
-      <span className="text-gray-700 font-normal text-sm">Add extra protection to your products</span>
-    </div>
-
-    {/* Divider */}
-    <div className="border-t border-gray-300 mb-4"></div>
-
-    {/* Main content section */}
-    <div className="flex flex-col md:flex-row items-start gap-6">
-      {/* Left side - Image */}
-      <div className="flex-shrink-0 mx-auto md:mx-0">
-        <img
-          src="/images/beashield.png"
-          alt="Sathya Shield"
-          className="w-36 h-36 object-contain"
-        />
-      </div>
-
-      {/* Right side - Content */}
-      <div className="flex-1">
-        <p className="font-semibold text-gray-900 mb-3 text-md">
-          Brand Authorised Repair/Replacement Guarantee As Per Manufacturer.
-        </p>
-        
-        <p className="text-gray-700 text-sm mb-4">
-          If you would like to cover your product under extended warranty for additional years. You may choose the plans as given below.
-        </p>
-
-        {/* Warranty Options */}
-        <div className="space-y-3 mb-6">
-          {product.extend_warranty.map((warranty, index) => (
-            <label 
-              key={warranty._id || index}
-              className="flex items-center gap-3 p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors"
-            >
-              <input
-                type="radio"
-                name="extendedWarranty"
-                value={warranty.amount}
-                checked={selectedWarrantyAmount === warranty.amount}
-                onChange={() => setSelectedWarrantyAmount(warranty.amount)}
-                className="w-4 h-4 accent-blue-800"
-              />
-              <span className="text-gray-700 text-sm">
-                Include {warranty.year} Year{warranty.year > 1 ? "s" : ""} for 
-                <span className="font-semibold"> ₹{warranty.amount.toLocaleString()}</span>
-              </span>
-            </label>
-          ))}
-
-          <label className="flex items-center gap-3 p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
-            <input
-              type="radio"
-              name="extendedWarranty"
-              value={0}
-              checked={selectedWarrantyAmount === 0}
-              onChange={() => setSelectedWarrantyAmount(0)}
-              className="w-4 h-4 accent-blue-800"
-            />
-            <span className="text-gray-700 text-sm">No Extended Warranty</span>
-          </label>
-        </div>
-
-        {/* Calculation Box - Only show when warranty is selected */}
-        {selectedWarrantyAmount > 0 && (
-          <div className="bg-gray-100 border border-gray-300 rounded-lg p-4">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-300">
-                  <th className="text-left pb-2 font-semibold text-gray-700">Product</th>
-                  <th className="text-left pb-2 font-semibold text-gray-700">Warranty</th>
-                  <th className="text-right pb-2 font-semibold text-gray-700">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="py-2 font-semibold text-gray-900">
-                    ₹{(product.special_price || product.price).toLocaleString()}
-                  </td>
-                  <td className="py-2 font-semibold text-gray-900">
-                    ₹{selectedWarrantyAmount.toLocaleString()}
-                  </td>
-                  <td className="py-2 text-right font-bold text-blue-800 text-lg">
-                    ₹{((product.special_price || product.price) + selectedWarrantyAmount).toLocaleString()}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            
-            {/* Mobile View */}
-            <div className="md:hidden mt-3 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-700">Product:</span>
-                <span className="font-semibold">₹{(product.special_price || product.price).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-700">Warranty:</span>
-                <span className="font-semibold">₹{selectedWarrantyAmount.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between border-t border-gray-300 pt-2">
-                <span className="font-semibold text-gray-900">Total:</span>
-                <span className="font-bold text-blue-800 text-lg">
-                  ₹{((product.special_price || product.price) + selectedWarrantyAmount).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
-
-
-
-            {/* Product More Info */}
-
-            <div className="mt-4 bg-gray-50 p-4 rounded-md">
-  {/* Static Title */}
-  <h3 className="text-sm font-semibold text-gray-900 mb-3">MORE INFO</h3>
-
-  <div className="flex flex-row gap-4">
-    {/* Image Section (Left) */}
-    <div className="w-[30%] flex-shrink-0">
-      <img
-        src={resolveImagePath(mainImage) || "/no-image.jpg"}
-        alt={product?.name || "Product"}
-        className="w-full h-auto max-w-[150px] max-h-[150px] object-contain rounded-md border border-gray-200 mx-auto"
-      />
-    </div>
-    
-    {/* Content Section (Right) */}
-    <div className="w-[70%] flex flex-col">
-      {/* Brand Information */}
-      <div className="mb-4">
-        <h4 className="text-sm font-semibold text-gray-900 mb-1">Brand</h4>
-        <p className="text-gray-700 text-sm">
-          {brand.find((b) => b.value === product.brand)?.label || "No Brand Info Available"}
-        </p>
-      </div>
-
-      {/* Quantity Information */}
-      <div className="mb-4">
-        <h4 className="text-sm font-semibold text-gray-900 mb-1">Available Quantity</h4>
-        <p className="text-gray-700 text-sm">
-          {product.quantity ? `${product.quantity} units available` : "Out of stock"}
-        </p>
-        {product.quantity && (
-          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-            <div 
-              className="bg-green-600 h-1.5 rounded-full" 
-              style={{ width: `${Math.min(100, product.quantity)}%` }}
-            ></div>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
-
-
-            <div className="border-b border-gray-400 mt-2"></div>
-
-            {/* Product feature section */}
-
-            <div className="mt-4 bg-gray-50 p-4 rounded-md">
-  {/* Static Title */}
-  <h3 className="text-sm font-semibold text-gray-900 mb-3">PRODUCT FEATURES</h3>
-
-  <div className="mt-3">
-    {(() => {
-      let features = [];
-
-      if (product?.key_specifications) {
-        if (Array.isArray(product.key_specifications)) {
-          features = product.key_specifications.flatMap(item =>
-            // 🔥 Smart split: split by comma NOT inside parentheses
-            item.split(/,(?![^(]*\))/)
-          );
-        } else if (typeof product.key_specifications === "string") {
-          features = product.key_specifications.split(/,(?![^(]*\))/);
-        }
-      }
-
-      // 🔥 Clean & filter
-      const cleanedFeatures = features
-        .map(f => String(f).replace(/[{}\[\]"]/g, "").trim())
-        .filter(f => f.length > 0);
-
-      return cleanedFeatures.length > 0 ? (
-        <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-          {cleanedFeatures.map((feature, index) => (
-            <li key={index}>
-              {feature.charAt(0).toUpperCase() + feature.slice(1)}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <span className="text-xs text-gray-500">No features available.</span>
-      );
-    })()}
-  </div>
-</div>
-
-            <div className="border-b border-gray-400 mt-2"></div>
-
-            {/* Product highlight section */}
-            {/* <div className="mt-4 bg-gray-50 p-4 rounded-md">
-                <div 
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => setShowHighlights(!showHighlights)}
-                >
-                  <h3 className="text-sm font-semibold text-gray-900">PRODUCT HIGHLIGHTS</h3>
-                  <svg 
-                    className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${showHighlights ? 'transform rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-
-                  {showHighlights && (
-                    <div className="mt-3">
-                      {product.highlights && product.highlights.trim() !== '' ? (
-                        <ol className="list-decimal pl-5 space-y-1 text-xs text-gray-600">
-                          {product.highlights
-                            .split('\n')
-                            .filter(item => item.trim() !== '')
-                            .map((item, index) => (
-                              <li key={index}>{item.trim()}</li>
-                            ))}
-                        </ol>
-                      ) : (
-                        <p className="text-xs text-gray-500">No highlights available.</p>
+            {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
+              <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide" style={{background:"#eaeaea"}}>
+                <div className="px-4 py-4">
+                  <h2 className="text-sm font-bold text-customBlue underline mb-2">Add Ons</h2>
+                  {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
+                    <div key={item._id} className="flex items-start mb-4">
+                      {item.quantity > 0 && (
+                        <input type="checkbox" className="mt-2 mr-3"
+                          checked={selectedRelatedProducts.some(p => p._id === item._id)}
+                          onChange={() => toggleRelatedProduct(item)} />
                       )}
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <Link href={`/product/${item.slug}`}>
+                          {item.images?.[0] && <img src={`/uploads/products/${item.images[0]}`} alt={item.name} className="w-16 h-16 object-contain" />}
+                        </Link>
+                        <div className="text-sm flex-1 min-w-0">
+                          <Link href={`/product/${item.slug}`}>
+                            <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">{item.name}</h3>
+                          </Link>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base font-semibold text-red-600">
+                              ₹ {(item.special_price > 0 ? item.special_price : item.price).toLocaleString()}
+                            </span>
+                          </div>
+                          <h4 className={`text-xs ${item.stock_status === "In Stock" ? "text-green-600" : "text-red-600"}`}>{item.stock_status}</h4>
+                        </div>
+                      </div>
                     </div>
-                  )}
-            </div> */}
-            <div className="mt-4 bg-gray-50 p-4 rounded-md">
-  {/* Static Title */}
-  <h3 className="text-sm font-semibold text-gray-900 mb-3">PRODUCT HIGHLIGHTS</h3>
+                  ))}
+                </div>
+              </div>
+            )}
 
-  <div className="mt-3 overflow-auto">
-    {Array.isArray(product.product_highlights) &&
-    product.product_highlights
-      .flatMap(item => item.split(/[\n,]+/).map(i => i.trim()))
-      .filter(item => item.length > 0).length > 0 ? (
-      <table className="w-full text-xs text-left text-gray-700 border border-gray-200">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border px-3 py-2">Key</th>
-            <th className="border px-3 py-2">Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {product.product_highlights
-            .flatMap(item => item.split(/[\n,]+/).map(i => i.trim()))
-            .filter(item => item.length > 0)
-            .map((item, index) => {
-              const cleanedItem = item
-                .replace(/[\[\]{}"]/g, '') // remove braces, brackets, quotes
-                .replace(/\s+/g, ' ')
-                .trim();
-              const [key, ...rest] = cleanedItem.split(':');
-              const value = rest.join(':').trim();
-              return (
-                <tr key={index} className="bg-white even:bg-gray-50">
-                  <td className="border px-3 py-2 font-medium">{key?.trim()}</td>
-                  <td className="border px-3 py-2">{value || '-'}</td>
-                </tr>
-              );
-            })}
-        </tbody>
-      </table>
+            {relatedProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
+              <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
+                <div className="px-4 py-4">
+                  <h2 className="text-sm font-bold text-customBlue underline mb-2">Similar Products</h2>
+                  {relatedProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
+                    <div key={item._id} className="flex items-start mb-4">
+                      {item.quantity > 0 && (
+                        <input type="checkbox" className="mt-2 mr-3"
+                          checked={selectedRelatedProducts.some(p => p._id === item._id)}
+                          onChange={() => toggleRelatedProduct(item)} />
+                      )}
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <Link href={`/product/${item.slug}`} className="block mb-1">
+                          {item.images?.[0] && <img src={'/uploads/products/' + item.images[0]} alt={item.name} className="w-16 h-16 object-contain flex-shrink-0" />}
+                        </Link>
+                        <div className="text-sm flex-1 min-w-0">
+                          <Link href={`/product/${item.slug}`} className="block mb-1">
+                            <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">{item.name}</h3>
+                          </Link>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base font-semibold text-red-600">
+                              ₹ {(item.special_price && item.special_price > 0 && item.special_price !== "0" && item.special_price < item.price ? item.special_price : item.price).toLocaleString()}
+                            </span>
+                            {item.special_price && item.special_price > 0 && item.special_price !== "0" && item.special_price < item.price && (
+                              <span className="text-xs text-gray-500 line-through">₹ {item.price.toLocaleString()}</span>
+                            )}
+                          </div>
+                          <h4 className={`text-xs ${item.stock_status === "In Stock" ? "text-green-600" : "text-red-600"}`}>
+                            {item.stock_status}{item.stock_status === "In Stock" && item.quantity ? `, ${item.quantity} units` : ""}
+                          </h4>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="w-full space-y-3">
+              {(selectedRelatedProducts.length > 0 || selectedFrequentProducts.length > 0 || selectedWarranty || selectedExtendedWarranty) && (
+                <div className="w-full bg-customBlue text-white border border-gray-400 font-semibold py-2 rounded-md shadow-md flex items-center justify-between px-4">
+                  <div className="flex items-center gap-2">
+                    <FaCartPlus className="text-white w-5 h-5" />
+                    <span className="text-md font-semibold">Cart Total</span>
+                  </div>
+                  <div className="flex flex-col items-end leading-tight">
+                    <span className="text-md font-semibold">₹{cartTotal.toLocaleString()}</span>
+                    <Link href="/cart" className="text-[12px] text-white hover:underline mt-0.5">View Cart</Link>
+                  </div>
+                </div>
+              )}
+              <div className="w-full">
+                <ProductAddtoCart
+                  productId={product._id}
+                  stockQuantity={product.quantity}
+                  quantity={quantity}
+                  additionalProducts={[...selectedFrequentProducts.map((p) => p._id), ...selectedRelatedProducts.map((p) => p._id)]}
+                  extendedWarranty={selectedWarrantyAmount}
+                  selectedFrequentProducts={selectedFrequentProducts}
+                  selectedRelatedProducts={selectedRelatedProducts}
+                  buttonLabel="Add Selected to Cart"
+                  buttonClassName="bg-blue-700 text-white"
+                />
+              </div>
+            </div>
+          </div>
+          {/* END Right 30% */}
+    
+        </div>
+        {/* END Outer Flex */}
+{/* DESKTOP ONLY — FAQ + EXCHANGE */}
+<div className="hidden md:flex gap-8 my-10 items-start">
+
+  {/* LEFT — FAQ (50%) */}
+  <div className="w-1/2">
+    <h2 className="text-base font-bold text-blue-700 mb-3">
+      Frequently Asked Questions
+    </h2>
+
+    {faqs.length > 0 ? (
+      <div className="border border-gray-200 rounded-sm overflow-hidden">
+        {faqs.map((faq, i) => (
+          <FaqItem key={i} question={faq.question} answer={faq.answer} />
+        ))}
+      </div>
     ) : (
-      <p className="text-gray-500 text-xs">No highlights available.</p>
+      <div className="border border-gray-200 rounded-sm p-6 text-center text-sm text-gray-400">
+        No questions available
+      </div>
     )}
   </div>
-</div>
 
-
-          <div className="border-b border-gray-400 mt-2"></div>
-
-            {/* Coupons */}
-            {/* <div className="mt-4">
-              <div className="flex items-center justify-between border border-blue-400 rounded-md p-2 mb-3">
-                <div className="flex items-center gap-1">
-                  //  <span className="text-gray-600 text-sm">➕</span> 
-                  <span className="inline-flex items-center justify-center w-4 h-4 text-white bg-gray-600 rounded-full text-lg">+</span>
-
-                  <span className="text-gray-700 text-xs">Mfr. coupon. $3.00 off 5</span>
-                </div>
-                <button className="text-blue-500 text-xs font-semibold hover:underline">
-                  View Details
-                </button>
-              </div>
-              <div className="mt-1 text-gray-900 text-xs font-medium">
-                <p>Buy 1, Get 1 FREE</p>
-                <p>Buy 1, Get 1 FREE</p>
-              </div>
-            </div> */}
-
-       <div className="mt-4">
-	   
-
-  {/* Responsive 3 Boxes Section */}
-  <div className="mt-3 flex flex-col md:flex-row md:justify-between gap-2 space-y-2 md:space-y-0">
-    {/* Replacement Box 
-    <div
-      className="flex items-start bg-blue-50 border border-blue-200 rounded-md p-4 w-full md:w-1/3 shadow-sm cursor-pointer"
-      onClick={() => setShowReplacementModal(true)}
-    >
-     <span className="text-3xl mr-3 mt-1">
-  <Icon icon="mdi:refresh" className="text-blue-600" />
-</span>
-      <div>
-        <div className="text-sm font-semibold text-blue-800">Replacement</div>
-        <div className="text-xs text-blue-600">in 7 days</div>
-      </div>
-    </div>
-	
-	*/}
-
-    {/* Warranty Box 
-    <div
-      className="flex items-start bg-blue-50 border border-blue-200 rounded-md p-4 w-full md:w-1/3 shadow-sm cursor-pointer"
-      onClick={() => setshowWarrantyModal(true)}
-    >
-      <span className="text-3xl mr-3 mt-1">
-  <Icon icon="mdi:shield" className="text-blue-500" />
-</span>
-      <div>
-        <div className="text-sm font-semibold text-blue-800">Warranty</div>
-        <div className="text-xs text-blue-600">in 1 Year</div>
-      </div>
-    </div>
-	
-	*/}
-
-    {/* GST Invoice Box 
-    <div
-      className="flex items-start bg-blue-50 border border-blue-200 rounded-md p-4 w-full md:w-1/3 shadow-sm cursor-pointer"
-      onClick={() => setshowGstInvoiceModal(true)}
-    >
-      <span className="text-yellow-500 text-xl mr-3 mt-1">📄</span>
-      <div>
-        <div className="text-sm font-semibold text-blue-800">GST Invoice</div>
-        <div className="text-xs text-blue-600">Available</div>
-      </div>
-	  
-	  
-    </div>
-	*/}
-	
-  </div>
-
-            {/* Modal */}
-            {showReplacementModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl relative p-6">
-                  {/* Modal Header */}
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h2 className="text-lg font-semibold text-blue-800">Replacement</h2>
-                    <button
-                      className="text-gray-500 hover:text-gray-700 text-xl"
-                      onClick={() => setShowReplacementModal(false)}
-                    >
-                      &times;
-                    </button>
-                  </div>
-
-                  {/* Modal Content */}
-                  <div className="mt-4 text-sm text-gray-700 space-y-2 max-h-[60vh] scrollbar-hide overflow-y-auto">
-                    <p>Please go through the mentioned Replacement policy before placing an order.</p>
-                    <p>
-                      Should you receive an item with physical damages, please note that you should
-                      contact us within 48 hours, (In the case of Brands like Apple, 24 hours), without
-                      using the product and without breaching Poorvika's Online Replacement Policy. If
-                      you fail to follow these, the replacement claim will become void.
-                    </p>
-                    <p>
-                      Products you purchased from Poorvika Online are only eligible for Replacement, under
-                      the following conditions during delivery:
-                    </p>
-                    <ul className="list-disc pl-6">
-                      <li>Physical Damage to the Product</li>
-                      <li>Defective Product</li>
-                      <li>Wrong product received</li>
-                      <li>Broken Seal</li>
-                    </ul>
-                    <p className="font-semibold">Replacement of Mobile Phone:</p>
-                    <p>
-                      In case you receive an item that is not in perfect condition, please contact us
-                      immediately. Important - DO NOT INSERT THE SIM and DO NOT CONNECT TO WIFI (Adhering
-                      to Poorvika's Online Replacement Policy).
-                    </p>
-                    <p className="font-semibold">Void Claim:</p>
-                    <p>
-                      Please note that if you do not abide by Poorvika Online's Replacement Policy and/or
-                      on ignoring your duties as stated above, you agree that your claim for replacement
-                      will become a VOID CLAIM.
-                    </p>
-                  </div>
-
-                  {/* Modal Footer */}
-                  <div className="mt-6 flex justify-end border-t pt-3">
-                    <a
-                      href="/cancellation-refund-policy"
-                      className="text-sm text-blue-600 font-medium hover:underline"
-                    >
-                      Know More
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Modal */}
-            {showWarrantyModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl relative p-6">
-                  {/* Modal Header */}
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h2 className="text-lg font-semibold text-blue-800">Warranty</h2>
-                    <button
-                      className="text-gray-500 hover:text-gray-700 text-xl"
-                      onClick={() => setshowWarrantyModal(false)}
-                    >
-                      &times;
-                    </button>
-                  </div>
-
-                  {/* Modal Content */}
-                  <div className="mt-4 text-sm text-gray-700 space-y-2 max-h-[60vh] scrollbar-hide overflow-y-auto">
-                    <p>1 Year manufacturer warranty for device and 6 months manufacturer warranty for in-box accessories.</p>
-                  </div>
-
-                  {/* Modal Footer */}
-                  <div className="mt-6 flex justify-end border-t pt-3">
-                    <a
-                      href="/privacypolicy"
-                      className="text-sm text-blue-600 font-medium hover:underline"
-                    >
-                      Know More
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Modal */}
-            {showGstInvoiceModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl relative p-6">
-                  {/* Modal Header */}
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h2 className="text-lg font-semibold text-blue-800">GST Invoice</h2>
-                    <button
-                      className="text-gray-500 hover:text-gray-700 text-xl"
-                      onClick={() => setshowGstInvoiceModal(false)}
-                    >
-                      &times;
-                    </button>
-                  </div>
-
-                  {/* Modal Content */}
-                  <div className="mt-4 text-sm text-gray-700 space-y-2 max-h-[60vh] scrollbar-hide overflow-y-auto">
-                    <p>Click here to know more about our T & C</p>
-                  </div>
-
-                  {/* Modal Footer */}
-                  <div className="mt-6 flex justify-end border-t pt-3">
-                    <a
-                      href="/shipping"
-                      className="text-sm text-blue-600 font-medium hover:underline"
-                    >
-                      Know More
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-  {/* Modals - Keep your existing code for modals */}
-</div>
-
-
-
-
-
-
-
-
-          </div>
-
-          {/* Right Section - Seller Info */}
-          <div className="md:col-span-3 w-full max-w-sm flex flex-col space-y-4">
- 
-  {/* ================= Box: Featured + Warranty + Related ================= */}
- {featuredProducts?.filter(item => item.stock_status === "In Stock").length > 0 && (
-  <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
-    <div className="px-4 py-4 border-b border-gray-300">
-      <h3 className="font-semibold text-sm text-gray-800 underline mb-4">
-        Frequently Bought Together:
+{/* EXCHANGE BOX */}
+<div className="w-1/2 border border-gray-200 rounded-sm p-5 bg-white">
+  <div className="flex items-center justify-between h-full gap-4">
+    
+    {/* LEFT — Title, text, button */}
+    <div className="flex flex-col gap-3 flex-1">
+      <h3 className="text-base font-bold text-blue-700">
+        Exchange Your Old Appliance
       </h3>
-
-      {featuredProducts.map((item) => (
-        <div key={item._id} className="flex items-start mb-4">
-          <input
-            type="checkbox"
-            className="mt-2 mr-3"
-            checked={selectedFrequentProducts.some(p => p._id === item._id)}
-            onChange={() => toggleFrequentProduct(item)}
-          />
-          <div className="flex items-start gap-3">
-            {item.images?.[0] && (
-              <img
-                src={'/uploads/products/' + item.images[0]}
-                alt={item.name}
-                className="w-16 h-16 object-contain"
-              />
-            )}
-            <div className="text-sm">
-              <Link
-                href={`/product/${item.slug}`}
-                className="block mb-1"
-                onClick={() => handleProductClick(item)}
-              >
-                <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">
-                  {item.name}
-                </h3>
-              </Link>
-
-              <div className="flex items-center gap-2">
-                {/* <span className="text-base font-semibold text-red-600">
-                  ₹ {(
-                    item.special_price &&
-                    item.special_price > 0 &&
-                    item.special_price !== "0" &&
-                    item.special_price < item.price
-                      ? item.special_price
-                      : item.price
-                  ).toLocaleString()}
-                </span>
-
-                {item.special_price &&
-                  item.special_price > 0 &&
-                  item.special_price !== "0" &&
-                  item.special_price < item.price && (
-                    <span className="text-xs text-gray-500 line-through">
-                      ₹ {item.price.toLocaleString()}
-                    </span>
-                  )} */}
-
-                  <span className="text-base font-semibold text-red-600">
-                    ₹ {Number(
-                      item?.special_price &&
-                      item?.special_price > 0 &&
-                      item?.special_price !== "0" &&
-                      item?.special_price < item?.price
-                        ? item?.special_price
-                        : item?.price || 0
-                    ).toLocaleString()}
-                  </span>
-
-                  {item?.special_price &&
-                    item?.special_price > 0 &&
-                    item?.special_price !== "0" &&
-                    item?.special_price < item?.price && (
-                      <span className="text-xs text-gray-500 line-through">
-                        ₹ {Number(item?.price || 0).toLocaleString()}
-                      </span>
-                  )}
-              </div>
-
-              <h4
-                className={`text-xs ${
-                  item.stock_status === "In Stock"
-                    ? "text-green-600"
-                    : "text-red-600"
-                }`}
-              >
-                {item.stock_status}
-                {item.stock_status === "In Stock" && item.quantity
-                  ? `, ${item.quantity} units`
-                  : ""}
-              </h4>
-            </div>
-          </div>
-        </div>
-      ))}
+      <p className="text-sm text-gray-500 leading-relaxed">
+        Upgrade to a new {ProductBreadcrumb?.[2]?.name || "product"} and get the best value for your old one.
+      </p>
+      <button className="w-fit border border-blue-600 text-blue-600 text-sm font-semibold px-4 py-2 rounded hover:bg-blue-50 transition">
+        Check Exchange Value
+      </button>
     </div>
+
+    {/* RIGHT — Two images + arrow */}
+    <div className="flex items-center gap-3 flex-shrink-0">
+      <img
+        src={
+          product.images?.[0]?.startsWith("http")
+            ? product.images[0]
+            : `${process.env.NEXT_PUBLIC_API_URL}/uploads/${product.images?.[0]}`
+        }
+        alt="old product"
+        className="w-16 h-24 object-contain opacity-40"
+      />
+      <span className="text-gray-400 text-xl">→</span>
+      <img
+        src={
+          product.images?.[0]?.startsWith("http")
+            ? product.images[0]
+            : `${process.env.NEXT_PUBLIC_API_URL}/uploads/${product.images?.[0]}`
+        }
+        alt="new product"
+        className="w-16 h-24 object-contain"
+      />
+    </div>
+
   </div>
-)}
+</div>
+</div>
 
-  
-  {/* Warranty Section
-  {(product?.warranty || product?.extended_warranty) && (
-    <div className="px-4 py-4 border-b border-gray-300">
-      <h4 className="text-sm font-semibold text-blue-600 mb-2">
-        Want to protect your product?
-      </h4>
 
-      {product?.warranty && (
-        <>
-          <p className="text-sm font-bold text-gray-800 underline mb-2">
-            Accidental and Liquid Damage Protection Plan
-          </p>
-          <div className="text-sm text-gray-800 space-y-2 mb-4">
-            <div className="flex items-center">
-              <input
-                type="radio"
-                name="protection"
-                className="mr-2"
-                checked={selectedWarranty === product.warranty}
-                onClick={() =>
-                  setSelectedWarranty(prev =>
-                    prev === product.warranty ? null : product.warranty
-                  )
-                }
-                readOnly
-              />
-              <label>
-                1 Year Accidental And Liquid Damage
-                <span className="text-green-600 font-bold ml-2">
-                  ₹ {product.warranty}
-                </span>
-              </label>
-            </div>
-          </div>
-        </>
-      )}
-
-      {product?.extended_warranty && (
-        <>
-          <p className="text-sm font-bold text-gray-800 underline mb-2">
-            Extended Warranty
-          </p>
-          <div className="text-sm text-gray-800">
-            <div className="flex items-center">
-              <input
-                type="radio"
-                name="extended"
-                className="mr-2"
-                checked={selectedExtendedWarranty === product.extended_warranty}
-                onClick={() =>
-                  setSelectedExtendedWarranty(prev =>
-                    prev === product.extended_warranty ? null : product.extended_warranty
-                  )
-                }
-                readOnly
-              />
-              <label>
-                1 Year Extended Warranty Protection
-                <span className="text-green-600 font-bold ml-2">
-                  ₹ {product.extended_warranty}
-                </span>
-              </label>
-            </div>
-          </div>
-        </>
-      )}
+        <RelatedProducts relatedProducts={product.related_products} />
+{recentlyViewedProducts.length > 0 && (
+  <div className="w-full mt-6 px-4">
+    {/* Header Section */}
+    <div className="flex justify-between items-center mb-3">
+      <h2 className="text-base font-bold text-blue-700">Recently Viewed</h2>
+      <button className="flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline">
+        View All 
+        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-blue-700 text-[10px]">
+          &gt;
+        </span>
+      </button>
     </div>
-  )} */}
 
-  {addOnProducts.filter(
-  (item) => item.quantity > 0 && item.status === "Active"
-).length > 0 && (
-<div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide" style={{background:"#eaeaea"}}>
-    <div className="px-4 py-4">
-      <h2 className="text-sm font-bold text-customBlue underline mb-2">
-        Add Ons
-      </h2>
-  {addOnProducts.filter((item) => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
-    <div key={item._id} className="flex items-start mb-4 ">
-      {item.quantity > 0 && (
-        <input
-          type="checkbox"
-          className="mt-2 mr-3"
-          checked={selectedRelatedProducts.some(p => p._id === item._id)}
-          onChange={() => toggleRelatedProduct(item)}
-        />
-      )}
-
-      <div className="flex items-start gap-3 flex-1 min-w-0">
-        <Link
-          href={`/product/${item.slug}`}
-          onClick={() => handleProductClick(item)}
-        >
-          {item.images?.[0] && (
-            <img
-              src={`/uploads/products/${item.images[0]}`}
-              alt={item.name}
-              className="w-16 h-16 object-contain"
-            />
-          )}
-        </Link>
-
-        <div className="text-sm flex-1 min-w-0">
-          <Link
-            href={`/product/${item.slug}`}
-            onClick={() => handleProductClick(item)}
+    {/* Scroll Container Outer Box */}
+    <div className="border border-gray-200 rounded-lg bg-white overflow-hidden w-full">
+      {/* - overflow-x-auto & snap-x: Mobile/Tablet-la smooth-ah left-to-right scroll aaga use aaguthu.
+        - md:grid md:grid-cols-5: Large screens/Desktop-la automatic-ah scroll maraiyum, side-by-side 5 items match aydum.
+        - divide-x: Items-ku naduvula accurate lines podum.
+      */}
+      <div className="flex md:grid md:grid-cols-5 overflow-x-auto snap-x snap-mandatory scrollbar-none divide-x divide-gray-200 w-full">
+        {recentlyViewedProducts.slice(0, 5).map((p) => (
+          <div 
+            key={p._id} 
+            className="w-[85%] sm:w-[50%] md:w-full flex-shrink-0 snap-start"
           >
-            <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">
-              {item.name}
-            </h3>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <span className="text-base font-semibold text-red-600">
-              ₹ {(item.special_price > 0 ? item.special_price : item.price).toLocaleString()}
-            </span>
-          </div>
-
-          <h4 className={`text-xs ${item.stock_status === "In Stock" ? "text-green-600" : "text-red-600"}`}>
-            {item.stock_status}
-          </h4>
-        </div>
-      </div>
-    </div>
-  ))}
-  </div>
-  </div>
-  )}
-  
-{relatedProducts.filter((item) => item.quantity > 0 && item.status === "Active").length > 0 && (
-  <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
-    <div className="px-4 py-4">
-      <h2 className="text-sm font-bold text-customBlue underline mb-2">
-        Similar Products
-      </h2>
-
-      {relatedProducts
-        .filter((item) => item.quantity > 0 && item.status === "Active")
-        .slice(0, 3)
-        .map((item) => (
-          <div key={item._id} className="flex items-start mb-4">
-            {item.quantity > 0 && (
-              <input
-                type="checkbox"
-                className="mt-2 mr-3"
-                checked={selectedRelatedProducts.some(p => p._id === item._id)}
-                onChange={() => toggleRelatedProduct(item)}
-              />
-            )}
-            <div className="flex items-start gap-3 flex-1 min-w-0">
-              <Link
-                  href={`/product/${item.slug}`}
-                  className="block mb-1"
-                  onClick={() => handleProductClick(item)}
-                >
-              {item.images?.[0] && (
-                <img
-                  src={'/uploads/products/' + item.images[0]}
-                  alt={item.name}
-                  className="w-16 h-16 object-contain flex-shrink-0"
-                />
-              )}
-              </Link>
-              <div className="text-sm flex-1 min-w-0">
-                <Link
-                  href={`/product/${item.slug}`}
-                  className="block mb-1"
-                  onClick={() => handleProductClick(item)}
-                >
-                  <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">
-                    {item.name}
-                  </h3>
-                </Link>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-base font-semibold text-red-600">
-                    ₹ {(
-                      item.special_price &&
-                      item.special_price > 0 &&
-                      item.special_price !== "0" &&
-                      item.special_price < item.price
-                        ? item.special_price
-                        : item.price
-                    ).toLocaleString()}
-                  </span>
-
-                  {item.special_price &&
-                    item.special_price > 0 &&
-                    item.special_price !== "0" &&
-                    item.special_price < item.price && (
-                      <span className="text-xs text-gray-500 line-through">
-                        ₹ {item.price.toLocaleString()}
-                      </span>
-                    )}
-                </div>
-
-                <h4
-                  className={`text-xs ${
-                    item.stock_status === "In Stock"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }`}
-                >
-                  {item.stock_status}
-                  {item.stock_status === "In Stock" && item.quantity
-                    ? `, ${item.quantity} units`
-                    : ""}
-                </h4>
-              </div>
-            </div>
+            <RecentlyViewedCard product={p} />
           </div>
         ))}
+      </div>
     </div>
   </div>
 )}
-
-
-  
-   {/* <div className="px-4 py-4">
-        <h2 className="text-sm font-bold text-customBlue underline mb-2">
-          Similar Products
-        </h2>
-        {relatedProducts
-          .filter(item => item.stock_status === "In Stock")
-          .slice(0, 3)
-          .map((item) => (
-            <div key={item._id} className="flex items-start mb-4">
-              {product?.quantity > 0 && (
-              <input
-                type="checkbox"
-                className="mt-2 mr-3"
-                checked={selectedRelatedProducts.some(p => p._id === item._id)}
-                onChange={() => toggleRelatedProduct(item)}
-              />
-            )}
-              <div className="flex items-start gap-3">
-                {item.images?.[0] && (
-                  <img
-                    src={'/uploads/products/' + item.images[0]}
-                    alt={item.name}
-                    className="w-16 h-16 object-contain"
-                  />
-                )}
-                <div className="text-sm">
-                  <Link
-                    href={`/product/${item.slug}`}
-                    className="block mb-1"
-                    onClick={() => handleProductClick(item)}
-                  >
-                    <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">
-                      {item.name}
-                    </h3>
-                  </Link>
-  
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-semibold text-red-600">
-                      ₹ {(
-                        item.special_price &&
-                        item.special_price > 0 &&
-                        item.special_price !== "0" &&
-                        item.special_price < item.price
-                          ? item.special_price
-                          : item.price
-                      ).toLocaleString()}
-                    </span>
-  
-                    {item.special_price &&
-                      item.special_price > 0 &&
-                      item.special_price !== "0" &&
-                      item.special_price < item.price && (
-                        <span className="text-xs text-gray-500 line-through">
-                          ₹ {item.price.toLocaleString()}
-                        </span>
-                      )}
-                  </div>
-  
-                  <h4
-                    className={`text-xs ${
-                      item.stock_status === "In Stock"
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {item.stock_status}
-                    {item.stock_status === "In Stock" && item.quantity
-                      ? `, ${item.quantity} units`
-                      : ""}
-                  </h4>
-                </div>
-              </div>
-            </div>
-          ))}
-      </div> */}
-
-{/* </div> */}
-
- 
-  {/* ================= Buttons Block (Below Box) ================= */}
-  <div className="w-full space-y-3">
-    {/* Cart total */}
-
-    {(selectedRelatedProducts.length > 0 ||
-    selectedFrequentProducts.length > 0 ||
-    selectedWarranty ||
-    selectedExtendedWarranty) && (
-    <div className="w-full bg-customBlue text-white border border-gray-400 font-semibold py-2 rounded-md shadow-md flex items-center justify-between px-4">
-      {/* Left - Icon + Label */}
-      <div className="flex items-center gap-2">
-        <FaCartPlus className="text-white w-5 h-5" />
-        <span className="text-md font-semibold">Cart Total</span>
-      </div>
-
-      {/* Right - Price + View Cart */}
-      <div className="flex flex-col items-end leading-tight">
-        <span className="text-md font-semibold">₹{cartTotal.toLocaleString()}</span>
-        <Link
-          href="/cart"
-          className="text-[12px] text-white hover:underline mt-0.5"
-        >
-          View Cart
-        </Link>
       </div>
     </div>
-  )}
-  {/* Buy Now */}
- {product.stock_status === "In Stock" && product.quantity > 0 && (
-  <button
-    onClick={handleBuyNow}
-    className="w-full bg-white hover:bg-customBlue hover:text-white text-customBlue border border-blue-200 font-semibold py-3 rounded-md shadow-md flex items-center justify-center gap-3"
-  >
-    <FaStore className="h-5 w-5" />
-    <span>Buy Now</span>
-  </button>
-)}
-
-
-  {/* Add to Cart */}
-  <ProductAddtoCart
-    productId={product._id}
-    stockQuantity={product.quantity}
-    quantity={quantity}
-    additionalProducts={[
-      ...selectedFrequentProducts.map((p) => p._id),
-      ...selectedRelatedProducts.map((p) => p._id),
-    ]}
-    // warranty={selectedWarranty}
-    selectedRelatedProducts={selectedRelatedProducts}
-    // extendedWarranty={selectedExtendedWarranty}
-    extendedWarranty={selectedWarrantyAmount}
-    selectedFrequentProducts={selectedFrequentProducts}
-    className="w-full bg-customBlue hover:bg-blue-700 text-white font-semibold py-3 rounded-md shadow-md text-center"
-  />
-</div>
-
-          </div>
-        </div>
-        
-       
-      </div>
-     
-
-        <div className="space-y-3">
-          <ProductDetailsSection 
-            product={product} 
-            reviews={reviews}
-            avgRating={avgRating}
-            reviewCount={reviewCount}
-          />
-           {/* <RecentlyViewedProducts className="w-full" /> */}
-         
-          
-           {/* <RelatedProducts
-             className="w-full"
-             categoryId={product.category}
-             currentProductId={product._id}
-           /> */}
-         
-         <RelatedProducts 
-  relatedProducts={product.related_products}
-/>
-         
-         
-         
-         
-         </div>
-      
-    </div>
-    
-    
   );
 }
 

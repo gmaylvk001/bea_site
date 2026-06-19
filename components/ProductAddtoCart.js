@@ -11,8 +11,7 @@ import { FaShoppingCart} from "react-icons/fa";
 
 import { v4 as uuidv4 } from "uuid";
 
-const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts = [],extendedWarranty, selectedFrequentProducts = [], stockQuantity = 1,special_price }) => {
-  const { openAuthModal } = useModal();
+const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts = [],extendedWarranty, selectedFrequentProducts = [], stockQuantity = 1,special_price, buttonLabel,buttonClassName }) => {  const { openAuthModal } = useModal();
   const { updateHeaderdetails, setIsLoggedIn, setUserData, setIsAdmin } = useHeaderdetails();
   const [isLoading, setIsLoading] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -231,15 +230,14 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
 <button
   onClick={handleAddToCart}
   disabled={isLoading || isOutOfStock || isprice}
-  className={`w-full px-4 py-3 rounded-md shadow-md transition duration-300 text-md flex items-center justify-center gap-x-3 font-semibold text-center
+  className={`w-full px-4 py-2 rounded-md shadow-md transition duration-300 text-md flex items-center justify-center gap-x-3 font-semibold text-center
     ${isOutOfStock
       ? 'bg-gray-400 cursor-not-allowed text-white'
       : isLoading
         ? 'bg-blue-700 cursor-not-allowed opacity-75 text-white'
         : cartSuccess
           ? 'bg-green-500 text-white hover:bg-green-600'
-          : 'bg-white hover:bg-customBlue hover:text-white text-customBlue border border-blue-200'
-    }
+: buttonClassName || 'bg-white hover:bg-customBlue hover:text-white text-customBlue border border-blue-200'    }
     active:scale-95 disabled:active:scale-100`}
 >
   {isOutOfStock ? (
@@ -283,7 +281,7 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
       >
         <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
       </svg>
-      <span className="hidden sm:inline">Add to Cart</span>
+    <span className="hidden sm:inline">{buttonLabel || "Add to Cart"}</span>
       <span className="sm:hidden">Add</span>
     </>
   )}

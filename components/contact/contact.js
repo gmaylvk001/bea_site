@@ -278,7 +278,7 @@ export default function ContactPage() {
           const active = data.data.filter((s) => s.status === "Active");
           setTotalStores(active.length);
           setStores(active);
-          setFilteredStores(active.slice(0, 5));
+          setFilteredStores(active.slice(0, 6));
         }
       } catch (err) {
         console.error("Failed to fetch stores", err);
@@ -293,14 +293,14 @@ export default function ContactPage() {
       return;
     }
     const q = searchQuery.toLowerCase();
-    const results = stores.filter(
+const results = stores.filter(
       (s) =>
         s.city?.toLowerCase().includes(q) ||
         s.organisation_name?.toLowerCase().includes(q) ||
         s.zipcode?.includes(q) ||
         s.address?.toLowerCase().includes(q)
     );
-    setFilteredStores(results.slice(0, 5));
+    setFilteredStores(results.slice(0, 6));
   };
 
   return (
@@ -406,8 +406,8 @@ export default function ContactPage() {
       {/* ══════════════════════════════════════════════════
           SECTION 2 — 3 SUPPORT CARDS
       ══════════════════════════════════════════════════ */}
-      <section className="bg-white px-6 sm:px-10 py-7">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section className="bg-white px-0 sm:px-1 py-7">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
 
           {/* Talk to Experts */}
           <div className="border border-gray-200 rounded-xl p-5 flex items-start gap-4">
@@ -463,8 +463,8 @@ export default function ContactPage() {
       {/* ══════════════════════════════════════════════════
           SECTION 3 — FORM (left) + MAP (right)
       ══════════════════════════════════════════════════ */}
-      <section className="bg-[#f8fafc] px-6 sm:px-10 py-8">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-8 items-start">
+      <section className="bg-[#f8fafc] px-0 sm:px-1 py-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-8 items-start">
 
           {/* Left — Form */}
           <div>
@@ -521,8 +521,8 @@ export default function ContactPage() {
       {/* ══════════════════════════════════════════════════
           SECTION 4 — FIND NEAREST STORE
       ══════════════════════════════════════════════════ */}
-      <section className="bg-white px-6 sm:px-10 py-10">
-        <div className="max-w-6xl mx-auto">
+      <section className="bg-white px-0 sm:px-1 py-10">
+        <div className="max-w-7xl mx-auto">
 
           <h2 className="text-center text-[22px] font-bold text-gray-900 mb-1">
             Find Your Nearest Store
