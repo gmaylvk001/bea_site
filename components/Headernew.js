@@ -2222,7 +2222,7 @@ const Header = () => {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     {sub.icon_url ? (
-                     <img   src={sub.icon_url} alt=""  style={{ width: 20, height: 20,  objectFit: 'contain',  flexShrink: 0, filter: isActive   ? 'invert(27%) sepia(95%) saturate(1200%) hue-rotate(204deg) brightness(95%) contrast(95%)'    : 'none',   transition: 'filter 0.15s', }}/>
+                     <img   src={sub.icon_url} alt=""  style={{ width: 30, height: 30,  objectFit: 'contain',  flexShrink: 0, filter: isActive   ? 'invert(27%) sepia(95%) saturate(1200%) hue-rotate(204deg) brightness(95%) contrast(95%)'    : 'none',   transition: 'filter 0.15s', }}/>
                     ) : (
                       <div style={{
                         width: 20, height: 20, borderRadius: '4px',

@@ -1,6 +1,6 @@
 'use client';
 // import { useState, useEffect } from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef,useMemo } from "react";
 import { SiTicktick } from "react-icons/si";
 import { TbBrandAppgallery } from "react-icons/tb";
 import { FiBox, FiHash } from "react-icons/fi";
@@ -12,6 +12,67 @@ const poppins = Poppins({ subsets: ["latin"], weight: ["400","500","600"] });
 import { formatDistanceToNow, format } from "date-fns";
 import { useHeaderdetails } from '@/context/HeaderContext';
 import { ToastContainer, toast } from 'react-toastify';
+
+
+function AvailableNearYou() {
+  const [stores, setStores] = useState([]);
+  const [loadingStores, setLoadingStores] = useState(true);
+  
+
+useEffect(() => {
+  const fetchStores = async () => {
+    try {
+      setLoadingStores(true);
+      const res = await fetch("/api/store/get");
+      const data = await res.json();
+      if (data.success) {
+        setStores((data.stores || data.data || []).filter((s) => s.status === "Active").slice(0, 4));
+      }
+    } catch (err) {
+      console.error("Failed to fetch stores", err);
+    } finally {
+      setLoadingStores(false);
+    }
+  };
+  fetchStores();
+}, []);
+return (
+  <div className="p-4 bg-white">
+    <h3 className="text-base font-bold text-gray-900 mb-1">Available Near You</h3>
+    <p className="text-xs text-gray-500 mb-3">Check product availability in BEA Stores</p>
+
+    {loadingStores ? (
+      <div className="space-y-2">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-5 bg-gray-200 rounded animate-pulse" />
+        ))}
+      </div>
+    ) : stores.length > 0 ? (
+      <div className="space-y-1">
+        {stores.slice(0, 4).map((store) => (
+          <div key={store._id} className="flex items-center justify-between py-1.5">
+            <span className="text-sm font-medium text-gray-800">
+              {store.organisation_name || store.name || store.store_name}
+            </span>
+            <span className="text-sm text-green-600 font-semibold">Available</span>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p className="text-sm text-gray-500">No stores found.</p>
+    )}
+
+    <Link
+      href="/our-stores"
+      className="mt-3 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline font-medium"
+    >
+      View all 47+ stores
+    </Link>
+  </div>
+);
+}
+
+
 export default function ProductDetailsSection({ product, reviews=[], avgRating=0, reviewCount=0}) {
   const [brand, setBrand] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
@@ -55,7 +116,7 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
   };
   // Replace "tabs" with UI-aligned tabs only (videos is not rendered in tabsForUI)
   // const tabs = ["overview", "description", "videos", "reviews"];
-  const uiTabs = ["overview", "description", "reviews"];
+  const uiTabs = ["overview", "specifications", "reviews", "faq"];
 
   // Check if a tab has content
   const hasTabContent = (tabId) => {
@@ -227,25 +288,10 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
   }, [product?._id]);
 
   // Set default active tab once per product based on cached flix or actual overview content
-  useEffect(() => {
-    if (!product) return;
-    const hasTextOrImages =
-      (product.overview && product.overview.trim() !== "") ||
-      (product.overview_image &&
-        (Array.isArray(product.overview_image)
-          ? product.overview_image.length > 0
-          : String(product.overview_image).split(",").filter(Boolean).length > 0));
-
-    if (flixLoaded || hasTextOrImages) {
-      setActiveTab("overview");
-    } else if (product.description && product.description.trim() !== "") {
-      setActiveTab("description");
-    } else {
-      // const next = findNextAvailableTab("overview");
-      setActiveTab("overview");
-    }
-    // run when product changes or cache becomes available
-  }, [product?._id, flixLoaded]);
+useEffect(() => {
+  if (!product) return;
+  setActiveTab("overview");
+}, [product?._id]);
   // Avoid re-initializing Flix if already loaded once for this product
   const initializeFlixMedia = () => {
     // Strong guards to avoid multiple loads
@@ -858,16 +904,16 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
 
     return (
       <div>
-        <div className={`flex justify-center ${poppins.className}`}>
+<div className={`flex overflow-x-auto scrollbar-hide border-b border-gray-200 ${poppins.className}`}>
           {tabs.map((tab) => (
             <button
               key={tab.name}
               onClick={() => onTabChange && onTabChange(tab.name)}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                activeName === tab.name
-                  ? "border border-black text-black font-semibold"
-                  : "text-gray-500 hover:text-black"
-              }`}
+           className={`px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 border-b-2 -mb-[2px] whitespace-nowrap flex-shrink-0 ${
+  activeName === tab.name
+    ? "border-blue-600 text-blue-600 font-semibold"
+    : "border-transparent text-gray-500 hover:text-gray-800"
+}`}
             >
               {titleize(tab.name)}
             </button>
@@ -881,10 +927,10 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
             key={tab.name}
             style={{ display: activeName === tab.name ? "block" : "none" }}
             className={
-              tab.name === "overview"
-                ? " w-full flex items-center justify-center px-4 py-6 text-center bg-gray-50"
-                : "max-w-2xl mx-auto px-4 py-6 text-center"
-            }
+  tab.name === "overview"
+    ? "w-full px-4 py-6 text-left bg-gray-50"
+    : "w-full px-4 py-6 text-left"
+}
           >
             {tab.content}
           </div>
@@ -892,24 +938,44 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
       </div>
     );
   }
-  // Prepare tab contents (JSX) once; passed into DynamicTabs
-  // Always render the Overview container so Flix can inject content even if product.overview is empty
-  const overviewContent = (
-    <div className="mx-auto px-4 py-6 text-center">
-      <div id="overview-tab">
-        <div className="col-md-12">
-          {/* Stable placeholder to prevent layout collapse while Flix loads */}
-          <div
-            id="flix-placeholder"
-            className="min-h-[240px] w-full flex items-center justify-center text-gray-400"
-          >
-            There is no product overview available for this item. 
-          </div>
-          {/* flix-inpage will be inserted here */}
-        </div>
-      </div>
+const overviewContent = (
+  <div className="w-full text-left" id="overview-tab">
+    <div className="col-md-12">
+      <div id="flix-placeholder" className="hidden" />
     </div>
-  );
+
+    {product.overviewdescription && (
+      <div className="mb-4">
+        <h2 className="text-base font-bold text-gray-900 mb-2">{product.name} Overview</h2>
+        <p className="text-sm text-gray-700 leading-relaxed">{product.overviewdescription}</p>
+      </div>
+    )}
+
+    {Array.isArray(product.key_specifications) && 
+     product.key_specifications.flatMap(i => i.split(/,(?![^(]*\))/)).map(f => f.replace(/[{}\[\]"]/g,"").trim()).filter(f=>f.length>0).length > 0 && (
+      <div className="mb-4">
+        <h3 className="text-base font-bold text-gray-900 mb-3">Key Features</h3>
+        <ul className="space-y-2">
+          {product.key_specifications
+            .flatMap(item => item.split(/,(?![^(]*\))/))
+            .map(f => String(f).replace(/[{}\[\]"]/g, "").trim())
+            .filter(f => f.length > 0)
+            .map((feature, index) => (
+              <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+                {feature.charAt(0).toUpperCase() + feature.slice(1)}
+              </li>
+            ))}
+        </ul>
+      </div>
+    )}
+    {!product.overviewdescription &&
+     !(Array.isArray(product.key_specifications) && product.key_specifications.length > 0) &&
+     !(Array.isArray(product.product_highlights) && product.product_highlights.length > 0) && (
+      <p className="text-gray-500 text-sm py-4">There is no product overview available for this item.</p>
+    )}
+  </div>
+);
 const descriptionContent = (() => {
   // Enhanced sanitize function to detect "<p>null</p>" and other null patterns
   const isNullContent = (value) => {
@@ -1020,6 +1086,8 @@ const descriptionContent = (() => {
 
   return cleaned;
 };
+
+
 
   return (
     <div>
@@ -1202,52 +1270,103 @@ const descriptionContent = (() => {
             )}
           </div>
         )} */}
-  const reviewsContent = (
+function ReviewsTab({ reviewForm, setReviewForm, handleReviewSubmit, submitting, tabData, formatReviewDate, poppins }) {
+  return (
     <div>
       <form onSubmit={handleReviewSubmit} className="bg-white p-4 rounded-md shadow mt-3">
         <h3 className="font-semibold text-left mb-2">Write a Review</h3>
-        <input type="text" placeholder="Review Title" value={reviewForm.title} onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })} required className="w-full border rounded p-2 mb-2" />
-        <StarRating value={reviewForm.rating} onChange={(rating) => setReviewForm({ ...reviewForm, rating })} />
-        <textarea placeholder="Write your comments..." value={reviewForm.comment} onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })} className="w-full border rounded p-2 mb-2" rows="3" ></textarea>
+        <input
+          type="text"
+          placeholder="Review Title"
+          value={reviewForm.title}
+          onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))}
+          required
+          className="w-full border rounded p-2 mb-2"
+        />
+        <StarRating value={reviewForm.rating} onChange={(rating) => setReviewForm(prev => ({ ...prev, rating }))} />
+        <textarea
+          placeholder="Write your comments..."
+          value={reviewForm.comment}
+          onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+          className="w-full border rounded p-2 mb-2"
+          rows="3"
+        />
         <button type="submit" disabled={submitting} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           {submitting ? "Submitting..." : "Submit Review"}
         </button>
       </form>
-      <h2 className={`text-sm font-bold transition-all duration-200 text-left mt-3 ${poppins.className}`}>Customer Reviews</h2>
-      <div className="flex items-center mt-1 sm:mt-2">
+
+      <h2 className={`text-sm font-bold text-left mt-3 ${poppins.className}`}>Customer Reviews</h2>
+      <div className="flex items-center mt-2">
         {[...Array(5)].map((_, i) => (
-          <span key={i} className={`text-lg sm:text-2xl ${i < Math.floor(tabData.reviews.rating) ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
+          <span key={i} className={`text-2xl ${i < Math.floor(tabData.reviews.rating) ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
         ))}
-        <span className="text-gray-700 ml-1 sm:ml-2 text-sm sm:text-base">
+        <span className="text-gray-700 ml-2 text-sm">
           {tabData.reviews.rating.toFixed(1)} ({tabData.reviews.count} Reviews)
         </span>
       </div>
+
       {tabData.reviews.items.length > 0 ? (
-        <div className="mt-2 sm:mt-4 space-y-2 sm:space-y-3">
+        <div className="mt-4 space-y-3">
           {tabData.reviews.items.map((review, index) => (
-            <div key={index} className={`border-b border-gray-300  pb-2 sm:pb-3 ${index === 0 ? "border-t" : ""} `}>
-              <div className="flex text-lg items-baseline sm:text-lg mt-1">
+            <div key={index} className={`border-b border-gray-300 pb-3 ${index === 0 ? "border-t" : ""}`}>
+              <div className="flex text-lg items-baseline mt-1">
                 {[...Array(5)].map((_, i) => (
                   <span className="text-yellow-400" key={i}>{i < review.rating ? '★' : '☆'}</span>
                 ))}
-                <p className="text-gray-700 font-medium text-sm sm:text-base">&nbsp;{review.title}</p>
+                <p className="text-gray-700 font-medium text-sm ml-1">{review.title}</p>
               </div>
-              <p className="text-gray-700 text-left mt-1 sm:mt-2 text-sm sm:text-base">{review.comment}</p>
-              <p className="text-gray-400 text-left text-xs sm:text-sm mt-1">Reviewed By {review.userName} on {formatReviewDate(review.date)}</p>
+              <p className="text-gray-700 text-left mt-2 text-sm">{review.comment}</p>
+              <p className="text-gray-400 text-left text-xs mt-1">
+                Reviewed By {review.userName} on {formatReviewDate(review.date)}
+              </p>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-gray-600 mt-2 sm:mt-4 text-sm sm:text-base">No reviews yet. Be the first to review this product!</p>
+        <p className="text-gray-600 mt-4 text-sm">No reviews yet. Be the first to review this product!</p>
       )}
     </div>
   );
+}
+  
+  const faqContent = (
+  <div className="text-left max-w-3xl mx-auto">
+    <h3 className="text-base font-bold text-gray-900 mb-4">Frequently Asked Questions</h3>
+    {Array.isArray(product.faqs) && product.faqs.length > 0 ? (
+      <div className="space-y-3">
+        {product.faqs.map((faq, index) => (
+          <details key={index} className="border border-gray-200 rounded-lg p-3 cursor-pointer">
+            <summary className="font-medium text-sm text-gray-800 flex justify-between items-center">
+              {faq.question}
+              <span className="text-blue-600 text-lg">+</span>
+            </summary>
+            <p className="mt-2 text-sm text-gray-600">{faq.answer}</p>
+          </details>
+        ))}
+      </div>
+    ) : (
+      <p className="text-sm text-gray-500">No FAQs available for this product.</p>
+    )}
+  </div>
+); 
   // Build tabsForUI (name + content)
-  const tabsForUI = [
-    { name: "overview", content: overviewContent },
-    { name: "description", content: descriptionContent },
-    { name: "reviews", content: reviewsContent },
-  ];
+const tabsForUI = [
+  { name: "overview", content: overviewContent },
+  { name: "specifications", content: descriptionContent },
+ { name: "reviews", content: (
+  <ReviewsTab
+    reviewForm={reviewForm}
+    setReviewForm={setReviewForm}
+    handleReviewSubmit={handleReviewSubmit}
+    submitting={submitting}
+    tabData={tabData}
+    formatReviewDate={formatReviewDate}
+    poppins={poppins}
+  />
+)},
+  { name: "faq", content: faqContent },
+];
   // Compute initialActiveName AFTER tabsForUI is initialized
   const initialActiveName = (() => {
     const PLACEHOLDER = "There is no product overview available for this item.";
@@ -1291,16 +1410,71 @@ const descriptionContent = (() => {
       </div>
     );
   }
-  return (
-    <div className="mt-4 sm:mt-8 bg-gray-100 w-full py-6">
-      <ToastContainer position="top-right" autoClose={5000} />
+return (
+  <div className="mt-4 sm:mt-8 w-full">
+    <ToastContainer position="top-right" autoClose={5000} />
+    
+    {/* Section 1 — Key Features + Available Near You */}
+    <div className="bg-white py-6 px-4 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        {/* Left — Key Features + Highlights */}
+        <div className="text-left">
+          {product.overviewdescription && (
+            <div className="mb-4">
+              <h2 className="text-base font-bold text-gray-900 mb-2">{product.name} Overview</h2>
+              <p className="text-sm text-gray-700 leading-relaxed">{product.overviewdescription}</p>
+            </div>
+          )}
+          {Array.isArray(product.product_highlights) && 
+           product.product_highlights.flatMap(i => i.split(/[\n,]+/).map(x=>x.trim())).filter(i=>i.length>0).length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-base font-bold text-gray-900 mb-3">Product Highlights</h3>
+              <ul className="space-y-2">
+                {product.product_highlights
+                  .flatMap(item => item.split(/[\n,]+/).map(i => i.trim()))
+                  .filter(item => item.length > 0)
+                  .map((item, index) => {
+                    const cleaned = item.replace(/[\[\]{}"]/g, '').trim();
+                    const [key, ...rest] = cleaned.split(':');
+                    const value = rest.join(':').trim();
+                    return (
+                      <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                        <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+                        <span><strong>{key?.trim()}</strong>{value ? `: ${value}` : ''}</span>
+                      </li>
+                    );
+                  })}
+              </ul>
+            </div>
+          )}
+
+          {!product.overviewdescription &&
+           !(Array.isArray(product.key_specifications) && product.key_specifications.length > 0) &&
+           !(Array.isArray(product.product_highlights) && product.product_highlights.length > 0) && (
+            <p className="text-gray-500 text-sm">No overview available.</p>
+          )}
+        </div>
+
+        {/* Right — Available Near You */}
+        <div>
+          <AvailableNearYou />
+        </div>
+
+      </div>
+    </div>
+
+    {/* Section 2 — Tabs */}
+    <div className="bg-gray-100 py-4 px-2 sm:px-4 max-w-7xl mx-auto">
       <DynamicTabs
         tabs={tabsForUI}
         activeName={activeTab}
         onTabChange={setActiveTab}
       />
     </div>
-  );
+
+  </div>
+);
 }
 
 const resolveFlixIds = (p = {}) => {
