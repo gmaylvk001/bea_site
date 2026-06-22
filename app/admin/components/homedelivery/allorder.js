@@ -22,7 +22,10 @@ useEffect(() => {
     const data = await res.json();
 
     // 👇 Only include orders with delivery_type: 'home'
-    const homeOrders = data.filter(order => order.delivery_type === 'home');
+       const homeOrders = data.filter(order => 
+     order.delivery_type === 'home' && 
+       order.order_status?.toLowerCase() !== 'payment_initialized'
+      );
 
     setOrders(homeOrders);
     setFiltered(homeOrders);
