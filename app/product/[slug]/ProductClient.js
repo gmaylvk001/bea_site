@@ -1003,23 +1003,27 @@ const fetchBrand = async () => {
     {/* Price */}
     <div className="mt-3 border-t border-gray-200 pt-3">
       <div className="flex items-baseline gap-3 flex-wrap">
-        <span className="text-2xl font-bold text-blue-800">
-          ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
-        </span>
-        {product.special_price > 0 && product.price > 0 && (
-          <span className="text-sm text-gray-400 line-through">₹ {Number(product.price).toLocaleString()}</span>
-        )}
-        {product.special_price > 0 && product.price > 0 && (
-          <span className="text-sm font-bold text-green-600">
-            {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
-          </span>
-        )}
-      </div>
-      {product.special_price > 0 && product.price > product.special_price && (
-        <p className="text-green-600 font-semibold text-sm mt-1">
-          You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
-        </p>
-      )}
+  <span className="text-2xl font-bold text-blue-800">
+    ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
+  </span>
+  {product.special_price > 0 && product.price > 0 && (
+    <span className="text-sm text-gray-400 line-through">
+      <span className="text-xs text-gray-400 font-normal">MRP </span>
+      ₹ {Number(product.price).toLocaleString()}
+    </span>
+  )}
+  {product.special_price > 0 && product.price > 0 && (
+    <span className="text-sm font-bold text-green-600">
+      {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
+    </span>
+  )}
+</div>
+<p className="text-sm text-gray-400 mt-1">(Incl. all Taxes)</p>
+{product.special_price > 0 && product.price > product.special_price && (
+  <p className="text-green-600 font-semibold text-sm mt-1">
+    You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
+  </p>
+)}
     </div>
 
     {/* Stock */}
@@ -1241,17 +1245,25 @@ const fetchBrand = async () => {
         Upgrade to a new product and get the best value for your old one.
       </p>
       <div className="flex items-center gap-3 justify-center my-2">
-        <img
-          src={product.images?.[0]?.startsWith("http") ? product.images[0] : `/uploads/products/${product.images?.[0]}`}
-          alt="old product"
-          className="w-16 h-24 object-contain opacity-40"
-        />
-        <span className="text-gray-400 text-xl">→</span>
-        <img
-          src={product.images?.[0]?.startsWith("http") ? product.images[0] : `/uploads/products/${product.images?.[0]}`}
-          alt="new product"
-          className="w-16 h-24 object-contain"
-        />
+       <img
+  src={
+    product.images?.[0]?.startsWith("http")
+      ? product.images[0]
+      : `/uploads/products/${product.images?.[0]}`
+  }
+  alt="old product"
+  className="w-24 h-32 object-contain opacity-40"
+/>
+<span className="text-gray-400 text-xl">→</span>
+<img
+  src={
+    product.images?.[0]?.startsWith("http")
+      ? product.images[0]
+      : `/uploads/products/${product.images?.[0]}`
+  }
+  alt="new product"
+  className="w-24 h-32 object-contain"
+/>
       </div>
       <button className="w-fit border border-blue-600 text-blue-600 text-sm font-semibold px-4 py-2 rounded hover:bg-blue-50 transition">
         Check Exchange Value
@@ -1409,24 +1421,28 @@ const fetchBrand = async () => {
                   </div>
                 </div>
                 <div className="border-t border-gray-200 pt-3 mb-3">
-                  <div className="flex items-baseline gap-3 flex-wrap">
-                    <span className="text-3xl font-bold text-blue-800">
-                      ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
-                    </span>
-                    {product.special_price > 0 && product.price > 0 && (
-                      <span className="text-base text-gray-400 line-through">₹ {Number(product.price).toLocaleString()}</span>
-                    )}
-                    {product.special_price > 0 && product.price > 0 && (
-                      <span className="text-sm font-bold text-green-600">
-                        {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
-                      </span>
-                    )}
-                  </div>
-                  {product.special_price > 0 && product.price > product.special_price && (
-                    <p className="text-green-600 font-semibold text-sm mt-1">
-                      You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
-                    </p>
-                  )}
+                <div className="flex items-baseline gap-3 flex-wrap">
+  <span className="text-3xl font-bold text-blue-800">
+    ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
+  </span>
+  {product.special_price > 0 && product.price > 0 && (
+    <span className="text-base text-gray-400 line-through">
+      <span className="text-xs text-gray-400 font-normal">MRP </span>
+      ₹ {Number(product.price).toLocaleString()}
+    </span>
+  )}
+  {product.special_price > 0 && product.price > 0 && (
+    <span className="text-sm font-bold text-green-600">
+      {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
+    </span>
+  )}
+</div>
+<p className="text-sm text-gray-400 mt-1">(Incl. all Taxes)</p>
+{product.special_price > 0 && product.price > product.special_price && (
+  <p className="text-green-600 font-semibold text-sm mt-1">
+    You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
+  </p>
+)}
                 </div>
                 <div className="mb-3 space-y-1">
                   <div className="flex items-center gap-2">
@@ -1716,25 +1732,25 @@ const fetchBrand = async () => {
 
     {/* RIGHT — Two images + arrow */}
     <div className="flex items-center gap-3 flex-shrink-0">
-      <img
-        src={
-          product.images?.[0]?.startsWith("http")
-            ? product.images[0]
-            : `${process.env.NEXT_PUBLIC_API_URL}/uploads/${product.images?.[0]}`
-        }
-        alt="old product"
-        className="w-16 h-24 object-contain opacity-40"
-      />
-      <span className="text-gray-400 text-xl">→</span>
-      <img
-        src={
-          product.images?.[0]?.startsWith("http")
-            ? product.images[0]
-            : `${process.env.NEXT_PUBLIC_API_URL}/uploads/${product.images?.[0]}`
-        }
-        alt="new product"
-        className="w-16 h-24 object-contain"
-      />
+     <img
+  src={
+    product.images?.[0]?.startsWith("http")
+      ? product.images[0]
+      : `/uploads/products/${product.images?.[0]}`
+  }
+  alt="old product"
+  className="w-28 h-36 object-contain opacity-40"
+/>
+<span className="text-gray-400 text-xl">→</span>
+<img
+  src={
+    product.images?.[0]?.startsWith("http")
+      ? product.images[0]
+      : `/uploads/products/${product.images?.[0]}`
+  }
+  alt="new product"
+  className="w-28 h-36 object-contain"
+/>
     </div>
 
   </div>

@@ -63,7 +63,7 @@ return (
     )}
 
     <Link
-      href="/our-stores"
+      href="/location"
       className="mt-3 inline-flex items-center gap-1 text-sm text-blue-600 hover:underline font-medium"
     >
       View all 47+ stores
@@ -72,6 +72,128 @@ return (
 );
 }
 
+function StarRating({ value, onChange }) {
+    return (
+      <div className="flex space-x-1 mb-2">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            className="focus:outline-none"
+          >
+            <span
+              className={`text-2xl ${
+                star <= value ? "text-yellow-400" : "text-gray-300"
+              }`}
+            >
+              ★
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+    function DynamicTabs({ tabs, activeName, onTabChange }) {
+    const titleize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+    return (
+      <div>
+<div className={`flex overflow-x-auto scrollbar-hide border-b border-gray-200 ${poppins.className}`}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.name}
+              onClick={() => onTabChange && onTabChange(tab.name)}
+           className={`px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 border-b-2 -mb-[2px] whitespace-nowrap flex-shrink-0 ${
+  activeName === tab.name
+    ? "border-blue-600 text-blue-600 font-semibold"
+    : "border-transparent text-gray-500 hover:text-gray-800"
+}`}
+            >
+              {titleize(tab.name)}
+            </button>
+          ))}
+        </div>
+
+        {/* Keep all tabs mounted; only the active one is visible.
+           This preserves Flix DOM so it doesn't need to reload. */}
+        {tabs.map((tab) => (
+          <div
+            key={tab.name}
+            style={{ display: activeName === tab.name ? "block" : "none" }}
+            className={
+  tab.name === "overview"
+    ? "w-full px-4 py-6 text-left bg-gray-50"
+    : "w-full px-4 py-6 text-left"
+}
+          >
+            {tab.content}
+          </div>
+        ))}
+      </div>
+    );
+  }
+ function ReviewsTab({ reviewForm, setReviewForm, handleReviewSubmit, submitting, tabData, formatReviewDate, poppins }) {
+  return (
+    <div>
+      <form onSubmit={handleReviewSubmit} className="bg-white p-4 rounded-md shadow mt-3">
+        <h3 className="font-semibold text-left mb-2">Write a Review</h3>
+        <input
+          type="text"
+          placeholder="Review Title"
+          value={reviewForm.title}
+          onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))}
+          required
+          className="w-full border rounded p-2 mb-2"
+        />
+        <StarRating value={reviewForm.rating} onChange={(rating) => setReviewForm(prev => ({ ...prev, rating }))} />
+        <textarea
+          placeholder="Write your comments..."
+          value={reviewForm.comment}
+          onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+          className="w-full border rounded p-2 mb-2"
+          rows="3"
+        />
+        <button type="submit" disabled={submitting} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          {submitting ? "Submitting..." : "Submit Review"}
+        </button>
+      </form>
+
+      <h2 className={`text-sm font-bold text-left mt-3 ${poppins.className}`}>Customer Reviews</h2>
+      <div className="flex items-center mt-2">
+        {[...Array(5)].map((_, i) => (
+          <span key={i} className={`text-2xl ${i < Math.floor(tabData.reviews.rating) ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
+        ))}
+        <span className="text-gray-700 ml-2 text-sm">
+          {tabData.reviews.rating.toFixed(1)} ({tabData.reviews.count} Reviews)
+        </span>
+      </div>
+
+      {tabData.reviews.items.length > 0 ? (
+        <div className="mt-4 space-y-3">
+          {tabData.reviews.items.map((review, index) => (
+            <div key={index} className={`border-b border-gray-300 pb-3 ${index === 0 ? "border-t" : ""}`}>
+              <div className="flex text-lg items-baseline mt-1">
+                {[...Array(5)].map((_, i) => (
+                  <span className="text-yellow-400" key={i}>{i < review.rating ? '★' : '☆'}</span>
+                ))}
+                <p className="text-gray-700 font-medium text-sm ml-1">{review.title}</p>
+              </div>
+              <p className="text-gray-700 text-left mt-2 text-sm">{review.comment}</p>
+              <p className="text-gray-400 text-left text-xs mt-1">
+                Reviewed By {review.userName} on {formatReviewDate(review.date)}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-600 mt-4 text-sm">No reviews yet. Be the first to review this product!</p>
+      )}
+    </div>
+  );
+}
+  
 
 export default function ProductDetailsSection({ product, reviews=[], avgRating=0, reviewCount=0}) {
   const [brand, setBrand] = useState([]);
@@ -899,45 +1021,7 @@ useEffect(() => {
     }
   };
   // Small, controlled tab component: keep Overview mounted to preserve injected DOM
-  function DynamicTabs({ tabs, activeName, onTabChange }) {
-    const titleize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
-    return (
-      <div>
-<div className={`flex overflow-x-auto scrollbar-hide border-b border-gray-200 ${poppins.className}`}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.name}
-              onClick={() => onTabChange && onTabChange(tab.name)}
-           className={`px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 border-b-2 -mb-[2px] whitespace-nowrap flex-shrink-0 ${
-  activeName === tab.name
-    ? "border-blue-600 text-blue-600 font-semibold"
-    : "border-transparent text-gray-500 hover:text-gray-800"
-}`}
-            >
-              {titleize(tab.name)}
-            </button>
-          ))}
-        </div>
-
-        {/* Keep all tabs mounted; only the active one is visible.
-           This preserves Flix DOM so it doesn't need to reload. */}
-        {tabs.map((tab) => (
-          <div
-            key={tab.name}
-            style={{ display: activeName === tab.name ? "block" : "none" }}
-            className={
-  tab.name === "overview"
-    ? "w-full px-4 py-6 text-left bg-gray-50"
-    : "w-full px-4 py-6 text-left"
-}
-          >
-            {tab.content}
-          </div>
-        ))}
-      </div>
-    );
-  }
 const overviewContent = (
   <div className="w-full text-left" id="overview-tab">
     <div className="col-md-12">
@@ -1270,66 +1354,7 @@ const descriptionContent = (() => {
             )}
           </div>
         )} */}
-function ReviewsTab({ reviewForm, setReviewForm, handleReviewSubmit, submitting, tabData, formatReviewDate, poppins }) {
-  return (
-    <div>
-      <form onSubmit={handleReviewSubmit} className="bg-white p-4 rounded-md shadow mt-3">
-        <h3 className="font-semibold text-left mb-2">Write a Review</h3>
-        <input
-          type="text"
-          placeholder="Review Title"
-          value={reviewForm.title}
-          onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))}
-          required
-          className="w-full border rounded p-2 mb-2"
-        />
-        <StarRating value={reviewForm.rating} onChange={(rating) => setReviewForm(prev => ({ ...prev, rating }))} />
-        <textarea
-          placeholder="Write your comments..."
-          value={reviewForm.comment}
-          onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
-          className="w-full border rounded p-2 mb-2"
-          rows="3"
-        />
-        <button type="submit" disabled={submitting} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          {submitting ? "Submitting..." : "Submit Review"}
-        </button>
-      </form>
 
-      <h2 className={`text-sm font-bold text-left mt-3 ${poppins.className}`}>Customer Reviews</h2>
-      <div className="flex items-center mt-2">
-        {[...Array(5)].map((_, i) => (
-          <span key={i} className={`text-2xl ${i < Math.floor(tabData.reviews.rating) ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
-        ))}
-        <span className="text-gray-700 ml-2 text-sm">
-          {tabData.reviews.rating.toFixed(1)} ({tabData.reviews.count} Reviews)
-        </span>
-      </div>
-
-      {tabData.reviews.items.length > 0 ? (
-        <div className="mt-4 space-y-3">
-          {tabData.reviews.items.map((review, index) => (
-            <div key={index} className={`border-b border-gray-300 pb-3 ${index === 0 ? "border-t" : ""}`}>
-              <div className="flex text-lg items-baseline mt-1">
-                {[...Array(5)].map((_, i) => (
-                  <span className="text-yellow-400" key={i}>{i < review.rating ? '★' : '☆'}</span>
-                ))}
-                <p className="text-gray-700 font-medium text-sm ml-1">{review.title}</p>
-              </div>
-              <p className="text-gray-700 text-left mt-2 text-sm">{review.comment}</p>
-              <p className="text-gray-400 text-left text-xs mt-1">
-                Reviewed By {review.userName} on {formatReviewDate(review.date)}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-600 mt-4 text-sm">No reviews yet. Be the first to review this product!</p>
-      )}
-    </div>
-  );
-}
-  
   const faqContent = (
   <div className="text-left max-w-3xl mx-auto">
     <h3 className="text-base font-bold text-gray-900 mb-4">Frequently Asked Questions</h3>
@@ -1351,22 +1376,22 @@ function ReviewsTab({ reviewForm, setReviewForm, handleReviewSubmit, submitting,
   </div>
 ); 
   // Build tabsForUI (name + content)
-const tabsForUI = [
+const tabsForUI = useMemo(() => [
   { name: "overview", content: overviewContent },
   { name: "specifications", content: descriptionContent },
- { name: "reviews", content: (
-  <ReviewsTab
-    reviewForm={reviewForm}
-    setReviewForm={setReviewForm}
-    handleReviewSubmit={handleReviewSubmit}
-    submitting={submitting}
-    tabData={tabData}
-    formatReviewDate={formatReviewDate}
-    poppins={poppins}
-  />
-)},
+  { name: "reviews", content: (
+    <ReviewsTab
+      reviewForm={reviewForm}
+      setReviewForm={setReviewForm}
+      handleReviewSubmit={handleReviewSubmit}
+      submitting={submitting}
+      tabData={tabData}
+      formatReviewDate={formatReviewDate}
+      poppins={poppins}
+    />
+  )},
   { name: "faq", content: faqContent },
-];
+], [reviewForm, submitting, tabData, overviewContent, descriptionContent, faqContent]);
   // Compute initialActiveName AFTER tabsForUI is initialized
   const initialActiveName = (() => {
     const PLACEHOLDER = "There is no product overview available for this item.";
@@ -1388,28 +1413,7 @@ const tabsForUI = [
     return firstWithContent ? firstWithContent.name : (tabsForUI[0]?.name || "");
   })();
 
-  function StarRating({ value, onChange }) {
-    return (
-      <div className="flex space-x-1 mb-2">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => onChange(star)}
-            className="focus:outline-none"
-          >
-            <span
-              className={`text-2xl ${
-                star <= value ? "text-yellow-400" : "text-gray-300"
-              }`}
-            >
-              ★
-            </span>
-          </button>
-        ))}
-      </div>
-    );
-  }
+  
 return (
   <div className="mt-4 sm:mt-8 w-full">
     <ToastContainer position="top-right" autoClose={5000} />
@@ -1466,11 +1470,12 @@ return (
 
     {/* Section 2 — Tabs */}
     <div className="bg-gray-100 py-4 px-2 sm:px-4 max-w-7xl mx-auto">
-      <DynamicTabs
-        tabs={tabsForUI}
-        activeName={activeTab}
-        onTabChange={setActiveTab}
-      />
+     <DynamicTabs
+  tabs={tabsForUI}
+  activeName={activeTab}
+  onTabChange={setActiveTab}
+  poppins={poppins}
+/>
     </div>
 
   </div>

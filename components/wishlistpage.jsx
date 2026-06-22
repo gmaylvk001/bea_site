@@ -878,7 +878,7 @@ export default function WishlistPage() {
   if (!isLoggedIn) return <LoginPrompt />;
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 py-5 pb-16">
+    <div className="max-w-[1400px] mx-auto px-4 py-5 pb-16 lg:px-1">
       <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} />
 
       <nav className="text-xs text-gray-500 mb-4">
