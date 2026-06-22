@@ -452,11 +452,11 @@ const AboutUs = () => {
                         
                         {/* Team Banner (Added shadow-lg) */}
                         <div className="relative rounded-2xl overflow-hidden shadow-lg">
-                            <img src="/uploads/driven_by_people.png" alt="" className="w-full object-cover h-[320px]"/>
+                            <img src="/uploads/drivenByPeople.png" alt="" className="w-full object-cover h-[320px] lg:h-full"/>
 
                             <div className="absolute inset-0 to-transparent"></div>
 
-                            <div className="absolute left-6 top-6 text-[#0a1d56] max-w-md ">
+                            <div className="absolute left-6 top-6 text-[#ffffff] max-w-md ">
                             <h3 className="text-3xl font-bold mb-2">
                                 Built on Trust. Driven by People.
                             </h3>

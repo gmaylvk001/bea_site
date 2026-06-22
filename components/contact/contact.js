@@ -558,7 +558,7 @@ const results = stores.filter(
                 .contact-store-track { -ms-overflow-style: none; scrollbar-width: none; }
               `}</style>
               <div
-                className="contact-store-track flex gap-4 overflow-x-auto pb-2 mb-6"
+               className="contact-store-track flex gap-4 overflow-x-auto pb-2 mb-6 justify-center"
                 style={{ scrollSnapType: "x mandatory" }}
               >
                 {filteredStores.map((store) => (
