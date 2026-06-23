@@ -693,6 +693,9 @@ const fetchBrand = async () => {
                         warranty={selectedWarranty}
                         extendedWarranty={selectedExtendedWarranty}
                         selectedFrequentProducts={selectedFrequentProducts}
+                         movement={product.movement}
+                       productName={product.name}
+                        productSlug={product.slug}
                       />
                     </div>
 
@@ -1527,6 +1530,9 @@ const fetchBrand = async () => {
         extendedWarranty={selectedExtendedWarranty}
         selectedFrequentProducts={selectedFrequentProducts}
         className="w-full bg-gradient-to-r bg-customBlue hover:bg-customBlue hover:text-white text-white border border-blue-200 font-semibold py-3 rounded-md shadow-md text-center"
+          movement={product.movement}        
+          productName={product.name}          
+        productSlug={product.slug}          
       />
       <div className="rounded-b-lg w-full bg-gray-100 mt-4">
   {[

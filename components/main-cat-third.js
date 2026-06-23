@@ -413,6 +413,9 @@ export default function CategoryMainPage({ categorySlug = "large-appliance" }) {
                             stockQuantity={product.quantity}
                             special_price={product.special_price}
                             className="w-full text-xs sm:text-sm py-1.5"
+                              movement={product.movement}
+                          productName={product.name}
+                             productSlug={product.slug}
                           />
                           <a
                             href={`https://wa.me/919865555000?text=${encodeURIComponent(

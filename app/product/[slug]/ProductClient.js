@@ -20,7 +20,7 @@ import { useCart } from '@/context/CartContext';
 import { useModal } from '@/context/ModalContext';
 import ProductCard from "@/components/ProductCard";
 import ProductAddtoCart from "@/components/ProductAddtoCart"
-import Addtocart from "@/components/AddToCart";
+
 import ProductBreadcrumb from "@/components/ProductBreadcrumb";
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import RelatedProducts from "@/components/RelatedProducts";
@@ -924,6 +924,9 @@ const fetchBrand = async () => {
        <div className="container mx-auto px-2 md:px-4 py-8">
          {/* Breadcrumb - moved outside the grid but inside container */}
        <ProductBreadcrumb product={product} />
+
+
+       
 {/* ===== MOBILE & TABLET VIEW (hidden on desktop) ===== */}
 <div className="block lg:hidden w-full">
 
@@ -1002,28 +1005,53 @@ const fetchBrand = async () => {
 
     {/* Price */}
     <div className="mt-3 border-t border-gray-200 pt-3">
-      <div className="flex items-baseline gap-3 flex-wrap">
-  <span className="text-2xl font-bold text-blue-800">
-    ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
-  </span>
-  {product.special_price > 0 && product.price > 0 && (
-    <span className="text-sm text-gray-400 line-through">
-      <span className="text-xs text-gray-400 font-normal">MRP </span>
-      ₹ {Number(product.price).toLocaleString()}
+     {/* Row 1: Price + MRP + OFF badge */}
+{/* Row 1+2: Price block left, MRP block middle, Badge right — all top-aligned */}
+<div className="flex items-start gap-3 flex-wrap">
+
+  {/* Column 1: Selling Price (top) + "Special Price" label (bottom) */}
+  <div className="flex flex-col leading-tight">
+    <span className="text-2xl font-bold text-blue-800">
+      ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
     </span>
+    {product.special_price > 0 && (
+      <span className="text-xs text-gray-500 mt-0.5">Special Price</span>
+    )}
+  </div>
+
+  {/* Column 2: MRP strikethrough (top) + Inclusive text (bottom) */}
+  {product.special_price > 0 && product.price > product.special_price && (
+    <div className="flex flex-col ms-3 leading-tight mt-2">
+      <span className="text-sm text-gray-500 line-through">
+        MRP ₹ {Number(product.price).toLocaleString()}
+      </span>
+      <span className="text-xs text-gray-500 mt-2">
+        (Inclusive of all taxes) ⓘ
+      </span>
+    </div>
   )}
-  {product.special_price > 0 && product.price > 0 && (
-    <span className="text-sm font-bold text-green-600">
+
+  {/* Column 3: OFF Badge — top aligned */}
+  {product.special_price > 0 && product.price > product.special_price && (
+    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded mt-1">
       {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
     </span>
   )}
+
 </div>
-<p className="text-sm text-gray-400 mt-1">(Incl. all Taxes)</p>
+
+{/* Row 2: You Save */}
 {product.special_price > 0 && product.price > product.special_price && (
-  <p className="text-green-600 font-semibold text-sm mt-1">
-    You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
+  <p className="text-green-600 font-semibold text-sm mt-1 flex items-center gap-1">
+    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+    </svg>
+    You Save ₹ {Number(product.price - product.special_price).toLocaleString()} ({Math.round(((product.price - product.special_price) / product.price) * 100)}%)
   </p>
 )}
+
+{/* Row 3: Price includes tax */}
+<p className="text-xs text-gray-400 mt-0.5">Price includes all applicable taxes </p>
     </div>
 
     {/* Stock */}
@@ -1064,10 +1092,18 @@ const fetchBrand = async () => {
 
       {product.stock_status === "In Stock" && product.quantity > 0 && (
         <div className="flex gap-3">
-          <button onClick={handleBuyNow} className="flex-1 bg-blue-700 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm">
-            <FaStore className="w-4 h-4" />
-            Buy Now
-          </button>
+         <button
+  onClick={handleBuyNow}
+  disabled={(product.movement === "EOL" || product.movement === "FOCUS") && product.quantity <= 10}
+  className={`flex-1 font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm
+    ${(product.movement === "EOL" || product.movement === "FOCUS") && product.quantity <= 10
+      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+      : "bg-blue-700 text-white cursor-pointer"
+    }`}
+>
+  <FaStore className="w-4 h-4" />
+  Buy Now
+</button>
           <div className="flex-1">
             <ProductAddtoCart
               productId={product._id}
@@ -1079,6 +1115,9 @@ const fetchBrand = async () => {
               selectedRelatedProducts={selectedRelatedProducts}
               buttonLabel="Add to Cart"
               buttonClassName="bg-white hover:bg-blue-50 text-blue-700"
+                movement={product.movement}         
+                 productName={product.name}        
+                 productSlug={product.slug}  
             />
           </div>
         </div>
@@ -1217,6 +1256,9 @@ const fetchBrand = async () => {
         selectedRelatedProducts={selectedRelatedProducts}
         buttonLabel="Add Selected to Cart"
         buttonClassName="bg-blue-700 text-white"
+          movement={product.movement}         // ADD
+          productName={product.name}          // ADD
+          productSlug={product.slug}  
       />
     </div>
   )}
@@ -1421,28 +1463,53 @@ const fetchBrand = async () => {
                   </div>
                 </div>
                 <div className="border-t border-gray-200 pt-3 mb-3">
-                <div className="flex items-baseline gap-3 flex-wrap">
-  <span className="text-3xl font-bold text-blue-800">
-    ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
-  </span>
-  {product.special_price > 0 && product.price > 0 && (
-    <span className="text-base text-gray-400 line-through">
-      <span className="text-xs text-gray-400 font-normal">MRP </span>
-      ₹ {Number(product.price).toLocaleString()}
+               {/* Row 1: Price + MRP + OFF badge */}
+{/* Row 1+2: Price block left, MRP block middle, Badge right — all top-aligned */}
+<div className="flex items-start gap-3 flex-wrap">
+
+  {/* Column 1: Selling Price (top) + "Special Price" label (bottom) */}
+  <div className="flex flex-col leading-tight">
+    <span className="text-3xl font-bold text-blue-800">
+      ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
     </span>
+    {product.special_price > 0 && (
+      <span className="text-xs text-gray-500 mt-0.5">Special Price</span>
+    )}
+  </div>
+
+  {/* Column 2: MRP strikethrough (top) + Inclusive text (bottom) */}
+  {product.special_price > 0 && product.price > product.special_price && (
+    <div className="flex flex-col ms-5 leading-tight mt-2">
+      <span className="text-sm text-gray-500 line-through">
+        MRP ₹ {Number(product.price).toLocaleString()}
+      </span>
+      <span className="text-xs text-gray-500 mt-2">
+        (Inclusive of all taxes) ⓘ
+      </span>
+    </div>
   )}
-  {product.special_price > 0 && product.price > 0 && (
-    <span className="text-sm font-bold text-green-600">
+
+  {/* Column 3: OFF Badge — top aligned */}
+  {product.special_price > 0 && product.price > product.special_price && (
+    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded mt-1">
       {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
     </span>
   )}
+
 </div>
-<p className="text-sm text-gray-400 mt-1">(Incl. all Taxes)</p>
+
+{/* Row 2: You Save */}
 {product.special_price > 0 && product.price > product.special_price && (
-  <p className="text-green-600 font-semibold text-sm mt-1">
-    You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
+  <p className="text-green-600 font-semibold text-sm mt-1 flex items-center gap-1">
+    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+    </svg>
+    You Save ₹ {Number(product.price - product.special_price).toLocaleString()} ({Math.round(((product.price - product.special_price) / product.price) * 100)}%)
   </p>
 )}
+
+{/* Row 3: Price includes tax */}
+<p className="text-xs text-gray-400 mt-0.5">Price includes all applicable taxes</p>
                 </div>
                 <div className="mb-3 space-y-1">
                   <div className="flex items-center gap-2">
@@ -1489,10 +1556,18 @@ const fetchBrand = async () => {
                 </div>
                 {product.stock_status === "In Stock" && product.quantity > 0 && (
                   <div className="flex gap-3 mb-3">
-                    <button onClick={handleBuyNow} className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 text-sm whitespace-nowrap">
-                      <FaStore className="w-4 h-4 flex-shrink-0" />
-                      Buy Now
-                    </button>
+                  <button
+  onClick={handleBuyNow}
+  disabled={(product.movement === "EOL" || product.movement === "FOCUS") && product.quantity <= 10}
+  className={`flex-1 font-semibold py-2 rounded-lg flex items-center justify-center gap-2 text-sm whitespace-nowrap
+    ${(product.movement === "EOL" || product.movement === "FOCUS") && product.quantity <= 10
+      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+      : "bg-blue-700 hover:bg-blue-800 text-white cursor-pointer"
+    }`}
+>
+  <FaStore className="w-4 h-4 flex-shrink-0" />
+  Buy Now
+</button>
                     <div className="flex-1">
                       <ProductAddtoCart
                         productId={product._id}
@@ -1504,6 +1579,9 @@ const fetchBrand = async () => {
                         selectedRelatedProducts={selectedRelatedProducts}
                         buttonLabel="Add to Cart"
                         buttonClassName="bg-white hover:bg-blue-50 text-blue-700"
+                           movement={product.movement}         
+                        productName={product.name}          
+                        productSlug={product.slug}  
                       />
                     </div>
                   </div>
@@ -1683,6 +1761,9 @@ const fetchBrand = async () => {
                   selectedRelatedProducts={selectedRelatedProducts}
                   buttonLabel="Add Selected to Cart"
                   buttonClassName="bg-blue-700 text-white"
+                    movement={product.movement}        
+                    productName={product.name}       
+                     productSlug={product.slug}  
                 />
               </div>
             </div>

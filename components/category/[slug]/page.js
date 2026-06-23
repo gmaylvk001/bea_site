@@ -1042,6 +1042,9 @@ export default function CategoryPage() {
                               stockQuantity={product.quantity}
                               special_price={product.special_price}
                               className="w-full text-xs sm:text-sm py-1.5"
+                                movement={product.movement}
+                              productName={product.name}
+                              productSlug={product.slug}
                             />
                             <a
                               href={`https://wa.me/?text=Check this out: ${product.name}`}

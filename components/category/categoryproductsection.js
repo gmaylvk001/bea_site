@@ -169,7 +169,10 @@ const CategoryProductCard = ({ product }) => {
         stockQuantity={product.quantity}
         special_price={product.special_price}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-      >
+         movement={product.movement}
+       productName={product.name}
+        productSlug={product.slug}
+     >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5"

@@ -1,5 +1,6 @@
 "use client";
-
+import { FaShoppingCart, FaPhoneAlt, FaEnvelope, FaTimes } from "react-icons/fa";
+import { FaWhatsapp } from "react-icons/fa";
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useModal } from '@/context/ModalContext';
@@ -9,9 +10,9 @@ import { trackAddToCart, ga4AddToCart } from "@/utils/nextjs-event-tracking";
 
 import { v4 as uuidv4 } from "uuid";
 
-import { FaShoppingCart} from "react-icons/fa";
 
-const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts = [],extendedWarranty, selectedFrequentProducts = [], stockQuantity = 1,special_price }) => {
+
+const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts = [], extendedWarranty, selectedFrequentProducts = [], stockQuantity = 1, special_price, movement, productName, productSlug }) => {
   const { openAuthModal } = useModal();
   const { updateHeaderdetails, setIsLoggedIn, setUserData,setIsAdmin } = useHeaderdetails();
   const [isLoading, setIsLoading] = useState(false);
@@ -19,13 +20,15 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
   // const [authError, setAuthError] = useState('');
   const [cartSuccess, setCartSuccess] = useState(false);
   const isOutOfStock = stockQuantity <= 0;
+  const isOpenBox = (movement === "FOCUS" || movement === "EOL") && stockQuantity < 10; 
+   const [showOpenBoxPopup, setShowOpenBoxPopup] = useState(false); 
     // const isprice = special_price <= 0;
   const { cartCount, updateCartCount } = useCart();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const handleAddToCart = async () => {
      if (isOutOfStock) return;
-
-    //  if(isprice){
+      if (isOpenBox) { setShowOpenBoxPopup(true); return; } 
+    //  if(isprice){ 
     //   return;
     //  }
       setIsLoading(true);
@@ -217,6 +220,13 @@ const trackAddToCart = ({ user_info, product_info }) => {
 };
   return (
     <>
+    {showOpenBoxPopup && (
+      <OpenBoxPopup
+        onClose={() => setShowOpenBoxPopup(false)}
+        productName={productName}
+        productSlug={productSlug}
+      />
+    )}
   <button
   onClick={handleAddToCart}
   disabled={isLoading || isOutOfStock}
@@ -314,5 +324,63 @@ const trackAddToCart = ({ user_info, product_info }) => {
 
 // Auth Modal Component
 
+function OpenBoxPopup({ onClose, productName, productSlug }) {
+  const productUrl = `${process.env.NEXT_PUBLIC_API_URL}/product/${productSlug}`;
+  const phone = "9842344323";
+  const email = "customercare@bharathelectronics.in";
+  const whatsappNumber = "919585685500";
+
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hi, I'm interested in this product: ${productName}\n${productUrl}`)}`;
+  const mailUrl = `mailto:${email}?subject=${encodeURIComponent(`Enquiry: ${productName}`)}&body=${encodeURIComponent(`Hi,\n\nI'm interested in the following product:\n\nProduct: ${productName}\nLink: ${productUrl}\n\nPlease assist me.`)}`;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.45)" }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+          <FaTimes size={16} />
+        </button>
+        <div className="flex justify-center mb-3">
+          <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+          </div>
+        </div>
+        <h3 className="text-center text-[16px] font-bold text-gray-900 mb-1">Open Box Product</h3>
+        <p className="text-center text-[12.5px] text-gray-500 leading-relaxed mb-5">
+          This is an <span className="font-semibold text-amber-600">Open Box</span> item. Home delivery is not available. Contact us to check in-store availability.
+        </p>
+        <div className="flex flex-col gap-2.5">
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white rounded-xl px-4 py-3 transition-colors">
+            <FaWhatsapp size={20} />
+            <div>
+              <div className="text-[12px] font-semibold leading-tight">WhatsApp Us</div>
+              <div className="text-[11px] opacity-80 leading-tight">Chat with our team</div>
+            </div>
+          </a>
+          <a href={mailUrl}
+            className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-3 transition-colors">
+            <FaEnvelope size={17} />
+            <div>
+              <div className="text-[12px] font-semibold leading-tight">Email Us</div>
+              <div className="text-[11px] opacity-80 leading-tight">customercare@bharathelectronics.in</div>
+            </div>
+          </a>
+          <a href={`tel:${phone}`}
+            className="flex items-center gap-3 bg-gray-800 hover:bg-gray-900 text-white rounded-xl px-4 py-3 transition-colors">
+            <FaPhoneAlt size={15} />
+            <div>
+              <div className="text-[12px] font-semibold leading-tight">Call Us</div>
+              <div className="text-[11px] opacity-80 leading-tight">98423 44323</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default AddToCartButton;

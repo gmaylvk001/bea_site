@@ -525,7 +525,9 @@ const getBannerRedirectUrls = (urls) => {
                                             stockQuantity={product.quantity}
                                             special_price={product.special_price}
                                             className="flex-1 whitespace-nowrap text-[10px] sm:text-sm py-1.5"
-                                            
+                                              movement={product.movement}
+                                          productName={product.name}
+                                           productSlug={product.slug}
                                           />
                                           <a
                                             href={`https://wa.me/919865555000?text=${encodeURIComponent(`Check Out This Product: ${typeof window !== 'undefined' ? window.location.origin : ''}/product/${product.slug}`)}`}
