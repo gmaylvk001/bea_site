@@ -7,6 +7,10 @@ import { useRouter } from "next/navigation";
 import { useCart } from '@/context/CartContext';
 import Link from "next/link";
 import { v4 as uuidv4 } from "uuid";
+import { MdSecurity, MdLoop, MdVerified, MdCardMembership, MdLocalShipping, MdLock } from "react-icons/md";
+import { useWishlist } from '@/context/WishlistContext';
+import ProductAddtoCart from "@/components/ProductAddtoCart";
+
 
 const slugify = (str) => {
   return str
@@ -140,12 +144,124 @@ const isSameOffers = (a, b) => {
   }
 };
 
+function CompleteYourPurchase({ products, scrollRef, updateCartCount }) {
+  if (!products?.length) return null;
+
+  const scrollBy = (dir) => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({ left: dir * 220, behavior: "smooth" });
+  };
+
+  return (
+    <div className="mt-6 bg-white border border-gray-200 rounded-xl p-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-[17px] font-bold text-[#0f3cc9]">Complete Your Purchase</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => scrollBy(-1)}
+            className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-blue-50 transition"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <button
+            onClick={() => scrollBy(1)}
+            className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-blue-50 transition"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 mb-4">Frequently bought together with this item</p>
+
+      {/* Scrollable Cards */}
+<div
+  ref={scrollRef}
+  className="flex gap-3 pb-2 scrollbar-hide flex-wrap justify-center overflow-x-auto"
+  style={{ scrollSnapType: "x mandatory" }}
+>
+        {products.map((product) => {
+          const price =
+            product.special_price > 0 && product.special_price < product.price
+              ? product.special_price
+              : product.price;
+          const image = product.images?.[0]
+            ? product.images[0].startsWith("http")
+              ? product.images[0]
+              : `/uploads/products/${product.images[0]}`
+            : "";
+          const subtitle =
+            product.key_specifications?.[0]?.split(":")?.[1]?.trim() ||
+            product.model_number ||
+            "";
+
+          return (
+           <div
+  key={product._id}
+  className="flex-shrink-0 w-[220px] border border-gray-200 rounded-xl p-4 flex flex-col items-center gap-3 bg-white"
+  style={{ scrollSnapAlign: "start" }}
+>
+  {/* Image */}
+  <div className="w-[140px] h-[140px] flex items-center justify-center">
+    <img
+      src={image}
+      alt={product.name}
+      className="w-full h-full object-contain"
+      onError={(e) => { e.target.style.display = "none"; }}
+    />
+  </div>
+
+  {/* Name */}
+  <p className="text-[14px] font-semibold text-gray-800 text-center line-clamp-2 leading-snug min-h-[40px]">
+    {product.name}
+  </p>
+
+  {/* Subtitle */}
+  {subtitle && (
+    <p className="text-[12px] text-gray-500 text-center line-clamp-1">{subtitle}</p>
+  )}
+
+  {/* Price */}
+  <p className="text-[15px] font-bold text-gray-900">
+    ₹{Number(price).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+  </p>
+
+  {/* Add Button */}
+  <div className="w-full">
+    <ProductAddtoCart
+      productId={product._id}
+      stockQuantity={product.quantity}
+      quantity={1}
+      additionalProducts={[]}
+      extendedWarranty={0}
+      selectedFrequentProducts={[]}
+      selectedRelatedProducts={[]}
+      buttonLabel="Add"
+      buttonClassName="bg-white border border-[#0f3cc9] text-[#0f3cc9] hover:bg-blue-50 text-sm py-2 w-full rounded-md font-semibold"
+      movement={product.movement}        
+      productName={product.name}          
+      productSlug={product.slug}    
+    />
+  </div>
+</div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function CartComponent() {
   const router = useRouter();
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { cartCount, updateCartCount } = useCart();
+const { updateWishlist } = useWishlist();
   
   // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -164,6 +280,9 @@ export default function CartComponent() {
   const [couponError, setCouponError] = useState("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [couponSuccess, setCouponSuccess] = useState(""); // inline success text
+
+  const [completeYourPurchase, setCompleteYourPurchase] = useState([]);
+   const completeScrollRef = useRef(null);
 
   // Coupon feature toggle state (shared)
   const [couponFeatureEnabled, setCouponFeatureEnabled] = useState(true);
@@ -480,7 +599,47 @@ export default function CartComponent() {
     fetchCartData();
   }, [router]);
 
-  // Apply discount to specific items based on coupon
+  useEffect(() => {
+  const fetchCompleteYourPurchase = async () => {
+    if (!cartData?.items?.length) return;
+
+    
+    const firstProductId = cartData.items[0]?.productId;
+     console.log("1. firstProductId:", firstProductId);
+    if (!firstProductId) return;
+
+    try {
+     
+      const res = await fetch(`/api/product/get/${firstProductId}`);
+      const data = await res.json();
+      console.log("2. product data:", data);
+     const addOnIds = data?.add_ons || data?.data?.add_ons || [];
+console.log("3. addOnIds:", addOnIds);
+if (!addOnIds.length) return;
+
+const featRes = await fetch("/api/product/addons", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ ids: addOnIds }),
+});
+const featData = await featRes.json();
+const featDataArr = featData?.products || featData || [];
+      console.log("4. featData:", featData); 
+      const cartProductIds = cartData.items.map(i => i.productId);
+     const filtered = (featDataArr || []).filter(
+  p => !cartProductIds.includes(p._id?.toString())
+);
+      
+      setCompleteYourPurchase(filtered);
+    } catch (e) {
+      console.error("Complete your purchase fetch error:", e);
+    }
+  };
+
+  fetchCompleteYourPurchase();
+}, [cartData?.items?.length]);
+
+  
   const applyDiscountToItems = (coupon, items) => {
     if (!coupon || !items) return items;
 
@@ -950,9 +1109,84 @@ const validateCoupon = async () => {
     setShowSuccessModal(true);
   };
 
-  const calculateSubtotal = () => {
+ const moveToWishlist = async (productId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setErrorMessage('Please login to add items to wishlist');
+      setShowErrorModal(true);
+      return;
+    }
+
+    const res = await fetch('/api/wishlist', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ productId })
+    });
+
+    if (!res.ok) throw new Error('Failed to add to wishlist');
+    const wishlistData = await res.json();
+updateWishlist(wishlistData.items, wishlistData.count);
+
+    // wishlist success → directly remove from cart (no confirm modal)
+    const token2 = localStorage.getItem('token');
+    const response = await fetch('/api/cart', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token2}`
+      },
+      body: JSON.stringify({ productId })
+    });
+
+    if (!response.ok) throw new Error('Failed to remove from cart');
+
+    const updatedCart = await response.json();
+    const itemsMerged = updatedCart.cart.items.map(item => {
+      const existingItem = cartData.items.find(i => i.productId === item.productId);
+      return { ...item, discount: existingItem ? existingItem.discount : 0 };
+    });
+
+    let finalItems = itemsMerged;
+    if (appliedCoupon) {
+      finalItems = applyDiscountToItems(appliedCoupon, itemsMerged);
+    }
+
+    const nextCart = { ...updatedCart.cart, items: finalItems };
+    setCartData(nextCart);
+    updateCartCount(nextCart.totalItems);
+    saveCartState(nextCart);
+
+    setSuccessMessage("Item moved to wishlist successfully");
+    setShowSuccessModal(true);
+
+  } catch (err) {
+    console.error('Move to wishlist error:', err);
+    setErrorMessage('Failed to move to wishlist. Try again.');
+    setShowErrorModal(true);
+  }
+};   
+const calculateMRP = () => {
   if (!cartData) return 0;
-  
+  return cartData.items.reduce((sum, item) => {
+    return sum + ((item.actual_price ?? item.price ?? 0) * item.quantity);
+  }, 0);
+};
+
+const calculateItemDiscount = () => {
+  if (!cartData) return 0;
+  return cartData.items.reduce((sum, item) => {
+    const mrp = (item.actual_price ?? item.price ?? 0) * item.quantity;
+    const selling = (item.price > 0 ? item.price : item.actual_price) * item.quantity;
+    return sum + (mrp - selling);
+  }, 0);
+};
+
+const calculateSubtotal = () => {
+  if (!cartData) return 0;
   return cartData.items.reduce((sum, item) => {
     const itemPrice = item.price > 0 ? item.price : item.actual_price;
     return sum + (itemPrice * item.quantity) + (item.warranty || 0) + (item.extendedWarranty || 0);
@@ -1222,391 +1456,560 @@ const validateCoupon = async () => {
       </div>
     );
   }
-  return (
-    <div className="bg-white min-h-screen">
-      {/* Modals */}
-      <ConfirmModal
-        show={showConfirmModal}
-        onClose={() => {
-          setShowConfirmModal(false);
-          setProductToDelete(null);
-        }}
-        onConfirm={removeItem}
-      />
-      <SuccessModal
-        show={showSuccessModal}
-        message={successMessage}
-        onClose={() => setShowSuccessModal(false)}
-      />
-      <ErrorModal
-        show={showErrorModal}
-        message={errorMessage}
-        onClose={() => setShowErrorModal(false)}
-      />
+return (
+  <div className="bg-white min-h-screen">
+    {/* Modals */}
+    <ConfirmModal
+      show={showConfirmModal}
+      onClose={() => {
+        setShowConfirmModal(false);
+        setProductToDelete(null);
+      }}
+      onConfirm={removeItem}
+    />
+    <SuccessModal
+      show={showSuccessModal}
+      message={successMessage}
+      onClose={() => setShowSuccessModal(false)}
+    />
+    <ErrorModal
+      show={showErrorModal}
+      message={errorMessage}
+      onClose={() => setShowErrorModal(false)}
+    />
 
-    {/* Header */}
-      <div className=" sm:pl-[3rem] sm:pr-[2rem] flex flex-col sm:flex-row justify-between items-center gap-2 my-[35px]">
-        <div style={{ "--heading-color": "#0069c6" }}>
-          <h1 className="font-bold text-[1.75rem] text-[#0069c6]"> My Cart</h1>
-        </div>
-        
-      </div>
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-[35px] px-4 sm:pl-[3rem] sm:pr-[2rem] py-0">
-        {/* Left Side - Cart Table (big width) */}
-        <div className="lg:col-span-2">
-          {/* Updated table for responsiveness */}
-         {/* ✅ Desktop Table View */}
-<div className="overflow-x-auto bg-white rounded-lg border hidden md:block">
-  <table className="min-w-full border">
-    <thead className="bg-white-50 border-b">
-      <tr>
-        <th className="py-3 px-4 text-left text-gray-500 text-sm font-semibold">Product</th>
-        <th className="text-center text-gray-500 text-sm font-semibold">Quantity</th>
-        <th className="text-center text-gray-500 text-sm font-semibold">Subtotal</th>
-        <th className="text-center text-gray-500 text-sm font-semibold">&emsp;</th>
-      </tr>
-    </thead>
-    <tbody>
-      {cartData.items.map((item) => (
-        <Fragment key={item.productId}>
-          <tr className="border-b">
-            <td className="flex items-center py-4 px-4 gap-3">
-              <div className="w-20 h-20 flex items-center justify-center border rounded-md overflow-hidden">
-                <Link href={`/product/${slugify(item.name)}`}>
-                <Image
-                  src={`/uploads/products/${item.image}`}
-                  alt={item.name}
-                  width={80}
-                  height={80}
-                  className="object-contain w-full h-full"
-                />
-                </Link>
+    <div className="w-full px-4 lg:px-2 py-6">
+      {/* Header */}
+      <h1 className="text-2xl font-bold text-[#0069c6] mb-5">
+        My Cart{" "}
+        <span className="text-gray-500 font-medium text-lg">
+          ({cartData.items.length} Item{cartData.items.length > 1 ? "s" : ""})
+        </span>
+      </h1>
 
-              </div>
-              <div className="flex flex-col gap-1 text-sm md:text-base">
-                <h3 className="text-xs text-gray-500 uppercase">{item.item_code}</h3>
-                <Link href={`/product/${slugify(item.name)}`}>
-                  <p className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">
-                    {item.name.length > 50 ? item.name.slice(0, 50) + "..." : item.name}
-                  </p>
-                </Link>
-                <div className="flex items-center gap-2">
-                  {item.price > 0 ? (
-                    <>
-                      <h3 className="text-base font-semibold text-red-600">₹{(item.price ?? 0).toFixed(2)}</h3>
-                      <h3 className="text-xs text-gray-500 line-through">
-                        ₹{(item.actual_price ?? item.price ?? 0).toFixed(2)}
-                      </h3>
-                    </>
-                  ) : (
-                    <h3 className="text-base font-semibold text-red-600">
-                      ₹{(item.actual_price ?? 0).toFixed(2)}
-                    </h3>
-                  )}
-                </div>
-              </div>
-            </td>
-            <td className="py-4 px-4 text-center">
-              <div className="flex justify-center items-center gap-2 border border-gray-300 rounded p-1">
-                <button
-                  className="px-2 py-1 text-black hover:text-blue-600"
-                  onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
-                  disabled={item.quantity <= 1}
-                >
-                  −
-                </button>
-                <span>{item.quantity}</span>
-                <button
-                  className="px-2 py-1 text-black hover:text-blue-600"
-                  onClick={() => updateQuantity(item.productId, item.quantity + 1, item.original_quantity)}
-                >
-                  +
-                </button>
-              </div>
-              <button
-                className="text-gray-500 text-xs font-semibold hover:text-blue-600"
-                onClick={() => confirmRemoveItem(item.productId)}
-              >
-                Remove
-              </button>
-            </td>
-            <td className="py-4 px-4 text-center font-semibold text-gray-900">
-              ₹{(((item.price > 0 ? item.price : item.actual_price) ?? 0) * (item.quantity ?? 1)).toFixed(2)}
-            </td>
-            <td className="py-4 px-4 text-center">&emsp;</td>
-          </tr>
-        </Fragment>
-      ))}
-    </tbody>
-  </table>
-</div>
+      {/* Main Grid: Left content + Right sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* LEFT: Cart items */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          {cartData.items.map((item) => (
+            <div key={item.productId}>
 
-{/* ✅ Mobile Simplified View */}
-<div className="block md:hidden space-y-4">
-  {cartData.items.map((item) => (
-    <div key={item.productId} className="flex gap-3 border rounded-lg p-3">
-      <div className="w-20 h-20 flex items-center justify-center border rounded-md overflow-hidden">
-        <Link href={`/product/${slugify(item.name)}`}>
-        <Image
-          src={`/uploads/products/${item.image}`}
-          alt={item.name}
-          width={80}
-          height={80}
-          className="object-contain w-full h-full"
-        />
-        </Link>
-      </div>
-      <div className="flex flex-col justify-between w-full">
-        <div>
-           <Link href={`/product/${slugify(item.name)}`}>
-          <p className="text-sm font-medium text-[#0069c6] hover:text-[#00badb]">
-            {item.name.length > 40 ? item.name.slice(0, 40) + "..." : item.name}
-          </p>
-          </Link>
-          <p className="text-xs text-gray-500 uppercase">{item.item_code}</p>
-        </div>
-        <div className="flex justify-between items-center mt-2">
-          {/* LEFT SIDE (Quantity + Remove) */}
-          <div className="flex flex-col gap-2">
-            {/* Quantity Box */}
-            <div className="flex items-center gap-2 border border-gray-300 rounded p-1">
-              <button
-                className="px-2 py-1 text-black hover:text-blue-600"
-                onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
-                disabled={item.quantity <= 1}
-              >
-                −
-              </button>
-              <span>{item.quantity}</span>
-              <button
-                className="px-2 py-1 text-black hover:text-blue-600"
-                onClick={() => updateQuantity(item.productId, item.quantity + 1, item.original_quantity)}
-              >
-                +
-              </button>
-            </div>
-            <button
-                className="text-gray-500 text-xs font-semibold hover:text-blue-600"
-                onClick={() => confirmRemoveItem(item.productId)}
-              >
-                Remove
-              </button>
-          </div>
-          {/* <button
-                className="text-gray-500 text-xs font-semibold hover:text-blue-600"
-                onClick={() => confirmRemoveItem(item.productId)}
-              >
-                Remove
-              </button> */}
-          <div className="text-base font-semibold text-red-600">
-            ₹{(((item.price > 0 ? item.price : item.actual_price) ?? 0) * (item.quantity ?? 1)).toFixed(2)}
-          </div>
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
+              {/* ── DESKTOP VIEW (lg+) ── */}
+              <div className="hidden lg:block border border-[#e5e7eb] rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_220px] gap-6 items-start">
 
-            {/* Continue Shopping Button */}
-          {/* <div className="flex justify-between items-center mt-6 flex-wrap gap-2">
-            <button
-              className="text-gray-500 hover:underline"
-              onClick={() => router.push("/index")}
-            >
-              ← Continue Shopping
-            </button>
-          </div> */}
-        </div>
-
-        {/* Right Side - Cart Totals (small width) */}
-        <div className="lg:col-span-1 bg-white p-3 rounded-lg border shadow-sm space-y-4">
-          {/* Coupon Section */}
-          <div className="mt-0">
-            {appliedCoupon ? (
-              <div className="bg-green-50 p-3 rounded-lg mb-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-green-700">
-                    Coupon: {appliedCoupon.offer_code}
-                  </span>
-                  <button
-                    onClick={removeCoupon}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    ✖
-                  </button>
-                </div>
-                <p className="text-sm text-green-600 mt-1">
-                  {appliedCoupon.offer_type === "percentage"
-                    ? `${appliedCoupon.percentage}% off`
-                    : `₹${appliedCoupon.fixed_price} off`}
-                </p>
-              </div>
-            ) : (
-              <div className="bg-[#f2f2f2] shadow-lg rounded-xl p-3 mb-5 max-w-md mx-auto border border-gray-200">
-                <h3 className="text-gray-700 font-semibold text-sm mb-1">
-                  Apply Coupon
-                </h3>
-                <p className="text-gray-900 text-sm mb-1" style={{ fontSize: "10.96px", color: "red", fontWeight: "bold" }}>
-                  Enter your coupon code below to get discounts on eligible products.
-                </p>
-
-                {/* Single-branch simplified rendering:
-                    - show skeleton while loading and no offers yet
-                    - else show valid offers if any
-                    - else show "Coupons are expired." when all are expired */}
-                { (isOffersLoading && activeOfferCodes.length === 0) ? (
-                  <div className="mt-2 mb-3">
-                    <div className="text-sm font-semibold text-gray-800 mb-2">
-                      🎉 Limited Time Offers!
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="p-1.5 rounded-md border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 animate-pulse h-10" />
-                      <div className="p-1.5 rounded-md border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 animate-pulse h-10" />
-                    </div>
+                  {/* Image */}
+                  <div className="w-40 h-40 flex items-center justify-center border rounded-md overflow-hidden mx-auto sm:mx-0">
+                    <Link href={`/product/${slugify(item.name)}`}>
+                      <Image
+                        src={`/uploads/products/${item.image}`}
+                        alt={item.name}
+                        width={160}
+                        height={220}
+                        className="object-contain w-full h-full"
+                      />
+                    </Link>
                   </div>
-                ) : (
-                  hasAnyValidActiveOffer ? (
-                    <div className="mt-2 mb-3">
-                      <div className="text-sm font-semibold text-gray-800 mb-2">
-                        🎉 Limited Time Offers!
-                      </div>
-                      <div className="flex flex-col space-y-1.5">
-                        {validActiveOfferCodes.map((display_coupon) => {
-                          const isValid = isCouponValid(display_coupon);
-                          if (!isValid) return null; // defensive
+
+                  {/* Info */}
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <h3 className="text-[12px] text-gray-500 mb-1">{item.item_code}</h3>
+                    <Link href={`/product/${slugify(item.name)}`}>
+                      <p className="text-[20px] font-semibold text-[#0f3cc9] leading-6 mb-2">
+                        {item.name}
+                      </p>
+                    </Link>
+                    {item.specs?.length > 0 && (
+                      <ul className="flex flex-col gap-1 mt-2">
+                        {item.specs.slice(0, 3).map((spec, i) => {
+                          const parts = spec.split(":");
+                          const displayText = parts[1]?.trim()
+                            ? `${parts[0]?.trim()}: ${parts[1]?.trim()}`
+                            : parts[0]?.trim();
                           return (
-                            <div
-                              key={display_coupon.code}
-                              className="p-1.5 rounded-md shadow-sm border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50"
-                            >
-                              <div className="flex flex-wrap items-center gap-2 text-gray-800 text-xs sm:text-sm leading-tight">
-                                <span className="whitespace-nowrap">🔖 Apply</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopyCoupon(display_coupon.code)}
-                                  className={`inline-flex items-center gap-2 px-4 py-1 rounded-md text-white font-semibold text-xs sm:text-sm shadow-sm hover:shadow cursor-pointer active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300
-                                    ${copiedCode === display_coupon.code ? "bg-green-400 hover:bg-green-500 border-green-500" : "bg-[#999999c4] hover:bg-[#808080] border-[#999999c4]"}
-                                  `}
-                                >
-                                  <span className="truncate">{display_coupon.code}</span>
-                                </button>
-
-                                {/* Copied Indicator */}
-                                {copiedCode === display_coupon.code && (
-                                  <span className="text-green-600 font-semibold ml-1">✅ Copied</span>
-                                )}
-
-                                {/* Discount Text */}
-                                <span className="whitespace-nowrap">
-                                  and get{" "}
-                                  {Number(display_coupon.fixed_price) > 0
-                                    ? `₹${Number(display_coupon.fixed_price).toFixed(0)} Off`
-                                    : `${Number(display_coupon.percentage).toFixed(0)}% Discount`}
-                                </span>
-
-                              </div>
-                            </div>
+                            <li key={i} className="flex items-center gap-1.5 text-[12px] text-gray-700">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                              <span>{displayText}</span>
+                            </li>
                           );
                         })}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-2 mb-3">
-                      {/* <div className="text-sm font-semibold text-gray-800 mb-2">
-                        🎉 Limited Time Offers!
-                      </div>
-                      <p className="text-xs text-gray-500">Coupons are expired.</p> */}
-                    </div>
-                  )
-                )}
+                      </ul>
+                    )}
+                  </div>
 
-                <div className="flex items-center space-x-0">
-                  <input
-                    id="coupon_input"
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => {
-                      setCouponCode(e.target.value);
-                      setCouponError("");
-                      setCouponSuccess("");
-                    }}
-                    placeholder="Enter coupon code"
-                    disabled={!couponFeatureEnabled}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-400"
-                  />
-                  <button
-                    onClick={validateCoupon}
-                    disabled={isValidatingCoupon || !couponFeatureEnabled}
-                    className="px-5 py-3 bg-blue-600 text-white text-sm rounded-r-lg font-medium hover:bg-blue-700 transition-all"
-                  >
-                    {isValidatingCoupon ? "Applying..." : "Apply"}
-                  </button>
+                  {/* Price + Qty */}
+                 <div className="flex flex-col items-end min-w-[180px]">
+  <h2 className="text-[28px] font-bold text-red-600 text-right">
+    ₹{(item.price ?? 0).toFixed(2)}
+  </h2>
+  <p className="text-xs text-gray-400 line-through text-right">
+    MRP ₹{(item.actual_price ?? item.price ?? 0).toFixed(2)}
+  </p>
+  <p className="text-xs text-green-600 font-medium mb-5 text-right">
+    You Save ₹{(item.actual_price - item.price).toFixed(2)}
+    ({Math.round(((item.actual_price - item.price) / item.actual_price) * 100)}%)
+  </p>
+                    <div className="border rounded-md overflow-hidden flex items-center h-[40px] w-[120px]">
+                      <button
+                        className="w-10 h-full text-lg disabled:opacity-40"
+                        onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
+                        disabled={item.quantity <= 1}
+                      >
+                        −
+                      </button>
+                      <span className="w-9 text-center text-sm font-medium">{item.quantity}</span>
+                      <button
+                        className="w-10 h-full text-lg"
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1, item.original_quantity)}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => confirmRemoveItem(item.productId)}
+                      className="text-gray-500 text-sm mt-4"
+                    >
+                      🗑 Remove
+                    </button>
+                  </div>
+
+                  {/* Row 2 - Wishlist & Remove + Delivery */}
+                  <div className="col-span-full mt-4 flex items-start justify-between">
+                    <div className="flex gap-3 mt-4">
+                 <button
+  className="border border-[#d7def8] text-[#0f3cc9] px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap flex items-center gap-1.5"
+  onClick={() => moveToWishlist(item.productId)}
+>
+  ♡ Move to Wishlist
+</button>
+                      <button
+                        onClick={() => confirmRemoveItem(item.productId)}
+                        className="border border-[#d7def8] text-[#0f3cc9] px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
+                      >
+                        🗑 Remove
+                      </button>
+                    </div>
+                    <div className="mt-4">
+                      <div className="bg-[#f6f8fc] border rounded-lg p-3 w-[380px]">
+                        <p className="font-medium text-sm mb-3 flex items-center gap-1.5">
+                          <MdLocalShipping className="text-[18px] text-[#0f3cc9]" />
+                             Check delivery availability
+                            </p>
+                        <div className="flex">
+                          <input
+                            type="text"
+                            placeholder="Enter Pincode"
+                            className="flex-1 border rounded-l-md px-3 h-8 text-sm"
+                          />
+                          <button className="bg-[#0f3cc9] text-white px-5 h-8 rounded-r-md text-sm">
+                            Check
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
-                {couponError && (
-                  <p className="text-red-500 text-sm mt-2">{couponError}</p>
-                )}
-                {couponSuccess && (
-                  <p className="text-green-600 text-sm mt-2">{couponSuccess}</p>
-                )}
-                {!couponFeatureEnabled && (
-                  <p className="text-xs text-gray-500 text-center mt-2">
-                    Coupons are currently disabled
+              </div>
+              {/* ── END DESKTOP CARD ── */}
+
+              {/* ── MOBILE / TABLET VIEW (< lg) ── */}
+              <div className="lg:hidden border border-[#e5e7eb] rounded-xl bg-white overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+
+                {/* 1. Image */}
+                <div className="flex justify-center items-center bg-gray-50 py-5 border-b border-gray-100">
+                  <Link href={`/product/${slugify(item.name)}`}>
+                    <Image
+                      src={`/uploads/products/${item.image}`}
+                      alt={item.name}
+                      width={160}
+                      height={160}
+                      className="object-contain w-[140px] h-[140px]"
+                    />
+                  </Link>
+                </div>
+
+                {/* 2. Name + Specs */}
+                <div className="px-4 pt-4 pb-2">
+                  <p className="text-[11px] text-gray-400 mb-1">{item.item_code}</p>
+                  <Link href={`/product/${slugify(item.name)}`}>
+                    <p className="text-[16px] font-semibold text-[#0f3cc9] leading-snug mb-2">
+                      {item.name}
+                    </p>
+                  </Link>
+                  {item.specs?.length > 0 && (
+                    <ul className="flex flex-col gap-1 mt-1">
+                      {item.specs.slice(0, 3).map((spec, i) => {
+                        const parts = spec.split(":");
+                        const displayText = parts[1]?.trim()
+                          ? `${parts[0]?.trim()}: ${parts[1]?.trim()}`
+                          : parts[0]?.trim();
+                        return (
+                          <li key={i} className="flex items-center gap-1.5 text-[11px] text-gray-600">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                            <span>{displayText}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+
+                {/* 3. Price */}
+                <div className="px-4 py-3 border-t  border-gray-100">
+                  <p className="text-[22px] mr-5 font-bold text-red-600">
+                    ₹{(item.price ?? 0).toFixed(2)}
                   </p>
-                )}
+                  <p className="text-xs text-gray-400 line-through">
+                    MRP ₹{(item.actual_price ?? item.price ?? 0).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-green-600 font-medium">
+                    You Save ₹{(item.actual_price - item.price).toFixed(2)}
+                    ({Math.round(((item.actual_price - item.price) / item.actual_price) * 100)}%)
+                  </p>
+                  {item.discount > 0 && (
+                    <p className="text-xs text-green-700 font-semibold mt-1">
+                      Coupon Discount: -₹{item.discount.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+
+                {/* 4. Quantity + Wishlist + Remove */}
+                <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between gap-3">
+                  <div className="border rounded-md overflow-hidden flex items-center h-[36px]">
+                    <button
+                      className="w-9 h-full text-lg text-gray-600 disabled:opacity-40"
+                      onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
+                      disabled={item.quantity <= 1}
+                    >
+                      −
+                    </button>
+                    <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                    <button
+                      className="w-9 h-full text-lg text-gray-600"
+                      onClick={() => updateQuantity(item.productId, item.quantity + 1, item.original_quantity)}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                  <button
+  className="border border-[#d7def8] text-[#0f3cc9] px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap flex items-center gap-1.5"
+  onClick={() => moveToWishlist(item.productId)}
+>
+  ♡ Wishlist
+</button>
+                    <button
+                      onClick={() => confirmRemoveItem(item.productId)}
+                      className="border border-[#d7def8] text-[#0f3cc9] px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+                    >
+                      🗑 Remove
+                    </button>
+                  </div>
+                </div>
+
+                {/* 5. Delivery check */}
+                <div className="px-4 py-3 border-t border-gray-100 bg-[#f6f8fc]">
+                  <p className="font-medium text-xs mb-2 flex items-center gap-1.5">
+  <MdLocalShipping className="text-[16px] text-[#0f3cc9]" />
+  Check delivery availability
+</p>
+                  <div className="flex">
+                    <input
+                      type="text"
+                      placeholder="Enter Pincode"
+                      className="flex-1 border rounded-l-md px-3 h-8 text-xs"
+                    />
+                    <button className="bg-[#0f3cc9] text-white px-4 h-8 rounded-r-md text-xs">
+                      Check
+                    </button>
+                  </div>
+                </div>
+
               </div>
-            )}
-          </div>
+              {/* ── END MOBILE CARD ── */}
 
-          {/* Cart Totals */}
-          <h3 className="text-gray-700 text-sm font-semibold">Cart Total</h3>
-          <div className="p-1 rounded-lg space-y-3 text-sm text-gray-700">
-            <div className="flex justify-between items-center">
-              <span>Subtotal</span>
-              <span className="font-semibold text-gray-900">
-                ₹{calculateSubtotal().toFixed(2)}
-              </span>
             </div>
-            <hr className="border-gray-300" />
+          ))}
 
-            {appliedCoupon && (
-              <div className="flex justify-between items-center">
-                <span>Discount</span>
-                <span className="font-semibold text-green-600">
-                  -₹{calculateDiscount().toFixed(2)}
-                </span>
-              </div>
-            )}
-            {appliedCoupon && <hr className="border-gray-300" />}
+          {/* ── MOBILE PRICE SUMMARY (below all items, only < lg) ── */}
+          <div className="lg:hidden mt-2 border border-gray-200 rounded-lg p-4 space-y-4 bg-white">
+            <h3 className="text-sm font-bold text-gray-700 tracking-wide">PRICE DETAILS</h3>
 
-            <div className="flex justify-between items-center">
-              <span>Delivery</span>
-              <span className="font-semibold text-gray-900">Free</span>
-            </div>
-            <hr className="border-gray-300" /> 
-
-            {/* <div className="flex justify-between items-center">
-              <span>Estimated Taxes</span>
-              <span className="font-semibold text-gray-900">₹0.00</span>
-            </div> */}
-          </div>
-
-          {/* Total Price */}
-          <div className="bg-gray-200 p-4 mt-4 rounded-lg flex justify-between font-bold text-gray-900">
-            <span>Total</span>
-            <span>₹{calculateTotal().toFixed(2)}</span>
-          </div>
-
-          {/* Checkout Button */}
-          <button
-            onClick={proceedToCheckout}
-            className="w-full py-3 rounded-md text-white font-semibold text-sm hover:brightness-110 transition-all"
-            style={{ backgroundColor: "#2453D3" }}
-          >
-            Checkout
-          </button>
-        </div>
-      </div>
+         <div className="flex flex-col gap-3 text-sm text-gray-700">
+  <div className="flex justify-between">
+    <span>Product Price (MRP)</span>
+    <span className="font-semibold text-gray-900">₹{calculateMRP().toFixed(2)}</span>
   </div>
-  );
+  <div className="flex justify-between">
+    <span>Discount</span>
+    <span className="font-semibold text-green-600">-₹{calculateItemDiscount().toFixed(2)}</span>
+  </div>
+  <hr className="border-gray-200" />
+  <div className="flex justify-between">
+    <span>Subtotal</span>
+    <span className="font-semibold text-gray-900">₹{calculateSubtotal().toFixed(2)}</span>
+  </div>
+</div>
+
+            {/* Coupon input */}
+            <div>
+              <div className="flex items-center">
+                <input
+                  id="coupon_input_mobile"
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value);
+                    setCouponError("");
+                    setCouponSuccess("");
+                  }}
+                  placeholder="Enter coupon code"
+                  disabled={!couponFeatureEnabled}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg text-sm"
+                />
+                <button
+                  onClick={validateCoupon}
+                  disabled={isValidatingCoupon || !couponFeatureEnabled}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-r-lg"
+                >
+                  {isValidatingCoupon ? "Applying..." : "Apply"}
+                </button>
+              </div>
+            {couponError && <p className="text-red-500 text-sm mt-2">{couponError}</p>}
+{couponSuccess && <p className="text-green-600 text-sm mt-2">{couponSuccess}</p>}
+{!couponFeatureEnabled && (
+  <p className="text-xs text-gray-500 mt-2">Coupons are currently disabled</p>
+)}
+{validActiveOfferCodes.length > 0 && (
+  <div className="mt-3 flex flex-col gap-2">
+    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Available Offers</p>
+    {validActiveOfferCodes.map((offer) => (
+      <div key={offer.code} className="flex items-center justify-between border border-dashed border-blue-300 rounded-lg px-3 py-2 bg-blue-50">
+        <div className="flex flex-col">
+          <span className="text-sm font-bold text-[#0f3cc9]">{offer.code}</span>
+          <span className="text-xs text-gray-500">
+            {offer.percentage > 0
+              ? `${offer.percentage}% off`
+              : offer.fixed_price > 0
+              ? `₹${offer.fixed_price} off`
+              : "Special offer"}
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            setCouponCode(offer.code);
+            setCouponError("");
+            setCouponSuccess("");
+          }}
+          className="text-xs text-[#0f3cc9] font-semibold border border-[#0f3cc9] px-2 py-1 rounded hover:bg-blue-100 transition"
+        >
+          Apply
+        </button>
+      </div>
+    ))}
+  </div>
+)}
+            </div>
+
+            {appliedCoupon && calculateDiscount() > 0 && (
+  <div className="flex justify-between items-center text-sm">
+    <div className="flex items-center gap-2">
+      <span className="text-green-700">Coupon ({appliedCoupon.offer_code})</span>
+      <button
+        onClick={removeCoupon}
+        className="text-red-500 text-xs underline hover:text-red-600"
+      >
+        Remove
+      </button>
+    </div>
+    <span className="font-semibold text-green-600">-₹{calculateDiscount().toFixed(2)}</span>
+  </div>
+)}
+
+            <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+              <div>
+                <p className="font-bold text-gray-900">Total Payable</p>
+                <p className="text-xs text-gray-400">(Inclusive of all taxes)</p>
+              </div>
+              <span className="text-xl font-bold text-gray-900">₹{calculateTotal().toFixed(2)}</span>
+            </div>
+
+            <button
+              onClick={proceedToCheckout}
+              className="w-full py-3 rounded-md text-white font-semibold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+              style={{ backgroundColor: "#2453D3" }}
+            >
+              <MdLock className="text-[16px]" /> Proceed Securely
+            </button>
+
+            {/* Trust badges */}
+<div className="grid grid-cols-4 gap-2 pt-2 text-center">
+  <div className="flex flex-col items-center gap-1">
+    <MdSecurity className="text-[22px] text-blue-600" />
+    <span className="text-[10px] text-gray-500 leading-tight">Secure Payments</span>
+  </div>
+  <div className="flex flex-col items-center gap-1">
+    <MdLoop className="text-[22px] text-green-500" />
+    <span className="text-[10px] text-gray-500 leading-tight">Easy Returns</span>
+  </div>
+  <div className="flex flex-col items-center gap-1">
+    <MdVerified className="text-[22px] text-blue-500" />
+    <span className="text-[10px] text-gray-500 leading-tight">100% Original Products</span>
+  </div>
+  <div className="flex flex-col items-center gap-1">
+    <MdCardMembership className="text-[22px] text-purple-500" />
+    <span className="text-[10px] text-gray-500 leading-tight">Brand Warranty</span>
+  </div>
+</div>
+          </div>
+          {/* ── END MOBILE PRICE SUMMARY ── */}
+
+        </div>
+        {/* END LEFT COLUMN */}
+
+        {/* RIGHT: Price Details sidebar — desktop only */}
+        <div className="hidden lg:block lg:col-span-1">
+          <div className="border border-gray-200 rounded-lg p-4 lg:sticky lg:top-4 space-y-4">
+            <h3 className="text-sm font-bold text-gray-700 tracking-wide">PRICE DETAILS</h3>
+
+           <div className="grid grid-cols-1 gap-3 text-sm text-gray-700">
+  <div className="flex justify-between items-center">
+    <span>Product Price (MRP)</span>
+    <span className="font-semibold text-gray-900">₹{calculateMRP().toFixed(2)}</span>
+  </div>
+  <div className="flex justify-between items-center">
+    <span>Discount</span>
+    <span className="font-semibold text-green-600">-₹{calculateItemDiscount().toFixed(2)}</span>
+  </div>
+  <hr className="border-gray-200" />
+  <div className="flex justify-between items-center">
+    <span>Subtotal</span>
+    <span className="font-semibold text-gray-900">₹{calculateSubtotal().toFixed(2)}</span>
+  </div>
+</div>
+            <div className="mt-3">
+              <div className="flex items-center">
+                <input
+                  id="coupon_input"
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value);
+                    setCouponError("");
+                    setCouponSuccess("");
+                  }}
+                  placeholder="Enter coupon code"
+                  disabled={!couponFeatureEnabled}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg text-sm"
+                />
+                <button
+                  onClick={validateCoupon}
+                  disabled={isValidatingCoupon || !couponFeatureEnabled}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-r-lg"
+                >
+                  {isValidatingCoupon ? "Applying..." : "Apply"}
+                </button>
+              </div>
+             {couponError && <p className="text-red-500 text-sm mt-2">{couponError}</p>}
+{couponSuccess && <p className="text-green-600 text-sm mt-2">{couponSuccess}</p>}
+{!couponFeatureEnabled && (
+  <p className="text-xs text-gray-500 mt-2">Coupons are currently disabled</p>
+)}
+{validActiveOfferCodes.length > 0 && (
+  <div className="mt-3 flex flex-col gap-2">
+    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Available Offers</p>
+    {validActiveOfferCodes.map((offer) => (
+      <div key={offer.code} className="flex items-center justify-between border border-dashed border-blue-300 rounded-lg px-3 py-2 bg-blue-50">
+        <div className="flex flex-col">
+          <span className="text-sm font-bold text-[#0f3cc9]">{offer.code}</span>
+          <span className="text-xs text-gray-500">
+            {offer.percentage > 0
+              ? `${offer.percentage}% off`
+              : offer.fixed_price > 0
+              ? `₹${offer.fixed_price} off`
+              : "Special offer"}
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            setCouponCode(offer.code);
+            setCouponError("");
+            setCouponSuccess("");
+          }}
+          className="text-xs text-[#0f3cc9] font-semibold border border-[#0f3cc9] px-2 py-1 rounded hover:bg-blue-100 transition"
+        >
+          Apply
+        </button>
+      </div>
+    ))}
+  </div>
+)}
+            </div>
+
+            {appliedCoupon && calculateDiscount() > 0 && (
+  <div className="flex justify-between items-center text-sm">
+    <div className="flex items-center gap-2">
+      <span className="text-green-700">Coupon ({appliedCoupon.offer_code})</span>
+      <button
+        onClick={removeCoupon}
+        className="text-red-500 text-xs underline hover:text-red-600"
+      >
+        Remove
+      </button>
+    </div>
+    <span className="font-semibold text-green-600">-₹{calculateDiscount().toFixed(2)}</span>
+  </div>
+)}
+            <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+              <div>
+                <p className="font-bold text-gray-900">Total Payable</p>
+                <p className="text-xs text-gray-400">(Inclusive of all taxes)</p>
+              </div>
+              <span className="text-xl font-bold text-gray-900">₹{calculateTotal().toFixed(2)}</span>
+            </div>
+
+            <button
+              onClick={proceedToCheckout}
+              className="w-full py-3 rounded-md text-white font-semibold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+              style={{ backgroundColor: "#2453D3" }}
+            >
+             <MdLock className="text-[16px]" /> Proceed Securely
+            </button>
+
+           {/* Trust badges */}
+<div className="grid grid-cols-4 gap-2 pt-2 text-center">
+  <div className="flex flex-col items-center gap-1">
+    <MdSecurity className="text-[22px] text-blue-600" />
+    <span className="text-[10px] text-gray-500 leading-tight">Secure Payments</span>
+  </div>
+  <div className="flex flex-col items-center gap-1">
+    <MdLoop className="text-[22px] text-green-500" />
+    <span className="text-[10px] text-gray-500 leading-tight">Easy Returns</span>
+  </div>
+  <div className="flex flex-col items-center gap-1">
+    <MdVerified className="text-[22px] text-blue-500" />
+    <span className="text-[10px] text-gray-500 leading-tight">100% Original Products</span>
+  </div>
+  <div className="flex flex-col items-center gap-1">
+    <MdCardMembership className="text-[22px] text-purple-500" />
+    <span className="text-[10px] text-gray-500 leading-tight">Brand Warranty</span>
+  </div>
+</div>
+          </div>
+        </div>
+        {/* END RIGHT SIDEBAR */}
+
+      </div>
+      {/* Complete Your Purchase */}
+         <CompleteYourPurchase
+                  products={completeYourPurchase}
+                  scrollRef={completeScrollRef}
+                 updateCartCount={updateCartCount}
+                 onAddSuccess={() => window.location.reload()}
+                 />
+    </div>
+
+  </div>
+);
 }

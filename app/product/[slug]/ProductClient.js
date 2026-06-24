@@ -1026,7 +1026,7 @@ const fetchBrand = async () => {
         MRP ₹ {Number(product.price).toLocaleString()}
       </span>
       <span className="text-xs text-gray-500 mt-2">
-        (Inclusive of all taxes) ⓘ
+        (Inclusive of all taxes) 
       </span>
     </div>
   )}
@@ -1484,7 +1484,7 @@ const fetchBrand = async () => {
         MRP ₹ {Number(product.price).toLocaleString()}
       </span>
       <span className="text-xs text-gray-500 mt-2">
-        (Inclusive of all taxes) ⓘ
+        (Inclusive of all taxes) 
       </span>
     </div>
   )}

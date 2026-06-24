@@ -154,7 +154,7 @@ export async function GET(req) {
 
     cart = await Cart.findOne({ userId }).populate(
       "items.productId",
-      "name price images item_code quantity"
+      "name price images item_code quantity key_specifications"
     );
 
     }
@@ -192,6 +192,7 @@ export async function GET(req) {
           warranty: item.warranty || 0,
           extendedWarranty: item.extendedWarranty || 0,
           actual_price: item.productId.price,
+          specs: item.productId.key_specifications?.slice(0, 3) || [], 
         };
       })
     );

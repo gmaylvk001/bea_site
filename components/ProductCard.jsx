@@ -4,7 +4,10 @@ import { useState,useEffect  } from 'react';
 import { useWishlist } from '@/context/WishlistContext';
 import { Heart } from 'lucide-react';
 import {AuthModal} from '@/components/AuthModal';
-const AddToWishlistButton = ({ productId }) => {
+
+
+
+const AddToWishlistButton = ({ productId, onAfterWishlist }) => {
   const { openAuthModal } = useModal();
   const [isLoading, setIsLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -59,8 +62,11 @@ const AddToWishlistButton = ({ productId }) => {
         throw new Error(`Failed to ${isCurrentlyWishlisted ? 'remove from' : 'add to'} wishlist`);
       }
       
-      const responseData = await wishlistResponse.json();
-      updateWishlist(responseData.items, responseData.count);
+     const responseData = await wishlistResponse.json();
+    updateWishlist(responseData.items, responseData.count);
+    if (!isCurrentlyWishlisted && onAfterWishlist) {
+  onAfterWishlist();
+   }
       
     } catch (error) {
       // console.error('Wishlist error:', error);

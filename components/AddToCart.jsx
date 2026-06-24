@@ -225,6 +225,7 @@ const trackAddToCart = ({ user_info, product_info }) => {
         onClose={() => setShowOpenBoxPopup(false)}
         productName={productName}
         productSlug={productSlug}
+        stockQuantity={stockQuantity}
       />
     )}
   <button
@@ -324,7 +325,7 @@ const trackAddToCart = ({ user_info, product_info }) => {
 
 // Auth Modal Component
 
-function OpenBoxPopup({ onClose, productName, productSlug }) {
+function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
   const productUrl = `${process.env.NEXT_PUBLIC_API_URL}/product/${productSlug}`;
   const phone = "9842344323";
   const email = "customercare@bharathelectronics.in";
@@ -334,50 +335,110 @@ function OpenBoxPopup({ onClose, productName, productSlug }) {
   const mailUrl = `mailto:${email}?subject=${encodeURIComponent(`Enquiry: ${productName}`)}&body=${encodeURIComponent(`Hi,\n\nI'm interested in the following product:\n\nProduct: ${productName}\nLink: ${productUrl}\n\nPlease assist me.`)}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.45)" }}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
-          <FaTimes size={16} />
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.55)" }}>
+      <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-sm relative px-5 py-3 md:py-4">
+
+        {/* Close */}
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10">
+          <FaTimes size={15} />
         </button>
-        <div className="flex justify-center mb-3">
-          <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-              <line x1="12" y1="22.08" x2="12" y2="12"/>
-            </svg>
-          </div>
+
+       {/* Box Image - small */}
+        <div className="hidden md:flex justify-center mb-1 md:mb-2">
+          <img src="/uploads/openBoxPopUp.png" alt="Open Box" className="w-9 h-9 md:w-12 md:h-12 object-contain" />
         </div>
-        <h3 className="text-center text-[16px] font-bold text-gray-900 mb-1">Open Box Product</h3>
-        <p className="text-center text-[12.5px] text-gray-500 leading-relaxed mb-5">
-          This is an <span className="font-semibold text-amber-600">Open Box</span> item. Home delivery is not available. Contact us to check in-store availability.
+
+        {/* Title */}
+        <h3 className="text-center text-[15px] md:text-[16px] font-bold text-gray-900 mb-2">Open Box Product</h3>
+
+        {/* Stock Badge */}
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1 md:py-1.5 mb-2 md:mb-3">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span className="text-[12px] font-semibold text-amber-700">
+            Limited Stock Available (Only {stockQuantity} units left!)
+          </span>
+        </div>
+
+        {/* Description */}
+        <p className="text-center text-[12px] text-gray-600 leading-relaxed mb-1">
+          This is an <span className="font-bold text-orange-500">Open Box / Clearance Sale</span> item with limited stock availability.
         </p>
-        <div className="flex flex-col gap-2.5">
+        <p className="text-center text-[11.5px] text-gray-500 leading-relaxed mb-2 sm:mb-3">
+          <span className="font-semibold text-gray-700">Home delivery may not be available</span> for this product. Please contact our team to check store availability, condition, price and pickup options.
+        </p>
+
+        {/* 3 Feature Icons */}
+{/* 3 Feature Icons */}
+<div className="hidden md:grid grid-cols-3 gap-2 mb-2 md:mb-3">
+  <div className="flex flex-col items-center gap-1">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    </svg>
+    <span className="text-[10px] text-gray-600 font-medium text-center leading-tight">Store Pickup<br/>Recommended</span>
+  </div>
+  <div className="flex flex-col items-center gap-1">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+      <line x1="12" y1="22.08" x2="12" y2="12"/>
+    </svg>
+    <span className="text-[10px] text-gray-600 font-medium text-center leading-tight">Limited Stock<br/>Available</span>
+  </div>
+  <div className="flex flex-col items-center gap-1">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    <span className="text-[10px] text-gray-600 font-medium text-center leading-tight">Quality Checked<br/>by BEA Team</span>
+  </div>
+</div>
+
+        {/* Info Note */}
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5 mb-3">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span className="text-[11px] text-blue-700 font-medium">Final price & availability will be confirmed by BEA team.</span>
+        </div>
+
+        {/* 3 Contact Buttons */}
+        <div className="flex flex-col gap-1.5 sm:gap-2 mb-2 sm:mb-3">
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white rounded-xl px-4 py-3 transition-colors">
+           className="flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white rounded-xl px-4 py-2 md:py-2.5 transition-colors">
             <FaWhatsapp size={20} />
             <div>
               <div className="text-[12px] font-semibold leading-tight">WhatsApp Us</div>
-              <div className="text-[11px] opacity-80 leading-tight">Chat with our team</div>
-            </div>
-          </a>
-          <a href={mailUrl}
-            className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-3 transition-colors">
-            <FaEnvelope size={17} />
-            <div>
-              <div className="text-[12px] font-semibold leading-tight">Email Us</div>
-              <div className="text-[11px] opacity-80 leading-tight">customercare@bharathelectronics.in</div>
+              <div className="text-[10.5px] opacity-80 leading-tight">Chat with our team</div>
             </div>
           </a>
           <a href={`tel:${phone}`}
-            className="flex items-center gap-3 bg-gray-800 hover:bg-gray-900 text-white rounded-xl px-4 py-3 transition-colors">
-            <FaPhoneAlt size={15} />
+            className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2.5 transition-colors">
+            <FaPhoneAlt size={16} />
             <div>
               <div className="text-[12px] font-semibold leading-tight">Call Us</div>
-              <div className="text-[11px] opacity-80 leading-tight">98423 44323</div>
+              <div className="text-[10.5px] opacity-80 leading-tight">98423 44323</div>
+            </div>
+          </a>
+          <a href={mailUrl}
+            className="flex items-center gap-3 bg-gray-800 hover:bg-gray-900 text-white rounded-xl px-4 py-2.5 transition-colors">
+            <FaEnvelope size={16} />
+            <div>
+              <div className="text-[12px] font-semibold leading-tight">Email Us</div>
+              <div className="text-[10.5px] opacity-80 leading-tight">customercare@bharathelectronics.in</div>
             </div>
           </a>
         </div>
+
+        {/* Privacy Note */}
+        <div className="flex items-center justify-center gap-1.5">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="#9ca3af" stroke="none">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+          </svg>
+          <span className="text-[10px] text-gray-400">Your details are safe with us. We respect your privacy.</span>
+        </div>
+
       </div>
     </div>
   );
