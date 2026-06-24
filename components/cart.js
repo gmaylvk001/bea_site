@@ -1169,6 +1169,17 @@ updateWishlist(wishlistData.items, wishlistData.count);
     setShowErrorModal(true);
   }
 };   
+const checkDelivery = (pincode) => {
+  const pin = parseInt(pincode.trim());
+  if (!pincode.trim() || pincode.trim().length !== 6 || isNaN(pin)) {
+    return { available: false, message: "Please enter a valid 6-digit pincode" };
+  }
+  // Tamil Nadu pincode range: 600000 - 643999
+  if (pin >= 600000 && pin <= 643999) {
+    return { available: true, message: "✓ Delivery available to this location" };
+  }
+  return { available: false, message: "✗ Delivery not available for this pincode" };
+};
 const calculateMRP = () => {
   if (!cartData) return 0;
   return cartData.items.reduce((sum, item) => {
@@ -1491,8 +1502,8 @@ return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT: Cart items */}
         <div className="lg:col-span-2 flex flex-col gap-4">
-          {cartData.items.map((item) => (
-            <div key={item.productId}>
+          {cartData.items.map((item, itemIndex) => (
+                   <div key={item.productId}>
 
               {/* ── DESKTOP VIEW (lg+) ── */}
               <div className="hidden lg:block border border-[#e5e7eb] rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
@@ -1589,24 +1600,47 @@ return (
                         🗑 Remove
                       </button>
                     </div>
-                    <div className="mt-4">
-                      <div className="bg-[#f6f8fc] border rounded-lg p-3 w-[380px]">
-                        <p className="font-medium text-sm mb-3 flex items-center gap-1.5">
-                          <MdLocalShipping className="text-[18px] text-[#0f3cc9]" />
-                             Check delivery availability
-                            </p>
-                        <div className="flex">
-                          <input
-                            type="text"
-                            placeholder="Enter Pincode"
-                            className="flex-1 border rounded-l-md px-3 h-8 text-sm"
-                          />
-                          <button className="bg-[#0f3cc9] text-white px-5 h-8 rounded-r-md text-sm">
-                            Check
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+    {itemIndex === 0 && <div className="bg-[#f6f8fc] border rounded-lg p-3 w-[380px]">
+  <p className="font-medium text-sm mb-3 flex items-center gap-1.5">
+    <MdLocalShipping className="text-[18px] text-[#0f3cc9]" />
+    Check delivery availability
+  </p>
+  <div className="flex">
+    <input
+      type="text"
+      placeholder="Enter Pincode"
+      maxLength={6}
+      id={`pincode-desktop-${item.productId}`}
+      className="flex-1 border rounded-l-md px-3 h-8 text-sm"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          const val = e.target.value;
+          const result = checkDelivery(val);
+          const msgEl = document.getElementById(`pinmsg-desktop-${item.productId}`);
+          if (msgEl) {
+            msgEl.textContent = result.message;
+            msgEl.className = `text-xs mt-1 ${result.available ? 'text-green-600' : 'text-red-500'}`;
+          }
+        }
+      }}
+    />
+    <button
+      className="bg-[#0f3cc9] text-white px-5 h-8 rounded-r-md text-sm"
+      onClick={() => {
+        const val = document.getElementById(`pincode-desktop-${item.productId}`)?.value || '';
+        const result = checkDelivery(val);
+        const msgEl = document.getElementById(`pinmsg-desktop-${item.productId}`);
+        if (msgEl) {
+          msgEl.textContent = result.message;
+          msgEl.className = `text-xs mt-1 ${result.available ? 'text-green-600' : 'text-red-500'}`;
+        }
+      }}
+    >
+      Check
+    </button>
+  </div>
+<p id={`pinmsg-desktop-${item.productId}`} className="text-xs mt-1"></p>
+</div>}
                   </div>
 
                 </div>
@@ -1709,22 +1743,47 @@ return (
                 </div>
 
                 {/* 5. Delivery check */}
-                <div className="px-4 py-3 border-t border-gray-100 bg-[#f6f8fc]">
-                  <p className="font-medium text-xs mb-2 flex items-center gap-1.5">
-  <MdLocalShipping className="text-[16px] text-[#0f3cc9]" />
-  Check delivery availability
-</p>
-                  <div className="flex">
-                    <input
-                      type="text"
-                      placeholder="Enter Pincode"
-                      className="flex-1 border rounded-l-md px-3 h-8 text-xs"
-                    />
-                    <button className="bg-[#0f3cc9] text-white px-4 h-8 rounded-r-md text-xs">
-                      Check
-                    </button>
-                  </div>
-                </div>
+             {itemIndex === 0 && <div className="px-4 py-3 border-t border-gray-100 bg-[#f6f8fc]">
+  <p className="font-medium text-xs mb-2 flex items-center gap-1.5">
+    <MdLocalShipping className="text-[16px] text-[#0f3cc9]" />
+    Check delivery availability
+  </p>
+  <div className="flex">
+    <input
+      type="text"
+      placeholder="Enter Pincode"
+      maxLength={6}
+      id={`pincode-mobile-${item.productId}`}
+      className="flex-1 border rounded-l-md px-3 h-8 text-xs"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          const val = e.target.value;
+          const result = checkDelivery(val);
+          const msgEl = document.getElementById(`pinmsg-mobile-${item.productId}`);
+          if (msgEl) {
+            msgEl.textContent = result.message;
+            msgEl.className = `text-xs mt-1 ${result.available ? 'text-green-600' : 'text-red-500'}`;
+          }
+        }
+      }}
+    />
+    <button
+      className="bg-[#0f3cc9] text-white px-4 h-8 rounded-r-md text-xs"
+      onClick={() => {
+        const val = document.getElementById(`pincode-mobile-${item.productId}`)?.value || '';
+        const result = checkDelivery(val);
+        const msgEl = document.getElementById(`pinmsg-mobile-${item.productId}`);
+        if (msgEl) {
+          msgEl.textContent = result.message;
+          msgEl.className = `text-xs mt-1 ${result.available ? 'text-green-600' : 'text-red-500'}`;
+        }
+      }}
+    >
+      Check
+    </button>
+  </div>
+  <p id={`pinmsg-mobile-${item.productId}`} className="text-xs mt-1"></p>
+</div>}
 
               </div>
               {/* ── END MOBILE CARD ── */}
@@ -1754,29 +1813,8 @@ return (
 
             {/* Coupon input */}
             <div>
-              <div className="flex items-center">
-                <input
-                  id="coupon_input_mobile"
-                  type="text"
-                  value={couponCode}
-                  onChange={(e) => {
-                    setCouponCode(e.target.value);
-                    setCouponError("");
-                    setCouponSuccess("");
-                  }}
-                  placeholder="Enter coupon code"
-                  disabled={!couponFeatureEnabled}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg text-sm"
-                />
-                <button
-                  onClick={validateCoupon}
-                  disabled={isValidatingCoupon || !couponFeatureEnabled}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-r-lg"
-                >
-                  {isValidatingCoupon ? "Applying..." : "Apply"}
-                </button>
-              </div>
-            {couponError && <p className="text-red-500 text-sm mt-2">{couponError}</p>}
+
+                  {couponError && <p className="text-red-500 text-sm mt-2">{couponError}</p>}
 {couponSuccess && <p className="text-green-600 text-sm mt-2">{couponSuccess}</p>}
 {!couponFeatureEnabled && (
   <p className="text-xs text-gray-500 mt-2">Coupons are currently disabled</p>
@@ -1810,6 +1848,29 @@ return (
     ))}
   </div>
 )}
+              <div className="flex mt-4 items-center">
+                <input
+                  id="coupon_input_mobile"
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value);
+                    setCouponError("");
+                    setCouponSuccess("");
+                  }}
+                  placeholder="Enter coupon code"
+                  disabled={!couponFeatureEnabled}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg text-sm"
+                />
+                <button
+                  onClick={validateCoupon}
+                  disabled={isValidatingCoupon || !couponFeatureEnabled}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-r-lg"
+                >
+                  {isValidatingCoupon ? "Applying..." : "Apply"}
+                </button>
+              </div>
+        
             </div>
 
             {appliedCoupon && calculateDiscount() > 0 && (
@@ -1889,29 +1950,7 @@ return (
   </div>
 </div>
             <div className="mt-3">
-              <div className="flex items-center">
-                <input
-                  id="coupon_input"
-                  type="text"
-                  value={couponCode}
-                  onChange={(e) => {
-                    setCouponCode(e.target.value);
-                    setCouponError("");
-                    setCouponSuccess("");
-                  }}
-                  placeholder="Enter coupon code"
-                  disabled={!couponFeatureEnabled}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg text-sm"
-                />
-                <button
-                  onClick={validateCoupon}
-                  disabled={isValidatingCoupon || !couponFeatureEnabled}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-r-lg"
-                >
-                  {isValidatingCoupon ? "Applying..." : "Apply"}
-                </button>
-              </div>
-             {couponError && <p className="text-red-500 text-sm mt-2">{couponError}</p>}
+                           {couponError && <p className="text-red-500 text-sm mt-2">{couponError}</p>}
 {couponSuccess && <p className="text-green-600 text-sm mt-2">{couponSuccess}</p>}
 {!couponFeatureEnabled && (
   <p className="text-xs text-gray-500 mt-2">Coupons are currently disabled</p>
@@ -1945,6 +1984,29 @@ return (
     ))}
   </div>
 )}
+              <div className="flex mt-4 items-center">
+                <input
+                  id="coupon_input"
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value);
+                    setCouponError("");
+                    setCouponSuccess("");
+                  }}
+                  placeholder="Enter coupon code"
+                  disabled={!couponFeatureEnabled}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg text-sm"
+                />
+                <button
+                  onClick={validateCoupon}
+                  disabled={isValidatingCoupon || !couponFeatureEnabled}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-r-lg"
+                >
+                  {isValidatingCoupon ? "Applying..." : "Apply"}
+                </button>
+              </div>
+
             </div>
 
             {appliedCoupon && calculateDiscount() > 0 && (

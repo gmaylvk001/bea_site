@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import { ToastContainer, toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 export default function BulkUploadPage() {
   const [excelFile, setExcelFile] = useState(null);
@@ -31,6 +32,7 @@ export default function BulkUploadPage() {
   const filterGroupFormRef = useRef(null);
   const filterFormRef = useRef(null);
   const categoryFormRef = useRef(null);
+  const warrantyFileRef = useRef(null);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -44,12 +46,16 @@ export default function BulkUploadPage() {
   const [product_name, setProduct_name] = useState(null);
   const [product_description, setProduct_description] = useState(null);
   const [dynamic_filter_upload, setDynamic_filter_upload] = useState(null);
+  const [warrantyFile, setWarrantyFile] = useState(null);
+  const [isWarrantyUploadLoading, setIsWarrantyUploadLoading] = useState(false);
 
   const notifiedRef = useRef(false);
 const fileInputRef = useRef(null);
 const fileBulkParticularInputRef = useRef(null);
 const fileBulkUploadAddonsInputRef = useRef(null);
 const fileImageBulkParticularInputRef = useRef(null);
+
+const router = useRouter();
   const showToast = (type, message) => {
     if (notifiedRef.current) return;
     notifiedRef.current = true;
@@ -72,6 +78,7 @@ const fileImageBulkParticularInputRef = useRef(null);
     setImageZip(null);
     setImageZips(null);
     setOverviewZip(null);
+    setWarrantyFile(null);
 
     // clear flags and messages
     setIsLoading(false);
@@ -92,6 +99,7 @@ const fileImageBulkParticularInputRef = useRef(null);
     try { filterFormRef.current?.reset(); } catch (e) { }
     try { categoryFormRef.current?.reset(); } catch (e) { }
     try { filterValueFormRef.current?.reset(); } catch (e) { }
+    if (warrantyFileRef.current) warrantyFileRef.current.value = "";
 
     // allow next upload to show a toast
     notifiedRef.current = false;
@@ -1394,6 +1402,59 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
     document.body.removeChild(link);
   };
 
+const handleWarrantyBulkUpload = async (e) => {
+  e.preventDefault();
+
+  if (!warrantyFile) {
+    showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+    return;
+  }
+
+  if (!validateFilterFile(warrantyFile)) {
+    showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", warrantyFile);
+
+  setIsWarrantyUploadLoading(true);
+
+  try {
+    const res = await fetch("/api/warranties/bulk-upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(
+        "success",
+        `Warranty Upload Done! Inserted: ${data.inserted}, Updated: ${data.updated}, Total: ${data.total}`
+      );
+
+       setTimeout(() => {
+    window.location.reload();
+     }, 1500);
+    } else {
+      showToast("error", data.error || "Upload failed");
+    }
+
+  } catch (err) {
+    console.error("Warranty upload error:", err);
+    showToast("error", "Upload failed. Please try again.");
+  } finally {
+    setIsWarrantyUploadLoading(false);
+   
+    setWarrantyFile(null);
+    if (warrantyFileRef.current) {
+      warrantyFileRef.current.value = "";
+      
+    }
+  }
+};
+
   const sections = [
     { id: "section-product-overview", label: "Product - All Details Upload", image: "/uploads/files/Product_all_upload_first_box.png" },
     { id: "section-filter-upload", label: "Filter Values Upload", image: "/uploads/files/Filter_Bulk_Upload_second_box.png" },
@@ -1403,6 +1464,7 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
     { id: "section-category-filter-upload", label: "Category Filter Upload", image: "/uploads/files/Category_filter_upload_sixth_box_image.png" },
 
     { id: "section-category-filter-upload-item-category-subcategory", label: "Item Code Category Bulk Upload", image: "/uploads/files/Category_bulk_upload_bulk_category_image_New.png" },
+
 
     { id: "item-category-particular-product-bulk-upload", label: "Item Particular Bulk Upload part one (without image)", image: "/uploads/files/item_category_particular_bulk_upload.png" },
 
@@ -1421,6 +1483,7 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
     { id: "dynamic_filter_upload", label: "Dynamic Filter Upload", image: "/uploads/files/dynamic_filter.png" },
     { id: "product-added-bulk-addons-frequentlybought-relatedproducts", label: "Add Frequently Addons and Related Products", image: "/uploads/files/bulk_upload_for_product_rightside_datas.png" },
     { id: "itemcode-product-bulk-upload-delete-filters", label: "Delete Filters For Product", image: "/uploads/files/delete_filters_for_product_bulk_upload.png" },
+     {id:"warranty-bulk-upload", label: "Warranty Bulk Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
 
   ];
 
@@ -2358,6 +2421,89 @@ const handlewithImageBulkParticularDetailsSubcatSubmit = async (e) => {
                 </div>
               </form>
             )}
+
+
+            {/* Warranty Bulk Upload */}
+{selectedSection === "warranty-bulk-upload" && (
+  <form
+    id="warranty-bulk-upload"
+    onSubmit={handleWarrantyBulkUpload}
+    className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8"
+  >
+    <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+      
+      <div className="mb-4">
+        <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
+          Warranty Bulk Upload
+        </h2>
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Excel / CSV File
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Upload warranty data. Existing entries (by QBC Code) will be updated; new entries will be inserted.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+       <input
+  type="file"
+  accept=".xlsx,.csv"
+  ref={warrantyFileRef}
+  onClick={(e) => {
+    e.target.value = "";
+    setWarrantyFile(null);
+  }}
+  onChange={(e) => setWarrantyFile(e.target.files?.[0] || null)}
+  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+  required
+/>
+
+      
+        <button
+          type="button"
+          onClick={() => {
+            const link = document.createElement("a");
+           
+            link.href = `/uploads/files/warranty_sample.xlsx?t=${Date.now()}`;
+            link.download = "warranty_sample.xlsx";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }}
+          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Sample Format
+        </button>
+      </div>
+    </div>
+
+    <div className="flex mt-5">
+      <button
+        type="submit"
+        disabled={isWarrantyUploadLoading}
+        className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center"
+      >
+        {isWarrantyUploadLoading ? (
+          <>
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            Uploading...
+          </>
+        ) : (
+          "Upload Warranties"
+        )}
+      </button>
+    </div>
+  </form>
+)}
 
             {/* Section 10: Delete Item Code in Product Upload */}
             {/* {selectedSection === "section-delete-product-itemcode-upload" && (
