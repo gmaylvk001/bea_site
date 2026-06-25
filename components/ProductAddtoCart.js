@@ -12,7 +12,7 @@ import { FaShoppingCart} from "react-icons/fa";
 
 import { v4 as uuidv4 } from "uuid";
 
-const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts = [], extendedWarranty, selectedFrequentProducts = [], stockQuantity = 1, special_price, buttonLabel, buttonClassName, movement, productName, productSlug }) => { const { openAuthModal } = useModal();
+const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts = [], extendedWarranty, selectedFrequentProducts = [], stockQuantity = 1, special_price, onSuccess,buttonLabel, buttonClassName, movement, productName, productSlug, warrantyData }) => { const { openAuthModal } = useModal();
   const { updateHeaderdetails, setIsLoggedIn, setUserData, setIsAdmin } = useHeaderdetails();
   const [isLoading, setIsLoading] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -132,7 +132,8 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
             quantity,
             selectedWarranty: warranty,
             selectedExtendedWarranty: extendedWarranty,
-            ...(guestCartId && { guestCartId }), // ✅ include only if guest
+            warrantyData: warrantyData || null,
+            ...(guestCartId && { guestCartId }), 
           }),
         });
 
@@ -221,6 +222,7 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
         }
   
         setCartSuccess(true);
+        if (onSuccess) onSuccess();
       } catch (error) {
         console.error('Add to cart error:', error);
         setAuthError(error.message);

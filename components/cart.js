@@ -245,6 +245,7 @@ function CompleteYourPurchase({ products, scrollRef, updateCartCount }) {
       movement={product.movement}        
       productName={product.name}          
       productSlug={product.slug}    
+      onSuccess={()=>window.location.reload()}
     />
   </div>
 </div>
@@ -782,23 +783,23 @@ const featDataArr = featData?.products || featData || [];
         throw new Error('Failed to update quantity');
       }
 
-      const updatedCart = await response.json();
+const updatedCart = await response.json();
 
+      // Merge existing details
       const itemsMerged = updatedCart.cart.items.map(item => {
         const existingItem = cartData.items.find(i => i.productId === item.productId);
         return {
           ...existingItem,
           ...item,
-          discount: existingItem ? existingItem.discount : 0,
-          original_quantity: existingItem?.original_quantity ?? item.original_quantity ?? Infinity
+          discount: 0
         };
       });
 
+      // Reapply coupon if exists
       let finalItems = itemsMerged;
       if (appliedCoupon) {
         finalItems = applyDiscountToItems(appliedCoupon, itemsMerged);
       }
-
       const finalCart = { ...updatedCart.cart, items: finalItems };
       setCartData(finalCart);
       updateCartCount(finalCart.totalItems);
@@ -867,10 +868,7 @@ const featDataArr = featData?.products || featData || [];
         finalItems = applyDiscountToItems(appliedCoupon, itemsMerged);
       }
 
-      let nextCartObj = { ...updatedCart.cart, items: finalItems };
-      setCartData(nextCartObj);
-      updateCartCount(nextCartObj.totalItems);
-      saveCartState(nextCartObj);
+let nextCartObj = { ...updatedCart.cart, items: finalItems };
 
       // If product-specific coupon no longer applicable, clear it and discounts
       if (appliedCoupon && appliedCoupon.offer_product && appliedCoupon.offer_product.includes(productToDelete)) {
@@ -880,12 +878,30 @@ const featDataArr = featData?.products || featData || [];
           ...nextCartObj,
           items: nextCartObj.items.map(item => ({ ...item, discount: 0 }))
         };
-        setCartData(nextCartObj);
-        saveCartState(nextCartObj);
       }
 
+      // Re-fetch cart fresh from API to avoid stale data
+      const token3 = localStorage.getItem('token');
+      const freshRes = await fetch('/api/cart', {
+        headers: { 'Authorization': `Bearer ${token3}` },
+        method: 'GET'
+      });
+      if (freshRes.ok) {
+        const freshData = await freshRes.json();
+        const freshItems = freshData.cart.items.map(item => ({ ...item, discount: 0 }));
+        let freshFinal = freshItems;
+        if (appliedCoupon) {
+          freshFinal = applyDiscountToItems(appliedCoupon, freshItems);
+        }
+        nextCartObj = { ...freshData.cart, items: freshFinal };
+      }
+
+      setCartData(nextCartObj);
+      updateCartCount(nextCartObj.totalItems);
+      saveCartState(nextCartObj);
       setSuccessMessage("Item removed from cart");
       setShowSuccessModal(true);
+      // setTimeout(() => window.location.reload(), 500);
     } catch (err) {
       console.error('Remove item error:', err);
       setError(err.message);
@@ -1556,10 +1572,12 @@ return (
   <p className="text-xs text-gray-400 line-through text-right">
     MRP ₹{(item.actual_price ?? item.price ?? 0).toFixed(2)}
   </p>
+  {(item.actual_price > 0 && item.actual_price > item.price) && (
   <p className="text-xs text-green-600 font-medium mb-5 text-right">
     You Save ₹{(item.actual_price - item.price).toFixed(2)}
     ({Math.round(((item.actual_price - item.price) / item.actual_price) * 100)}%)
   </p>
+)}
                     <div className="border rounded-md overflow-hidden flex items-center h-[40px] w-[120px]">
                       <button
                         className="w-10 h-full text-lg disabled:opacity-40"
@@ -1697,10 +1715,12 @@ return (
                   <p className="text-xs text-gray-400 line-through">
                     MRP ₹{(item.actual_price ?? item.price ?? 0).toFixed(2)}
                   </p>
-                  <p className="text-xs text-green-600 font-medium">
-                    You Save ₹{(item.actual_price - item.price).toFixed(2)}
-                    ({Math.round(((item.actual_price - item.price) / item.actual_price) * 100)}%)
-                  </p>
+                {(item.actual_price > 0 && item.actual_price > item.price) && (
+  <p className="text-xs text-green-600 font-medium">
+    You Save ₹{(item.actual_price - item.price).toFixed(2)}
+    ({Math.round(((item.actual_price - item.price) / item.actual_price) * 100)}%)
+  </p>
+)}
                   {item.discount > 0 && (
                     <p className="text-xs text-green-700 font-semibold mt-1">
                       Coupon Discount: -₹{item.discount.toFixed(2)}
@@ -1786,7 +1806,7 @@ return (
 </div>}
 
               </div>
-              {/* ── END MOBILE CARD ── */}
+              {/* ── END MOBILE CARD ── */} 
 
             </div>
           ))}

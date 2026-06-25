@@ -59,15 +59,16 @@ export async function POST(req) {
     }
 
     const {
-      productId,
-      original_prod_quantity,
-      quantity = 1,
-      selectedWarranty = 0,
-      selectedExtendedWarranty = 0,
-      upsellProducts = [],
-      guestCartId, // frontend sends UUID from localStorage
-    } = await req.json();
-
+  productId,
+  original_prod_quantity,
+  quantity = 1,
+  selectedWarranty = 0,
+  selectedExtendedWarranty = 0,
+  upsellProducts = [],
+  guestCartId,
+  warrantyData = null,
+  
+} = await req.json();
     if (!productId) {
       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
     }
@@ -103,6 +104,7 @@ export async function POST(req) {
       }
       cart.items[existingItemIndex].warranty = selectedWarranty;
       cart.items[existingItemIndex].extendedWarranty = selectedExtendedWarranty;
+       cart.items[existingItemIndex].warrantyData = warrantyData;
     } else {
       cart.items.push({
         item_code: product.item_code,
@@ -113,6 +115,7 @@ export async function POST(req) {
         image: product.images[0],
         warranty: selectedWarranty,
         extendedWarranty: selectedExtendedWarranty,
+        warrantyData: warrantyData,
         actual_price: product.special_price ?? product.price,
       });
     }
@@ -176,7 +179,7 @@ export async function GET(req) {
         { status: 200 }
       );
     }
-
+     
       const items = await Promise.all(
       cart.items.map(async (item) => {
        // console.log(item);
@@ -191,6 +194,7 @@ export async function GET(req) {
           quantity: item.quantity,
           warranty: item.warranty || 0,
           extendedWarranty: item.extendedWarranty || 0,
+          warrantyData: item.warrantyData || null,
           actual_price: item.productId.price,
           specs: item.productId.key_specifications?.slice(0, 3) || [], 
         };
