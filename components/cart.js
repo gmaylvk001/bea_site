@@ -1505,7 +1505,7 @@ return (
       onClose={() => setShowErrorModal(false)}
     />
 
-    <div className="w-full max-w-[1600px] mx-auto px-4 lg:px-2 py-6">
+    <div className="w-full max-w-full sm:max-w-[680px] md:max-w-[860px] lg:max-w-[1180px] xl:max-w-[1360px] 2xl:max-w-[1480px] mx-auto px-4 md:px-6 lg:px-8">
       {/* Header */}
       <h1 className="text-2xl font-bold text-[#0069c6] mb-5">
         My Cart{" "}
@@ -1564,7 +1564,7 @@ return (
                     )}
 
                      {/* Warranty Display — Desktop */}
-{item.warrantyData && (
+{item.warrantyData?.year > 0 && item.warrantyData?.price > 0 && (
   <div className="flex items-center gap-2 mt-2 bg-blue-50 border border-blue-100 rounded-md px-3 py-2">
     <span className="text-blue-600 text-sm">🛡️</span>
     <div>
@@ -1580,25 +1580,25 @@ return (
                   </div>
 
                   {/* Price + Qty */}
-                 <div className="flex flex-col items-end min-w-[180px]">
-  <h2 className="text-[28px] font-bold text-red-600 text-right">
+                 <div className="flex flex-col items-end min-w-[180px] ">
+  <h2 className="text-[28px] font-bold text-red-600 text-right mr-6">
     ₹{(item.price ?? 0).toFixed(2)}
   </h2>
-  <p className="text-xs text-gray-400 line-through text-right">
+  <p className="text-xs text-gray-400 line-through text-right mr-16">
     MRP ₹{(item.actual_price ?? item.price ?? 0).toFixed(2)}
   </p>
   {(item.actual_price > 0 && item.actual_price > item.price) && (
-  <p className="text-xs text-green-600 font-medium mb-5 text-right">
-    You Save ₹{(item.actual_price - item.price).toFixed(2)}
-    ({Math.round(((item.actual_price - item.price) / item.actual_price) * 100)}%)
+  <p className="text-xs mr-1 font-medium mb-5 text-right mt-1">
+    <span className="text-gray-400">You Save </span> <span className="text-green-600">₹{(item.actual_price - item.price).toFixed(2)}
+    ({Math.round(((item.actual_price - item.price) / item.actual_price) * 100)}%)</span>
   </p>
 )}
-       {item.warrantyData && (
-  <p className="text-xs text-blue-600 font-medium mt-1 text-right">
+   {item.warrantyData?.year > 0 && item.warrantyData?.price > 0 && (
+  <p className="text-xs mr-8 mb-2 text-blue-600 font-medium mt-1 text-right">
     + ₹{item.warrantyData.price?.toLocaleString("en-IN")} (Warranty)
   </p>
 )}
-                    <div className="border rounded-md overflow-hidden flex items-center h-[40px] w-[120px]">
+                    <div className="border rounded-md overflow-hidden flex items-center mr-8 h-[40px] w-[120px]">
                       <button
                         className="w-10 h-full text-lg disabled:opacity-40"
                         onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
@@ -1616,7 +1616,7 @@ return (
                     </div>
                     <button
                       onClick={() => confirmRemoveItem(item.productId)}
-                      className="text-gray-500 text-sm mt-4"
+                      className="text-gray-500 text-sm mt-3 mr-14"
                     >
                       🗑 Remove
                     </button>
@@ -1747,7 +1747,7 @@ return (
                     </p>
                   )}
                   {/* Mobile — Warranty Display */}
-{item.warrantyData && (
+{item.warrantyData?.year > 0 && item.warrantyData?.price > 0 && (
   <div className="flex items-center gap-2 mt-2 bg-blue-50 border border-blue-100 rounded-md px-3 py-2">
     <span className="text-blue-600 text-sm">🛡️</span>
     <div>
@@ -1851,11 +1851,11 @@ return (
 
        <div className="flex flex-col gap-3 text-sm text-gray-700">
   <div className="flex justify-between">
-    <span>Product Price (MRP)</span>
+    <span>Product Price</span>
     <span className="font-semibold text-gray-900">₹{calculateMRP().toFixed(2)}</span>
   </div>
   <div className="flex justify-between">
-    <span>Discount</span>
+    <span className="text-green-600">Discount</span>
     <span className="font-semibold text-green-600">-₹{calculateItemDiscount().toFixed(2)}</span>
   </div>
   <hr className="border-gray-200" />
@@ -2000,14 +2000,25 @@ return (
 
            <div className="grid grid-cols-1 gap-3 text-sm text-gray-700">
   <div className="flex justify-between items-center">
-    <span>Product Price (MRP)</span>
+    <span>Product Price</span>
     <span className="font-semibold text-gray-900">₹{calculateMRP().toFixed(2)}</span>
   </div>
   <div className="flex justify-between items-center">
-    <span>Discount</span>
+    <span className="text-green-600">Discount</span>
     <span className="font-semibold text-green-600">-₹{calculateItemDiscount().toFixed(2)}</span>
   </div>
   <hr className="border-gray-200" />
+  
+  {cartData.items.some(item => item.warrantyData?.year > 0 && item.warrantyData?.price > 0) && (
+    <div className="flex justify-between items-center">
+      <span>Extended Warranty</span>
+      <span className="font-semibold text-blue-600">
+        + ₹{cartData.items
+          .reduce((sum, item) => sum + (item.warrantyData?.price || 0), 0)
+          .toLocaleString("en-IN")}
+      </span>
+    </div>
+  )}
   <div className="flex justify-between items-center">
     <span>Subtotal</span>
     <span className="font-semibold text-gray-900">₹{calculateSubtotal().toFixed(2)}</span>
