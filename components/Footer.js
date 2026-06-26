@@ -570,7 +570,7 @@ const Footer = () => {
   <div className="container mx-auto px-4">
 
     {/* Changed to 1 column on mobile, 4 on tablet, 10 on desktop */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-y-10 gap-x-4 text-sm">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-y-10 gap-x-6 text-sm">
 
       {groupedCategories.main.slice(0, 5).map((main) => {
         const Icon =
@@ -581,10 +581,10 @@ const Footer = () => {
             key={main._id}
             className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0"
           >
-            <h4 className="flex items-center gap-2 font-semibold uppercase mb-4 whitespace-nowrap overflow-hidden text-ellipsis">
-              <Icon size={18} className="shrink-0" />
-              <span className="text-[13px]">{main.category_name}</span>
-            </h4>
+           <h4 className="flex items-center gap-2 font-semibold uppercase mb-4 flex-wrap">
+  <Icon size={18} className="shrink-0" />
+  <span className="text-[13px] leading-snug">{main.category_name}</span>
+</h4>
 
             <ul className="space-y-2 text-gray-300 text-sm">
               {(groupedCategories.subs[main._id] || [])
@@ -592,8 +592,8 @@ const Footer = () => {
                 .map((sub) => (
                   <li
                     key={sub._id}
-                    className="whitespace-nowrap overflow-hidden text-ellipsis hover:text-white transition-colors"
-                  >
+  className="hover:text-white transition-colors"
+>
                     <Link
                       href={`/category/${main.category_slug}/${sub.category_slug}`}
                     >
