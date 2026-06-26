@@ -238,8 +238,8 @@ const opportunities = [
 
   return (
     <>
-      <section className="relative overflow-hidden bg-gradient-to-r from-[#001b5e] via-[#002b8f] to-[#003ccf]">
-  <div className="max-w-12xl mx-auto px-4 md:px-6">
+     <section className="relative overflow-hidden bg-gradient-to-r from-[#001b5e] via-[#002b8f] to-[#003ccf]">
+ <div className="w-full px-4 md:px-8 lg:px-12">
 
     <div className="grid lg:grid-cols-2 items-center min-h-[480px]">
 
@@ -340,6 +340,9 @@ const opportunities = [
   </div>
 </section>
 
+   
+    <div className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 lg:px-8">
+     
 <section className="py-3 bg-white">
 <div className="max-w-12xl mx-auto px-4 md:px-6">
 
@@ -710,6 +713,7 @@ const opportunities = [
 
   </div>
 </section>
-    </>
+    </div>
+     </>
   );
 }
