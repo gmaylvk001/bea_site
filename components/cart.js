@@ -1505,7 +1505,7 @@ return (
       onClose={() => setShowErrorModal(false)}
     />
 
-    <div className="w-full px-4 lg:px-2 py-6">
+    <div className="w-full max-w-[1600px] mx-auto px-4 lg:px-2 py-6">
       {/* Header */}
       <h1 className="text-2xl font-bold text-[#0069c6] mb-5">
         My Cart{" "}
@@ -1562,6 +1562,21 @@ return (
                         })}
                       </ul>
                     )}
+
+                     {/* Warranty Display — Desktop */}
+{item.warrantyData && (
+  <div className="flex items-center gap-2 mt-2 bg-blue-50 border border-blue-100 rounded-md px-3 py-2">
+    <span className="text-blue-600 text-sm">🛡️</span>
+    <div>
+      <p className="text-xs font-semibold text-blue-700">
+        {item.warrantyData.year} Year Extended Warranty
+      </p>
+      <p className="text-xs text-gray-500">
+        ₹{item.warrantyData.price?.toLocaleString("en-IN")}
+      </p>
+    </div>
+  </div>
+)}
                   </div>
 
                   {/* Price + Qty */}
@@ -1576,6 +1591,11 @@ return (
   <p className="text-xs text-green-600 font-medium mb-5 text-right">
     You Save ₹{(item.actual_price - item.price).toFixed(2)}
     ({Math.round(((item.actual_price - item.price) / item.actual_price) * 100)}%)
+  </p>
+)}
+       {item.warrantyData && (
+  <p className="text-xs text-blue-600 font-medium mt-1 text-right">
+    + ₹{item.warrantyData.price?.toLocaleString("en-IN")} (Warranty)
   </p>
 )}
                     <div className="border rounded-md overflow-hidden flex items-center h-[40px] w-[120px]">
@@ -1726,6 +1746,20 @@ return (
                       Coupon Discount: -₹{item.discount.toFixed(2)}
                     </p>
                   )}
+                  {/* Mobile — Warranty Display */}
+{item.warrantyData && (
+  <div className="flex items-center gap-2 mt-2 bg-blue-50 border border-blue-100 rounded-md px-3 py-2">
+    <span className="text-blue-600 text-sm">🛡️</span>
+    <div>
+      <p className="text-xs font-semibold text-blue-700">
+        {item.warrantyData.year} Year Extended Warranty
+      </p>
+      <p className="text-xs text-gray-500">
+        + ₹{item.warrantyData.price?.toLocaleString("en-IN")}
+      </p>
+    </div>
+  </div>
+)}
                 </div>
 
                 {/* 4. Quantity + Wishlist + Remove */}
@@ -1815,7 +1849,7 @@ return (
           <div className="lg:hidden mt-2 border border-gray-200 rounded-lg p-4 space-y-4 bg-white">
             <h3 className="text-sm font-bold text-gray-700 tracking-wide">PRICE DETAILS</h3>
 
-         <div className="flex flex-col gap-3 text-sm text-gray-700">
+       <div className="flex flex-col gap-3 text-sm text-gray-700">
   <div className="flex justify-between">
     <span>Product Price (MRP)</span>
     <span className="font-semibold text-gray-900">₹{calculateMRP().toFixed(2)}</span>
@@ -1825,6 +1859,16 @@ return (
     <span className="font-semibold text-green-600">-₹{calculateItemDiscount().toFixed(2)}</span>
   </div>
   <hr className="border-gray-200" />
+  {cartData.items.some(item => item.warrantyData) && (
+    <div className="flex justify-between items-center">
+      <span>Extended Warranty</span>
+      <span className="font-semibold text-blue-600">
+        + ₹{cartData.items
+          .reduce((sum, item) => sum + (item.warrantyData?.price || 0), 0)
+          .toLocaleString("en-IN")}
+      </span>
+    </div>
+  )}
   <div className="flex justify-between">
     <span>Subtotal</span>
     <span className="font-semibold text-gray-900">₹{calculateSubtotal().toFixed(2)}</span>
