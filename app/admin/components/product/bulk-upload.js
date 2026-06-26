@@ -48,7 +48,9 @@ export default function BulkUploadPage() {
   const [dynamic_filter_upload, setDynamic_filter_upload] = useState(null);
   const [warrantyFile, setWarrantyFile] = useState(null);
   const [isWarrantyUploadLoading, setIsWarrantyUploadLoading] = useState(false);
-
+const [warrantyMapFile, setWarrantyMapFile] = useState(null);
+const [isWarrantyMapLoading, setIsWarrantyMapLoading] = useState(false);
+const warrantyMapFileRef = useRef(null);
   const notifiedRef = useRef(false);
 const fileInputRef = useRef(null);
 const fileBulkParticularInputRef = useRef(null);
@@ -79,6 +81,7 @@ const router = useRouter();
     setImageZips(null);
     setOverviewZip(null);
     setWarrantyFile(null);
+    setWarrantyMapFile(null);
 
     // clear flags and messages
     setIsLoading(false);
@@ -1455,6 +1458,50 @@ const handleWarrantyBulkUpload = async (e) => {
   }
 };
 
+const handleWarrantyMapUpload = async (e) => {
+  e.preventDefault();
+
+  if (!warrantyMapFile) {
+    showToast("error", "Please upload a valid Excel (.xlsx) file.");
+    return;
+  }
+
+  if (!validateFilterFile(warrantyMapFile)) {
+    showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", warrantyMapFile);
+
+  setIsWarrantyMapLoading(true);
+
+  try {
+    const res = await fetch("/api/warranties/bulk-warranty-map", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast(
+        "success",
+        `Warranty Mapping Done! Updated: ${data.updated}${data.notFound?.length ? `, Not Found: ${data.notFound.length}` : ""}`
+      );
+    } else {
+      showToast("error", data.error || "Upload failed");
+    }
+  } catch (err) {
+    console.error("Warranty map upload error:", err);
+    showToast("error", "Upload failed. Please try again.");
+  } finally {
+    setIsWarrantyMapLoading(false);
+    setWarrantyMapFile(null);
+    if (warrantyMapFileRef.current) warrantyMapFileRef.current.value = "";
+  }
+};
+
   const sections = [
     { id: "section-product-overview", label: "Product - All Details Upload", image: "/uploads/files/Product_all_upload_first_box.png" },
     { id: "section-filter-upload", label: "Filter Values Upload", image: "/uploads/files/Filter_Bulk_Upload_second_box.png" },
@@ -1484,6 +1531,7 @@ const handleWarrantyBulkUpload = async (e) => {
     { id: "product-added-bulk-addons-frequentlybought-relatedproducts", label: "Add Frequently Addons and Related Products", image: "/uploads/files/bulk_upload_for_product_rightside_datas.png" },
     { id: "itemcode-product-bulk-upload-delete-filters", label: "Delete Filters For Product", image: "/uploads/files/delete_filters_for_product_bulk_upload.png" },
      {id:"warranty-bulk-upload", label: "Warranty Bulk Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
+     { id: "warranty-map-bulk-upload", label: "Product Warranty Mapping Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
 
   ];
 
@@ -2455,6 +2503,7 @@ const handleWarrantyBulkUpload = async (e) => {
   onClick={(e) => {
     e.target.value = "";
     setWarrantyFile(null);
+
   }}
   onChange={(e) => setWarrantyFile(e.target.files?.[0] || null)}
   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -2499,6 +2548,90 @@ const handleWarrantyBulkUpload = async (e) => {
           </>
         ) : (
           "Upload Warranties"
+        )}
+      </button>
+    </div>
+  </form>
+)}
+
+{/* Warranty Map Bulk Upload */}
+{selectedSection === "warranty-map-bulk-upload" && (
+  <form
+    id="warranty-map-bulk-upload"
+    onSubmit={handleWarrantyMapUpload}
+    className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8"
+  >
+    <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+      <div className="mb-4">
+        <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
+          Product Warranty Mapping Upload
+        </h2>
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Excel / CSV File
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Columns: <code className="bg-gray-100 px-1 rounded">product_item_code</code> and{" "}
+          <code className="bg-gray-100 px-1 rounded">warranty_item_codes</code> (comma separated)
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <input
+          type="file"
+          accept=".xlsx,.csv"
+          ref={warrantyMapFileRef}
+          onClick={(e) => {
+            e.target.value = "";
+            setWarrantyMapFile(null);
+          }}
+          onChange={(e) => setWarrantyMapFile(e.target.files?.[0] || null)}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          required
+        />
+
+        {/* Download Template */}
+        <button
+          type="button"
+          onClick={() => {
+            const XLSX = require("xlsx");
+            const ws = XLSX.utils.aoa_to_sheet([
+              ["product_item_code", "warranty_item_codes"],
+              ["TV001", "PRAC1NXSS17,PRAC2NXSS17"],
+              ["AC002", "PRAC3NXSS17"],
+            ]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Warranty Mapping");
+            XLSX.writeFile(wb, "warranty_mapping_template.xlsx");
+          }}
+          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Template
+        </button>
+      </div>
+    </div>
+
+    <div className="flex mt-5">
+      <button
+        type="submit"
+        disabled={isWarrantyMapLoading}
+        className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center"
+      >
+        {isWarrantyMapLoading ? (
+          <>
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            Uploading...
+          </>
+        ) : (
+          "Upload Warranty Mapping"
         )}
       </button>
     </div>

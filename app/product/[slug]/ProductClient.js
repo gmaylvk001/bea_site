@@ -75,6 +75,8 @@ export default function ProductClient() {
   const [recentlyViewedProducts, setRecentlyViewedProducts] = useState([]);
   const [isDesktop, setIsDesktop] = useState(false);
 const [addOnProducts, setAddOnProducts] = useState([]);
+ const [warranties, setWarranties] = useState([]);
+const [selectedWarrantyData, setSelectedWarrantyData] = useState(null);
 
 const addOnIds = Array.isArray(product?.add_ons)
   ? product.add_ons.map(id => id.toString())
@@ -172,6 +174,15 @@ useEffect(() => {
   window.addEventListener("resize", handleResize);
   return () => window.removeEventListener("resize", handleResize);
 }, []);
+
+useEffect(() => {
+  if (!product?.warranty_ids || product.warranty_ids.length === 0) return;
+
+ 
+  fetch(`/api/warranties/by-item-nos?item_nos=${product.warranty_ids.join(",")}`)
+    .then((r) => r.json())
+    .then((d) => setWarranties(d.warranties || []));
+}, [product?.warranty_ids]);
 const handleDecrease = () => {
   setQuantity(Math.max(1, quantity - 1));
   setQuantityWarning(false); // clear warning when decreasing
@@ -354,7 +365,8 @@ const handleBuyNow = async () => {
         quantity,
         selectedWarranty: selectedWarranty,
         selectedExtendedWarranty: selectedExtendedWarranty,
-        ...(guestCartId && { guestCartId }), // ✅ include only if guest
+        warrantyData: selectedWarrantyData,
+        ...(guestCartId && { guestCartId }),
       }),
     });
 
@@ -459,7 +471,7 @@ const handleBuyNow = async () => {
 
 
 
-const warranties = product?.extend_warranty || [];
+// const warranties = product?.extend_warranty || [];
 
 
 
@@ -1057,7 +1069,18 @@ const fetchBrand = async () => {
     {/* Stock */}
     <div className="mt-2">
       {product.stock_status === "In Stock" && product.quantity > 0 ? (
-        <span className="text-green-600 font-semibold text-sm">✓ In Stock</span>
+        <div className="flex flex-col gap-0.5">
+       <div className="flex items-center gap-3">
+  <span className="text-green-600 font-semibold text-sm">✓ In Stock</span>
+  {product.quantity <= 5 ? (
+    <span className="text-xs font-semibold text-red-500">Only {product.quantity} item{product.quantity > 1 ? 's' : ''} left!</span>
+  ) : product.quantity <= 10 ? (
+    <span className="text-xs font-semibold text-green-600">Only {product.quantity} items left</span>
+  ) : (
+    <span className="text-xs font-semibold text-green-600">{product.quantity} items available</span>
+  )}
+</div>
+        </div>
       ) : (
         <span className="text-red-600 font-semibold text-sm">Out of Stock</span>
       )}
@@ -1113,6 +1136,7 @@ const fetchBrand = async () => {
               extendedWarranty={selectedWarrantyAmount}
               selectedFrequentProducts={selectedFrequentProducts}
               selectedRelatedProducts={selectedRelatedProducts}
+               warrantyData={selectedWarrantyData}
               buttonLabel="Add to Cart"
               buttonClassName="bg-white hover:bg-blue-50 text-blue-700"
                 movement={product.movement}         
@@ -1134,6 +1158,60 @@ const fetchBrand = async () => {
   </div>
 )}
 </div>
+  {/* Extended Warranty — Mobile */}
+{warranties.length > 0 && (
+  <div className="border border-gray-200 rounded-lg p-4 mt-3">
+    <div className="flex items-center gap-2 mb-3">
+      <FaShield className="text-blue-700 w-5 h-5" />
+      <h3 className="font-bold text-sm text-gray-800">Add Extended Warranty</h3>
+    </div>
+
+    {/* No Warranty option */}
+    <label className="flex items-center justify-between py-2 border-b border-gray-100 cursor-pointer">
+      <div className="flex items-center gap-2">
+        <input
+          type="radio"
+          name="warranty_mobile"
+          checked={selectedWarrantyData === null}
+          onChange={() => {
+              setSelectedWarrantyData(null);
+              setSelectedWarrantyAmount(0);
+          }}
+          className="accent-blue-600"
+        />
+        <span className="text-sm text-gray-700">No Extended Warranty</span>
+      </div>
+    </label>
+
+    {/* Warranty options */}
+    {warranties
+      .sort((a, b) => a.year - b.year)
+     
+      .map((w) => (
+        <label
+          key={w.item_no}
+          className="flex items-center justify-between py-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
+        >
+          <div className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="warranty_mobile"
+              checked={selectedWarrantyData?.item_no === w.item_no}
+              onChange={() => {
+                    setSelectedWarrantyData(w);
+                     setSelectedWarrantyAmount(w.price);
+                       }}
+              className="accent-blue-600"
+            />
+            <span className="text-sm text-gray-700">{w.year} Year Extended Warranty</span>
+          </div>
+          <span className="text-sm font-semibold text-gray-800">
+            ₹ {w.price.toLocaleString("en-IN")}
+          </span>
+        </label>
+      ))}
+  </div>
+)}
   {/* 4. ProductDetailsSection (Highlights, Overview, Specs, Reviews, FAQ) */}
   <div className="mt-4">
     <ProductDetailsSection
@@ -1254,10 +1332,11 @@ const fetchBrand = async () => {
         extendedWarranty={selectedWarrantyAmount}
         selectedFrequentProducts={selectedFrequentProducts}
         selectedRelatedProducts={selectedRelatedProducts}
+         warrantyData={selectedWarrantyData}
         buttonLabel="Add Selected to Cart"
         buttonClassName="bg-blue-700 text-white"
-          movement={product.movement}         // ADD
-          productName={product.name}          // ADD
+          movement={product.movement}         
+          productName={product.name}          
           productSlug={product.slug}  
       />
     </div>
@@ -1514,12 +1593,16 @@ const fetchBrand = async () => {
                 <div className="mb-3 space-y-1">
                   <div className="flex items-center gap-2">
                     {product.stock_status === "In Stock" && product.quantity > 0 ? (
-                      <span className="flex items-center gap-1 text-green-600 font-semibold text-sm">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        In Stock
-                      </span>
+  <div className="flex items-center gap-3">
+    <span className="text-green-600 font-semibold text-sm">✓ In Stock</span>
+    {product.quantity <= 5 ? (
+      <span className="text-base font-semibold text-red-500">Only {product.quantity} item{product.quantity > 1 ? 's' : ''} left!</span>
+    ) : product.quantity <= 10 ? (
+      <span className="text-base font-semibold text-green-600">Only {product.quantity} items left</span>
+    ) : (
+      <span className="text-base font-semibold text-green-600">{product.quantity} items available</span>
+    )}
+  </div>
                     ) : (
                       <span className="text-red-600 font-semibold text-sm">Out of Stock</span>
                     )}
@@ -1577,6 +1660,7 @@ const fetchBrand = async () => {
                         extendedWarranty={selectedWarrantyAmount}
                         selectedFrequentProducts={selectedFrequentProducts}
                         selectedRelatedProducts={selectedRelatedProducts}
+                         warrantyData={selectedWarrantyData}
                         buttonLabel="Add to Cart"
                         buttonClassName="bg-white hover:bg-blue-50 text-blue-700"
                            movement={product.movement}         
@@ -1628,6 +1712,79 @@ const fetchBrand = async () => {
   <div className="border border-gray-300 rounded-lg shadow-sm bg-white p-4 overflow-hidden w-full">
     <h3 className="font-semibold text-gray-800 text-sm mb-3">Available Offers</h3>
     <RazorpayOffers amount={Number(product.special_price) || Number(product.price)} />
+  </div>
+)}
+  {/* Extended Warranty — Desktop Sidebar */}
+{warranties.length > 0 && (
+  <div className="border border-gray-200 rounded-lg shadow-sm bg-white p-4">
+    <div className="flex items-center gap-2 mb-3">
+      <FaShield className="text-blue-700 w-5 h-5" />
+      <div>
+        <h3 className="font-bold text-sm text-gray-800">Add Extended Warranty</h3>
+        <p className="text-xs text-blue-600 underline cursor-pointer">
+          Why is Extended Warranty Important?
+        </p>
+      </div>
+    </div>
+
+    {/* No Warranty */}
+    <label className="flex items-center justify-between py-2 border-b border-gray-100 cursor-pointer">
+      <div className="flex items-center gap-2">
+        <input
+          type="radio"
+          name="warranty_desktop"
+          checked={selectedWarrantyData === null}
+          onChange={() => {
+              setSelectedWarrantyData(null);
+              setSelectedWarrantyAmount(0); 
+          }}
+          className="accent-blue-600"
+        />
+        <span className="text-sm text-gray-700">No Extended Warranty</span>
+      </div>
+    </label>
+
+    {/* Warranty Options */}
+    {warranties
+      .sort((a, b) => a.year - b.year)
+      .map((w, index) => (
+        <label
+          key={w.item_no}
+          className="flex items-center justify-between py-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
+        >
+          <div className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="warranty_desktop"
+              checked={selectedWarrantyData?.item_no === w.item_no}
+             onChange={() => {
+                         setSelectedWarrantyData(w);
+                         setSelectedWarrantyAmount(w.price);
+                            }}
+              className="accent-blue-600"
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-700">
+                {w.year} Year Extended Warranty
+              </span>
+              {/* Popular / Best Value badge */}
+              {index === warranties.length - 2 && warranties.length > 2 && (
+                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">
+                  Popular
+                </span>
+              )}
+              {index === warranties.length - 1 && warranties.length > 1 && (
+                <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-medium">
+                  Best Value
+                </span>
+              )}
+            </div>
+          </div>
+          <span className="text-sm font-semibold text-gray-800">
+            ₹ {w.price.toLocaleString("en-IN")}
+          </span>
+        </label>
+      ))}
   </div>
 )}
             {featuredProducts?.filter(item => item.stock_status === "In Stock").length > 0 && (
@@ -1759,6 +1916,7 @@ const fetchBrand = async () => {
                   extendedWarranty={selectedWarrantyAmount}
                   selectedFrequentProducts={selectedFrequentProducts}
                   selectedRelatedProducts={selectedRelatedProducts}
+                   warrantyData={selectedWarrantyData}
                   buttonLabel="Add Selected to Cart"
                   buttonClassName="bg-blue-700 text-white"
                     movement={product.movement}        

@@ -37,6 +37,11 @@ add_ons: {
   ref: "Product",
   default: [],
 },
+
+warranty_ids: {
+  type: [String],
+  default: [],
+},
   warranty: Number,
   extended_warranty:Number,
   extend_warranty: {

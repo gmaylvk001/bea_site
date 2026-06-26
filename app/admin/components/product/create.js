@@ -9,6 +9,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { components } from "react-select";
 import { Check } from "react-feather";
+import WarrantySearchInput from "@/app/admin/components/WarrantySearchInput";
 
 
 const steps = [
@@ -57,7 +58,8 @@ export default function AddProductPage({ mode = "add", productData = null, produ
     warranty: "",
     extended_warranty: "",
     product_highlights: [],
-    search_keywords : ""
+    search_keywords : "",
+     warranty_ids: [],
   });
 
     const [variant, setVariant] = useState([{
@@ -372,7 +374,9 @@ useEffect(() => {
         : [null],
       overviewImageFile: productData.overviewImageFile || [null],
       featured_products: productData.featured_products || [],
-      removedOverviewImages: [] // Reset removed images
+      removedOverviewImages: [], // Reset removed images
+        warranty_ids: productData.warranty_ids || [],
+
     }));
 
     if(productData.sub_category){
@@ -2050,7 +2054,7 @@ const updatedFilter = Filter.map((group) => ({
     </div>
 
     {/* Extended Warranty Section */}
-    <div className="border p-4 rounded">
+    {/* <div className="border p-4 rounded">
   <label className="block text-sm font-medium text-gray-700 mb-2">Extended Warranty</label>
 
  {warranties.map((warranty, index) => (
@@ -2085,6 +2089,20 @@ const updatedFilter = Filter.map((group) => ({
   </div>
 ))}
 
+</div> */}
+    <div className="border p-4 rounded">
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Extended Warranty Plans
+  </label>
+  <p className="text-xs text-gray-500 mb-3">
+    Search by product description — 1yr / 2yr / 3yr / 4yr plans
+  </p>
+  <WarrantySearchInput
+    value={product.warranty_ids}
+    onChange={(ids) =>
+      setProduct((prev) => ({ ...prev, warranty_ids: ids }))
+    }
+  />
 </div>
 
 <div className="grid grid-cols-2 gap-4 border p-4 rounded">
