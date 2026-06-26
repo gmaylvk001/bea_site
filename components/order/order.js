@@ -305,6 +305,19 @@ export default function Order() {
                                 {order.order_item?.[0]?.name || 'Product'}
                                 {order.order_item?.length > 1 && ` + ${order.order_item.length - 1} more`}
                               </h3>
+                                      {/* Warranty Data */}
+{order.order_item?.some(item => item.warrantyData?.name) && (
+  <div className="mb-2">
+    {order.order_item.filter(item => item.warrantyData?.name).map((item, idx) => (
+      <div key={idx} className="flex items-center gap-1 text-sm text-blue-700 bg-blue-50 px-2 py-1 rounded-md w-fit mb-1">
+        🛡️ <span>{item.warrantyData.year} Yr Warranty</span>
+        <span className="text-gray-500">— {item.warrantyData.name}</span>
+        <span className="font-bold text-red-500 ml-1">₹{item.warrantyData.price}</span>
+      </div>
+    ))}
+  </div>
+)}
+                               
                               <p className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">₹{order.order_amount}</p>
                             </div>
 

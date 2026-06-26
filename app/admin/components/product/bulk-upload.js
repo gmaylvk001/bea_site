@@ -1523,15 +1523,15 @@ const handleWarrantyMapUpload = async (e) => {
     { id: "section-status-bulk", label: "Status Bulk Upload", image: "/uploads/files/Status_bulk_upload_tenth_box_image.png" },
      { id: "section-stock-status-bulk-upload", label: "Stock Status Upload", image: "/uploads/files/Stock_status_bulk_upload.png" },
     //  { id: "section-delete-product-itemcode-upload", label: "Item Code Delete Bulk Upload", image: "/uploads/files/item_code_delete_bulk_upload.png" },
-    { id: "extended-warrenty-upload", label: "Extended Warrenty Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
+    // { id: "extended-warrenty-upload", label: "Extended Warrenty Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
     { id: "Key-Features", label: "Key Features", image: "/uploads/files/Key features.jpg" },
     { id: "product_name", label: "Product name only", image: "/uploads/files/Product Name.png" },
     { id: "product_description", label: "Product Description", image: "/uploads/files/product_description.png" },
     { id: "dynamic_filter_upload", label: "Dynamic Filter Upload", image: "/uploads/files/dynamic_filter.png" },
     { id: "product-added-bulk-addons-frequentlybought-relatedproducts", label: "Add Frequently Addons and Related Products", image: "/uploads/files/bulk_upload_for_product_rightside_datas.png" },
     { id: "itemcode-product-bulk-upload-delete-filters", label: "Delete Filters For Product", image: "/uploads/files/delete_filters_for_product_bulk_upload.png" },
-     {id:"warranty-bulk-upload", label: "Warranty Bulk Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
-     { id: "warranty-map-bulk-upload", label: "Product Warranty Mapping Upload", image: "/uploads/files/Extended_warrenty_upload_eleventh_box_image.png" },
+     {id:"warranty-bulk-upload", label: "Warranty Bulk Upload", image: "/uploads/files/warranty-bulk-upload.png" },
+     { id: "warranty-map-bulk-upload", label: "Product Warranty Mapping Upload", image: "/uploads/files/warranty-map-bulk-upload.png" },
 
   ];
 
@@ -2670,7 +2670,7 @@ const handleWarrantyMapUpload = async (e) => {
             )} */}
 
             {/* Section 11: Extended warrenty Upload */}
-            {selectedSection === "extended-warrenty-upload" && (
+            {/* {selectedSection === "extended-warrenty-upload" && (
               <form id="extended-warrenty-upload" ref={filterValueFormRef} onSubmit={(e) => handleSubmit(e, "map_product_brands")} className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8">
                 <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
                   <div className="mb-4">
@@ -2725,7 +2725,7 @@ const handleWarrantyMapUpload = async (e) => {
                   </div>
                 </div>
               </form>
-            )}
+            )} */}
 
 
             {selectedSection === "Key-Features" && (

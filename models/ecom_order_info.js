@@ -33,6 +33,13 @@ const OrderSchema = new mongoose.Schema(
       store_id: { type:String },
       warranty: { type:Number },
       extendedWarranty:{ type: Number },
+        warrantyData: {
+        item_no: { type: String, default: null },
+        name: { type: String, default: null },
+        year: { type: Number, default: null },
+        price: { type: Number, default: null },
+       
+      },
       image: { type:String },
       original_quantity:{ type: Number },
       discount: { type:Number },

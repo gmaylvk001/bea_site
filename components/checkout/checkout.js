@@ -848,12 +848,13 @@ console.log("comments:", comments);
               order_username: `${addressData.firstName} ${addressData.lastName}`,
               order_phonenumber: addressData.phonenumber,
               email_address: addressData.email,
-               order_item: cartItems.map(item => ({
-           ...item,
-         coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
-      ? item.coupondetails.map(c => c.offer_code || String(c))
-          : []
-           })),
+             order_item: cartItems.map(item => ({
+  ...item,
+  warrantyData: item.warrantyData || null,
+  coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
+    ? item.coupondetails.map(c => c.offer_code || String(c))
+    : []
+})),
               order_amount: totalAmount,
               order_deliveryaddress: deliveryAddress,
               // COMMENT SAVE
@@ -983,11 +984,12 @@ console.log("comments:", comments);
           order_phonenumber: addressData.phonenumber,
           email_address: addressData.email,
           order_item: cartItems.map(item => ({    
-                  ...item,
-         coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
-         ? item.coupondetails.map(c => c.offer_code || String(c))
-           : []
-          })),
+  ...item,
+  warrantyData: item.warrantyData || null,
+  coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
+    ? item.coupondetails.map(c => c.offer_code || String(c))
+    : []
+})),
           order_amount: totalAmount,
           order_deliveryaddress: deliveryAddress,
           // COMMENT SAVE
@@ -1146,9 +1148,12 @@ console.log("comments:", comments);
         // Send confirmation emails in background — errors here must NOT affect the success flow
         try {
           const name = addressData.firstName + ' ' + addressData.lastName;
-          const itemsHtml = orderData.order.order_item.map(item =>
-            `<li>${item.name} - ₹${Number(item.price).toFixed(2)} x ${item.quantity}</li>`
-          ).join('');
+          const itemsHtml = cartItems.map(item => {
+  const warrantyLine = item.warrantyData
+    ? ` | 🛡️ ${item.warrantyData.year} Year Extended Warranty - Rs.${Number(item.warrantyData.price).toFixed(2)}`
+    : '';
+  return `<li>${item.name} - Rs.${Number(item.price).toFixed(2)} x ${item.quantity}${warrantyLine}</li>`;
+}).join('');
           const itemHtml = `<ul style="padding-left: 20px; color: #555555;">${itemsHtml}</ul>`;
           const order_amount = `₹${Number(orderData.order.order_amount).toFixed(2)}`;
 
@@ -1164,17 +1169,20 @@ console.log("comments:", comments);
             body: emailFormData,
           });
 
-          const adminItemsHtml = orderData.order.order_item.map(item =>
-            `<li>${item.name} - ₹${Number(item.price).toFixed(2)} x ${item.quantity}</li>`
-          ).join('');
+          const adminItemsHtml = cartItems.map(item => {
+  const warrantyLine = item.warrantyData
+    ? ` | 🛡️ ${item.warrantyData.year} Year Extended Warranty - Rs.${Number(item.warrantyData.price).toFixed(2)}`
+    : '';
+  return `<li>${item.name} - Rs.${Number(item.price).toFixed(2)} x ${item.quantity}${warrantyLine}</li>`;
+}).join('');
           const adminItemsTableHtml = `<ul style="padding-left: 20px; color: #555555;">${adminItemsHtml}</ul>`;
 
           const adminemailFormData = new FormData();
           adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
           adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
 
-           const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
-            // const emailadmin = ['hariharann2026@gmail.com'];
+          //  const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
+            const emailadmin = ['hariharann2026@gmail.com'];
           for (const adminEmail of emailadmin) {
             adminemailFormData.set("email", adminEmail);
             await fetch("https://bea.eygr.in/api/email/send-msg", {
@@ -1732,14 +1740,15 @@ console.log("comments:", comments);
                   </span>
                 </div>
               )}
-              {cartItems.some(item => item.extendedWarranty > 0) && (
-                <div className="flex justify-between text-gray-800 font-semibold pt-2 mt-2">
-                  <span className="text-[#0069c6] hover:text-[#00badb] text-xs sm:text-sm font-medium">Extended Warranty:</span>
-                  <span className="text-sm whitespace-nowrap text-base font-semibold text-red-600">
-                    ₹{cartItems.reduce((sum, item) => sum + (item.extendedWarranty || 0), 0).toFixed(2)}
-                  </span>
-                </div>
-              )}
+          
+{cartItems.some(item => item.warrantyData) && (
+  <div className="flex justify-between text-gray-800 font-semibold pt-2 mt-2">
+    <span className="text-[#0069c6] text-xs sm:text-sm font-medium">Extended Warranty Plan:</span>
+    <span className="text-sm font-semibold text-red-600">
+      ₹{cartItems.reduce((sum, item) => sum + (item.warrantyData?.price || 0), 0).toFixed(2)}
+    </span>
+  </div>
+)}
 
 
               {/* Discount Row */}

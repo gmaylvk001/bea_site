@@ -1272,7 +1272,8 @@ const calculateSubtotal = () => {
 
         discount: item.discount || 0,
 
-        image: item.image
+        image: item.image,
+         warrantyData: item.warrantyData || null,
 
       }))
 

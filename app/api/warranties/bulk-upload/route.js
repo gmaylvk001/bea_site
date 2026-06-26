@@ -19,18 +19,16 @@ export async function POST(request) {
   const sheet = workbook.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
-  const warranties = rows
-    .map((row) => ({
-      item_no: (row["Item No."] || "").toString().trim(),
-      name: row["Item Description"] || "",
-      brand: row["Brand"] || "",
-      qbc_code: (row["QBC CODE"] || "").toString().trim(),
-      year: Number(row["YEAR"]) || 0,
-      price: Number(row["SPL PRICE"]) || 0,
-      category: row["Property"] || "",
-      status: row["Status"] || "Active",
-    }))
-    .filter((w) => w.item_no);
+const warranties = rows
+  .map((row) => ({
+    item_no: (row["Item No."] || "").toString().trim(),
+    name: row["Item Description"] || "",
+    brand: row["Brand"] || "",
+    year: Number(row["YEAR"]) || 0,
+    price: Number(row["SPL PRICE"]) || 0,
+    status: row["Status"] || "Active",
+  }))
+  .filter((w) => w.item_no);
   
 
   if (warranties.length === 0) {
