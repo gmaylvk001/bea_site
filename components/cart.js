@@ -1589,13 +1589,13 @@ return (
     MRP ₹{(item.actual_price ?? item.price ?? 0).toFixed(2)}
   </p>
   {(item.actual_price > 0 && item.actual_price > item.price) && (
-  <p className="text-xs mr-1 font-medium mb-5 text-right mt-1">
+  <p className="text-xs mr-3 font-medium mb-5 text-right mt-1">
     <span className="text-gray-400">You Save </span> <span className="text-green-600">₹{(item.actual_price - item.price).toFixed(2)}
     ({Math.round(((item.actual_price - item.price) / item.actual_price) * 100)}%)</span>
   </p>
 )}
    {item.warrantyData?.year > 0 && item.warrantyData?.price > 0 && (
-  <p className="text-xs mr-8 mb-2 text-blue-600 font-medium mt-1 text-right">
+  <p className="text-xs mr-8 mb-1 text-blue-600 font-medium mt-1 text-right">
     + ₹{item.warrantyData.price?.toLocaleString("en-IN")} (Warranty)
   </p>
 )}
