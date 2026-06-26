@@ -434,7 +434,9 @@ const handleBuyNow = async () => {
         price: resolvePrice(product),           // actual selling price for checkout subtotal
         quantity,
         warranty: selectedWarranty || 0,
-        extendedWarranty: selectedWarrantyAmount || 0, // use the warranty radio state
+        extendedWarranty: selectedWarrantyAmount || 0, 
+          warrantyData: selectedWarrantyData || null,
+       
       },
       ...selectedFrequentProducts.map((p) => ({
         ...p,
@@ -449,12 +451,12 @@ const handleBuyNow = async () => {
     ];
 
     const total = items.reduce((sum, item) => {
-      const basePrice = item.price * item.quantity;
-      const warrantyCost = (item.warranty || 0) * item.quantity;
-      const extendedCost = (item.extendedWarranty || 0) * item.quantity;
-      return sum + basePrice + warrantyCost + extendedCost;
-    }, 0);
-
+  const basePrice = item.price * item.quantity;
+  const warrantyCost = (item.warranty || 0) * item.quantity;
+  const extendedCost = (item.extendedWarranty || 0) * item.quantity;
+  const warrantyDataCost = (item.warrantyData?.price || 0) * item.quantity;
+  return sum + basePrice + warrantyCost + extendedCost + warrantyDataCost;
+}, 0);
     // ✅ Save Buy Now state so checkout can read the correct price
     localStorage.setItem(
       "buyNowData",
