@@ -30,7 +30,20 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
      if(isprice){
       return;
      }
-      if (isOpenBox) { setShowOpenBoxPopup(true); return; }
+      if (isOpenBox) {
+  if (productSlug) {
+    // Check if we're already on the product detail page
+    const isOnProductPage = window.location.pathname === `/product/${productSlug}`;
+    if (isOnProductPage) {
+      setShowOpenBoxPopup(true);
+    } else {
+      window.location.href = `/product/${productSlug}`;
+    }
+  } else {
+    setShowOpenBoxPopup(true);
+  }
+  return;
+}
       setIsLoading(true);
       // setAuthError('');
       setCartSuccess(false);
