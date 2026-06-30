@@ -29,6 +29,11 @@ export async function POST(req) {
       payment_status,
       user_adddeliveryid,
       email_address,
+      loyalty_points_redeemed,
+      loyalty_discount,
+      loyalty_redemption_token,
+      promotion_code_applied,
+       promotion_discount_applied,
     } = body;
 
     // Validate required fields
@@ -54,6 +59,11 @@ export async function POST(req) {
       email_address,
       order_status: order_status || "pending",
       payment_status: payment_status || "unpaid",
+      loyalty_points_redeemed: loyalty_points_redeemed || 0,
+          loyalty_discount: loyalty_discount || 0,
+      loyalty_redemption_token: loyalty_redemption_token || null,
+      promotion_code_applied: promotion_code_applied || null,
+     promotion_discount_applied: promotion_discount_applied || 0,
     };
 
     // Check if order already exists (match by order_number if provided, else user + pending order)

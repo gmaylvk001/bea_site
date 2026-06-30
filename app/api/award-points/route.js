@@ -17,10 +17,11 @@ export async function POST(req) {
       cartItems,
       loyaltyPointsRedeemedAmount,
       loyaltyPointsRedeemedCode,
-      paymentMode
+      paymentMode,
+      promotionCode,
+      promotionDiscount,
     } = body;
 
-    // Validate required fields
     if (!phoneNumber || !orderNumber || !orderAmount) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -28,7 +29,9 @@ export async function POST(req) {
       );
     }
 
-    // Truco API call
+   
+    console.log("AWARD-POINTS called for orderNumber:", orderNumber);
+
     const trucoRes = await fetch(
       `${process.env.TRUCO_BASE_URL}/external/transaction`,
       {
@@ -49,6 +52,8 @@ export async function POST(req) {
             sales_channel: "online",
             loyalty_points_redeemed_amount: loyaltyPointsRedeemedAmount || 0,
             loyalty_points_redeemed_code: loyaltyPointsRedeemedCode || "",
+            promotion_code_applied: promotionCode || "",
+            promotion_discount_applied: promotionDiscount || 0,
             line_items: cartItems.map((item) => ({
               product_code: item.item_code || String(item.id),
               product_name: item.name,
@@ -77,16 +82,21 @@ export async function POST(req) {
 
     const trucoData = await trucoRes.json();
     console.log("Truco response:", trucoData);
+    console.log("Truco invoice_number vs our orderNumber:", trucoData.invoice_number, "vs", orderNumber); // 🆕
 
     if (trucoData.success) {
-      // Order-ல points update பண்ணு
-      await EcomOrderInfo.findOneAndUpdate(
+      const updateResult = await EcomOrderInfo.findOneAndUpdate(
         { order_number: orderNumber },
         {
           loyalty_points_awarded: trucoData.points_awarded,
-          truco_transaction_id: trucoData.transaction_id
-        }
+          truco_transaction_id: trucoData.transaction_id,
+          promotion_code_applied: promotionCode || null,
+          promotion_discount_applied: promotionDiscount || 0,
+        },
+        { new: true }   
       );
+
+      console.log("DB update result:", updateResult ? "FOUND & UPDATED" : "ORDER NOT FOUND IN DB", "for orderNumber:", orderNumber); // 🆕
 
       return NextResponse.json({
         success: true,
@@ -135,7 +145,8 @@ export async function GET(req) {
       return NextResponse.json({
         success: true,
         points: data.currentPointsBalance || 0,
-        value: data.currentBalanceValue || 0
+        value: data.currentBalanceValue || 0,
+        pointsPerCurrencyUnit: data.pointsPerCurrencyUnit || null,
       });
     } else {
       return NextResponse.json({ success: false, points: 0 });

@@ -1233,8 +1233,9 @@ const calculateSubtotal = () => {
   };
 
   const proceedToCheckout = () => {
-
+  
   if (!cartData) return;
+  console.log("DEBUG appliedCoupon at checkout click:", appliedCoupon);
 
   // Calculate totals
 
@@ -2069,7 +2070,7 @@ return (
           Apply
         </button>
       </div>
-    ))}
+    ))}  
     
      <a href="https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"
       target="_blank"
