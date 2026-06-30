@@ -51,6 +51,9 @@ export default function BulkUploadPage() {
 const [warrantyMapFile, setWarrantyMapFile] = useState(null);
 const [isWarrantyMapLoading, setIsWarrantyMapLoading] = useState(false);
 const warrantyMapFileRef = useRef(null);
+const [pincodeFile, setPincodeFile] = useState(null);
+const [isPincodeUploadLoading, setIsPincodeUploadLoading] = useState(false);
+const pincodeFileRef = useRef(null);
   const notifiedRef = useRef(false);
 const fileInputRef = useRef(null);
 const fileBulkParticularInputRef = useRef(null);
@@ -82,7 +85,7 @@ const router = useRouter();
     setOverviewZip(null);
     setWarrantyFile(null);
     setWarrantyMapFile(null);
-
+    setPincodeFile(null);
     // clear flags and messages
     setIsLoading(false);
     setActiveUploadType(null);
@@ -1501,7 +1504,54 @@ const handleWarrantyMapUpload = async (e) => {
     if (warrantyMapFileRef.current) warrantyMapFileRef.current.value = "";
   }
 };
+    
+const handlePincodeUpload = async (e) => {
+  e.preventDefault();
 
+  if (!pincodeFile) {
+    showToast("error", "Please upload a valid Excel (.xlsx) file.");
+    return;
+  }
+  if (!validateFilterFile(pincodeFile)) {
+    showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", pincodeFile);
+
+  setIsPincodeUploadLoading(true);
+
+  try {
+    const res = await fetch("/api/pincode/bulk-upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast("success", `Pincode Upload Done! Updated: ${data.updated}, Skipped: ${data.skipped}`);
+    } else {
+      showToast("error", data.error || "Upload failed");
+    }
+  } catch (err) {
+    console.error("Pincode upload error:", err);
+    showToast("error", "Upload failed. Please try again.");
+  } finally {
+    setIsPincodeUploadLoading(false);
+    setPincodeFile(null);
+    if (pincodeFileRef.current) pincodeFileRef.current.value = "";
+  }
+};
+ const handlePincodeSampleDownload = () => {
+  const link = document.createElement("a");
+  link.href = `/uploads/files/BEA_Pincode_Sample.xlsx?t=${Date.now()}`;
+  link.download = "BEA_Pincode_Sample.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
   const sections = [
     { id: "section-product-overview", label: "Product - All Details Upload", image: "/uploads/files/Product_all_upload_first_box.png" },
     { id: "section-filter-upload", label: "Filter Values Upload", image: "/uploads/files/Filter_Bulk_Upload_second_box.png" },
@@ -1532,7 +1582,7 @@ const handleWarrantyMapUpload = async (e) => {
     { id: "itemcode-product-bulk-upload-delete-filters", label: "Delete Filters For Product", image: "/uploads/files/delete_filters_for_product_bulk_upload.png" },
      {id:"warranty-bulk-upload", label: "Warranty Bulk Upload", image: "/uploads/files/warranty-bulk-upload.png" },
      { id: "warranty-map-bulk-upload", label: "Product Warranty Mapping Upload", image: "/uploads/files/warranty-map-bulk-upload.png" },
-
+     { id: "pincode-serviceability-bulk-upload", label: "Pincode Serviceability Upload", image: "/uploads/files/warranty-map-bulk-upload.png" },
   ];
 
   return (
@@ -2632,6 +2682,73 @@ const handleWarrantyMapUpload = async (e) => {
           </>
         ) : (
           "Upload Warranty Mapping"
+        )}
+      </button>
+    </div>
+  </form>
+)}
+
+{selectedSection === "pincode-serviceability-bulk-upload" && (
+  <form
+    id="pincode-serviceability-bulk-upload"
+    onSubmit={handlePincodeUpload}
+    className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8"
+  >
+    <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+      <div className="mb-4">
+        <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
+          Pincode Serviceability Bulk Upload
+        </h2>
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Excel / CSV File
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Upload BEA pincode serviceability data. Columns: SAP Code, Branch Name, Branch Pincode, Serviceable Pincode, Distance (km), Nearest Branch Rank, Branch Address.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <input
+          type="file"
+          accept=".xlsx,.csv"
+          ref={pincodeFileRef}
+          onClick={(e) => { e.target.value = ""; setPincodeFile(null); }}
+          onChange={(e) => setPincodeFile(e.target.files?.[0] || null)}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          required
+        />
+      </div>
+      <button
+  type="button"
+  onClick={handlePincodeSampleDownload}
+  className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+>
+  <svg className="w-4 h-4 mt-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+  </svg>
+  Download Sample Format
+</button>
+    </div>
+
+    <div className="flex mt-5">
+      <button
+        type="submit"
+        disabled={isPincodeUploadLoading}
+        className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center"
+      >
+        {isPincodeUploadLoading ? (
+          <>
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            Uploading...
+          </>
+        ) : (
+          "Upload Pincodes"
         )}
       </button>
     </div>

@@ -1569,12 +1569,12 @@ return (
   <div className="flex items-center gap-2 mt-2 bg-blue-50 border border-blue-100 rounded-md px-3 py-2">
     <span className="text-blue-600 text-sm">🛡️</span>
     <div>
-      <p className="text-xs font-semibold text-blue-700">
-        {item.warrantyData.year} Year Extended Warranty
-      </p>
-      <p className="text-xs text-gray-500">
-        ₹{item.warrantyData.price?.toLocaleString("en-IN")}
-      </p>
+     <p className="text-xs font-semibold text-blue-700">
+                {item.warrantyData.name || `${item.warrantyData.year} Year Extended Warranty`}
+              </p>
+              <p className="text-xs text-gray-500">
+                ₹{item.warrantyData.price?.toLocaleString("en-IN")}
+              </p>
     </div>
   </div>
 )}
@@ -1752,8 +1752,8 @@ return (
   <div className="flex items-center gap-2 mt-2 bg-blue-50 border border-blue-100 rounded-md px-3 py-2">
     <span className="text-blue-600 text-sm">🛡️</span>
     <div>
-      <p className="text-xs font-semibold text-blue-700">
-        {item.warrantyData.year} Year Extended Warranty
+     <p className="text-xs font-semibold text-blue-700">
+        {item.warrantyData.name || `${item.warrantyData.year} Year Extended Warranty`}
       </p>
       <p className="text-xs text-gray-500">
         + ₹{item.warrantyData.price?.toLocaleString("en-IN")}
@@ -1911,6 +1911,18 @@ return (
         </button>
       </div>
     ))}
+    
+     <a href="https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-1.5 mt-1 py-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 hover:bg-blue-50 transition group"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#0f3cc9]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4" />
+      </svg>
+      <span className="text-[11px] font-bold text-[#0f3cc9] group-hover:underline">Download Truco App</span>
+      <span className="text-[11px] text-gray-500">— Exclusive Offers & Coupons Await!</span>
+    </a>
   </div>
 )}
               <div className="flex mt-4 items-center">
@@ -2058,6 +2070,18 @@ return (
         </button>
       </div>
     ))}
+    
+     <a href="https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-1.5 mt-1 py-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 hover:bg-blue-50 transition group"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#0f3cc9]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4" />
+      </svg>
+      <span className="text-[11px] font-bold text-[#0f3cc9] group-hover:underline">Download Truco App</span>
+      <span className="text-[11px] text-gray-500">— Exclusive Offers & Coupons Await!</span>
+    </a>
   </div>
 )}
               <div className="flex mt-4 items-center">

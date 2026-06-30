@@ -1000,9 +1000,30 @@ const fetchBrand = async () => {
 
   {/* 2. Brand + Name + Price */}
   <div className="mt-4">
-    <p className="text-blue-600 font-semibold text-sm uppercase tracking-wide">
-      {brand.find((b) => b.value === product.brand)?.label || ""}
-    </p>
+    <div className="flex items-center justify-between">
+      <p className="text-blue-600 font-semibold text-sm uppercase tracking-wide">
+        {brand.find((b) => b.value === product.brand)?.label || ""}
+      </p>
+      <button
+        onClick={() => {
+          if (navigator.share) {
+            navigator.share({
+              title: product.name,
+              text: `Check out ${product.name}`,
+              url: window.location.href,
+            });
+          } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert("Link copied to clipboard!");
+          }
+        }}
+        className="flex items-center gap-1.5 text-gray-500 hover:text-blue-600 transition-colors"
+        title="Share this product"
+      >
+        <FaShareAlt className="w-4 h-4" />
+        <span className="text-xs font-medium">Share</span>
+      </button>
+    </div>
     <h1 className="text-lg font-bold text-gray-900 leading-snug mt-1">{product.name}</h1>
     <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
       {product.model_number && <span>Model: {product.model_number}</span>}
@@ -1071,20 +1092,11 @@ const fetchBrand = async () => {
     {/* Stock */}
     <div className="mt-2">
       {product.stock_status === "In Stock" && product.quantity > 0 ? (
-        <div className="flex flex-col gap-0.5">
-       <div className="flex items-center gap-3">
-  <span className="text-green-600 font-semibold text-sm">✓ In Stock</span>
-  {product.quantity <= 5 ? (
-    <span className="text-xs font-semibold text-red-500">Only {product.quantity} item{product.quantity > 1 ? 's' : ''} left!</span>
-  ) : product.quantity <= 10 ? (
-    <span className="text-xs font-semibold text-green-600">Only {product.quantity} items left</span>
-  ) : (
-    <span className="text-xs font-semibold text-green-600">{product.quantity} items available</span>
-  )}
-</div>
-        </div>
+        <span className={`font-semibold text-sm ${product.quantity <= 5 ? "text-red-500" : "text-green-600"}`}>
+          ✓ {product.quantity} quantity (In Stock)
+        </span>
       ) : (
-        <span className="text-red-600 font-semibold text-sm">Out of Stock</span>
+        <span className="text-red-600 font-semibold text-sm">✗ Out of Stock</span>
       )}
       <p className="text-xs text-gray-600 mt-1">
         Sold by <span className="font-semibold">Bharath Electronics & Appliances</span>
@@ -1519,9 +1531,30 @@ const fetchBrand = async () => {
 
               {/* Product Info - right half */}
               <div className="w-full lg:w-1/2">
-                <p className="text-blue-600 font-semibold text-sm mb-1 uppercase tracking-wide">
-                  {brand.find((b) => b.value === product.brand)?.label || ""}
-                </p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-blue-600 font-semibold text-sm uppercase tracking-wide">
+                    {brand.find((b) => b.value === product.brand)?.label || ""}
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: product.name,
+                          text: `Check out ${product.name}`,
+                          url: window.location.href,
+                        });
+                      } else {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert("Link copied to clipboard!");
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-gray-500 hover:text-blue-600 transition-colors"
+                    title="Share this product"
+                  >
+                    <FaShareAlt className="w-4 h-4" />
+                    <span className="text-xs font-medium">Share</span>
+                  </button>
+                </div>
                 <h1 className="text-xl font-bold text-gray-900 leading-snug mb-2">{product.name}</h1>
                 <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
                   {product.model_number && <span>Model: {product.model_number}</span>}
@@ -1595,18 +1628,11 @@ const fetchBrand = async () => {
                 <div className="mb-3 space-y-1">
                   <div className="flex items-center gap-2">
                     {product.stock_status === "In Stock" && product.quantity > 0 ? (
-  <div className="flex items-center gap-3">
-    <span className="text-green-600 font-semibold text-sm">✓ In Stock</span>
-    {product.quantity <= 5 ? (
-      <span className="text-base font-semibold text-red-500">Only {product.quantity} item{product.quantity > 1 ? 's' : ''} left!</span>
-    ) : product.quantity <= 10 ? (
-      <span className="text-base font-semibold text-green-600">Only {product.quantity} items left</span>
-    ) : (
-      <span className="text-base font-semibold text-green-600">{product.quantity} items available</span>
-    )}
-  </div>
+                      <span className={`font-semibold text-sm ${product.quantity <= 5 ? "text-red-500" : "text-green-600"}`}>
+                        ✓ {product.quantity} quantity (In Stock)
+                      </span>
                     ) : (
-                      <span className="text-red-600 font-semibold text-sm">Out of Stock</span>
+                      <span className="text-red-600 font-semibold text-sm">✗ Out of Stock</span>
                     )}
                   </div>
                   <p className="text-xs text-gray-600">
