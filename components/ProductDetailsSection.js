@@ -95,8 +95,11 @@ function StarRating({ value, onChange }) {
     );
   }
 
-    function DynamicTabs({ tabs, activeName, onTabChange }) {
-    const titleize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+function DynamicTabs({ tabs, activeName, onTabChange }) {
+    const titleize = (s) => {
+      if (s === "manufacturer") return "Manufacturer Details";
+      return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+    };
 
     return (
       <div>
@@ -195,7 +198,7 @@ function StarRating({ value, onChange }) {
 }
   
 
-export default function ProductDetailsSection({ product, reviews=[], avgRating=0, reviewCount=0}) {
+export default function ProductDetailsSection({ product, reviews=[], avgRating=0, reviewCount=0, manufacturerName="", manufacturerAddress=""}) {
   const [brand, setBrand] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   // NEW: ensure default tab is set only once per product id
@@ -238,7 +241,7 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
   };
   // Replace "tabs" with UI-aligned tabs only (videos is not rendered in tabsForUI)
   // const tabs = ["overview", "description", "videos", "reviews"];
-  const uiTabs = ["overview", "specifications", "reviews", "faq"];
+  const uiTabs = ["overview", "specifications", "manufacturer", "reviews", "faq"];
 
   // Check if a tab has content
   const hasTabContent = (tabId) => {
@@ -1375,10 +1378,28 @@ const descriptionContent = (() => {
     )}
   </div>
 ); 
+const manufacturerContent = (
+  <div className="text-left">
+    <h3 className="text-base font-bold text-gray-900 mb-4">Manufacturer Details</h3>
+    {(manufacturerName || manufacturerAddress) ? (
+      <ul className="space-y-2 text-sm text-gray-700">
+        {manufacturerName && (
+          <li><span className="font-semibold">Manufacturer:</span> {manufacturerName}</li>
+        )}
+        {manufacturerAddress && (
+          <li><span className="font-semibold">Address:</span> {manufacturerAddress}</li>
+        )}
+      </ul>
+    ) : (
+      <p className="text-sm text-gray-500">No manufacturer details available for this product.</p>
+    )}
+  </div>
+);
   // Build tabsForUI (name + content)
 const tabsForUI = useMemo(() => [
   { name: "overview", content: overviewContent },
   { name: "specifications", content: descriptionContent },
+  { name: "manufacturer", content: manufacturerContent },
   { name: "reviews", content: (
     <ReviewsTab
       reviewForm={reviewForm}
@@ -1391,7 +1412,7 @@ const tabsForUI = useMemo(() => [
     />
   )},
   { name: "faq", content: faqContent },
-], [reviewForm, submitting, tabData, overviewContent, descriptionContent, faqContent]);
+], [reviewForm, submitting, tabData, overviewContent, descriptionContent, faqContent, manufacturerName, manufacturerAddress, manufacturerContent]);
   // Compute initialActiveName AFTER tabsForUI is initialized
   const initialActiveName = (() => {
     const PLACEHOLDER = "There is no product overview available for this item.";
@@ -1415,7 +1436,7 @@ const tabsForUI = useMemo(() => [
 
   
 return (
-  <div className="mt-4 sm:mt-8 w-full">
+ <div className="mt-1 sm:mt-2 w-full">
     <ToastContainer position="top-right" autoClose={5000} />
     
     {/* Section 1 — Key Features + Available Near You */}

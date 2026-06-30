@@ -7,7 +7,7 @@ import {AuthModal} from '@/components/AuthModal';
 
 
 
-const AddToWishlistButton = ({ productId, onAfterWishlist }) => {
+const AddToWishlistButton = ({ productId, onAfterWishlist, className, label, iconSize = 18 }) => {
   const { openAuthModal } = useModal();
   const [isLoading, setIsLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -78,9 +78,17 @@ const AddToWishlistButton = ({ productId, onAfterWishlist }) => {
 
   return (
     <>
-       <button className={`p-1 rounded-full bg-white shadow ${isWishlisted ? 'text-red-500' : 'hover:text-red-500'}`} onClick={handleWishlistAction} disabled={isLoading}
+       <button
+          className={
+            className
+              ? `${className} ${isWishlisted ? 'text-red-500 border-red-500' : ''}`
+              : `p-1 rounded-full bg-white shadow ${isWishlisted ? 'text-red-500' : 'hover:text-red-500'}`
+          }
+          onClick={handleWishlistAction}
+          disabled={isLoading}
         >
-          <Heart size={18}  fill={isWishlisted ? 'currentColor' : 'none'} />
+          <Heart size={iconSize} fill={isWishlisted ? 'currentColor' : 'none'} />
+          {label && <span className="text-xs font-medium">{label}</span>}
         </button>
 
       {/* AuthModal remains the same */}

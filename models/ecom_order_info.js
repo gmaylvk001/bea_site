@@ -100,6 +100,12 @@ const OrderSchema = new mongoose.Schema(
 
   loyalty_points_awarded: { type: Number, default: 0 },
   truco_transaction_id: { type: String, default: null },
+  loyalty_points_redeemed: { type: Number, default: 0 },
+loyalty_discount: { type: Number, default: 0 },
+loyalty_redemption_token: { type: String, default: null },
+points_per_currency_unit: { type: Number, default: null },
+promotion_code_applied: { type: String, default: null },
+promotion_discount_applied: { type: Number, default: 0 },
 
   // NEW: Order History
     order_history: [OrderHistorySchema]

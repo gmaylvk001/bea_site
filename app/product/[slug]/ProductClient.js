@@ -20,6 +20,7 @@ import { useCart } from '@/context/CartContext';
 import { useModal } from '@/context/ModalContext';
 import ProductCard from "@/components/ProductCard";
 import ProductAddtoCart from "@/components/ProductAddtoCart"
+import AddToWishlistButton from "@/components/ProductCard";
 
 import ProductBreadcrumb from "@/components/ProductBreadcrumb";
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
@@ -616,6 +617,9 @@ useEffect(() => {
 }, [featuredProducts]);
 // derived main image
 const mainImage = product?.images?.[selectedImageIndex] || "/no-image.jpg";
+const matchedBrandForManufacturer = Array.isArray(brand)
+  ? brand.find((b) => b.value === product.brand)
+  : null;
 
 // helper to resolve full path
 const resolveImagePath = (image) => {
@@ -769,6 +773,8 @@ const fetchBrand = async () => {
         const brandOptions = data.map((b) => ({
           value: b._id,
           label: b.brand_name,
+          manufacturer_name: b.manufacturer_name || "",
+          manufacturer_address: b.manufacturer_address || "",
         }));
   
         setBrand(brandOptions);
@@ -1004,25 +1010,7 @@ const fetchBrand = async () => {
       <p className="text-blue-600 font-semibold text-sm uppercase tracking-wide">
         {brand.find((b) => b.value === product.brand)?.label || ""}
       </p>
-      <button
-        onClick={() => {
-          if (navigator.share) {
-            navigator.share({
-              title: product.name,
-              text: `Check out ${product.name}`,
-              url: window.location.href,
-            });
-          } else {
-            navigator.clipboard.writeText(window.location.href);
-            alert("Link copied to clipboard!");
-          }
-        }}
-        className="flex items-center gap-1.5 text-gray-500 hover:text-blue-600 transition-colors"
-        title="Share this product"
-      >
-        <FaShareAlt className="w-4 h-4" />
-        <span className="text-xs font-medium">Share</span>
-      </button>
+     
     </div>
     <h1 className="text-lg font-bold text-gray-900 leading-snug mt-1">{product.name}</h1>
     <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
@@ -1091,28 +1079,50 @@ const fetchBrand = async () => {
 
     {/* Stock */}
     <div className="mt-2">
-      {product.stock_status === "In Stock" && product.quantity > 0 ? (
-        <span className={`font-semibold text-sm ${product.quantity <= 5 ? "text-red-500" : "text-green-600"}`}>
-          ✓ {product.quantity} quantity (In Stock)
-        </span>
-      ) : (
-        <span className="text-red-600 font-semibold text-sm">✗ Out of Stock</span>
-      )}
+    {product.stock_status === "In Stock" && product.quantity > 0 ? (
+  <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+    <span className="flex items-center justify-center w-3 h-3 rounded-full bg-green-600 flex-shrink-0">
+      <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </span>
+    In Stock ({product.quantity} units)
+  </span>
+) : (
+  <span className="text-red-600 font-semibold text-sm">✗ Out of Stock</span>
+)}
       <p className="text-xs text-gray-600 mt-1">
         Sold by <span className="font-semibold">Bharath Electronics & Appliances</span>
       </p>
     </div>
 
-    {/* Delivery Check */}
-    <div className="border border-gray-200 rounded-lg p-3 mt-3">
-      <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-        Check delivery, installation & store availability
-      </div>
-      <div className="flex gap-2">
-        <input type="text" placeholder="641012" className="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500" />
-        <button className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm font-medium">Check</button>
-      </div>
-      <p className="text-xs text-gray-500 mt-1.5">Delivery available by <span className="text-blue-600 font-medium">Tomorrow</span></p>
+   {/* Share / Wishlist */}
+    <div className="flex items-center gap-2 mt-3">
+      <button
+        onClick={() => {
+          if (navigator.share) {
+            navigator.share({
+              title: product.name,
+              text: `Check out ${product.name}`,
+              url: window.location.href,
+            });
+          } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert("Link copied to clipboard!");
+          }
+        }}
+        className="flex-1 flex items-center justify-center gap-2 border border-gray-300 rounded-full py-2.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+        title="Share this product"
+      >
+        <FaShareAlt className="w-4 h-4 text-blue-600" />
+        <span className="text-xs font-medium">Share</span>
+      </button>
+     <AddToWishlistButton
+        productId={product._id}
+        label="Add to Wishlist"
+        iconSize={14}
+        className="flex-1 flex items-center justify-center gap-2 border border-gray-300 rounded-full py-2.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+      />
     </div>
 
     {/* Quantity + Buy Now + Add to Cart */}
@@ -1228,11 +1238,13 @@ const fetchBrand = async () => {
 )}
   {/* 4. ProductDetailsSection (Highlights, Overview, Specs, Reviews, FAQ) */}
   <div className="mt-4">
-    <ProductDetailsSection
+ <ProductDetailsSection
       product={product}
       reviews={reviews}
       avgRating={avgRating}
       reviewCount={reviewCount}
+      manufacturerName={matchedBrandForManufacturer?.manufacturer_name}
+      manufacturerAddress={matchedBrandForManufacturer?.manufacturer_address}
     />
   </div> 
    
@@ -1535,25 +1547,7 @@ const fetchBrand = async () => {
                   <p className="text-blue-600 font-semibold text-sm uppercase tracking-wide">
                     {brand.find((b) => b.value === product.brand)?.label || ""}
                   </p>
-                  <button
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: product.name,
-                          text: `Check out ${product.name}`,
-                          url: window.location.href,
-                        });
-                      } else {
-                        navigator.clipboard.writeText(window.location.href);
-                        alert("Link copied to clipboard!");
-                      }
-                    }}
-                    className="flex items-center gap-1.5 text-gray-500 hover:text-blue-600 transition-colors"
-                    title="Share this product"
-                  >
-                    <FaShareAlt className="w-4 h-4" />
-                    <span className="text-xs font-medium">Share</span>
-                  </button>
+                 
                 </div>
                 <h1 className="text-xl font-bold text-gray-900 leading-snug mb-2">{product.name}</h1>
                 <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
@@ -1628,12 +1622,17 @@ const fetchBrand = async () => {
                 <div className="mb-3 space-y-1">
                   <div className="flex items-center gap-2">
                     {product.stock_status === "In Stock" && product.quantity > 0 ? (
-                      <span className={`font-semibold text-sm ${product.quantity <= 5 ? "text-red-500" : "text-green-600"}`}>
-                        ✓ {product.quantity} quantity (In Stock)
-                      </span>
-                    ) : (
-                      <span className="text-red-600 font-semibold text-sm">✗ Out of Stock</span>
-                    )}
+  <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+    <span className="flex items-center justify-center w-3 h-3 rounded-full bg-green-600 flex-shrink-0">
+      <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </span>
+    In Stock ({product.quantity} units)
+  </span>
+) : (
+  <span className="text-red-600 font-semibold text-sm">✗ Out of Stock</span>
+)}
                   </div>
                   <p className="text-xs text-gray-600">
                     Sold by <span className="font-semibold">Bharath Electronics & Appliances</span>
@@ -1642,19 +1641,32 @@ const fetchBrand = async () => {
                     </svg>
                   </p>
                 </div>
-                <div className="border border-gray-200 rounded-lg p-3 mb-3">
-                  <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Check delivery, installation & store availability
-                  </div>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="641012" className="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500" />
-                    <button className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-blue-700">Check</button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1.5">Delivery available by <span className="text-blue-600 font-medium">Tomorrow</span></p>
+                <div className="flex items-center gap-2 mb-3">
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: product.name,
+                          text: `Check out ${product.name}`,
+                          url: window.location.href,
+                        });
+                      } else {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert("Link copied to clipboard!");
+                      }
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 border border-gray-300 rounded-full py-2.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                    title="Share this product"
+                  >
+                  <FaShareAlt className="w-4 h-4 text-blue-600" />
+                    <span className="text-xs font-medium">Share</span>
+                  </button>
+                 <AddToWishlistButton
+                    productId={product._id}
+                    label="Add to Wishlist"
+                    iconSize={14}
+                 className="flex-1 flex items-center justify-center gap-2 border border-gray-300 rounded-full py-2.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+                  />
                 </div>
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-sm font-medium text-gray-700">Quantity:</span>
@@ -1723,12 +1735,14 @@ const fetchBrand = async () => {
 
             {/* ProductDetailsSection - full width inside left 70% */}
             <div className="w-full">
-              <ProductDetailsSection
-                product={product}
-                reviews={reviews}
-                avgRating={avgRating}
-                reviewCount={reviewCount}
-              />
+             <ProductDetailsSection
+      product={product}
+      reviews={reviews}
+      avgRating={avgRating}
+      reviewCount={reviewCount}
+      manufacturerName={matchedBrandForManufacturer?.manufacturer_name}
+      manufacturerAddress={matchedBrandForManufacturer?.manufacturer_address}
+    />
             </div>
 
           </div>
