@@ -103,15 +103,15 @@ function DynamicTabs({ tabs, activeName, onTabChange }) {
 
     return (
       <div>
-<div className={`flex overflow-x-auto scrollbar-hide border-b border-gray-200 ${poppins.className}`}>
+<div className={`flex overflow-x-auto scrollbar-hide border-b border-gray-200 gap-6 sm:gap-10 px-1 ${poppins.className}`}>
           {tabs.map((tab) => (
             <button
               key={tab.name}
               onClick={() => onTabChange && onTabChange(tab.name)}
-           className={`px-3 py-2 text-xs sm:text-sm font-medium transition-all duration-200 border-b-2 -mb-[2px] whitespace-nowrap flex-shrink-0 ${
+           className={`py-3 sm:py-4 text-base sm:text-lg transition-all duration-200 border-b-[3px] -mb-[2px] whitespace-nowrap flex-shrink-0 ${
   activeName === tab.name
-    ? "border-blue-600 text-blue-600 font-semibold"
-    : "border-transparent text-gray-500 hover:text-gray-800"
+    ? "border-blue-600 text-blue-600 font-bold"
+    : "border-transparent text-gray-600 font-medium hover:text-gray-900"
 }`}
             >
               {titleize(tab.name)}
@@ -1379,17 +1379,70 @@ const descriptionContent = (() => {
   </div>
 ); 
 const manufacturerContent = (
-  <div className="text-left">
-    <h3 className="text-base font-bold text-gray-900 mb-4">Manufacturer Details</h3>
+  <div className="text-left max-w-3xl">
     {(manufacturerName || manufacturerAddress) ? (
-      <ul className="space-y-2 text-sm text-gray-700">
+      <div className="border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-sm">
+        {/* Header */}
+        <div className="flex items-center gap-5 p-6 sm:p-7 border-b border-gray-100">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V7l6-4v18M19 21V11l-6-4M9 9h.01M9 12h.01M9 15h.01" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Manufacturer Information</h3>
+            <p className="text-sm sm:text-base text-gray-500 mt-1">Details about the product manufacturer and brand.</p>
+          </div>
+        </div>
+
+        {/* Manufacturer */}
         {manufacturerName && (
-          <li><span className="font-semibold">Manufacturer:</span> {manufacturerName}</li>
+          <div className="flex items-start gap-5 p-6 sm:p-7 border-b border-gray-100">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75l1.5 1.5 3.75-4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.5l-1 3.5-3.5 1 2 3-2 3 3.5 1 1 3.5 3-2 3 2 1-3.5 3.5-1-2-3 2-3-3.5-1-1-3.5-3 2-3-2z" opacity="0" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Manufacturer</p>
+              <p className="text-lg sm:text-xl font-bold text-gray-900 mt-0.5">{manufacturerName}</p>
+            </div>
+          </div>
         )}
+
+        {/* Address */}
         {manufacturerAddress && (
-          <li><span className="font-semibold">Address:</span> {manufacturerAddress}</li>
+          <div className="flex items-start gap-5 p-6 sm:p-7 border-b border-gray-100">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Registered Office Address</p>
+              <p className="text-lg sm:text-xl font-bold text-gray-900 mt-0.5">{manufacturerAddress}</p>
+            </div>
+          </div>
         )}
-      </ul>
+
+        {/* Brand */}
+        {brandName && (
+          <div className="flex items-start gap-5 p-6 sm:p-7">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Brand</p>
+              <p className="text-lg sm:text-xl font-bold text-gray-900 mt-0.5">{brandName}</p>
+            </div>
+          </div>
+        )}
+      </div>
     ) : (
       <p className="text-sm text-gray-500">No manufacturer details available for this product.</p>
     )}
