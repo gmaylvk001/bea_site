@@ -118,7 +118,7 @@ const ShippingPolicy = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 lg:px-8">
       {/* Breadcrumb */}
       <div className="max-w-12xl mx-auto px-4 md:px-6 pt-6">
         <div className="flex items-center gap-2 text-sm text-gray-500">
