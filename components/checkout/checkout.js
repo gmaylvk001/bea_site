@@ -740,8 +740,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           emailFD.append('email', addressData.email);
           emailFD.append('params', JSON.stringify([name, orderData.order.order_number, `₹${Number(orderData.order.order_amount).toFixed(2)}`, orderData.order.payment_method, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
           await fetch('https://bea.eygr.in/api/email/send-msg', { method: 'POST', headers: { Authorization: 'Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L' }, body: emailFD });
-          // const adminEmails = ['arunkarthik@bharathelectronics.in','ecom@bharathelectronics.in','itadmin@bharathelectronics.in','telemarketing@bharathelectronics.in','sekarcorp@bharathelectronics.in','abu@bharathelectronics.in','customercare@bharathelectronics.in'];
-            const adminEmails = ['hariharann2026@gmail.com']
+          const adminEmails = ['arunkarthik@bharathelectronics.in','ecom@bharathelectronics.in','itadmin@bharathelectronics.in','telemarketing@bharathelectronics.in','sekarcorp@bharathelectronics.in','abu@bharathelectronics.in','customercare@bharathelectronics.in'];
+            // const adminEmails = ['hariharann2026@gmail.com']
           const adminFD = new FormData();
           adminFD.append('campaign_id', 'dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6');
           adminFD.append('params', JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
