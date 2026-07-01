@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { useCart } from '@/context/CartContext';
 import { ToastContainer, toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
@@ -8,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/AuthModal';
 import { ga4BeginCheckout, ga4Purchase } from "@/utils/nextjs-event-tracking.js";
 
-// Dynamically load Razorpay script
 const loadRazorpay = () => {
   return new Promise((resolve) => {
     const script = document.createElement('script');
@@ -19,172 +17,272 @@ const loadRazorpay = () => {
   });
 };
 
+// ─── Haversine distance (km) ────────────────────────────────────────────────
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
+// ─── Delivery Type Component ─────────────────────────────────────────────────
+const DeliveryOptions = ({
+  formData, handleChange,
+  isDeliverySaved, setIsDeliverySaved,
+  stores, nearestStores, setNearestStores,
+  selectedPickupStore, setSelectedPickupStore,
+}) => {
 
+  const [loadingStores, setLoadingStores] = useState(false);
+  const [showAllStores, setShowAllStores] = useState(false);
+  const prevPincode = useRef('');
 
-const DeliveryOptions = ({ formData, handleChange, isDeliverySaved, setIsDeliverySaved, stores }) => {
-  const [fetchedStores, setFetchedStores] = useState(stores || []);
-
+  // When postCode changes & store pickup selected → find nearest stores
   useEffect(() => {
-    const fetchStores = async () => {
-      try {
-        const res = await fetch("/api/store/get");
-        const json = await res.json();
-        if (json.success) {
-          setFetchedStores(json.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch stores", error);
-      }
-    };
-
-    if (!stores || stores.length === 0) {
-      fetchStores();
+    const pincode = formData.postCode;
+    if (
+      formData.deliveryType === 'store' &&
+      pincode?.length === 6 &&
+      pincode !== prevPincode.current
+    ) {
+      prevPincode.current = pincode;
+      findNearestStores(pincode);
     }
-  }, [stores]);
+  }, [formData.postCode, formData.deliveryType]);
 
+const findNearestStores = async (pincode) => {
+  setLoadingStores(true);
+  try {
+    const res = await fetch(`/api/pincode/check?pincode=${pincode}`);
+    const data = await res.json();
 
+    if (!data.success || !data.stores?.length) {
+      toast.error("This pincode is not serviceable. Please select a store manually.");
+      setNearestStores(stores.slice(0, 3).map(s => ({ ...s, distanceKm: null })));
+      setLoadingStores(false);
+      return;
+    }
 
+    
+    const matchedStores = data.stores;
+
+    setNearestStores(matchedStores);
+    setSelectedPickupStore(matchedStores[0]._id);
+    handleChange({ target: { name: "selectedStore", value: matchedStores[0]._id } });
+
+  } catch (err) {
+    console.error("Pincode check error:", err);
+    toast.error("Unable to find nearest store. Please select manually.");
+  } finally {
+    setLoadingStores(false);
+  }
+};
+
+  const displayedStores = showAllStores ? nearestStores : nearestStores.slice(0, 3);
 
   return (
-    <div className="mt-6 border rounded-md shadow-sm">
-      {/* Header */}
-      <div className="flex justify-between items-center bg-gray-100 px-4 py-2 border-b">
-        <div className="text-sm font-semibold uppercase text-gray-700">Delivery Type</div>
-        {isDeliverySaved && (
-          <button
-            className="text-red-600 text-sm"
-            onClick={() => setIsDeliverySaved(false)}
-          >
-            Change
-          </button>
-        )}
+    <div className="mt-4">
+      {/* Delivery Type Tabs */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* Home Delivery */}
+        <label
+          className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
+            ${formData.deliveryType === 'home'
+              ? 'border-blue-600 bg-blue-50'
+              : 'border-gray-200 bg-white hover:border-gray-300'}`}
+        >
+          <input
+            type="radio"
+            name="deliveryType"
+            value="home"
+            checked={formData.deliveryType === 'home'}
+            onChange={handleChange}
+            className="sr-only"
+          />
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5
+            ${formData.deliveryType === 'home' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+            <svg className={`w-5 h-5 ${formData.deliveryType === 'home' ? 'text-blue-600' : 'text-gray-500'}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </div>
+          <div>
+            <p className={`text-sm font-medium ${formData.deliveryType === 'home' ? 'text-blue-700' : 'text-gray-800'}`}>
+              Home delivery
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">Free delivery to your address</p>
+          </div>
+        </label>
+
+        {/* Store Pickup */}
+        <label
+          className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
+            ${formData.deliveryType === 'store'
+              ? 'border-blue-600 bg-blue-50'
+              : 'border-gray-200 bg-white hover:border-gray-300'}`}
+        >
+          <input
+            type="radio"
+            name="deliveryType"
+            value="store"
+            checked={formData.deliveryType === 'store'}
+            onChange={handleChange}
+            className="sr-only"
+          />
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5
+            ${formData.deliveryType === 'store' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+            <svg className={`w-5 h-5 ${formData.deliveryType === 'store' ? 'text-blue-600' : 'text-gray-500'}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div>
+            <p className={`text-sm font-medium ${formData.deliveryType === 'store' ? 'text-blue-700' : 'text-gray-800'}`}>
+              Store pickup
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">Pick up from your nearest BEA showroom</p>
+          </div>
+        </label>
       </div>
 
-      {!isDeliverySaved ? (
-        // Editable Form
-        <div className="p-4 space-y-4">
-          {/* Store Pickup */}
-          <div className="flex items-center space-x-3">
-            <input
-              type="radio"
-              id="storePickup"
-              name="deliveryType"
-              value="store"
-              checked={formData.deliveryType === "store"}
-              onChange={handleChange}
-              className="w-5 h-5 text-red-600"
-            />
-            <label htmlFor="storePickup" className="text-gray-700 font-medium">Store Pickup</label>
-          </div>
+      {/* Store Pickup → nearest stores */}
+      {formData.deliveryType === 'store' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-2">
+          <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Nearest BEA Stores (Store Pickup)
+          </p>
 
-          {formData.deliveryType === "store" && (
-            <select
-              name="selectedStore"
-              value={formData.selectedStore}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-md p-2 w-full"
-              required
-            >
-              <option value="">Select store</option>
-              {fetchedStores.map((store) => (
-                <option key={store._id} value={store._id}>
-                  {store.organisation_name} - {store.city}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {/* Home Delivery */}
-          <div className="flex items-center space-x-3">
-            <input
-              type="radio"
-              id="homeDelivery"
-              name="deliveryType"
-              value="home"
-              checked={formData.deliveryType === "home"}
-              onChange={handleChange}
-              className="w-5 h-5 text-red-600"
-            />
-            <label htmlFor="homeDelivery" className="text-gray-700 font-medium">Home Delivery</label>
-          </div>
-
-          {/* Save and Continue */}
-          <button
-            type="button"
-            onClick={() => {
-              if (formData.deliveryType === "store" && !formData.selectedStore) {
-                toast.error("Please select a store for pickup");
-                return;
-              }
-              toast.success("Delivery method saved");
-              setIsDeliverySaved(true);
-            }}
-            className="bg-red-600 text-white px-6 py-2 rounded-md mt-4 hover:bg-red-700 transition"
-          >
-            Save And Continue
-          </button>
-        </div>
-      ) : (
-        // Collapsed Summary View
-        <div className="p-4 flex items-start gap-4">
-          <div className="text-2xl">🚚</div>
-          <div>
-            <div className="text-sm font-semibold text-gray-700 uppercase">
-              {formData.deliveryType === 'store' ? 'STORE PICKUP' : 'HOME DELIVERY'}
+          {loadingStores ? (
+            <div className="flex items-center gap-2 py-3">
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-gray-500">Finding nearest stores…</span>
             </div>
-            {formData.deliveryType === 'store' && (
-              <div className="text-gray-600 text-sm">
-                {fetchedStores.find(s => s._id === formData.selectedStore)?.city} (
-                {fetchedStores.find(s => s._id === formData.selectedStore)?.organisation_name})
+          ) : nearestStores.length === 0 ? (
+            <div className="text-sm text-gray-500 py-2">
+              Enter your pincode above to find nearest stores.
+            </div>
+          ) : (
+            <>
+              {/* Top 3 stores side-by-side on desktop, stacked on mobile */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                {displayedStores.map((store) => (
+                  <div
+                    key={store._id}
+                    onClick={() => {
+                      setSelectedPickupStore(store._id);
+                      handleChange({ target: { name: 'selectedStore', value: store._id } });
+                    }}
+                    className={`rounded-lg p-3 cursor-pointer border transition-all
+                      ${selectedPickupStore === store._id
+                        ? 'border-blue-500 bg-white shadow-sm'
+                        : 'border-blue-200 bg-white hover:border-blue-400'}`}
+                  >
+                    <p className="text-xs font-semibold text-gray-800 leading-snug">
+                      {store.organisation_name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1 leading-snug">
+                      {store.address || store.city}
+                    </p>
+                    <span className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600
+                      bg-blue-100 px-2 py-0.5 rounded-full font-medium">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round"
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      </svg>
+                      {store.distanceKm != null ? `${store.distanceKm.toFixed(1)} KM Away` : "Nearest store"}
+                    </span>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+
+              {nearestStores.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllStores(v => !v)}
+                  className="text-xs text-blue-600 underline"
+                >
+                  {showAllStores
+                    ? 'Show less'
+                    : `View all ${nearestStores.length} stores ›`}
+                </button>
+              )}
+            </>
+          )}
         </div>
+      )}
+
+      {/* Save and Continue */}
+      {!isDeliverySaved && (
+        <button
+          type="button"
+          onClick={() => {
+            if (formData.deliveryType === 'store' && !formData.selectedStore) {
+              toast.error('Please select a store for pickup');
+              return;
+            }
+            toast.success('Delivery method saved');
+            setIsDeliverySaved(true);
+          }}
+          className="mt-4 bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+        >
+          Save and continue
+        </button>
+      )}
+
+      {isDeliverySaved && (
+        <button
+          type="button"
+          onClick={() => setIsDeliverySaved(false)}
+          className="mt-3 text-sm text-blue-600 underline"
+        >
+          Change delivery method
+        </button>
       )}
     </div>
   );
 };
 
+// ─── Main CheckoutPage ───────────────────────────────────────────────────────
 export default function CheckoutPage() {
   const { cartCount, updateCartCount } = useCart();
   const router = useRouter();
   const [stores, setStores] = useState([]);
+  const [nearestStores, setNearestStores] = useState([]);
+  const [selectedPickupStore, setSelectedPickupStore] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+
+
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    businessName: "",
-    country: "",
-    address: "",
-    landmark: "",
-    city: "",
-    state: "Tamilnadu",
-    postCode: "",
-    phonenumber: "",
-    email: "",
-    additionalInfo: "",
-    deliveryType: "home",
-    selectedStore: ""
+    firstName: '', lastName: '', businessName: '',
+    country: '', address: '', landmark: '',
+    city: '', state: 'Tamilnadu', postCode: '',
+    phonenumber: '', email: '', additionalInfo: '',
+    deliveryType: 'home', selectedStore: '',
   });
+
   const [isDeliverySaved, setIsDeliverySaved] = useState(false);
   const [useraddress, setUseraddress] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [useSavedAddress, setUseSavedAddress] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("online");
-  const [error, setError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState('online');
+  const [error, setError] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authError, setAuthError] = useState('');
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  // / ✅ NEW: summary state
-  const [orderSummary, setOrderSummary] = useState({
-    discount: 0,
-    subtotal: 0,
-    total: 0
-  });
-  console.log(cartItems);
+  const [orderSummary, setOrderSummary] = useState({ discount: 0, subtotal: 0, total: 0 });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [userPhone, setUserPhone] = useState('');
   const [loyaltyBalance, setLoyaltyBalance] = useState(0);
   const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
@@ -194,158 +292,108 @@ export default function CheckoutPage() {
   const [showPointsInput, setShowPointsInput] = useState(false);
   const [customPoints, setCustomPoints] = useState(0);
   const [maxUsablePoints, setMaxUsablePoints] = useState(0);
-
   const [touched, setTouched] = useState({});
+  const [shippingMethod, setShippingMethod] = useState('standard');
+
+  const extraCities = ["Ariyalur","Chennai","Coimbatore","Cuddalore","Dharmapuri","Dindigul","Erode","Kanchipuram","Kanyakumari","Karur","Krishnagiri","Madurai","Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram","Salem","Sivaganga","Thanjavur","Theni","Thoothukudi","Tirunelveli","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore","Viluppuram","Virudhunagar","Singanallur","Sivananthapuram","Vadavalli","Annur","Mettupalayam","Thennur","Ariyamangalam","Komarapalayam","Kattur"];
+
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const res = await fetch("/api/store/get");
+        const res = await fetch('/api/store/get');
         const result = await res.json();
-        if (result.success) {
-          setStores(result.data);
-        } else {
-          console.error("Error fetching stores:", result.error);
-        }
-      } catch (err) {
-        console.error("Fetch error:", err);
-      }
+        if (result.success) setStores(result.data);
+      } catch (err) { console.error('Fetch stores error:', err); }
     };
     fetchStores();
   }, []);
 
-  const uniqueCities = [...new Set(stores.map(store => store.city))];
-  const extraCities = ["Ariyalur", "Chennai", "Coimbatore", "Cuddalore", "Dharmapuri", "Dindigul", "Erode", "Kanchipuram", "Kanyakumari", "Karur", "Krishnagiri", "Madurai", "Nagapattinam", "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Salem", "Sivaganga", "Thanjavur", "Theni", "Thoothukudi", "Tirunelveli", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar", "Singanallur", "Sivananthapuram", "Vadavalli", "Annur", "Mettupalayam", "Thennur", "Ariyamangalam", "Komarapalayam", "Kattur"];
-
-  const finalCities = [...new Set([...uniqueCities, ...extraCities])];
+  useEffect(() => {
+    const uniqueCities = [...new Set(stores.map(s => s.city))];
+    // finalCities is derived in render
+  }, [stores]);
 
   useEffect(() => {
-    const buyNowData = localStorage.getItem("buyNowData");
-    const checkoutData = localStorage.getItem("checkoutData");
+    const buyNowData = localStorage.getItem('buyNowData');
+    const checkoutData = localStorage.getItem('checkoutData');
+     console.log("DEBUG raw checkoutData:", checkoutData);  
     let skipCartFetch = false;
-
     if (buyNowData) {
-      const parsedData = JSON.parse(buyNowData);
-      setCartItems(parsedData.cart.items);
-      // also set orderSummary so payment amount is correct
-      setOrderSummary({
-        discount: 0,
-        subtotal: parsedData.total || 0,
-        total: parsedData.total || 0,
-      });
-      // Convert to checkoutData so the totals survive an auth modal reload
-      localStorage.setItem("checkoutData", JSON.stringify({
-        cart: parsedData.cart,
-        discount: 0,
-        subtotal: parsedData.total || 0,
-        total: parsedData.total || 0,
-      }));
-      localStorage.removeItem("buyNowData");
+      const p = JSON.parse(buyNowData);
+      setCartItems(p.cart.items);
+      setOrderSummary({ discount: 0, subtotal: p.total || 0, total: p.total || 0 });
+       setAppliedCoupon(p.coupon || null); 
+      localStorage.setItem('checkoutData', JSON.stringify({ cart: p.cart,  coupon: appliedCoupon, discount: 0, subtotal: p.total || 0, total: p.total || 0 }));
+      localStorage.removeItem('buyNowData');
       skipCartFetch = true;
     } else if (checkoutData) {
-      const parsedData = JSON.parse(checkoutData);
-      setCartItems(parsedData.cart.items);
-
-      // ✅ also load discount, subtotal, total
-      setOrderSummary({
-        discount: parsedData.discount || 0,
-        subtotal: parsedData.subtotal || 0,
-        total: parsedData.total || 0
-      });
+      const p = JSON.parse(checkoutData);
+      
+      setCartItems(p.cart.items);
+      setOrderSummary({ discount: p.discount || 0, subtotal: p.subtotal || 0, total: p.total || 0 });
+      setAppliedCoupon(p.coupon || null); 
       skipCartFetch = true;
     }
-
     fetchData(skipCartFetch);
   }, []);
 
-  // ✅ GA4 begin_checkout — fires once cart items are ready
   useEffect(() => {
     if (cartItems.length > 0 && orderSummary.total > 0) {
       ga4BeginCheckout({ items: cartItems, value: orderSummary.total });
     }
   }, [cartItems, orderSummary.total]);
 
-
   const fetchData = async (skipCartFetch = false) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setShowAuthModal(true);
-      setLoading(false);
-      return;
-    }
-
+    const token = localStorage.getItem('token');
+    if (!token) { setShowAuthModal(true); setLoading(false); return; }
     try {
       const decoded = jwtDecode(token);
       const userId = decoded.userId;
-
-      // skip cart fetch when items were already loaded from buyNowData or checkoutData
       if (!skipCartFetch) {
-        const cartResponse = await fetch("/api/cart", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!cartResponse.ok) throw new Error("Failed to fetch cart data");
-
-        const cartData = await cartResponse.json();
+        const cartRes = await fetch('/api/cart', { headers: { Authorization: `Bearer ${token}` } });
+        if (!cartRes.ok) throw new Error('Failed to fetch cart');
+        const cartData = await cartRes.json();
         setCartItems(cartData.cart.items);
       }
-
-      // Fetch user address
-      const addressResponse = await fetch(`/api/useraddress?user_id=${userId}`);
-      if (!addressResponse.ok) throw new Error("Failed to fetch address data");
-
-      const addressData = await addressResponse.json();
-      setUseraddress(addressData.userAddress);
-
-      if (addressData.userAddress.length > 0) {
-        const addr = addressData.userAddress[0];
+      const addrRes = await fetch(`/api/useraddress?user_id=${userId}`);
+      if (!addrRes.ok) throw new Error('Failed to fetch address');
+      const addrData = await addrRes.json();
+      setUseraddress(addrData.userAddress);
+      if (addrData.userAddress.length > 0) {
+        const addr = addrData.userAddress[0];
         setFormData(prev => ({
           ...prev,
-          firstName: addr.firstName || "",
-          lastName: addr.lastName || "",
-          country: addr.country || "",
-          address: addr.address || "",
-          city: addr.city || "",
-          state: addr.state || "Tamilnadu",
-          postCode: addr.postCode || "",
-          phonenumber: addr.phonenumber || "",
-          landmark: addr.landmark || "",
-          email: addr.email || "",
-          businessName: addr.businessName || "",
-          additionalInfo: addr.additionalInfo || ""
+          firstName: addr.firstName || '', lastName: addr.lastName || '',
+          country: addr.country || '', address: addr.address || '',
+          city: addr.city || '', state: addr.state || 'Tamilnadu',
+          postCode: addr.postCode || '', phonenumber: addr.phonenumber || '',
+          landmark: addr.landmark || '', email: addr.email || '',
+          businessName: addr.businessName || '', additionalInfo: addr.additionalInfo || '',
         }));
-        setSelectedAddress(0); // auto-select first address so edits sync to the card
+        setSelectedAddress(0);
       }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Failed to load checkout data");
+    } catch (err) {
+      console.error('fetchData error:', err);
+      toast.error('Failed to load checkout data');
     } finally {
-       try {
-    const token = localStorage.getItem("token");
-    const authRes = await fetch('/api/auth/check', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const authData = await authRes.json();
-    if (authData.phone) {
-      setUserPhone(authData.phone);
-      const loyaltyRes = await fetch(`/api/award-points?phone=${authData.phone}`);
-      const loyaltyData = await loyaltyRes.json();
-      if (loyaltyData.success) {
-        setLoyaltyBalance(loyaltyData.points);
-      }
-    }
-  } catch (e) {
-    console.error('Loyalty balance fetch failed:', e);
-  }
+      try {
+        const token = localStorage.getItem('token');
+        const authRes = await fetch('/api/auth/check', { headers: { Authorization: `Bearer ${token}` } });
+        const authData = await authRes.json();
+        if (authData.phone) {
+          setUserPhone(authData.phone);
+          const loyaltyRes = await fetch(`/api/award-points?phone=${authData.phone}`);
+          const loyaltyData = await loyaltyRes.json();
+          if (loyaltyData.success) setLoyaltyBalance(loyaltyData.points);
+        }
+      } catch (e) { console.error('Loyalty fetch failed:', e); }
       setLoading(false);
     }
   };
 
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-
-    // Keep the selected saved address card in sync with form edits
     if (selectedAddress !== null) {
       setUseraddress(prev => {
         const updated = [...prev];
@@ -353,153 +401,81 @@ export default function CheckoutPage() {
         return updated;
       });
     }
+    // Visual-only convenience: when switching to store pickup, surface "Pay at store" as the
+    // highlighted payment option to match the in-store collection flow shown in the design.
+    if (name === 'deliveryType') {
+      if (value === 'store') {
+        setPaymentMethod('pay_at_store');
+      } else if (value === 'home' && paymentMethod === 'pay_at_store') {
+        setPaymentMethod('online');
+      }
+    }
   };
 
-  const handlePaymentChange = (e) => {
-    setPaymentMethod(e.target.value);
-    if (e.target.value === 'Cash on Delivery' && pointsApplied) {
-    handleRemovePoints();
-  }
+  const handlePaymentChange = (method) => {
+    setPaymentMethod(method);
+    if (method === 'Cash on Delivery' && pointsApplied) handleRemovePoints();
   };
-
 
   const handleUseAllPoints = async () => {
-  if (!userPhone || loyaltyBalance <= 0) {
-    toast.error("No loyalty points available!");
-    return;
-  }
-  // Max usable points = 5% of bill (Truco limit)
-  const maxByBill = Math.floor(orderSummary.total * 0.05);
-  const max = Math.min(loyaltyBalance, maxByBill);
-   
-      setMaxUsablePoints(max);
-      setCustomPoints(max); 
-      setShowPointsInput(true);
-
-  setLoyaltyLoading(true);
-  try {
-   const res = await fetch('/api/validate-points?action=validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mobileNumber: userPhone,
-        pointsToRedeem: loyaltyBalance,
-        billTotal: orderSummary.total
-      })
-    });
-    const data = await res.json();
-    console.log("Validate response:", data);
-  if (data.isValid) {
-  
-  const discount = Math.min(data.redemptionAmount, orderSummary.total);
-  
-  setLoyaltyToken(data.token);
-  setLoyaltyDiscount(discount);
-  setPointsApplied(true);
-
-  setOrderSummary(prev => ({
-    ...prev,
-    total: Math.max(0, prev.total - discount)
-  }));
-  toast.success(`🎉 ₹${discount} discount applied!`);
-} else {
- 
-  if (data.token) {
+    if (!userPhone || loyaltyBalance <= 0) { toast.error('No loyalty points available!'); return; }
+    const maxByBill = Math.floor(orderSummary.total * 0.05);
+    const max = Math.min(loyaltyBalance, maxByBill);
+    setMaxUsablePoints(max);
+    setCustomPoints(max);
+    setShowPointsInput(true);
+    setLoyaltyLoading(true);
     try {
-      await fetch('/api/validate-points?action=cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: data.token })
+      const res = await fetch('/api/validate-points?action=validate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: loyaltyBalance, billTotal: orderSummary.total }),
       });
-    } catch (e) {
-      console.error('Token cancel failed:', e);
-    }
-  }
-  toast.error(data.errorMessage || "Points redemption failed!");
-}
-} catch (e) {
-  toast.error("Failed to apply points!");
-    console.error('handleUseAllPoints error:', e);
-} finally {
-  setLoyaltyLoading(false);
-}
-};
-
- const handleApplyPoints = async () => {
-  if (customPoints <= 0 || customPoints > maxUsablePoints) {
-    toast.error(`Enter points between 1 and ${maxUsablePoints}`);
-    return;
-  }
-  setLoyaltyLoading(true);
-  try {
-    const res = await fetch('/api/validate-points?action=validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mobileNumber: userPhone,
-        pointsToRedeem: customPoints,
-        billTotal: orderSummary.total
-      })
-    });
-    const data = await res.json();
-
-    if (data.isValid) {
-      const discount = Math.min(data.redemptionAmount, orderSummary.total);
-      setLoyaltyToken(data.token);
-      setLoyaltyDiscount(discount);
-      setPointsApplied(true);
-      setShowPointsInput(false);
-      setOrderSummary(prev => ({
-        ...prev,
-        total: Math.max(0, prev.total - discount)
-      }));
-      toast.success(`🎉 ₹${discount} discount applied!`);
-    } else {
-      if (data.token) {
-        await fetch('/api/validate-points?action=cancel', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: data.token })
-        });
+      const data = await res.json();
+      if (data.isValid) {
+        const discount = Math.min(data.redemptionAmount, orderSummary.total);
+        setLoyaltyToken(data.token); setLoyaltyDiscount(discount); setPointsApplied(true);
+        setOrderSummary(prev => ({ ...prev, total: Math.max(0, prev.total - discount) }));
+        toast.success(`₹${discount} discount applied!`);
+      } else {
+        if (data.token) await fetch('/api/validate-points?action=cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: data.token }) });
+        toast.error(data.errorMessage || 'Points redemption failed!');
       }
-      toast.error(data.errorMessage || "Points redemption failed!");
-    }
-  } catch (e) {
-    toast.error("Failed to apply points!");
-    console.error('handleApplyPoints error:', e);
-  } finally {
-    setLoyaltyLoading(false);
-  }
-};
-
-const handleRemovePoints = async () => {
-
-
-  if (loyaltyToken) {
-    try {
-        await fetch('/api/validate-points?action=cancel', {
-         method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: loyaltyToken })
-       });
-    } catch (e) {
-      console.error('Token cancel failed:', e);
-    }
-  }
-
-  setOrderSummary(prev => ({
-    ...prev,
-    total: prev.total + loyaltyDiscount
-  }));
-  setLoyaltyDiscount(0);
-  setLoyaltyToken('');
-  setPointsApplied(false);
-};
-
-  const handleBlur = (e) => {
-    const { name } = e.target;
-    setTouched(prev => ({ ...prev, [name]: true }));
+    } catch (e) { toast.error('Failed to apply points!'); } finally { setLoyaltyLoading(false); }
   };
+
+  const handleApplyPoints = async () => {
+    if (customPoints <= 0 || customPoints > maxUsablePoints) { toast.error(`Enter points between 1 and ${maxUsablePoints}`); return; }
+    setLoyaltyLoading(true);
+    try {
+      const res = await fetch('/api/validate-points?action=validate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: customPoints, billTotal: orderSummary.total }),
+      });
+      const data = await res.json();
+      if (data.isValid) {
+        const discount = Math.min(data.redemptionAmount, orderSummary.total);
+        setLoyaltyToken(data.token); setLoyaltyDiscount(discount); setPointsApplied(true);
+        setShowPointsInput(false);
+        setOrderSummary(prev => ({ ...prev, total: Math.max(0, prev.total - discount) }));
+        toast.success(`₹${discount} discount applied!`);
+      } else {
+        if (data.token) await fetch('/api/validate-points?action=cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: data.token }) });
+        toast.error(data.errorMessage || 'Points redemption failed!');
+      }
+    } catch (e) { toast.error('Failed to apply points!'); } finally { setLoyaltyLoading(false); }
+  };
+
+  const handleRemovePoints = async () => {
+    if (loyaltyToken) {
+      try {
+        await fetch('/api/validate-points?action=cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: loyaltyToken }) });
+      } catch (e) { console.error('Token cancel failed:', e); }
+    }
+    setOrderSummary(prev => ({ ...prev, total: prev.total + loyaltyDiscount }));
+    setLoyaltyDiscount(0); setLoyaltyToken(''); setPointsApplied(false);
+  };
+
+  const handleBlur = (e) => setTouched(prev => ({ ...prev, [e.target.name]: true }));
 
   const getFieldError = (name) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -509,262 +485,105 @@ const handleRemovePoints = async () => {
     switch (name) {
       case 'firstName': return !formData.firstName ? 'First name is required' : null;
       case 'lastName': return !formData.lastName ? 'Last name is required' : null;
-      case 'email':
-        if (!formData.email) return 'Email is required';
-        if (!emailRegex.test(formData.email)) return 'Enter a valid email address';
-        return null;
-      case 'phonenumber':
-        if (!formData.phonenumber) return 'Phone number is required';
-        if (!phoneRegex.test(formData.phonenumber)) return 'Enter a valid 10-digit phone number';
-        return null;
+      case 'email': return !formData.email ? 'Email is required' : !emailRegex.test(formData.email) ? 'Enter a valid email' : null;
+      case 'phonenumber': return !formData.phonenumber ? 'Phone is required' : !phoneRegex.test(formData.phonenumber) ? 'Enter a valid 10-digit number' : null;
       case 'country': return !formData.country ? 'Country is required' : null;
       case 'address': return !formData.address ? 'Address is required' : null;
       case 'city': return !formData.city ? 'City is required' : null;
-      case 'postCode':
-        if (!formData.postCode) return 'Post code is required';
-        if (!postCodeRegex.test(formData.postCode)) return 'Enter a valid postal code (4-6 digits)';
-        return null;
+      case 'postCode': return !formData.postCode ? 'Post code is required' : !postCodeRegex.test(formData.postCode) ? 'Enter a valid postal code' : null;
       default: return null;
     }
   };
 
-  const initializeRazorpay = async () => {
-    return await loadRazorpay();
-  };
+  const initializeRazorpay = async () => await loadRazorpay();
 
   const createRazorpayOrder = async (amount) => {
-    try {
-      const res = await fetch('/api/create-razorpay-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: amount * 100 }) // Convert to paise
-      });
-      return await res.json();
-    } catch (error) {
-      throw new Error('Failed to create Razorpay order');
-    }
+    const res = await fetch('/api/create-razorpay-order', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: amount * 100 }),
+    });
+    return await res.json();
   };
+
   const handleOnlinePayment = async (totalAmount) => {
-    try {
-
-      const razorpayLoaded = await initializeRazorpay();
-      if (!razorpayLoaded) {
-        toast.error('Razorpay SDK failed to load');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const orderResponse = await createRazorpayOrder(totalAmount);
-      const { order } = orderResponse;
-
-      return new Promise((resolve, reject) => {
-        const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY,
-          amount: order.amount,
-          currency: "INR",
-          name: "BEA",
-          description: "Product Purchase",
-          order_id: order.id,
-          handler: async function (response) {
-            try {
-              const verificationRes = await fetch('/api/verify-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature
-                })
-              });
-
-              if (verificationRes.ok) {
-                resolve({
-                  paymentId: response.razorpay_payment_id,
-                  status: "paid",
-                  mode: "online"
-                });
-              } else {
-                reject(new Error('Payment verification failed'));
-              }
-            } catch (err) {
-              reject(err);
-            }
-          },
-          prefill: {
-            name: `${formData.firstName} ${formData.lastName}`,
-            email: formData.email,
-            contact: formData.phonenumber
-          },
-          theme: {
-            color: "#F37254"
-          },
-          modal: {
-            ondismiss: () => {
-              setIsSubmitting(false);
-              reject(new Error('Payment window closed'));
-            }
-          }
-        };
-
-        const razorpay = new window.Razorpay(options);
-        razorpay.open();
-
-        razorpay.on('payment.failed', function (response) {
-          setIsSubmitting(false);
-          reject(new Error(response.error.description));
-        });
-      });
-    } catch (error) {
-      console.error('Razorpay error:', error);
-      toast.error('Payment processing failed');
-      setIsSubmitting(false);
-      throw error;
-    }
+    const razorpayLoaded = await initializeRazorpay();
+    if (!razorpayLoaded) { toast.error('Razorpay SDK failed to load'); setIsSubmitting(false); return; }
+    const orderResponse = await createRazorpayOrder(totalAmount);
+    const { order } = orderResponse;
+    return new Promise((resolve, reject) => {
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY,
+        amount: order.amount, currency: 'INR', name: 'BEA',
+        description: 'Product Purchase', order_id: order.id,
+        handler: async (response) => {
+          try {
+            const verificationRes = await fetch('/api/verify-payment', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            if (verificationRes.ok) resolve({ paymentId: response.razorpay_payment_id, status: 'paid', mode: 'online' });
+            else reject(new Error('Payment verification failed'));
+          } catch (err) { reject(err); }
+        },
+        prefill: { name: `${formData.firstName} ${formData.lastName}`, email: formData.email, contact: formData.phonenumber },
+        theme: { color: '#1a56db' },
+        modal: { ondismiss: () => { setIsSubmitting(false); reject(new Error('Payment window closed')); } },
+      };
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+      razorpay.on('payment.failed', (response) => { setIsSubmitting(false); reject(new Error(response.error.description)); });
+    });
   };
-  // const handleOnlinePayment = async (totalAmount) => {
-  //   try {
-  //     const razorpayLoaded = await initializeRazorpay();
-  //     if (!razorpayLoaded) {
-  //       toast.error('Razorpay SDK failed to load');
-  //       setIsSubmitting(false);
-  //       return;
-  //     }
 
-  //     const orderResponse = await createRazorpayOrder(totalAmount);
-  //     const { order } = orderResponse;
-
-  //     return new Promise((resolve, reject) => {
-  //       const options = {
-  //         key: process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY,
-  //         amount: order.amount,
-  //         currency: "INR",
-  //         name: "BEA",
-  //         description: "Product Purchase",
-  //         order_id: order.id,
-  //         handler: async function (response) {
-  //           try {
-  //             const verificationRes = await fetch('/api/verify-payment', {
-  //               method: 'POST',
-  //               headers: { 'Content-Type': 'application/json' },
-  //               body: JSON.stringify({
-  //                 razorpay_payment_id: response.razorpay_payment_id,
-  //                 razorpay_order_id: response.razorpay_order_id,
-  //                 razorpay_signature: response.razorpay_signature
-  //               })
-  //             });
-
-  //             if (verificationRes.ok) {
-  //               resolve({
-  //                 paymentId: response.razorpay_payment_id,
-  //                 status: "paid",
-  //                 mode: "online"
-  //               });
-  //             } else {
-  //               reject(new Error('Payment verification failed'));
-  //             }
-  //           } catch (err) {
-  //             reject(err);
-  //           }
-  //         },
-  //         prefill: {
-  //           name: `${formData.firstName} ${formData.lastName}`,
-  //           email: formData.email,
-  //           contact: formData.phonenumber
-  //         },
-  //         theme: {
-  //           color: "#F37254"
-  //         }
-  //       };
-
-  //       const razorpay = new window.Razorpay(options);
-  //       razorpay.open();
-
-  //       razorpay.on('payment.failed', function (response) {
-  //          setIsSubmitting(false);
-  //         reject(new Error(response.error.description));
-  //       });
-  //        razorpay.on('modal.close', function() {
-  //       setIsSubmitting(false);
-  //     });
-  //     });
-  //   } catch (error) {
-  //     console.error('Razorpay error:', error);
-  //     toast.error('Payment processing failed');
-  //     throw error;
-  //   }
-  // };
-  // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalDiscount = cartItems.reduce((sum, item) => sum + (item.discount || 0), 0);
-  const grandTotal = subtotal - totalDiscount;
+  const warrantyTotal = cartItems.reduce((sum, item) => sum + (item.warrantyData?.price || 0), 0);
+
+  const mrpTotal = cartItems.reduce((sum, item) => sum + ((item.actual_price ?? item.price ?? 0) * item.quantity), 0);
+ const itemDiscountTotal = cartItems.reduce((sum, item) => {
+  const mrp = (item.actual_price ?? item.price ?? 0) * item.quantity;
+  const selling = (item.price > 0 ? item.price : item.actual_price) * item.quantity;
+  return sum + (mrp - selling);
+}, 0);
+const sellingPrice = mrpTotal - itemDiscountTotal;
+
+  const uniqueCities = [...new Set(stores.map(s => s.city))];
+  const finalCities = [...new Set([...uniqueCities, ...extraCities])].sort();
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
+   
     if (isSubmitting) return;
-
-
-    setError("");
+    setError('');
+    console.log("Applied coupon at order time:", appliedCoupon); 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setShowAuthModal(true);
-        setIsSubmitting(false);
-        return;
-      }
+      const token = localStorage.getItem('token');
+      if (!token) { setShowAuthModal(true); return; }
       const decoded = jwtDecode(token);
       const userId = decoded.userId;
-
-      // Use saved address data if selected, otherwise use form data
       const addressData = useSavedAddress && selectedAddress !== null
-        ? {
-          ...useraddress[selectedAddress],
-          state: useraddress[selectedAddress].state || "Tamilnadu",
-          country: useraddress[selectedAddress].country || "India",
-        }
-        : {
-          ...formData,
-          state: formData.state || "Tamilnadu",
-          country: formData.country || "India",
-        };
-
-      // Validation Checks (only if not using saved address)
+        ? { ...useraddress[selectedAddress], state: useraddress[selectedAddress].state || 'Tamilnadu', country: useraddress[selectedAddress].country || 'India' }
+        : { ...formData, state: formData.state || 'Tamilnadu', country: formData.country || 'India' };
 
       if (!useSavedAddress || selectedAddress === null) {
         setTouched({ firstName: true, lastName: true, email: true, phonenumber: true, country: true, address: true, city: true, postCode: true });
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phoneRegex = /^[0-9]{10}$/;
         const postCodeRegex = /^[0-9]{4,6}$/;
-
-        if (
-          !addressData.firstName ||
-          !addressData.lastName ||
-          !addressData.email ||
-          !addressData.phonenumber ||
-          !addressData.postCode ||
-          !addressData.state
-        ) {
-          toast.error("Please fill in all required fields.");
-          return;
-        }
-
-        if (!emailRegex.test(addressData.email)) {
-          toast.error("Please enter a valid email address.");
-          return;
-        }
-        if (!phoneRegex.test(addressData.phonenumber)) {
-          toast.error("Please enter a valid 10-digit phone number.");
-          return;
-        }
-        if (!postCodeRegex.test(addressData.postCode)) {
-          toast.error("Please enter a valid postal code (4-6 digits).");
-          return;
-        }
+        if (!addressData.firstName || !addressData.lastName || !addressData.email || !addressData.phonenumber || !addressData.postCode || !addressData.state) { toast.error('Please fill in all required fields.'); return; }
+        if (!emailRegex.test(addressData.email)) { toast.error('Please enter a valid email address.'); return; }
+        if (!phoneRegex.test(addressData.phonenumber)) { toast.error('Please enter a valid 10-digit phone number.'); return; }
+        if (!postCodeRegex.test(addressData.postCode)) { toast.error('Please enter a valid postal code.'); return; }
       }
+
       setIsSubmitting(true);
-      setError("");
-
       const totalAmount = orderSummary.total;
+      let savedAddressId = null;
 
-        let savedAddressId = null;
       if (!useSavedAddress || selectedAddress === null) {
         const formDataToSend = new FormData();
         formDataToSend.append('userId', userId);
@@ -779,1174 +598,923 @@ const handleRemovePoints = async () => {
         formDataToSend.append('state', addressData.state);
         formDataToSend.append('landmark', addressData.landmark || '');
         formDataToSend.append('phonenumber', addressData.phonenumber);
-        formDataToSend.append('altnumber', addressData.altnumber || '');
-        formDataToSend.append('gst_name', addressData.gst_name || '');
-        formDataToSend.append('gst_number', addressData.gst_number || '');
         formDataToSend.append('additionalInfo', addressData.additionalInfo || '');
-
-        const addressRes = await fetch('/api/useraddress/add', {
-          method: 'POST',
-          body: formDataToSend,
-        });
-
-        if (!addressRes.ok) {
-          throw new Error('Failed to save address');
-        }
+        const addressRes = await fetch('/api/useraddress/add', { method: 'POST', body: formDataToSend });
+        if (!addressRes.ok) throw new Error('Failed to save address');
         const newAddressData = await addressRes.json();
         setUseraddress(prev => [...prev, newAddressData.userAddress]);
         savedAddressId = newAddressData.userAddress?._id;
       }
 
-            const deliveryAddress = useSavedAddress && selectedAddress !== null
-        ? [
-          useraddress[selectedAddress].address,
-          useraddress[selectedAddress].landmark,
-          // useraddress[selectedAddress].additionalInfo,
-          useraddress[selectedAddress].businessName,
-          useraddress[selectedAddress].city,
-          useraddress[selectedAddress].state,
-          useraddress[selectedAddress].country,
-          useraddress[selectedAddress].postCode
-        ].filter(Boolean).join(", ")
-        : [
-          addressData.address,
-          addressData.landmark,
-          // addressData.additionalInfo,
-          addressData.businessName,
-          addressData.city,
-          addressData.state,
-          addressData.country,
-          addressData.postCode
-        ].filter(Boolean).join(", ");
-        
-        const comments =
-  useSavedAddress && selectedAddress !== null
-    ? (useraddress[selectedAddress]?.additionalInfo || "")
-    : (addressData.additionalInfo || "");
+      const deliveryAddress = [
+        addressData.address, addressData.landmark,
+        addressData.businessName, addressData.city,
+        addressData.state, addressData.country, addressData.postCode,
+      ].filter(Boolean).join(', ');
 
-console.log("comments:", comments);
+      const comments = useSavedAddress && selectedAddress !== null
+        ? (useraddress[selectedAddress]?.additionalInfo || '')
+        : (addressData.additionalInfo || '');
 
-      let order_number ="ORD" + Date.now();
-      let paymentId = "";
-      let paymentStatus = "";
-      let paymentMode = "";
-      let order_status = "payment_initialized"
+      const pickupStoreName = formData.deliveryType === 'store'
+        ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
+        : undefined;
+
+      let order_number = 'ORD' + Date.now();
+      let paymentId = '', paymentStatus = '', paymentMode = '';
+
       if (paymentMethod === 'Cash on Delivery') {
-        paymentId = "COD_" + Date.now();
-        paymentStatus = "pending";
-        paymentMode = "Cash on Delivery";
+        paymentId = 'COD_' + Date.now(); paymentStatus = 'pending'; paymentMode = 'Cash on Delivery';
       } else if (paymentMethod === 'online') {
         try {
-
-          const orderRes = await fetch('/api/orders/add', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: userId,
-           user_adddeliveryid: useSavedAddress && selectedAddress !== null
-          ? useraddress[selectedAddress]._id  : savedAddressId || useraddress[0]?._id,
-              order_username: `${addressData.firstName} ${addressData.lastName}`,
-              order_phonenumber: addressData.phonenumber,
-              email_address: addressData.email,
-             order_item: cartItems.map(item => ({
-  ...item,
-  warrantyData: item.warrantyData || null,
-  coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
-    ? item.coupondetails.map(c => c.offer_code || String(c))
-    : []
-})),
-              order_amount: totalAmount,
-              order_deliveryaddress: deliveryAddress,
-              // COMMENT SAVE
-              customer_comments: comments,
-              payment_method: paymentMethod,
-              payment_type:  "online",
-              order_status: order_status,
-              delivery_type: formData.deliveryType === "store" ? "store_pickup" : "home",
-              pickup_store: formData.deliveryType === "store"
-                ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
-                : undefined,
-              payment_id: paymentId || '',
-              payment_status: "payment_initialized",
-              order_number:"ORD" + Date.now() || "ORD" + Date.now(),
-              order_details: cartItems.map((item) => ({
-              item_code: `ITEM${item.item_code}`,
-               product_id: item.id,
-              product_name: item.name,
-              product_price: item.price,
-               model: "N/A",
-              user_id: userId,
-              coupondiscount: item.discount || 0,
-               coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
-                ? item.coupondetails.map(c => c.offer_code || String(c))
-              : [],
-              created_at: new Date(),
-             updated_at: new Date(),
-              quantity: item.quantity,
-             store_id: formData.deliveryType === "store" ? formData.selectedStore : "STORE01",
-               orderNumber: "ORD" + Date.now(),
-              })),
-            }),
-          });
-
-          const orderData = await orderRes.json()
-          console.log("order data",orderData)
-          order_number = orderData?.order?.order_number
-          console.log(order_number,'testing')
-
+         const orderRes = await fetch('/api/orders/add', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    user_id: userId,
+    user_adddeliveryid: useSavedAddress && selectedAddress !== null ? useraddress[selectedAddress]._id : savedAddressId || useraddress[0]?._id,
+    order_username: `${addressData.firstName} ${addressData.lastName}`,
+    order_phonenumber: addressData.phonenumber, email_address: addressData.email,
+    order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
+    order_amount: totalAmount, order_deliveryaddress: deliveryAddress,
+      loyalty_points_redeemed: pointsApplied ? customPoints : 0,
+       loyalty_discount: loyaltyDiscount || 0,
+       loyalty_redemption_token: loyaltyToken || '',
+      promotion_code_applied: appliedCoupon?.offer_code || null,
+      promotion_discount_applied: appliedCoupon ? (orderSummary.discount || 0) : 0,
+    
+    customer_comments: comments, payment_method: paymentMethod, payment_type: paymentMode,
+    order_status: 'pending',
+    delivery_type: formData.deliveryType === 'store' ? 'store_pickup' : 'home',
+    pickup_store: pickupStoreName,
+    payment_id: '', payment_status: 'payment_initialized', 
+    order_number: order_number || 'ORD' + Date.now(),
+    order_details: cartItems.map(item => ({ item_code: `ITEM${item.item_code}`, product_id: item.id, product_name: item.name, product_price: item.price, model: 'N/A', user_id: userId, coupondiscount: 0, created_at: new Date(), updated_at: new Date(), quantity: item.quantity, store_id: formData.deliveryType === 'store' ? formData.selectedStore : 'STORE01', orderNumber: 'ORD' + Date.now() })),
+  }),
+});
+          const orderData = await orderRes.json();
+          order_number = orderData?.order?.order_number;
           let result = await handleOnlinePayment(totalAmount);
-
-          console.log(result,'razer pay result dfoidfnalkdsfoignldfoiafn;ldksafnhoi')
-          paymentId = result.paymentId;
-          paymentStatus = result.status;
-          paymentMode = result.mode;
-
-
-        } catch (error) {
-          toast.error(`Payment failed: ${error.message}`);
-          setIsSubmitting(false);
-          return;
-        }
-      } else {
-        console.log("Invalid Payment Method");
-        return;
+          paymentId = result.paymentId; paymentStatus = result.status; paymentMode = result.mode;
+        } catch (error) { toast.error(`Payment failed: ${error.message}`); setIsSubmitting(false); return; }
       }
-             if (loyaltyToken && pointsApplied) {
-        console.log("Redeem token:", loyaltyToken);
-      try {
-        const redeemRes = await fetch('/api/validate-points?action=redeem', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({
-          token: loyaltyToken,
-          orderNumber: order_number,
-         })
-        });
-      const redeemData = await redeemRes.json();
-      console.log("Redeem response:", redeemData);
-     } catch (e) {
-      console.error('Points redeem failed:', e);
-    }
-   }
-       
-      // Only save new address if not using saved address
-        console.log("loyaltyToken:", loyaltyToken);
-         console.log("pointsApplied:", pointsApplied);
 
+      if (loyaltyToken && pointsApplied) {
+        try {
+          await fetch('/api/validate-points?action=redeem', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: loyaltyToken, orderNumber: order_number }),
+          });
+        } catch (e) { console.error('Points redeem failed:', e); }
+      }
 
-      // Save Payment
       const paymentRes = await fetch('/api/payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: userId,
-          payment_mode: paymentMode,
-          status: paymentStatus,
-          modevalue: totalAmount,
-          payment_id: paymentId,
-          payment_Date: new Date(),
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, payment_mode: paymentMode, status: paymentStatus, modevalue: totalAmount, payment_id: paymentId, payment_Date: new Date() }),
       });
+      if (!paymentRes.ok) throw new Error('Payment processing failed');
+      const paymentData = (await paymentRes.json()).paymentData;
 
-      if (!paymentRes.ok) {
-        throw new Error('Payment processing failed');
-      }
-
-      const res = await paymentRes.json();
-      const paymentData = res.paymentData;
-
-      console.log(paymentData,"'''''''''''''''''''''''''''''''''payment dat''''''''''")
-      // Prepare delivery address string
-      /* const deliveryAddress = useSavedAddress && selectedAddress !== null
-        ? `${useraddress[selectedAddress].address}, ${useraddress[selectedAddress].city}, ${useraddress[selectedAddress].state}, ${useraddress[selectedAddress].country}, ${useraddress[selectedAddress].postCode}`
-        : `${addressData.address}, ${addressData.city}, ${addressData.state}, ${addressData.country}, ${addressData.postCode}`; */
-      // Prepare delivery address string
-
-
-      /* alert(
-`pickup_store: ${
-  formData.deliveryType === "store"
-    ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
-    : "undefined"
-}`
-); */
-
-      // Save Order
       const orderRes = await fetch('/api/orders/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: userId,
-         user_adddeliveryid: useSavedAddress && selectedAddress !== null
-         ? useraddress[selectedAddress]._id
-         : savedAddressId || useraddress[0]?._id,
+          user_adddeliveryid: useSavedAddress && selectedAddress !== null ? useraddress[selectedAddress]._id : savedAddressId || useraddress[0]?._id,
           order_username: `${addressData.firstName} ${addressData.lastName}`,
-          order_phonenumber: addressData.phonenumber,
-          email_address: addressData.email,
-          order_item: cartItems.map(item => ({    
-  ...item,
-  warrantyData: item.warrantyData || null,
-  coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0
-    ? item.coupondetails.map(c => c.offer_code || String(c))
-    : []
-})),
-          order_amount: totalAmount,
-          order_deliveryaddress: deliveryAddress,
-          // COMMENT SAVE
-          customer_comments: comments,
-          payment_method: paymentMethod,
-          payment_type: paymentMode,
-          order_status: "pending",
-          delivery_type: formData.deliveryType === "store" ? "store_pickup" : "home",
-          pickup_store: formData.deliveryType === "store"
-            ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
-            : undefined,
-          payment_id: paymentData.payment_id,
-          payment_status: paymentData.status,
-          order_number: order_number|| "ORD" + Date.now(),
-          order_details: cartItems.map((item) => ({
-            item_code: `ITEM${item.item_code}`,
-            product_id: item.id,
-            product_name: item.name,
-            product_price: item.price,
-            model: "N/A",
-            user_id: userId,
-            coupondiscount: 0,
-            created_at: new Date(),
-            updated_at: new Date(),
-            // quantity: 1,
-            quantity: item.quantity,
-            store_id: formData.deliveryType === "store" ? formData.selectedStore : "STORE01",
-            orderNumber: "ORD" + Date.now(),
-          })),
+          order_phonenumber: addressData.phonenumber, email_address: addressData.email,
+          order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
+          order_amount: totalAmount, order_deliveryaddress: deliveryAddress,
+              loyalty_points_redeemed: pointsApplied ? customPoints : 0,
+          loyalty_discount: loyaltyDiscount || 0,
+           loyalty_redemption_token: loyaltyToken || '',
+         promotion_code_applied: appliedCoupon?.offer_code || null,
+          promotion_discount_applied: appliedCoupon ? (orderSummary.discount || 0) : 0,
+
+          customer_comments: comments, payment_method: paymentMethod, payment_type: paymentMode,
+          order_status: 'pending',
+          delivery_type: formData.deliveryType === 'store' ? 'store_pickup' : 'home',
+          pickup_store: pickupStoreName,
+          payment_id: paymentData.payment_id, payment_status: paymentData.status,
+          order_number: order_number || 'ORD' + Date.now(),
+          order_details: cartItems.map(item => ({ item_code: `ITEM${item.item_code}`, product_id: item.id, product_name: item.name, product_price: item.price, model: 'N/A', user_id: userId, coupondiscount: 0, created_at: new Date(), updated_at: new Date(), quantity: item.quantity, store_id: formData.deliveryType === 'store' ? formData.selectedStore : 'STORE01', orderNumber: 'ORD' + Date.now() })),
         }),
       });
-      console.log(orderRes);
-      if (!orderRes.ok) {
-        throw new Error('Order creation failed');
-      }
+      if (!orderRes.ok) throw new Error('Order creation failed');
 
-
-      // if(orderRes.ok){
-      // const responsedata = await orderRes.json();
-      // const order_id = responsedata.order._id.toString();
-      // const orderhistory1 = await fetch('/api/orderhistory',{
-      //   method:'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({orderId : order_id})
-      // });
-
-      // if(formData.deliveryType == 'store'){
-      //  const storeorderid = await fetch('/api/sender_orderid',{
-      //   method:'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({orderId : order_id})
-      //  });
-
-      //  if(storeorderid.ok){
-      //     const storeresponsedata = await storeorderid.json();
-      //   const storeorderid_status = storeresponsedata.status;
-      //     const orderhistory = await fetch('/api/orderhistory',{
-      //       method:'PUT',
-      //       headers: { 'Content-Type': 'application/json' },
-      //       body: JSON.stringify({orderId : order_id,status:storeorderid_status})
-      //     });
-      //  }
-
-      // }
-      // }
-
-      // Clear cart after successful order
-      const cartdelte = await fetch('/api/cart', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ clearAll: true })
+      const cartDelete = await fetch('/api/cart', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ clearAll: true }),
       });
 
+      if (cartDelete.status === 401) { localStorage.removeItem('token'); router.push('/login'); return; }
 
-      if (cartdelte.status === 401) {
-        localStorage.removeItem('token');
-        router.push('/login');
-        return;
-      }
-
-      if (cartdelte.status === 200) {
-
-        // ✅ UPDATE abandoned → SUCCESS
-        // await fetch('/api/abandoned/update', {
-        //   method: 'PUT',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({
-        //     id: abandonedId,
-        //     payment_status: "paid",
-        //     order_status: "pending",
-        //     payment_id: paymentId || null,
-        //     orderNumber: "ORD" + Date.now()
-        //   })
-        // });
-
-
-        localStorage.removeItem('checkoutData');
-        localStorage.removeItem('appliedCoupon');
+      if (cartDelete.status === 200) {
+        localStorage.removeItem('checkoutData'); localStorage.removeItem('appliedCoupon');
         const orderData = await orderRes.json();
+        ga4Purchase({ orderId: orderData.order.order_number, value: orderSummary.total, items: cartItems });
 
-        // ✅ GA4 purchase event
-     ga4Purchase({
-          orderId: orderData.order.order_number,
-          value: orderSummary.total,
-          items: cartItems,
-        });
         if (paymentMethod !== 'Cash on Delivery') {
-         try {
- const loyaltyRes = await fetch('/api/award-points', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      phoneNumber: userPhone,
-      orderNumber: order_number,
-      orderAmount: totalAmount,
-      firstName: addressData.firstName,
-      lastName: addressData.lastName,
-      email: addressData.email,
-      cartItems: cartItems,
-      loyaltyPointsRedeemedAmount: loyaltyDiscount || 0,
-      loyaltyPointsRedeemedCode: loyaltyToken || "",       
-      paymentMode: paymentMode  
-     })
-  });
-   const loyaltyData = await loyaltyRes.json();
+          try {
+            const loyaltyRes = await fetch('/api/award-points', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phoneNumber: userPhone, orderNumber: order_number, orderAmount: totalAmount, firstName: addressData.firstName, lastName: addressData.lastName, email: addressData.email, cartItems, loyaltyPointsRedeemedAmount: loyaltyDiscount || 0, loyaltyPointsRedeemedCode: loyaltyToken || '', paymentMode, promotionCode: appliedCoupon?.offer_code || '', promotionDiscount: appliedCoupon ? (orderSummary.discount || 0) : 0, }),
+            });
+            const loyaltyData = await loyaltyRes.json();
+            if (loyaltyData.success && loyaltyData.points_awarded > 0) {
+              toast.success(`You earned ${loyaltyData.points_awarded} loyalty points!`, { autoClose: 5000 });
+              window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
+            }
+          } catch (e) { console.error('Loyalty award failed:', e); }
+        }
 
-  if (loyaltyData.success && loyaltyData.points_awarded > 0) {
-    toast.success(`🎉 You earned ${loyaltyData.points_awarded} loyalty points!`, {
-      autoClose: 5000
-    });
-     window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
-  }
-} catch (loyaltyErr) {
-  console.error("Loyalty points award failed:", loyaltyErr);
-}
-}
+        await fetch('/api/send-order-detail-to-sap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_number: orderData.order.order_number }) });
 
-        // send_order_detail_to_sap
-        const Send_SAP_Res = await fetch('/api/send-order-detail-to-sap', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          order_number: orderData.order.order_number,
-        }),
-        }); 
-
-        console.log("SAP_STATUS", Send_SAP_Res.status); 
-
-        // ✅ Order confirmed — show success and navigate immediately
-        toast.success("Order placed successfully!");
+        toast.success('Order placed successfully!');
         updateCartCount(0);
         router.push('/orders');
-        // Send confirmation emails in background — errors here must NOT affect the success flow
+
         try {
-          const name = addressData.firstName + ' ' + addressData.lastName;
-          const itemsHtml = cartItems.map(item => {
-  const warrantyLine = item.warrantyData
-    ? ` | 🛡️ ${item.warrantyData.year} Year Extended Warranty - Rs.${Number(item.warrantyData.price).toFixed(2)}`
-    : '';
-  return `<li>${item.name} - Rs.${Number(item.price).toFixed(2)} x ${item.quantity}${warrantyLine}</li>`;
-}).join('');
-          const itemHtml = `<ul style="padding-left: 20px; color: #555555;">${itemsHtml}</ul>`;
-          const order_amount = `₹${Number(orderData.order.order_amount).toFixed(2)}`;
-
-          const emailFormData = new FormData();
-          emailFormData.append("campaign_id", "0800f221-7805-4b76-988c-bbecd66e7500");
-          emailFormData.append("email", addressData.email);
-          //emailFormData.append("email", "gmaylvk001@gmail.com");
-          emailFormData.append("params", JSON.stringify([name, orderData.order.order_number, order_amount, orderData.order.payment_method, itemHtml]));
-
-          await fetch("https://bea.eygr.in/api/email/send-msg", {
-            method: "POST",
-            headers: { Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L" },
-            body: emailFormData,
-          });
-
-          const adminItemsHtml = cartItems.map(item => {
-  const warrantyLine = item.warrantyData
-    ? ` | 🛡️ ${item.warrantyData.year} Year Extended Warranty - Rs.${Number(item.warrantyData.price).toFixed(2)}`
-    : '';
-  return `<li>${item.name} - Rs.${Number(item.price).toFixed(2)} x ${item.quantity}${warrantyLine}</li>`;
-}).join('');
-          const adminItemsTableHtml = `<ul style="padding-left: 20px; color: #555555;">${adminItemsHtml}</ul>`;
-
-          const adminemailFormData = new FormData();
-          adminemailFormData.append("campaign_id", "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6");
-          adminemailFormData.append("params", JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, adminItemsTableHtml]));
-
-             const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","abu@bharathelectronics.in","customercare@bharathelectronics.in"];
-            //  const emailadmin = ['hariharann2026@gmail.com'];
-          for (const adminEmail of emailadmin) {
-            adminemailFormData.set("email", adminEmail);
-            await fetch("https://bea.eygr.in/api/email/send-msg", {
-              method: "POST",
-              headers: { Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L" },
-              body: adminemailFormData,
-            });
-          }
-        } catch (emailErr) {
-          console.error("Email sending failed (order still placed):", emailErr);
-        }
-
+          const name = `${addressData.firstName} ${addressData.lastName}`;
+          const itemsHtml = cartItems.map(item => { const w = item.warrantyData ? ` | ${item.warrantyData.year} Year Extended Warranty - Rs.${Number(item.warrantyData.price).toFixed(2)}` : ''; return `<li>${item.name} - Rs.${Number(item.price).toFixed(2)} x ${item.quantity}${w}</li>`; }).join('');
+          const emailFD = new FormData();
+          emailFD.append('campaign_id', '0800f221-7805-4b76-988c-bbecd66e7500');
+          emailFD.append('email', addressData.email);
+          emailFD.append('params', JSON.stringify([name, orderData.order.order_number, `₹${Number(orderData.order.order_amount).toFixed(2)}`, orderData.order.payment_method, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
+          await fetch('https://bea.eygr.in/api/email/send-msg', { method: 'POST', headers: { Authorization: 'Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L' }, body: emailFD });
+          // const adminEmails = ['arunkarthik@bharathelectronics.in','ecom@bharathelectronics.in','itadmin@bharathelectronics.in','telemarketing@bharathelectronics.in','sekarcorp@bharathelectronics.in','abu@bharathelectronics.in','customercare@bharathelectronics.in'];
+            const adminEmails = ['hariharann2026@gmail.com']
+          const adminFD = new FormData();
+          adminFD.append('campaign_id', 'dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6');
+          adminFD.append('params', JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
+          for (const email of adminEmails) { adminFD.set('email', email); await fetch('https://bea.eygr.in/api/email/send-msg', { method: 'POST', headers: { Authorization: 'Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L' }, body: adminFD }); }
+        } catch (e) { console.error('Email sending failed:', e); }
       }
     } catch (error) {
-     
-      toast.error("Payment failed");
-      console.error("Error submitting order:", error);
-      toast.error("Failed to place order. Please try again.");
+      console.error('Submit error:', error);
+      toast.error('Failed to place order. Please try again.');
       setIsSubmitting(false);
     }
   };
 
+  // ─── Floating label input helper ──────────────────────────────────────────
+  const FloatInput = ({ label, name, type = 'text', required, readOnly, value, onChange, onBlur }) => {
+    const err = getFieldError(name);
+    return (
+      <div className="relative">
+        <input
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          readOnly={readOnly}
+          className={`peer w-full border rounded-lg pt-5 pb-1.5 px-3 text-sm outline-none transition
+            ${readOnly ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white'}
+            ${err ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-300'
+              : 'border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200'}`}
+        />
+        <label className={`absolute left-3 transition-all duration-150 pointer-events-none
+          ${value ? 'top-1 text-[10px] text-gray-500' : 'top-3.5 text-sm text-gray-400'}`}>
+          {label}{required && '*'}
+        </label>
+        {err && <p className="text-red-500 text-xs mt-0.5">{err}</p>}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading checkout...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto" />
+          <p className="mt-4 text-gray-500 text-sm">Loading checkout…</p>
         </div>
       </div>
     );
   }
 
+  // ─── Price summary helpers ─────────────────────────────────────────────────
+  const productPrice = orderSummary.subtotal + orderSummary.discount;
+  const shippingCost = shippingMethod === 'express' ? 299 : 0;
+  const finalTotal = orderSummary.total + shippingCost;
+
   return (
-    <div className="bg-white min-h-screen">
+    <div className="min-h-screen bg-white">
       <ToastContainer position="top-right" autoClose={5000} />
 
-      {/* Checkout Header Bar */}
-      <div className="bg-white py-6 px-8 flex border-b justify-between items-center">
-        <h2 className="text-2xl font-bold text-orange-500 " style={{ marginLeft: "64px" }}>Checkout</h2>
-        {/* <div className="flex items-center space-x-2" style={{marginRight: "100px"}}>
-          <span className="text-2xl text-gray-600">🏠 Home</span>
-          <span className="text-gray-500">›</span>
-          <span className="text-2xl text-orange-500 font-semibold">Checkout</span>
-        </div> */}
-      </div>
-
-      {/* <div className="max-w-9xl mx-auto rounded-lg p-8 pt-0  container"> */}
-      <div className="w-full  rounded-lg  pt-0">
-
-        <div className="flex flex-col lg:flex-row ml-[9px] lg:ml-[100px] mx-auto">
-
-          {/* <div className="flex flex-col lg:flex-row ml-[9px] lg:ml-[100px] mx-auto"></div> */}
-          {/* Left - Checkout Form */}
-          <div className="w-full lg:w-2/4 bg-white p-0 pt-6">
-
-            {error && <p className="text-red-500 text-bold-sm mb-4">{error}</p>}
-
-            {useSavedAddress && selectedAddress !== null ? (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="grid grid-cols-2 gap-4">
-                  <p><span className="font-medium">Name:</span> {useraddress[selectedAddress].firstName} {useraddress[selectedAddress].lastName}</p>
-                  <p><span className="font-medium">Phone:</span> {useraddress[selectedAddress].phonenumber}</p>
-                  <p><span className="font-medium">Address:</span> {useraddress[selectedAddress].address}</p>
-                  <p><span className="font-medium">City:</span> {useraddress[selectedAddress].city}</p>
-                  <p><span className="font-medium">State:</span> {useraddress[selectedAddress].state}</p>
-                  <p><span className="font-medium">Country:</span> {useraddress[selectedAddress].country}</p>
-                  <p><span className="font-medium">Postal Code:</span> {useraddress[selectedAddress].postCode}</p>
+      {/* ── Top header bar ─────────────────────────────────────────────────── */}
+      {/* <div className="border-b bg-white px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-20">
+        <a href="/" className="flex items-center gap-2">
+          <img src="/bea-new.png" alt="BEA" className="h-8 w-auto" />
+        </a>
+        
+        <div className="hidden sm:flex items-center gap-0 text-xs">
+          {['Cart', 'Delivery', 'Payment', 'Confirmation'].map((step, i) => (
+            <div key={step} className="flex items-center gap-0">
+              <div className={`flex items-center gap-1.5 px-1
+                ${i === 0 ? 'text-gray-400' : i === 1 ? 'text-blue-600 font-semibold' : 'text-gray-400'}`}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold
+                  ${i === 0 ? 'bg-green-500 text-white' : i === 1 ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-400'}`}>
+                  {i === 0 ? '✓' : i + 1}
                 </div>
+                {step}
               </div>
-            ) : (
-
-              <form onSubmit={handleSubmit} className="mr-2">
-                {/* Contact Section */}
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-black mb-3">
-                    Contact
-                  </h2>
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    <div className="relative mt-3">
-                      <input
-                        type="text"
-                        name="phonenumber"
-                        value={formData.phonenumber}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('phonenumber') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
-                      />
-                      <span className={`absolute left-2 transition-all duration-200 ${formData.phonenumber
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}>
-                        Phone Number*
-                      </span>
-                      {getFieldError('phonenumber') && <p className="text-red-500 text-xs mt-1">{getFieldError('phonenumber')}</p>}
-                    </div>
-                    <div className="relative mt-3 ">
-                      <input
-                        type="email"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        name="email"
-                        value={formData.email}
-                        className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('email') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
-                      />
-                      <span className={`absolute left-2 transition-all duration-200 ${formData.email
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}>
-                        Email Address*
-                      </span>
-                      {getFieldError('email') && <p className="text-red-500 text-xs mt-1">{getFieldError('email')}</p>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Delivery Section */}
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-black mb-3">
-                    Delivery
-                  </h2>
-                  <div className="relative mt-6">
-                    <input
-                      type="text"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      name="country"
-                      value={formData.country}
-                      className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('country') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                      required
-                    />
-                    <span className={`absolute left-2 transition-all duration-200 ${formData.country
-                      ? 'top-1 text-xs text-gray-500'
-                      : 'top-3 text-gray-400'
-                      }`}>
-                      Country*
-                    </span>
-                    {getFieldError('country') && <p className="text-red-500 text-xs mt-1">{getFieldError('country')}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    <div className="relative mt-3">
-                      <input
-                        type="text"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        name="firstName"
-                        value={formData.firstName}
-                        className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('firstName') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
-                      />
-                      <span className={`absolute left-2 transition-all duration-200 ${formData.firstName
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}>
-                        First Name*
-                      </span>
-                      {getFieldError('firstName') && <p className="text-red-500 text-xs mt-1">{getFieldError('firstName')}</p>}
-                    </div>
-                    <div className="relative mt-3">
-                      <input
-                        type="text"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        name="lastName"
-                        value={formData.lastName}
-                        className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('lastName') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
-                      />
-                      <span className={`absolute left-2 transition-all duration-200 ${formData.lastName
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}>
-                        Last Name*
-                      </span>
-                      {getFieldError('lastName') && <p className="text-red-500 text-xs mt-1">{getFieldError('lastName')}</p>}
-                    </div>
-                  </div>
-
-                  <div className="relative mt-6">
-                    <input
-                      type="text"
-                      onChange={handleChange}
-                      name="businessName"
-                      value={formData.businessName}
-                      className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
-                      required
-                    />
-                    <span className={`absolute left-2 transition-all duration-200 ${formData.businessName
-                      ? 'top-1 text-xs text-gray-500'
-                      : 'top-3 text-gray-400'
-                      }`}>
-                      Company Name (Optional)
-                    </span>
-                  </div>
-
-                  <div className="relative mt-6 w-full">
-                    <input
-                      type="text"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      name="address"
-                      value={formData.address}
-                      className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('address') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                      required
-                    />
-                    <span
-                      className={`absolute left-2 transition-all duration-200 pointer-events-none ${formData.address
-                        ? 'top-1 text-xs text-gray-500'
-                        : 'top-3 text-gray-400'
-                        }`}
-                    >House number and street name*
-                    </span>
-                    {getFieldError('address') && <p className="text-red-500 text-xs mt-1">{getFieldError('address')}</p>}
-                  </div>
-
-
-                  <div className="relative mt-6">
-                    <input
-                      type="text"
-                      onChange={handleChange}
-                      name="landmark"
-                      value={formData.landmark}
-                      className="border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1"
-                      required
-                    />
-                    <span className={`absolute left-2 transition-all duration-200 ${formData.landmark
-                      ? 'top-1 text-xs text-gray-500'
-                      : 'top-3 text-gray-400'
-                      }`}>
-                      Landmark, suite, unit, etc. (Optional)
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    {/* <div className="relative mt-3 w-full">
-      <select
-        name="state"
-        value={formData.state}
-        onChange={handleChange}
-        className="border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1 px-2"
-        required
-      >
-        <option value="">--Select State--</option>
-        <option value="Tamilnadu">Tamilnadu</option>
-      </select>
-        <span
-          className={`absolute left-2 transition-all duration-200 pointer-events-none ${
-            formData.state
-              ? 'top-1 text-xs text-gray-500'
-              : 'top-3 text-gray-400'
-          }`}
-        >
-          State
-        </span>
+              {i < 3 && <div className="w-8 h-px bg-gray-200 mx-1" />}
+            </div>
+          ))}
+        </div>
+        <div className="sm:hidden text-xs text-gray-500 font-medium">Step 2 of 4</div>
       </div> */}
 
-                    <div className="relative mt-3 w-full">
-                      <input
-                        type="text"
-                        name="state"
-                        value={formData.state}
-                        readOnly
-                        className="border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200 pt-5 pb-1 px-2 text-gray-700 cursor-not-allowed"
-                      />
-                      <label
-                        className="absolute left-2 text-xs text-gray-500 top-1 pointer-events-none transition-all duration-200"
-                      >
-                        State*
-                      </label>
-                    </div>
+      {/* ── Main layout ────────────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row gap-0 lg:gap-8 py-6">
 
+          {/* ══ LEFT — Form ═══════════════════════════════════════════════════ */}
+          <div className="w-full lg:w-[58%] lg:pr-4">
 
+            {/* 1. Contact Details */}
+            <section className="mb-8">
+              <h2 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+                Contact details
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <FloatInput label="Phone number" name="phonenumber" type="tel" required
+                    value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur} />
+                  {formData.phonenumber?.length === 10 && (
+                    <p className="text-green-600 text-xs mt-1 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      We'll keep you updated on your order
+                    </p>
+                  )}
+                </div>
+                <FloatInput label="Email address" name="email" type="email" required
+                  value={formData.email} onChange={handleChange} onBlur={handleBlur} />
+              </div>
+            </section>
 
+            {/* 2. Delivery Options */}
+            <section className="mb-8">
+              <h2 className="text-base font-semibold text-gray-800 mb-1 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+                Delivery options
+              </h2>
 
-                    <div className="relative mt-3 w-full">
+              <DeliveryOptions
+                formData={formData}
+                handleChange={handleChange}
+                isDeliverySaved={isDeliverySaved}
+                setIsDeliverySaved={setIsDeliverySaved}
+                stores={stores}
+                nearestStores={nearestStores}
+                setNearestStores={setNearestStores}
+                selectedPickupStore={selectedPickupStore}
+                setSelectedPickupStore={setSelectedPickupStore}
+              />
+
+              {/* Delivery address — shown when home delivery */}
+              {formData.deliveryType === 'home' && (
+                <div className="mt-4 space-y-3">
+                  <FloatInput label="Country" name="country" required
+                    value={formData.country} onChange={handleChange} onBlur={handleBlur} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <FloatInput label="First name" name="firstName" required
+                      value={formData.firstName} onChange={handleChange} onBlur={handleBlur} />
+                    <FloatInput label="Last name" name="lastName" required
+                      value={formData.lastName} onChange={handleChange} onBlur={handleBlur} />
+                  </div>
+                  <FloatInput label="Company name (optional)" name="businessName"
+                    value={formData.businessName} onChange={handleChange} onBlur={handleBlur} />
+                  <FloatInput label="House number and street name" name="address" required
+                    value={formData.address} onChange={handleChange} onBlur={handleBlur} />
+                  <FloatInput label="Landmark, suite, unit, etc. (optional)" name="landmark"
+                    value={formData.landmark} onChange={handleChange} onBlur={handleBlur} />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <FloatInput label="State" name="state" readOnly
+                      value={formData.state} onChange={handleChange} onBlur={handleBlur} />
+                    <div className="relative">
                       <select
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={`border rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 px-2 ${getFieldError('city') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                        required
+                        name="city" value={formData.city}
+                        onChange={handleChange} onBlur={handleBlur}
+                        className={`peer w-full border rounded-lg pt-5 pb-1.5 px-3 text-sm outline-none transition appearance-none bg-white
+                          ${getFieldError('city') ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
                       >
-                        <option value="" disabled hidden></option>
-                        {finalCities.map((city, index) => (
-                          <option key={index} value={city}>
-                            {city}
-                          </option>
-                        ))}
+                        <option value="" disabled hidden />
+                        {finalCities.map((city, i) => <option key={i} value={city}>{city}</option>)}
                       </select>
-                      <span
-                        className={`absolute left-2 transition-all duration-200 pointer-events-none ${formData.city
-                          ? 'top-1 text-xs text-gray-500'
-                          : 'top-3 text-gray-400'
-                          }`}
-                      >
+                      <label className={`absolute left-3 transition-all duration-150 pointer-events-none
+                        ${formData.city ? 'top-1 text-[10px] text-gray-500' : 'top-3.5 text-sm text-gray-400'}`}>
                         City*
-                      </span>
-                      {getFieldError('city') && <p className="text-red-500 text-xs mt-1">{getFieldError('city')}</p>}
+                      </label>
+                      {getFieldError('city') && <p className="text-red-500 text-xs mt-0.5">{getFieldError('city')}</p>}
                     </div>
-
+                    <FloatInput label="Pincode" name="postCode" required
+                      value={formData.postCode} onChange={handleChange} onBlur={handleBlur} />
                   </div>
-
-                  <div className="relative mt-6">
-                    <input
-                      type="text"
-                      name="postCode"
-                      value={formData.postCode}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`border p-2 rounded-md w-full focus:outline-none focus:ring-2 pt-5 pb-1 ${getFieldError('postCode') ? 'border-red-500 focus:ring-red-300 bg-red-50' : 'focus:ring-orange-500 focus:border-orange-200'}`}
-                      required
-                    />
-                    <span className={`absolute left-2 transition-all duration-200 ${formData.postCode
-                      ? 'top-1 text-xs text-gray-500'
-                      : 'top-3 text-gray-400'
-                      }`}>
-                      Post Code*
-                    </span>
-                    {getFieldError('postCode') && <p className="text-red-500 text-xs mt-1">{getFieldError('postCode')}</p>}
-                  </div>
-
-                  <h2 className="text-xl font-semibold text-black mb-2 mt-6">
-                    Shipping Method
-                  </h2>
-
-                  <DeliveryOptions
-                    formData={formData}
-                    handleChange={handleChange}
-                    isDeliverySaved={isDeliverySaved}
-                    setIsDeliverySaved={setIsDeliverySaved}
-                    stores={stores}
-                  />
+                  <FloatInput label="Phone" name="phonenumber" type="tel" required
+                    value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur} />
                 </div>
+              )}
 
-                <h2 className="text-xl font-semibold text-black mb-2 mt-6">
-                  Billing Address
-                </h2>
-                {/* <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              {useSavedAddress && selectedAddress !== null ? 'Selected Address' : 'Billing Details'}
-            </h2> */}
-                {useraddress && useraddress.length > 0 && (
-                  <div className="mb-6">
-                    <h2 className="text-sm font-semibold text-gray-800 mb-4">Saved Addresses</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {useraddress.map((item, index) => (
-                        <div
-                          key={`address-${index}`}
-                          className={`border p-4 rounded-lg cursor-pointer transition-all ${selectedAddress === index ? 'border-orange-500 bg-orange-50' : 'hover:border-gray-300'}`}
-                          onClick={() => {
-                            setSelectedAddress(index);
-                            const addr = useraddress[index];
-                            setFormData(prev => ({
-                              ...prev,
-                              firstName: addr.firstName || "",
-                              lastName: addr.lastName || "",
-                              businessName: addr.businessName || "",
-                              country: addr.country || "",
-                              address: addr.address || "",
-                              landmark: addr.landmark || "",
-                              city: addr.city || "",
-                              state: addr.state || "Tamilnadu",
-                              postCode: addr.postCode || "",
-                              phonenumber: addr.phonenumber || "",
-                              email: addr.email || "",
-                              additionalInfo: addr.additionalInfo || "",
-                            }));
-                          }}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium">{item.firstName} {item.lastName}</p>
-                              <p className="text-sm text-gray-600">{item.address}</p>
-                              <p className="text-sm text-gray-600">{item.city}, {item.state}, {item.postCode}</p>
-                              <p className="text-sm text-gray-600">{item.country}</p>
-                              <p className="text-sm text-gray-600">Phone: {item.phonenumber}</p>
-                            </div>
-                            {selectedAddress === index && (
-                              <span className="text-orange-500">✓ Selected</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4">
-                      <button
-                        onClick={() => setUseSavedAddress(!useSavedAddress)}
-                        className="text-orange-500 hover:text-orange-700 text-sm font-medium"
+              {/* Store pickup — full address block (matches design) */}
+              {formData.deliveryType === 'store' && (
+                <div className="mt-4 space-y-3">
+                  <FloatInput label="Country" name="country" required
+                    value={formData.country} onChange={handleChange} onBlur={handleBlur} />
+                  <FloatInput label="Full Name" name="firstName" required
+                    value={formData.firstName} onChange={handleChange} onBlur={handleBlur} />
+                  <FloatInput label="Address" name="address" required
+                    value={formData.address} onChange={handleChange} onBlur={handleBlur} />
+                  <FloatInput label="Landmark (Optional)" name="landmark"
+                    value={formData.landmark} onChange={handleChange} onBlur={handleBlur} />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <FloatInput label="State" name="state" readOnly
+                      value={formData.state} onChange={handleChange} onBlur={handleBlur} />
+                    <div className="relative">
+                      <select
+                        name="city" value={formData.city}
+                        onChange={handleChange} onBlur={handleBlur}
+                        className={`peer w-full border rounded-lg pt-5 pb-1.5 px-3 text-sm outline-none transition appearance-none bg-white
+                          ${getFieldError('city') ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
                       >
-                        {useSavedAddress ? 'Use new address instead' : 'Use saved address'}
-                      </button>
+                        <option value="" disabled hidden />
+                        {finalCities.map((city, i) => <option key={i} value={city}>{city}</option>)}
+                      </select>
+                      <label className={`absolute left-3 transition-all duration-150 pointer-events-none
+                        ${formData.city ? 'top-1 text-[10px] text-gray-500' : 'top-3.5 text-sm text-gray-400'}`}>
+                        City*
+                      </label>
+                      {getFieldError('city') && <p className="text-red-500 text-xs mt-0.5">{getFieldError('city')}</p>}
                     </div>
+                    <FloatInput label="Pincode" name="postCode" required
+                      value={formData.postCode} onChange={handleChange} onBlur={handleBlur} />
                   </div>
-                )}
-
-                {/* Additional Info Section */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Comments(Optional)
-                  </h3>
-                  <textarea
-                    name="additionalInfo"
-                    placeholder="Notes about your order"
-                    value={formData.additionalInfo}
-                    onChange={handleChange}
-                    className="border p-2 rounded-md w-full h-20 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-200"
-                  ></textarea>
+                  <FloatInput label="Phone" name="phonenumber" type="tel" required
+                    value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur} />
                 </div>
-                <div className="mt-3 mb-4 text-sm">
-                  <a
-                    href="/privacypolicy"
-                    className="text-orange-500 hover:underline mr-4 underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Privacy Policy
-                  </a>
-                  <a
-                    href="/terms-and-condition"
-                    className="text-orange-500 hover:underline mr-4 underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Terms & Conditions
-                  </a>
-                  <a
-                    href="/shipping"
-                    className="text-orange-500 hover:underline mr-4 underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Shipping Policy
-                  </a>
-                  <a
-                    href="/cancellation-refund-policy"
-                    className="text-orange-500 hover:underline underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Cancellation & Refund Policy
-                  </a>
-                </div>
+              )}
+            </section>
 
-              </form>
-
-
-
-            )}
-          </div>
-
-          {/* Right - Order Summary */}
-          <div className="w-full lg:w-2/4 p-6 sticky top-6 self-start mb-5" style={{ backgroundColor: "#F7F4F2", height: "auto" }}>
-            <div className="mt-1" style={{ marginRight: "100px" }}>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Orders</h3>
-
-              {/* <div className="border-b pb-3 mb-3">
-                {cartItems.map((item) => (
-                  <div key={`order-item-${item.productId}`} className="flex justify-between text-gray-600 mb-2">
-                    <div>
-                      <span>{item.name}</span>
-                      <p className="text-sm text-gray-400">Qty: {item.quantity}</p>
+            {/* 3. Shipping Method */}
+            <section className="mb-8">
+              <h2 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">3</span>
+                Shipping method
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { value: 'standard', label: 'Standard delivery', sub: '3–5 working days', price: 'FREE', free: true },
+                  { value: 'express', label: 'Express delivery', sub: '1–2 working days', price: '₹299', free: false, disabled: true  },
+                ].map(opt => (
+                <label key={opt.value}
+  className={`flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all
+    ${opt.disabled ? 'cursor-not-allowed opacity-50 border-gray-200 bg-gray-50' : shippingMethod === opt.value ? 'cursor-pointer border-blue-600 bg-blue-50' : 'cursor-pointer border-gray-200 bg-white hover:border-gray-300'}`}
+>
+  <input type="radio" name="shippingMethod" value={opt.value}
+    checked={shippingMethod === opt.value}
+    onChange={() => !opt.disabled && setShippingMethod(opt.value)}
+    disabled={opt.disabled}
+    className="sr-only" />
+                    <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center
+                      ${shippingMethod === opt.value ? 'border-blue-600' : 'border-gray-300'}`}>
+                      {shippingMethod === opt.value && <div className="w-2 h-2 rounded-full bg-blue-600" />}
                     </div>
-                    <span>₹{(item.price * item.quantity).toFixed(2)}</span>
-                  </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-800">{opt.label}</span>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full
+                          ${opt.free ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {opt.price}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">{opt.sub}</p>
+                    </div>
+                  </label>
                 ))}
-              </div> */}
+              </div>
+            </section>
 
+            {/* 4. Payment Method */}
+            <section className="mb-8">
+              <h2 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">4</span>
+                Payment method
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { value: 'online', icon: (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                  ), label: 'Online payment', sub: 'UPI, Cards, Netbanking' },
+                  { value: 'emi', icon: (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  ), label: 'EMI options', sub: 'Easy EMI from leading banks' },
+                  { value: 'Cash on Delivery', icon: (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  ), label: 'Cash on delivery', sub: 'Pay when you receive' },
+                  { value: 'pay_at_store', icon: (
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  ), label: 'Pay at store', sub: 'Pay at the time of pickup' },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handlePaymentChange(opt.value)}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-center
+                      ${paymentMethod === opt.value
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                  >
+                    <span className={paymentMethod === opt.value ? 'text-blue-600' : 'text-gray-500'}>
+                      {opt.icon}
+                    </span>
+                    <span className={`text-xs font-semibold ${paymentMethod === opt.value ? 'text-blue-700' : 'text-gray-700'}`}>
+                      {opt.label}
+                    </span>
+                    <span className="text-[10px] text-gray-400 leading-tight">{opt.sub}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
 
-              <div className="relative border-b pb-3 mb-3">
-                {/* Scrollable List */}
-                <div
-                  className="max-h-64 overflow-y-auto pr-2 scroll-smooth"
-                >
-                  {cartItems.map((item) => (
+            {/* Billing / Saved addresses */}
+            {useraddress && useraddress.length > 0 && (
+              <section className="mb-8">
+                <h2 className="text-base font-semibold text-gray-800 mb-3">Billing address</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {useraddress.map((item, index) => (
                     <div
-                      key={`order-item-${item.productId}`}
-                      className="flex items-start justify-between gap-3 text-gray-700 mb-4"
+                      key={`addr-${index}`}
+                      onClick={() => {
+                        setSelectedAddress(index);
+                        const addr = useraddress[index];
+                        setFormData(prev => ({ ...prev, firstName: addr.firstName || '', lastName: addr.lastName || '', businessName: addr.businessName || '', country: addr.country || '', address: addr.address || '', landmark: addr.landmark || '', city: addr.city || '', state: addr.state || 'Tamilnadu', postCode: addr.postCode || '', phonenumber: addr.phonenumber || '', email: addr.email || '', additionalInfo: addr.additionalInfo || '' }));
+                      }}
+                      className={`border-2 rounded-xl p-4 cursor-pointer transition-all
+                        ${selectedAddress === index ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}
                     >
-
-                      {/* Product Image */}
-                      <div className="relative w-16 h-16 flex-shrink-0 border rounded overflow-hidden p-2">
-                        <img
-                          src={`/uploads/products/${item.image || item.images?.[0]}`}
-                          alt={item.name}
-                          className="w-full h-full object-contain"
-                        />
- 
-                        {/* Quantity Badge */}
-                        <div className="absolute top-0 right-0 bg-gray-700 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                          {item.quantity}
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{item.firstName} {item.lastName}</p>
+                          <p className="text-xs text-gray-500 mt-1">{item.address}</p>
+                          <p className="text-xs text-gray-500">{item.city}, {item.state}, {item.postCode}</p>
+                          <p className="text-xs text-gray-500">{item.phonenumber}</p>
                         </div>
-                      </div>
-
-
-                      {/* Product Details */}
-                      <div className="flex-1">
-                        <div title={item.name} className="leading-snug text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-3 min-h-[40px]">
-                          {item.name}
-                        </div>
-
-                        {/* <div className="text-xs mt-1 text-gray-600">
-                          Qty: <span className="text-red-600">{item.quantity}</span>
-                        </div> */}
-
-                      </div>
-
-                      {/* Price */}
-                      <div className="text-sm whitespace-nowrap text-base font-semibold text-red-600">
-                        ₹{(item.price > 0 ? item.price : item.actual_price) * item.quantity.toFixed(2)}
+                        {selectedAddress === index && (
+                          <span className="text-orange-500 text-xs font-medium flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                            Selected
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setUseSavedAddress(!useSavedAddress)}
+                  className="mt-3 text-sm text-orange-500 underline"
+                >
+                  {useSavedAddress ? 'Use new address instead' : 'Use saved address'}
+                </button>
+              </section>
+            )}
 
-                {/* Scroll for More Items Overlay */}
+            {/* Comments */}
+            <section className="mb-8">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Comments (optional)</h3>
+              <textarea
+                name="additionalInfo"
+                value={formData.additionalInfo}
+                onChange={handleChange}
+                placeholder="Notes about your order"
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 resize-none"
+              />
+            </section>
 
-                {/* {cartItems.length > 2 && (
-                  <div className="flex justify-center mt-2">
-                    <div className="bg-gray-800 text-white text-xs px-3 py-1 rounded-full shadow-lg flex items-center gap-1 animate-bounce">
-                      <span>Scroll for more items</span>
-                      <span className="text-lg">↓</span>
-                    </div>
-                  </div>
-                )} */}
+            {/* Policy links */}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-blue-600 mb-6">
+              {[['Privacy Policy', '/privacypolicy'], ['Terms & Conditions', '/terms-and-condition'], ['Shipping Policy', '/shipping'], ['Cancellation & Refund Policy', '/cancellation-refund-policy']].map(([label, href]) => (
+                <a key={href} href={href} target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-800">{label}</a>
+              ))}
+            </div>
 
+            {/* Safe bar */}
+            <div className="flex items-center gap-2 py-3 border-t text-xs text-gray-400">
+              <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Safe and secure checkout. Your data is 100% protected.
+            </div>
+          </div>
+
+          {/* ══ RIGHT — Order Summary ═════════════════════════════════════════ */}
+          <div className="w-full lg:w-[38%] lg:sticky lg:top-20 self-start">
+            <div className="bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden">
+
+              {/* Your order header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+                <span className="text-sm font-semibold text-gray-800">Your order</span>
+                <a href="/cart" className="text-xs text-blue-600 hover:underline">Edit cart</a>
               </div>
 
+              {/* Cart items */}
+              <div className="max-h-64 overflow-y-auto px-5 py-3 space-y-3 border-b border-gray-200">
+                {cartItems.map((item) => (
+                  <div key={`oi-${item.productId}`} className="flex items-start gap-3">
+                    <div className="relative w-14 h-14 flex-shrink-0 border border-gray-200 rounded-lg overflow-hidden bg-white p-1.5">
+                      <img
+                        src={`/uploads/products/${item.image || item.images?.[0]}`}
+                        alt={item.name}
+                        className="w-full h-full object-contain"
+                      />
+                      <div className="absolute -top-1 -right-1 bg-gray-700 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">
+                        {item.quantity}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-blue-600 hover:text-blue-800 line-clamp-2 leading-snug font-medium">
+                        {item.name}
+                      </p>
+                      {item.warrantyData && (
+                        <p className="text-[10px] text-purple-600 mt-1 flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                          </svg>
+                          {item.warrantyData.year}yr Warranty
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-sm font-semibold text-red-600 whitespace-nowrap">
+                      ₹{((item.price > 0 ? item.price : item.actual_price) * item.quantity).toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Sold by */}
+              <div className="px-5 py-3 border-b border-gray-200 flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span className="text-xs font-medium text-gray-700">Bharath Electronics &amp; Appliances</span>
+                <span className="text-[10px] text-green-700 bg-green-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                  Authorized brand partner
+                </span>
+              </div>
+
+              {/* Price details */}
+              <div className="px-5 py-4 border-b border-gray-200 space-y-2">
+             <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-3">Price details</p>
+
+{/* MRP */}
+<div className="flex justify-between text-sm text-gray-700">
+  <span>product price</span>
+  <span>₹{mrpTotal.toLocaleString('en-IN')}</span>
+</div>
+
+{/* Item discount (MRP - selling) */}
+{itemDiscountTotal > 0 && (
+  <div className="flex justify-between text-sm text-green-600">
+    <span>Discount</span>
+    <span>−₹{itemDiscountTotal.toLocaleString('en-IN')}</span>
+  </div>
+)}
 
 
-              {/* Add Discount row if there's any discount */}
-              {totalDiscount > 0 && (
-                <div className="flex justify-between text-green-600 mb-2">
-                  <span>Discount:</span>
-                  <span>-₹{totalDiscount.toFixed(2)}</span>
-                </div>
-              )}
-              {cartItems.some(item => item.warranty > 0) && (
-                <div className="flex justify-between text-gray-800 font-semibold">
-                  <span className="text-[#0069c6] hover:text-[#00badb] text-xs sm:text-sm font-medium">Warranty:</span>
-                  <span className="text-sm whitespace-nowrap text-base font-semibold text-red-600">
-                    ₹{cartItems.reduce((sum, item) => sum + (item.warranty || 0), 0).toFixed(2)}
-                  </span>
-                </div>
-              )}
-          
-{cartItems.some(item => item.warrantyData) && (
-  <div className="flex justify-between text-gray-800 font-semibold pt-2 mt-2">
-    <span className="text-[#0069c6] text-xs sm:text-sm font-medium">Extended Warranty Plan:</span>
-    <span className="text-sm font-semibold text-red-600">
-      ₹{cartItems.reduce((sum, item) => sum + (item.warrantyData?.price || 0), 0).toFixed(2)}
+{/* Warranty */}
+{warrantyTotal > 0 && (
+  <div className="flex justify-between text-sm">
+    <span className="flex items-center gap-1 text-purple-700">
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+      {cartItems.find(i => i.warrantyData)?.warrantyData?.name || 'Extended warranty'}
+    </span>
+    <span className="text-red-600 font-medium">₹{warrantyTotal.toLocaleString('en-IN')}</span>
+  </div>
+)}
+{cartItems.some(item => item.warranty > 0) && (
+  <div className="flex justify-between text-sm">
+    <span className="text-purple-700">BEA Care warranty</span>
+    <span className="text-red-600 font-medium">
+      ₹{cartItems.reduce((s, i) => s + (i.warranty || 0), 0).toLocaleString('en-IN')}
     </span>
   </div>
 )}
 
-
-              {/* Discount Row */}
-              {orderSummary.discount > 0 && (
-                <div className="flex justify-between text-green-600 mb-2">
-                  <span>Discount:</span>
-                  <span>-₹{orderSummary.discount.toFixed(2)}</span>
+{/* Subtotal */}
+<div className="flex justify-between text-sm text-gray-700 font-medium border-t border-gray-100 pt-2">
+  <span>Subtotal</span>
+  <span>₹{orderSummary.subtotal.toLocaleString('en-IN')}</span>
+</div>
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span>Delivery</span>
+                  {shippingCost === 0
+                    ? <span className="text-green-600 font-medium">FREE</span>
+                    : <span>₹{shippingCost}</span>
+                  }
                 </div>
-              )}
-                {/* Loyalty Points Section */}
-{loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
-  <div className="border rounded-lg p-3 mb-3 bg-blue-50">
-    <div className="flex justify-between items-center">
-      <div>
-        <p className="text-sm font-semibold text-[#2453D3]">🏆 Loyalty Points</p>
-        <p className="text-xs text-gray-500">
-          {loyaltyBalance} pts ≈ ₹{loyaltyBalance.toFixed(2)}
-        </p>
-      </div>
 
-      {/* ✅ 10k+ இருந்தா button, இல்லன்னா message */}
-      {orderSummary.total >= 10000 ? (
-        <>
-          {!pointsApplied && !showPointsInput && (
-            <button
-              onClick={handleUseAllPoints}
-              className="bg-[#2453D3] text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
-            >
-              Use Points
-            </button>
-          )}
-          {pointsApplied && (
-            <button
-              onClick={handleRemovePoints}
-              className="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-600 transition"
-            >
-              Remove
-            </button>
-          )}
-        </>
-      ) : (
-        <span className="text-xs text-orange-500 font-medium">
-          Min ₹10,000 order required
-        </span>
-      )}
-    </div>
+                {/* Loyalty points section */}
+                {loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
+                  <div className="border border-indigo-200 rounded-xl p-3 bg-indigo-50 mt-2">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs font-semibold text-indigo-700 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 17l3 3 3-3m-3-9v12M4 4h16v4a4 4 0 01-4 4H8a4 4 0 01-4-4V4z" />
+                          </svg>
+                          Loyalty points
+                        </p>
+                        <p className="text-[10px] text-gray-500">{loyaltyBalance} pts ≈ ₹{loyaltyBalance.toFixed(2)}</p>
+                      </div>
+                      {orderSummary.total >= 10000 ? (
+                        <>
+                          {!pointsApplied && !showPointsInput && (
+                            <button onClick={handleUseAllPoints}
+                              className="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition">
+                              Use points
+                            </button>
+                          )}
+                          {pointsApplied && (
+                            <button onClick={handleRemovePoints}
+                              className="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-600 transition">
+                              Remove
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-xs text-orange-500 font-medium">Min ₹10,000 order required</span>
+                      )}
+                    </div>
+                    {orderSummary.total >= 10000 && showPointsInput && !pointsApplied && (
+                      <div className="mt-3 bg-white rounded-lg p-3 border border-indigo-200">
+                        <p className="text-[10px] text-gray-500 mb-2">Max <span className="font-semibold text-indigo-700">{maxUsablePoints} pts</span> (₹{maxUsablePoints})</p>
+                        <div className="flex gap-2">
+                          <input type="number" min={1} max={maxUsablePoints} value={customPoints}
+                            onChange={(e) => setCustomPoints(Math.min(Number(e.target.value), maxUsablePoints))}
+                            className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-indigo-400" />
+                          <button onClick={handleApplyPoints} disabled={loyaltyLoading}
+                            className="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 transition">
+                            {loyaltyLoading ? '…' : 'Apply'}
+                          </button>
+                          <button onClick={() => setShowPointsInput(false)}
+                            className="bg-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg hover:bg-gray-200 transition">
+                            Cancel
+                          </button>
+                        </div>
+                        <input type="range" min={1} max={maxUsablePoints} value={customPoints} step={1}
+                          onChange={(e) => setCustomPoints(Number(e.target.value))}
+                          className="w-full mt-2 accent-indigo-600" />
+                        <p className="text-[10px] text-gray-400 mt-1">Discount: ₹{customPoints} off</p>
+                      </div>
+                    )}
+                    {pointsApplied && (
+                      <p className="text-green-600 text-xs mt-2 font-semibold flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                        ₹{loyaltyDiscount.toFixed(2)} discount applied!
+                      </p>
+                    )}
+                    {loyaltyDiscount > 0 && (
+                      <div className="flex justify-between text-sm text-indigo-700 mt-1 font-medium">
+                        <span>Loyalty discount</span>
+                        <span>−₹{loyaltyDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-    {/* Input box — 5% */}
-    {orderSummary.total >= 10000 && showPointsInput && !pointsApplied && (
-      <div className="mt-3 bg-white rounded-lg p-3 border border-blue-200">
-        <p className="text-xs text-gray-500 mb-2">
-          Max <span className="font-semibold text-[#2453D3]">{maxUsablePoints} pts</span> use (₹{maxUsablePoints})
-        </p>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            min={1}
-            max={maxUsablePoints}
-            value={customPoints}
-            onChange={(e) => {
-              const val = Math.min(Number(e.target.value), maxUsablePoints);
-              setCustomPoints(val);
-            }}
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <button
-            onClick={handleApplyPoints}
-            disabled={loyaltyLoading}
-            className="bg-[#2453D3] text-white text-xs px-4 py-1.5 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400"
-          >
-            {loyaltyLoading ? '...' : 'Apply'}
-          </button>
-          <button
-            onClick={() => setShowPointsInput(false)}
-            className="bg-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-lg hover:bg-gray-300 transition"
-          >
-            Cancel
-          </button>
-        </div>
-        <input
-          type="range"
-          min={1}
-          max={maxUsablePoints}
-          value={customPoints}
-          onChange={(e) => setCustomPoints(Number(e.target.value))}
-          className="w-full mt-2 accent-blue-600"
-        />
-        <p className="text-xs text-gray-400 mt-1">
-          Discount: ₹{customPoints} off your order
-        </p>
-      </div>
-    )}
-
-    {pointsApplied && (
-      <p className="text-green-600 text-xs mt-2 font-semibold">
-        ✅ ₹{loyaltyDiscount.toFixed(2)} discount applied!
-      </p>
-    )}
-  </div>
-)}
-  <h6>Download the BEA Truco App for more rewards.<span className="text-blue-500"><a  href={"https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"}>click here</a></span></h6>
-              {/* Subtotal */}
-              <div className="flex justify-between text-gray-800 font-semibold  pt-2 mt-2">
-                <span>Subtotal:</span>
-                <span>₹{orderSummary.subtotal.toFixed(2)}</span>
-              </div>
-
-              {/* Total */}
-              <div className="flex justify-between text-gray-800 font-semibold pt-2 mt-2">
-                <span>Total:</span>
-                <span>₹{orderSummary.total.toFixed(2)}</span>
-              </div>
-
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Payment Method</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="online"
-                      checked={paymentMethod === "online"}
-                      onChange={handlePaymentChange}
-                      className="w-4 h-4 text-orange-500"
-                    />
-                    <span>Online Payment</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="Cash on Delivery"
-                      checked={paymentMethod === "Cash on Delivery"}
-                      onChange={handlePaymentChange}
-                      className="w-4 h-4 text-orange-500"
-                    />
-                    <span>Cash on Delivery</span>
-                  </label>
+                {/* Total */}
+                <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                  <div>
+                    <span className="text-sm font-semibold text-gray-800">Total payable</span>
+                    <p className="text-[10px] text-gray-400">Inclusive of all taxes</p>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900">₹{finalTotal.toLocaleString('en-IN')}</span>
                 </div>
               </div>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved}
-                className={`mt-6 w-1/2 md:w-1/3 text-white font-semibold py-2 rounded-lg transition ${isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-red-500 hover:bg-red-600'
-                  }`}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center justify-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
+
+              {/* Trust badges */}
+              <div className="grid grid-cols-3 gap-2 px-5 py-4 border-b border-gray-200">
+                {[
+                  { icon: (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
-                    Processing...
-                  </span>
-                ) : 'Place Order'}
-              </button>
+                  ), label: '2 years warranty' },
+                  { icon: (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  ), label: 'Free installation' },
+                  { icon: (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  ), label: '10 days replacement' },
+                ].map(b => (
+                  <div key={b.label} className="flex flex-col items-center gap-1 text-center">
+                    <span className="text-blue-600">{b.icon}</span>
+                    <span className="text-[10px] text-gray-500">{b.label}</span>
+                  </div>
+                ))}
+              </div>
 
-              {/* <button 
-                onClick={handleSubmit} 
-                disabled={loading || cartItems.length === 0 || !isDeliverySaved}
-                className={`mt-6 w-full text-white font-semibold py-3 rounded-lg transition ${
-                  loading || cartItems.length === 0 || !isDeliverySaved
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-red-500 hover:bg-red-600'
-                }`}
-              >
-                {loading ? 'Processing...' : 'Place Order'}
-              </button> */}
+              {/* Truco box */}
+<div className="mx-5 my-4 border border-gray-200 rounded-xl bg-white overflow-hidden flex items-stretch">
+  {/* Left — content */}
+  <div className="flex-1 p-4 flex flex-col justify-between">
+    <div>
+      <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5 mb-0.5">
+        BEA TRUCO Rewards
+        <svg className="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 7h-3.5a2.5 2.5 0 100-5 2.5 2.5 0 00-2.5 2.5V7m-4 0H6.5a2.5 2.5 0 110-5 2.5 2.5 0 012.5 2.5V7m-7 0h16v4H3V7zm0 4h16v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" />
+        </svg>
+      </p>
+      <p className="text-[10px] text-gray-500 mb-3">Earn points on every purchase</p>
+      <ul className="space-y-1.5 mb-4">
+        {[
+          'Earn reward points',
+          'Exclusive member offers',
+          'Track orders easily',
+          'Priority service support',
+        ].map(item => (
+          <li key={item} className="flex items-center gap-1.5 text-[11px] text-gray-700">
+            <svg className="w-3 h-3 text-indigo-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+     <a
+      href="https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-gray-900 hover:bg-gray-800 px-3 py-2 rounded-lg transition w-fit"
+    >
+      Download TRUCO App
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      </svg>
+    </a>
+  </div>
+  {/* Right — phone image */}
+<div className="w-20 flex-shrink-0 flex items-center justify-center relative overflow-hidden">
+    <img
+      src="/uploads/truco_app_phone.png"
+      alt="BEA Truco App"
+      className="w-full h-full object-cover object-center"
+      onError={(e) => {
+        e.target.style.display = 'none';
+        e.target.parentElement.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-3 text-center"><div class="bg-white rounded-xl px-3 py-2"><p class="text-indigo-700 text-xs font-bold leading-tight">BEA</p><p class="text-indigo-500 text-[9px] font-semibold">TRUCO</p></div></div>`;
+      }}
+    />
+  </div>
+</div>
+
+              {/* Help box */}
+              <div className="mx-5 mb-4 border border-gray-200 rounded-xl p-3">
+                <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  Need help before you buy? Our experts are here for you!
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <a href="tel:9842344323"
+                    className="flex items-center justify-center gap-2 border border-green-200 rounded-lg py-2 text-xs font-medium text-green-700 hover:bg-green-50 transition">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    Call expert
+                  </a>
+                  <a href="https://web.whatsapp.com/send?phone=919842344323&text=Hi"
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 border border-green-200 rounded-lg py-2 text-xs font-medium text-green-700 hover:bg-green-50 transition">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    WhatsApp expert
+                  </a>
+                </div>
+              </div>
+
+              {/* CTA button */}
+              <div className="px-5 pb-5">
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved}
+                  className={`w-full h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all
+                    ${isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98]'}`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Processing…
+                    </>
+                  ) : (
+                    <>
+                      Continue to payment
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* BEA Promise */}
+              <div className="px-5 py-4 bg-white border-t border-gray-200">
+                <p className="text-xs font-semibold text-gray-700 mb-3">BEA Promise —</p>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                  {[
+                    { icon: (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    ), label: '100% genuine products' },
+                    { icon: (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    ), label: 'Brand warranty' },
+                    { icon: (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    ), label: 'Safe & secure delivery' },
+                    { icon: (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    ), label: 'Professional installation' },
+                    { icon: (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    ), label: '47+ showrooms support network' },
+                  ].map(b => (
+                    <div key={b.label} className="flex flex-col items-center gap-1 text-center">
+                      <span className="text-blue-600">{b.icon}</span>
+                      <span className="text-[9px] text-gray-500 leading-tight">{b.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Mobile sticky CTA */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-30 flex items-center gap-3">
+        <div className="flex-1">
+          <p className="text-xs text-gray-500">Total payable</p>
+          <p className="text-base font-bold text-gray-900">₹{finalTotal.toLocaleString('en-IN')}</p>
+        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved}
+          className={`px-6 h-11 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all
+            ${isSubmitting || loading || cartItems.length === 0 || !isDeliverySaved
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+        >
+          {isSubmitting ? 'Processing…' : 'Place order →'}
+        </button>
+      </div>
+
+      {/* Auth modal */}
       {showAuthModal && (
         <AuthModal
           onClose={() => setShowAuthModal(false)}
-          onSuccess={() => {
-            setShowAuthModal(false);
-            window.location.reload();
-          }}
-          error={authError}
+          onSuccess={() => { setShowAuthModal(false); window.location.reload(); }}
         />
       )}
 
+      {/* Full-screen processing overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <h3 className="text-lg font-medium text-gray-900">Processing Your Order</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full mx-4 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4" />
+            <h3 className="text-base font-semibold text-gray-900">Processing your order</h3>
             <p className="mt-2 text-sm text-gray-500">Please wait while we process your payment and order details.</p>
           </div>
         </div>
