@@ -1382,66 +1382,67 @@ const manufacturerContent = (
   <div className="text-left max-w-3xl">
     {(manufacturerName || manufacturerAddress) ? (
       <div className="border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-sm">
+
         {/* Header */}
-        <div className="flex items-center gap-5 p-6 sm:p-7 border-b border-gray-100">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="flex items-center gap-4 p-5 border-b border-gray-100">
+          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V7l6-4v18M19 21V11l-6-4M9 9h.01M9 12h.01M9 15h.01" />
             </svg>
           </div>
           <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Manufacturer Information</h3>
-            <p className="text-sm sm:text-base text-gray-500 mt-1">Details about the product manufacturer and brand.</p>
+            <h3 className="text-lg font-bold text-gray-900">Manufacturer Information</h3>
+            <p className="text-sm text-gray-500 mt-0.5">Details about the product manufacturer and brand.</p>
           </div>
         </div>
 
         {/* Manufacturer */}
         {manufacturerName && (
-          <div className="flex items-start gap-5 p-6 sm:p-7 border-b border-gray-100">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75l1.5 1.5 3.75-4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.5l-1 3.5-3.5 1 2 3-2 3 3.5 1 1 3.5 3-2 3 2 1-3.5 3.5-1-2-3 2-3-3.5-1-1-3.5-3 2-3-2z" opacity="0" />
+          <div className="flex items-center gap-4 p-5 border-b border-gray-100">
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
             </div>
             <div>
               <p className="text-sm text-gray-500">Manufacturer</p>
-              <p className="text-lg sm:text-xl font-bold text-gray-900 mt-0.5">{manufacturerName}</p>
+              <p className="text-base font-bold text-gray-900 mt-0.5">{manufacturerName}</p>
             </div>
           </div>
         )}
 
         {/* Address */}
         {manufacturerAddress && (
-          <div className="flex items-start gap-5 p-6 sm:p-7 border-b border-gray-100">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="flex items-center gap-4 p-5 border-b border-gray-100">
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
             <div>
               <p className="text-sm text-gray-500">Registered Office Address</p>
-              <p className="text-lg sm:text-xl font-bold text-gray-900 mt-0.5">{manufacturerAddress}</p>
+              <p className="text-base font-bold text-gray-900 mt-0.5">{manufacturerAddress}</p>
             </div>
           </div>
         )}
 
         {/* Brand */}
         {brandName && (
-          <div className="flex items-start gap-5 p-6 sm:p-7">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="flex items-center gap-4 p-5">
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18" />
               </svg>
             </div>
             <div>
               <p className="text-sm text-gray-500">Brand</p>
-              <p className="text-lg sm:text-xl font-bold text-gray-900 mt-0.5">{brandName}</p>
+              <p className="text-base font-bold text-gray-900 mt-0.5">{brandName}</p>
             </div>
           </div>
         )}
+
       </div>
     ) : (
       <p className="text-sm text-gray-500">No manufacturer details available for this product.</p>
