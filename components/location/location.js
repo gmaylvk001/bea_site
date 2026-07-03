@@ -212,17 +212,13 @@ export default function BEABranchesPage() {
   const totalCities = new Set(stores.map((s) => s.city).filter(Boolean)).size;
 
   return (
-    <div className="font-sans bg-[#f8fafc] text-gray-900">
-
-      {/* ── Hero Banner ── */}
-
-      {/* DESKTOP — overlay layout (unchanged) */}
-      <div className="relative w-full hidden sm:block">
+    <>
+     <div className="relative w-full hidden sm:block">
         <img
           src="/location/LocationBanner1.png"
           alt="BEA Store Network"
           className="w-full block object-cover"
-          style={{ minHeight: '340px', maxHeight: '480px' }}
+          style={{ minHeight: '340px', maxHeight: '600px' }}
           onError={(e) => { e.target.style.display = "none"; }}
         />
 
@@ -288,6 +284,12 @@ export default function BEABranchesPage() {
           </div>
         </div>
       </div>
+    <div className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
+
+      {/* ── Hero Banner ── */}
+
+      {/* DESKTOP — overlay layout (unchanged) */}
+     
 
       {/* Desktop spacer */}
       <div className="hidden sm:block h-[70px] bg-[#f8fafc]" />
@@ -563,5 +565,6 @@ className="h-[44px]  flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none
       </div>
 
     </div>
+    </>
   );
 }

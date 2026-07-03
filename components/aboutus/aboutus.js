@@ -87,8 +87,8 @@ const AboutUs = () => {
     ];
 
     return (
-        <div className="text-[#1d1d1f]">
-            {/* 🟠 About us Header Bar */}
+        <>
+         {/* 🟠 About us Header Bar */}
             <div className="bg-blue-50 py-6 px-4 md:px-8 lg:px-10 flex justify-between items-center">
                 <div className="flex items-center space-x-2">
                 <Link href="/" className="text-gray-600 hover:text-blue-600">🏠 Home</Link>
@@ -157,6 +157,8 @@ const AboutUs = () => {
         </div>
     </div>
 </section>
+        <div className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
+           
             {/* Statistics Bar (Kept constraints strictly as requested) */}
             <section className="-mt-8 relative z-20">
                 <div className="max-w-7xl mx-auto px-6">
@@ -515,6 +517,7 @@ const AboutUs = () => {
                 </div>
             </section>
         </div>
+        </>
     );
 };
 

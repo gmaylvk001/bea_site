@@ -295,7 +295,7 @@ const removeProductRow = (index) => {
             </section>
 
             {/* SOLUTIONS SECTION */}
-            <section className="bg-white py-5">
+            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
                 <div className="max-w-12xl mx-auto px-4 md:px-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
                         {/* LEFT CONTENT */}
@@ -396,7 +396,7 @@ const removeProductRow = (index) => {
             </section>
 
             {/* CORPORATE SERVICES */}
-            <section className="bg-white py-1">
+            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 lg:px-8 py-10">
                 <div className="max-w-12xl mx-auto px-4 md:px-6">
                     <h2 className="text-[30px] font-extrabold text-center text-[#081028] mb-5">Our Corporate Services</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
@@ -442,7 +442,7 @@ const removeProductRow = (index) => {
             </section>
 
             {/* TRUSTED BUSINESSES SECTION */}
-            <section className="py-1 bg-white">
+            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 py-10">
                 <div className="max-w-12xl mx-auto px-4 md:px-6">
                     {/* TITLE */}
                     <h2 className="text-[34px] md:text-[32px] font-extrabold text-center text-[#081028] mb-2">Trusted by Businesses Across Tamil Nadu</h2>
@@ -930,7 +930,7 @@ const removeProductRow = (index) => {
             </section>
 
             {/* STATS BAR */}
-            <section className="pb-3 bg-white">
+            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 py-10">
                 <div className="max-w-12xl mx-auto px-4 md:px-6">
                     <div className="bg-gradient-to-r from-[#041b63] to-[#0050d0] rounded-[28px] px-6 md:px-3 py-3">
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 text-white">
@@ -1009,7 +1009,7 @@ const removeProductRow = (index) => {
             </section>
 
             {/* CONTACT CARDS */}
-            <section className="pb-2 bg-white">
+            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 py-10">
                 <div className="max-w-12xl mx-auto px-4 md:px-6">
                     <h2 className="text-[32px] font-extrabold text-center text-[#081028] mb-4">Speak With Our Corporate Team</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1077,7 +1077,7 @@ const removeProductRow = (index) => {
             </section>
             
             {/* FINAL CTA */}
-            <section className="py-4 bg-white">
+            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 py-10">
                 <div className="max-w-[1600px] mx-auto px-4">
                     <div className="bg-[#032c7a] rounded-2xl px-6 py-4 flex items-center justify-between gap-6 overflow-x-auto">
                         {/* Left Section */}

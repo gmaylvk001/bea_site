@@ -36,7 +36,15 @@ const DeliveryOptions = ({
   isDeliverySaved, setIsDeliverySaved,
   stores, nearestStores, setNearestStores,
   selectedPickupStore, setSelectedPickupStore,
+  cartItems,
 }) => {
+  const firstProduct = cartItems?.[0];
+  const productLink = firstProduct
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/product/${firstProduct.productId || firstProduct.id}`
+    : (typeof window !== 'undefined' ? window.location.href : '');
+  const productMsg = firstProduct
+    ? `Hi, I'd like to check availability for: ${firstProduct.name} - ${productLink}`
+    : `Hi, I'd like to check product availability - ${productLink}`;
 
   const [loadingStores, setLoadingStores] = useState(false);
   const [showAllStores, setShowAllStores] = useState(false);
@@ -177,34 +185,57 @@ const findNearestStores = async (pincode) => {
             <>
               {/* Top 3 stores side-by-side on desktop, stacked on mobile */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                {displayedStores.map((store) => (
-                  <div
-                    key={store._id}
-                    onClick={() => {
-                      setSelectedPickupStore(store._id);
-                      handleChange({ target: { name: 'selectedStore', value: store._id } });
-                    }}
-                    className={`rounded-lg p-3 cursor-pointer border transition-all
-                      ${selectedPickupStore === store._id
-                        ? 'border-blue-500 bg-white shadow-sm'
-                        : 'border-blue-200 bg-white hover:border-blue-400'}`}
-                  >
-                    <p className="text-xs font-semibold text-gray-800 leading-snug">
-                      {store.organisation_name}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1 leading-snug">
-                      {store.address || store.city}
-                    </p>
-                    <span className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600
-                      bg-blue-100 px-2 py-0.5 rounded-full font-medium">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round"
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      </svg>
-                      {store.distanceKm != null ? `${store.distanceKm.toFixed(1)} KM Away` : "Nearest store"}
-                    </span>
-                  </div>
-                ))}
+                {displayedStores.map((store) => {
+                  const storePhone = store.phone || store.phonenumber || '9842344323';
+                  const storeEmail = store.email || 'customercare@bharathelectronics.in';
+                  const waLink = `https://wa.me/91${storePhone}?text=${encodeURIComponent(productMsg)}`;
+                  const mailLink = `mailto:${storeEmail}?subject=${encodeURIComponent('Product availability check')}&body=${encodeURIComponent(productMsg)}`;
+                  return (
+                    <div
+                      key={store._id}
+                      className="rounded-lg p-3 border border-blue-200 bg-white"
+                    >
+                      <p className="text-xs font-semibold text-gray-800 leading-snug">
+                        {store.organisation_name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 leading-snug">
+                        {store.address || store.city}
+                      </p>
+                      <span className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600
+                        bg-blue-100 px-2 py-0.5 rounded-full font-medium">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        </svg>
+                        {store.distanceKm != null ? `${store.distanceKm.toFixed(1)} KM Away` : "Nearest store"}
+                      </span>
+
+                      <p className="text-[10px] text-gray-500 mt-2 flex items-center gap-2">
+                        <span>Call and check the product availability</span>
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <a href={`tel:${storePhone}`} title="Call store"
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                        </a>
+                        <a href={mailLink} title="Email store"
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </a>
+                        <a href={waLink} target="_blank" rel="noopener noreferrer" title="WhatsApp store"
+                          className="w-7 h-7 flex items-center justify-center rounded-full bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition">
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M12.05 21.785h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884" />
+                          </svg>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {nearestStores.length > 3 && (
@@ -228,10 +259,6 @@ const findNearestStores = async (pincode) => {
         <button
           type="button"
           onClick={() => {
-            if (formData.deliveryType === 'store' && !formData.selectedStore) {
-              toast.error('Please select a store for pickup');
-              return;
-            }
             toast.success('Delivery method saved');
             setIsDeliverySaved(true);
           }}
@@ -406,6 +433,7 @@ export default function CheckoutPage() {
     if (name === 'deliveryType') {
       if (value === 'store') {
         setPaymentMethod('pay_at_store');
+        if (pointsApplied) handleRemovePoints();
       } else if (value === 'home' && paymentMethod === 'pay_at_store') {
         setPaymentMethod('online');
       }
@@ -625,6 +653,10 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
 
       if (paymentMethod === 'Cash on Delivery') {
         paymentId = 'COD_' + Date.now(); paymentStatus = 'pending'; paymentMode = 'Cash on Delivery';
+      } else if (paymentMethod === 'pay_at_store') {
+        paymentId = 'PAS_' + Date.now(); paymentStatus = 'pending'; paymentMode = 'Pay at Store';
+      } else if (paymentMethod === 'emi') {
+        paymentId = 'EMI_' + Date.now(); paymentStatus = 'pending'; paymentMode = 'EMI';
       } else if (paymentMethod === 'online') {
         try {
          const orderRes = await fetch('/api/orders/add', {
@@ -634,7 +666,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
     user_adddeliveryid: useSavedAddress && selectedAddress !== null ? useraddress[selectedAddress]._id : savedAddressId || useraddress[0]?._id,
     order_username: `${addressData.firstName} ${addressData.lastName}`,
     order_phonenumber: addressData.phonenumber, email_address: addressData.email,
-    order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
+    order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, store_id: formData.deliveryType === 'store' ? formData.selectedStore : null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
     order_amount: totalAmount, order_deliveryaddress: deliveryAddress,
       loyalty_points_redeemed: pointsApplied ? customPoints : 0,
        loyalty_discount: loyaltyDiscount || 0,
@@ -646,6 +678,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
     order_status: 'pending',
     delivery_type: formData.deliveryType === 'store' ? 'store_pickup' : 'home',
     pickup_store: pickupStoreName,
+    store_id: formData.deliveryType === 'store' ? formData.selectedStore : null,
     payment_id: '', payment_status: 'payment_initialized', 
     order_number: order_number || 'ORD' + Date.now(),
     order_details: cartItems.map(item => ({ item_code: `ITEM${item.item_code}`, product_id: item.id, product_name: item.name, product_price: item.price, model: 'N/A', user_id: userId, coupondiscount: 0, created_at: new Date(), updated_at: new Date(), quantity: item.quantity, store_id: formData.deliveryType === 'store' ? formData.selectedStore : 'STORE01', orderNumber: 'ORD' + Date.now() })),
@@ -681,7 +714,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           user_adddeliveryid: useSavedAddress && selectedAddress !== null ? useraddress[selectedAddress]._id : savedAddressId || useraddress[0]?._id,
           order_username: `${addressData.firstName} ${addressData.lastName}`,
           order_phonenumber: addressData.phonenumber, email_address: addressData.email,
-          order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
+          order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, store_id: formData.deliveryType === 'store' ? formData.selectedStore : null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
           order_amount: totalAmount, order_deliveryaddress: deliveryAddress,
               loyalty_points_redeemed: pointsApplied ? customPoints : 0,
           loyalty_discount: loyaltyDiscount || 0,
@@ -693,6 +726,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           order_status: 'pending',
           delivery_type: formData.deliveryType === 'store' ? 'store_pickup' : 'home',
           pickup_store: pickupStoreName,
+          store_id: formData.deliveryType === 'store' ? formData.selectedStore : null,
           payment_id: paymentData.payment_id, payment_status: paymentData.status,
           order_number: order_number || 'ORD' + Date.now(),
           order_details: cartItems.map(item => ({ item_code: `ITEM${item.item_code}`, product_id: item.id, product_name: item.name, product_price: item.price, model: 'N/A', user_id: userId, coupondiscount: 0, created_at: new Date(), updated_at: new Date(), quantity: item.quantity, store_id: formData.deliveryType === 'store' ? formData.selectedStore : 'STORE01', orderNumber: 'ORD' + Date.now() })),
@@ -712,7 +746,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         const orderData = await orderRes.json();
         ga4Purchase({ orderId: orderData.order.order_number, value: orderSummary.total, items: cartItems });
 
-        if (paymentMethod !== 'Cash on Delivery') {
+        if (paymentMethod !== 'Cash on Delivery' && paymentMethod !== 'pay_at_store') {
           try {
             const loyaltyRes = await fetch('/api/award-points', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -740,8 +774,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           emailFD.append('email', addressData.email);
           emailFD.append('params', JSON.stringify([name, orderData.order.order_number, `₹${Number(orderData.order.order_amount).toFixed(2)}`, orderData.order.payment_method, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
           await fetch('https://bea.eygr.in/api/email/send-msg', { method: 'POST', headers: { Authorization: 'Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L' }, body: emailFD });
-          const adminEmails = ['arunkarthik@bharathelectronics.in','ecom@bharathelectronics.in','itadmin@bharathelectronics.in','telemarketing@bharathelectronics.in','sekarcorp@bharathelectronics.in','abu@bharathelectronics.in','customercare@bharathelectronics.in'];
-            // const adminEmails = ['hariharann2026@gmail.com']
+          // const adminEmails = ['arunkarthik@bharathelectronics.in','ecom@bharathelectronics.in','itadmin@bharathelectronics.in','telemarketing@bharathelectronics.in','sekarcorp@bharathelectronics.in','abu@bharathelectronics.in','customercare@bharathelectronics.in'];
+         const adminEmails = ['hariharann2026@gmail.com']
           const adminFD = new FormData();
           adminFD.append('campaign_id', 'dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6');
           adminFD.append('params', JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
@@ -871,6 +905,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                 setNearestStores={setNearestStores}
                 selectedPickupStore={selectedPickupStore}
                 setSelectedPickupStore={setSelectedPickupStore}
+                cartItems={cartItems}
               />
 
               {/* Delivery address — shown when home delivery */}
@@ -1013,11 +1048,11 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
                   ), label: 'EMI options', sub: 'Easy EMI from leading banks' },
-                  { value: 'Cash on Delivery', icon: (
+                  ...(formData.deliveryType !== 'store' ? [{ value: 'Cash on Delivery', icon: (
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                  ), label: 'Cash on delivery', sub: 'Pay when you receive' },
+                  ), label: 'Cash on delivery', sub: 'Pay when you receive' }] : []),
                   { value: 'pay_at_store', icon: (
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -1227,7 +1262,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                 </div>
 
                 {/* Loyalty points section */}
-                {loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && (
+                {loyaltyBalance > 0 && paymentMethod !== 'Cash on Delivery' && paymentMethod !== 'pay_at_store' && (
                   <div className="border border-indigo-200 rounded-xl p-3 bg-indigo-50 mt-2">
                     <div className="flex justify-between items-center">
                       <div>

@@ -357,7 +357,7 @@ export default function ContactForm() {
       
 
       {/* FORM + SUPPORT SECTION */}
-      <section className="max-w-8xl mx-auto px-6 py-10">
+      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-8">
           
 
@@ -602,7 +602,7 @@ export default function ContactForm() {
 
       {/* SUPPORT PROCESS */}
 
-      <section className="max-w-8xl mx-auto px-6 pb-8">
+      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
         <div className="bg-white border rounded-2xl p-8 md:p-10 shadow-sm">
 
           <h2 className="text-xl font-bold text-center text-[#2453d3] mb-5">
@@ -650,7 +650,7 @@ export default function ContactForm() {
       </section>
 
       {/* FAQ + HAPPY CUSTOMERS */}
-      <section className="max-w-8xl mx-auto px-6 pb-5">
+      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-6 items-start">
 
           {/* FAQ SECTION */}
@@ -756,7 +756,7 @@ export default function ContactForm() {
         </div>
       </section>
 
-      <section className="max-w-8xl mx-auto px-6 pb-12">
+      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
         <div className="bg-[#eef4ff] border border-blue-100 rounded-2xl p-6 flex flex-col lg:flex-row items-center gap-6 shadow-sm">
           {/* Left Side - 50% */}
           <div className="w-full lg:w-1/2">
