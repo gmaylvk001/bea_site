@@ -1372,22 +1372,31 @@ const Header = () => {
       <>
         <header className="sticky top-0 z-50">
             <style jsx global>{`
-              :root{--height:38px;--radius:12px;--outline:#e3e3e9;--bg:#ffffff;--accent:#5b46f0;--muted:#6b7280;--shadow:0 8px 18px rgba(36,83,211,0.04)}
-              .search-bar{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:10px;padding:4px 8px;border:3px solid var(--outline);box-shadow:var(--shadow);transition:box-shadow .25s ease,transform .12s ease,border-color .18s ease;width:100%;max-width:900px;margin:0 auto}
+              :root{--height:34px;--radius:12px;--outline:#e3e3e9;--bg:#ffffff;--accent:#5b46f0;--muted:#6b7280;--shadow:0 8px 18px rgba(36,83,211,0.04)}
+              .search-bar{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:10px;padding:3px 6px;border:2px solid var(--outline);box-shadow:var(--shadow);transition:box-shadow .25s ease,transform .12s ease,border-color .18s ease;width:100%;max-width:680px;margin:0 auto}
               .search-bar:focus-within{box-shadow:0 12px 30px rgba(36,83,211,.04);border-color:rgba(36,83,211,.04)}
-              .search-bar-inner{position:relative;display:flex;align-items:center;gap:10px;width:100%;padding:2px;border-radius:8px}
+              .search-bar-inner{position:relative;display:flex;align-items:center;gap:8px;width:100%;padding:2px;border-radius:8px}
                /* select */
                /* default: no visible border, show only when focused or has value */
-               .search-select{height:var(--height);min-width:140px;max-width:234px;border-radius:10px;border:1px solid transparent;padding:0 36px 0 14px;font-size:15px;color:#111;background:#fff;-webkit-appearance:none;appearance:none;cursor:pointer}
-               .select-wrap{position:relative;display:inline-block;max-width:35%;flex:0 0 auto;}
+               .search-select{height:var(--height);min-width:118px;max-width:200px;border-radius:10px;border:1px solid transparent;padding:0 30px 0 12px;font-size:14px;color:#111;background:#fff;-webkit-appearance:none;appearance:none;cursor:pointer}
+               .select-wrap{position:relative;display:inline-block;max-width:32%;flex:0 0 auto;}
                .select-wrap::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);width:10px;height:10px;background-image:linear-gradient(135deg,#6b7280,#6b7280);clip-path:polygon(50% 70%,0 25%,100% 25%);opacity:.85;pointer-events:none}
                /* input */
-               .search-input{flex:1 1 auto;height:var(--height);padding:8px 12px;border-radius:10px;border:1px solid transparent;background:#fff;color:#0f172a;font-size:15px;width:100%;}
+               .search-input{flex:1 1 auto;height:var(--height);padding:6px 10px;border-radius:10px;border:1px solid transparent;background:#fff;color:#0f172a;font-size:14px;width:100%;}
                /* when user has typed or on focus, show light border */
                .search-input.has-value, .search-input:focus, .search-select:focus { border-color: #e3e3e9; box-shadow: 0 6px 20px rgba(36,83,211,0.04); }
                /* remove default browser outline to avoid black focus ring */
                .search-input:focus, .search-select:focus { outline: none; }
                @keyframes shimmer{from{left:-120%}to{left:120%}}
+               @keyframes loyaltyNewBlink{
+                 0%,100%{background:#ef4444;color:#fff;box-shadow:0 0 6px rgba(239,68,68,.6)}
+                 25%{background:#f59e0b;color:#fff;box-shadow:0 0 6px rgba(245,158,11,.6)}
+                 50%{background:#22c55e;color:#fff;box-shadow:0 0 6px rgba(34,197,94,.6)}
+                 75%{background:#3b82f6;color:#fff;box-shadow:0 0 6px rgba(59,130,246,.6)}
+               }
+               .loyalty-new-badge{
+                 animation:loyaltyNewBlink 1.1s ease-in-out infinite;
+               }
                @media (max-width:900px){:root{--height:36px}.search-btn{width:48px;color:#2453d3;}.search-select{min-width:100px}}
             `}</style>
             {/* Main Header */}
@@ -1397,30 +1406,37 @@ const Header = () => {
                     <Link href="/" className="p-1 rounded-lg">
                       <img src="/user/bea-new.png" alt="Logo" width={70} height={45} className="h-auto" />
                     </Link>
-                    <div className="flex items-center gap-3 pr-1 text-customBlue">
-                      {/* Feedback Icon */}
-                      <Link href="/feedback" className="relative">
+                    <div className="flex items-center gap-2 pr-1 text-customBlue mt-0.5">
+                      <Link href="/feedback" className="flex flex-col items-center gap-0.5 min-w-[40px]">
                           <FiMessageSquare size={16} />
+                          <span className="text-[9px] font-medium leading-none">Feedback</span>
                       </Link>
 
-                      {/* Contact Icon */}
-                      <Link href="/contact" className="relative">
-                          <FiPhoneCall size={16}  />
+                      <Link href="/contact" className="flex flex-col items-center gap-0.5 min-w-[40px]">
+                          <FiPhoneCall size={16} />
+                          <span className="text-[9px] font-medium leading-none">Contact</span>
                       </Link>
-                      <Link href="/location">
+                      <Link href="/location" className="flex flex-col items-center gap-0.5 min-w-[40px]">
                         <FiMapPin size={16} />
+                        <span className="text-[9px] font-medium leading-none">Store</span>
                       </Link>
-                        <Link href="/wishlist" className="relative">
-                          <FiHeart size={16} />
-                          <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
-                            {wishlistCount}
-                          </span>
+                        <Link href="/wishlist" className="relative flex flex-col items-center gap-0.5 min-w-[40px]">
+                          <div className="relative">
+                            <FiHeart size={16} />
+                            <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
+                              {wishlistCount}
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-medium leading-none">Wishlist</span>
                         </Link>
-                        <Link href="/cart" className="relative">
-                          <FiShoppingCart size={16} />
-                          <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
-                            {cartCount}
-                          </span>
+                        <Link href="/cart" className="relative flex flex-col items-center gap-0.5 min-w-[40px]">
+                          <div className="relative">
+                            <FiShoppingCart size={16} />
+                            <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
+                              {cartCount}
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-medium leading-none">Cart</span>
                         </Link>
                         <div className="relative">
                           {userData ? (
@@ -1456,7 +1472,7 @@ const Header = () => {
                 {/* NEW MOBILE SEARCH BAR */}
                 <div className="sm:hidden mt-2 -mx-4 px-0">
                   <div className="bg-[#2453D3] w-full px-3 py-3">
-                    <div className="flex items-center bg-white h-12 rounded-xl border border-gray-300 shadow-sm overflow-hidden w-full transition-all duration-150 focus-within:border-[#2453d3] focus-within:shadow-[0_0_0_2px_rgba(36,83,211,0.15)] flex-nowrap">
+                    <div className="flex items-center bg-white h-10 rounded-xl border border-gray-300 shadow-sm overflow-hidden w-full transition-all duration-150 focus-within:border-[#2453d3] focus-within:shadow-[0_0_0_2px_rgba(36,83,211,0.15)] flex-nowrap">
                       
                       {/* Category select */}
                       <select
@@ -1554,7 +1570,7 @@ const Header = () => {
                   </div>
                 )}
                 {/* DESKTOP ROW (unchanged original content) */}
-                <div className="hidden sm:flex justify-between items-center gap-4">
+                <div className="hidden sm:flex justify-between items-center gap-3">
                     {/* Logo (Hidden on mobile) */}
                     <div className="hidden sm:block bg-white py-2 rounded-lg">
                         <Link href="/" className="mx-auto">
@@ -1563,18 +1579,18 @@ const Header = () => {
                     </div>
 
                     {/* Search Bar (Hidden on mobile - will show in mobile menu) */}
-                    <div className="search-bar relative hidden sm:flex flex-1 w-full max-w-[900px] mx-auto items-center bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200" role="search" style={{minHeight: '40px', display: 'flex',
+                    <div className="search-bar relative hidden sm:flex flex-1 w-full max-w-[680px] mx-auto items-center bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200" role="search" style={{minHeight: '36px', display: 'flex',
                         alignItems: 'center',
-                        gap: '10px',
+                        gap: '8px',
                         background: 'var(--bg)',
                         borderRadius: '10px',
-                        padding: '4px 8px',
-                        border: '3px solid var(--outline)',
+                        padding: '3px 6px',
+                        border: '2px solid var(--outline)',
                         boxShadow: 'var(--shadow)',
                         transition:
                           'box-shadow .25s ease, transform .12s ease, border-color .18s ease',
                         width: '100%',
-                        maxWidth: '900px',
+                        maxWidth: '680px',
                         margin: '0 auto',}}>
                       <div className="search-bar-inner" style={{ position: 'relative', width: '100%' }}>
                         <div className="select-wrap">
@@ -1642,70 +1658,45 @@ const Header = () => {
                       </div>                    
                     </div>
                     {/* Icons Group */}
-                    <div className="flex items-center gap-[2rem] sm:gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 mt-0.5">
                         {/* Mobile Search Button (Hidden on desktop) */}
                         <button onClick={toggleMobileMenu} className="sm:hidden text-customBlue">
                             <FiSearch size={20} />
                         </button>
 
-                        {/* Feedback Icon */}
-							{/* <Link href="/feedback" className="hidden sm:flex items-center relative">
-                            <FiMessageSquare size={18} className="text-customBlue" />
-							</Link> */}
-               {/* Loyalty Points */}
-              
-						<Link href="/feedback" className="hidden sm:flex items-center relative group z-50">
+						<Link href="/feedback" className="hidden sm:flex flex-col items-center gap-0.5 min-w-[52px]">
 						  <FiMessageSquare size={18} className="text-customBlue" />
-
-						  <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
-							Feedback
-						  </span>
+						  <span className="text-[10px] text-customBlue font-medium leading-none">Feedback</span>
 						</Link>
 
-
-
-
-                        {/* Contact Icon */}
-                        <Link href="/contact" className="hidden sm:flex items-center relative group z-50">
+                        <Link href="/contact" className="hidden sm:flex flex-col items-center gap-0.5 min-w-[52px]">
                             <FiPhoneCall size={18} className="text-customBlue" />
-							<span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
-							Contact
-						  </span>
+							<span className="text-[10px] text-customBlue font-medium leading-none">Contact</span>
                         </Link>
 
-                        {/* Location (Hidden on mobile) */}
-                        <Link href="/location" className="hidden sm:flex items-center relative group z-50">
+                        <Link href="/location" className="hidden sm:flex flex-col items-center gap-0.5 min-w-[52px]">
                             <FiMapPin size={18} className="text-customBlue" />
-							<span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
-							Store
-						  </span>
-                                {/* <span className="ml-1 text-xs sm:text-sm text-customBlue hidden lg:inline">Location</span> */}
+							<span className="text-[10px] text-customBlue font-medium leading-none">Store</span>
                         </Link>
 
-                        {/* Wishlist */}
-                        <Link href="/wishlist" className="flex items-center relative p-1 sm:p-0 group z-50">
-                            <FiHeart size={18} className="text-customBlue" />
-                            {/* {wishlistCount > 0 && ( */}
-                                <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
-                                    {wishlistCount}
-                                </span>
-                            {/* )} */}
-                            {/* <span className="ml-1 text-xs sm:text-sm text-customBlue hidden lg:inline">Wishlist</span> */}
-							<span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
-							Wishlist
-						  </span>
+                        <Link href="/wishlist" className="flex flex-col items-center gap-0.5 min-w-[52px] relative">
+                            <div className="relative">
+                              <FiHeart size={18} className="text-customBlue" />
+                              <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
+                                  {wishlistCount}
+                              </span>
+                            </div>
+							<span className="text-[10px] text-customBlue font-medium leading-none">Wishlist</span>
                         </Link>
 
-                        {/* Cart */}
-                        <Link href="/cart" className="flex items-center relative p-1 sm:p-0 group z-50">
-                            <FiShoppingCart size={18} className="text-customBlue" />
-                            <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
-                                {cartCount}
-                            </span>
-                            {/* <span className="ml-1 text-xs sm:text-sm text-customBlue hidden lg:inline">Cart</span> */}
-							<span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-customBlue px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition duration-200 z-50">
-							Cart
-						  </span>
+                        <Link href="/cart" className="flex flex-col items-center gap-0.5 min-w-[52px] relative">
+                            <div className="relative">
+                              <FiShoppingCart size={18} className="text-customBlue" />
+                              <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
+                                  {cartCount}
+                              </span>
+                            </div>
+							<span className="text-[10px] text-customBlue font-medium leading-none">Cart</span>
                         </Link>
 
                         {/* User Account */}
@@ -1807,6 +1798,18 @@ const Header = () => {
                    <span> Open Box Clearance Sale</span>
               <FiChevronRight className="bg-[#2453D3] rounded-full text-white" size={18} />
                        </Link>
+                        {/* Loyalty - Mobile */}
+                        <Link
+                          href="/loyalty"
+                          className="mt-3 relative flex items-center justify-between bg-white rounded-md px-4 py-3 text-black font-semibold text-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <span>Loyalty</span>
+                          <span className="loyalty-new-badge absolute top-2 right-10 text-[9px] font-bold px-1.5 py-0.5 rounded leading-none">
+                            NEW
+                          </span>
+                          <FiChevronRight className="bg-[#2453D3] rounded-full text-white" size={18} />
+                        </Link>
                   </div>
                 )}
                 {/* Auth Modal */}
@@ -2137,6 +2140,19 @@ const Header = () => {
     />
   </Link>
 </SwiperSlide>
+                                <SwiperSlide className="!w-auto overflow-visible flex justify-center">
+                                  <Link
+                                    href="/loyalty"
+                                    className="relative px-5 py-2 flex flex-col items-center text-center"
+                                  >
+                                    <span className="loyalty-new-badge absolute top-0 right-0 z-10 text-[9px] font-bold px-1.5 py-0.5 rounded leading-none">
+                                      NEW
+                                    </span>
+                                    <span className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap">
+                                      Loyalty
+                                    </span>
+                                  </Link>
+                                </SwiperSlide>
  </Swiper>
   </div>
        </div>

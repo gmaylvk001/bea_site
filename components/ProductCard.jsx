@@ -88,7 +88,7 @@ const AddToWishlistButton = ({ productId, onAfterWishlist, className, label, ico
           disabled={isLoading}
         >
           <Heart size={iconSize} fill={isWishlisted ? 'currentColor' : 'none'} />
-          {label && <span className="text-xs font-medium">{label}</span>}
+          {label && <span>{label}</span>}
         </button>
 
       {/* AuthModal remains the same */}

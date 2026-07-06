@@ -79,6 +79,11 @@ const [addOnProducts, setAddOnProducts] = useState([]);
  const [warranties, setWarranties] = useState([]);
 const [selectedWarrantyData, setSelectedWarrantyData] = useState(null);
 
+const outlineActionBtnClass =
+  "flex items-center justify-center gap-2 border border-gray-300 rounded-md bg-white px-4 py-2 text-sm font-medium text-blue-800 hover:border-blue-400 hover:bg-blue-50 transition-colors whitespace-nowrap";
+const addToCartOutlineClass =
+  "w-full border border-gray-300 rounded-md bg-white px-4 py-2.5 text-sm font-medium text-blue-800 hover:border-blue-400 hover:bg-blue-50 transition-colors shadow-none";
+
 const addOnIds = Array.isArray(product?.add_ons)
   ? product.add_ons.map(id => id.toString())
   : [];
@@ -1028,53 +1033,49 @@ const fetchBrand = async () => {
 
     {/* Price */}
     <div className="mt-3 border-t border-gray-200 pt-3">
-     {/* Row 1: Price + MRP + OFF badge */}
-{/* Row 1+2: Price block left, MRP block middle, Badge right — all top-aligned */}
-<div className="flex items-start gap-3 flex-wrap">
-
-  {/* Column 1: Selling Price (top) + "Special Price" label (bottom) */}
-  <div className="flex flex-col leading-tight">
-    <span className="text-2xl font-bold text-blue-800">
-      ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
-    </span>
-    {product.special_price > 0 && (
-      <span className="text-xs text-gray-500 mt-0.5">Special Price</span>
-    )}
-  </div>
-
-  {/* Column 2: MRP strikethrough (top) + Inclusive text (bottom) */}
-  {product.special_price > 0 && product.price > product.special_price && (
-    <div className="flex flex-col ms-3 leading-tight mt-2">
-      <span className="text-sm text-gray-500 line-through">
-        MRP ₹ {Number(product.price).toLocaleString()}
-      </span>
-      <span className="text-xs text-gray-500 mt-2">
-        (Inclusive of all taxes) 
-      </span>
-    </div>
+<div className="flex flex-col leading-tight">
+  <span className="text-2xl font-bold text-blue-800">
+    ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
+  </span>
+  {product.special_price > 0 && (
+    <span className="text-xs text-gray-500 mt-0.5">Special Price</span>
   )}
-
-  {/* Column 3: OFF Badge — top aligned */}
-  {product.special_price > 0 && product.price > product.special_price && (
-    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded mt-1">
-      {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
-    </span>
-  )}
-
 </div>
 
-{/* Row 2: You Save */}
 {product.special_price > 0 && product.price > product.special_price && (
-  <p className="text-green-600 font-semibold text-sm mt-1 flex items-center gap-1">
-    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-    </svg>
-    You Save ₹ {Number(product.price - product.special_price).toLocaleString()} ({Math.round(((product.price - product.special_price) / product.price) * 100)}%)
-  </p>
+  <div className="flex w-full items-start justify-between gap-4 sm:gap-6 mt-3">
+    <div className="flex flex-col leading-tight flex-1 min-w-0 pr-3 border-r border-gray-200">
+      <span className="text-sm text-gray-500 line-through whitespace-nowrap">
+        MRP ₹ {Number(product.price).toLocaleString()}
+      </span>
+      <span className="text-xs text-gray-500 mt-1 whitespace-nowrap">
+        (Inclusive of all taxes)
+      </span>
+    </div>
+
+    <div className="flex flex-col leading-tight flex-1 min-w-0 px-3 border-r border-gray-200">
+      <p className="text-green-600 font-semibold text-sm flex items-center gap-1 whitespace-nowrap">
+        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+        You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
+      </p>
+      <span className="text-xs text-gray-400 mt-1">
+        Price includes all applicable taxes
+      </span>
+    </div>
+
+    <div className="flex flex-col items-end justify-start flex-shrink-0 pl-3">
+      <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded whitespace-nowrap">
+        {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
+      </span>
+    </div>
+  </div>
 )}
 
-{/* Row 3: Price includes tax */}
-<p className="text-xs text-gray-400 mt-0.5">Price includes all applicable taxes </p>
+{!(product.special_price > 0 && product.price > product.special_price) && (
+  <p className="text-xs text-gray-400 mt-0.5">Price includes all applicable taxes</p>
+)}
     </div>
 
     {/* Stock */}
@@ -1111,17 +1112,17 @@ const fetchBrand = async () => {
             alert("Link copied to clipboard!");
           }
         }}
-        className="flex-1 flex items-center justify-center gap-2 border border-gray-300 rounded-full py-2.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+        className={`flex-1 ${outlineActionBtnClass}`}
         title="Share this product"
       >
-        <FaShareAlt className="w-4 h-4 text-blue-600" />
-        <span className="text-xs font-medium">Share</span>
+        <FaShareAlt className="w-4 h-4 text-blue-800" />
+        <span>Share</span>
       </button>
      <AddToWishlistButton
         productId={product._id}
         label="Add to Wishlist"
-        iconSize={14}
-        className="flex-1 flex items-center justify-center gap-2 border border-gray-300 rounded-full py-2.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
+        iconSize={16}
+        className={`flex-1 ${outlineActionBtnClass}`}
       />
     </div>
 
@@ -1162,7 +1163,7 @@ const fetchBrand = async () => {
               selectedRelatedProducts={selectedRelatedProducts}
                warrantyData={selectedWarrantyData}
               buttonLabel="Add to Cart"
-              buttonClassName="bg-white hover:bg-blue-50 text-blue-700"
+              buttonClassName={addToCartOutlineClass}
                 movement={product.movement}         
                  productName={product.name}        
                  productSlug={product.slug}  
@@ -1279,7 +1280,7 @@ const fetchBrand = async () => {
 
   {/* 6. Add Ons */}
   {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
-    <div className="mt-4 border border-gray-300 rounded-lg" style={{background:"#eaeaea"}}>
+    <div className="mt-4 border border-gray-300 rounded-lg bg-white">
       <div className="px-4 py-4">
         <h2 className="text-sm font-bold text-customBlue underline mb-2">Add Ons</h2>
         {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
@@ -1571,11 +1572,7 @@ const fetchBrand = async () => {
                   </div>
                 </div>
                 <div className="border-t border-gray-200 pt-3 mb-3">
-               {/* Row 1: Price + MRP + OFF badge */}
-{/* Row 1+2: Price block left, MRP block middle, Badge right — all top-aligned */}
-<div className="flex items-start gap-3 flex-wrap">
-
-  {/* Column 1: Selling Price (top) + "Special Price" label (bottom) */}
+<div className="flex items-start justify-between gap-4">
   <div className="flex flex-col leading-tight">
     <span className="text-3xl font-bold text-blue-800">
       ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
@@ -1585,39 +1582,69 @@ const fetchBrand = async () => {
     )}
   </div>
 
-  {/* Column 2: MRP strikethrough (top) + Inclusive text (bottom) */}
-  {product.special_price > 0 && product.price > product.special_price && (
-    <div className="flex flex-col ms-5 leading-tight mt-2">
-      <span className="text-sm text-gray-500 line-through">
-        MRP ₹ {Number(product.price).toLocaleString()}
-      </span>
-      <span className="text-xs text-gray-500 mt-2">
-        (Inclusive of all taxes) 
-      </span>
-    </div>
-  )}
-
-  {/* Column 3: OFF Badge — top aligned */}
-  {product.special_price > 0 && product.price > product.special_price && (
-    <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded mt-1">
-      {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
-    </span>
-  )}
-
+  <div className="flex items-center gap-2 flex-shrink-0 pt-1">
+    <button
+      onClick={() => {
+        if (navigator.share) {
+          navigator.share({
+            title: product.name,
+            text: `Check out ${product.name}`,
+            url: window.location.href,
+          });
+        } else {
+          navigator.clipboard.writeText(window.location.href);
+          alert("Link copied to clipboard!");
+        }
+      }}
+      className={outlineActionBtnClass}
+      title="Share this product"
+    >
+      <FaShareAlt className="w-4 h-4 text-blue-800" />
+      <span>Share</span>
+    </button>
+    <AddToWishlistButton
+      productId={product._id}
+      label="Add to Wishlist"
+      iconSize={16}
+      className={outlineActionBtnClass}
+    />
+  </div>
 </div>
 
-{/* Row 2: You Save */}
 {product.special_price > 0 && product.price > product.special_price && (
-  <p className="text-green-600 font-semibold text-sm mt-1 flex items-center gap-1">
-    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-    </svg>
-    You Save ₹ {Number(product.price - product.special_price).toLocaleString()} ({Math.round(((product.price - product.special_price) / product.price) * 100)}%)
-  </p>
+  <div className="flex w-full items-start justify-between gap-6 mt-3">
+    <div className="flex flex-col leading-tight flex-1 min-w-0 pr-6 border-r border-gray-200">
+      <span className="text-sm text-gray-500 line-through whitespace-nowrap">
+        MRP ₹ {Number(product.price).toLocaleString()}
+      </span>
+      <span className="text-xs text-gray-500 mt-1 whitespace-nowrap">
+        (Inclusive of all taxes)
+      </span>
+    </div>
+
+    <div className="flex flex-col leading-tight flex-1 min-w-0 px-6 border-r border-gray-200">
+      <p className="text-green-600 font-semibold text-sm flex items-center gap-1 whitespace-nowrap">
+        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+        You Save ₹ {Number(product.price - product.special_price).toLocaleString()}
+      </p>
+      <span className="text-xs text-gray-400 mt-1">
+        Price includes all applicable taxes
+      </span>
+    </div>
+
+    <div className="flex flex-col items-end justify-start flex-shrink-0 pl-6">
+      <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded whitespace-nowrap">
+        {Math.round(((product.price - product.special_price) / product.price) * 100)}% OFF
+      </span>
+    </div>
+  </div>
 )}
 
-{/* Row 3: Price includes tax */}
-<p className="text-xs text-gray-400 mt-0.5">Price includes all applicable taxes</p>
+{!(product.special_price > 0 && product.price > product.special_price) && (
+  <p className="text-xs text-gray-400 mt-1">Price includes all applicable taxes</p>
+)}
                 </div>
                 <div className="mb-3 space-y-1">
                   <div className="flex items-center gap-2">
@@ -1640,33 +1667,6 @@ const fetchBrand = async () => {
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                   </p>
-                </div>
-                <div className="flex items-center gap-2 mb-3">
-                  <button
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: product.name,
-                          text: `Check out ${product.name}`,
-                          url: window.location.href,
-                        });
-                      } else {
-                        navigator.clipboard.writeText(window.location.href);
-                        alert("Link copied to clipboard!");
-                      }
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 border border-gray-300 rounded-full py-2.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
-                    title="Share this product"
-                  >
-                  <FaShareAlt className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-medium">Share</span>
-                  </button>
-                 <AddToWishlistButton
-                    productId={product._id}
-                    label="Add to Wishlist"
-                    iconSize={14}
-                 className="flex-1 flex items-center justify-center gap-2 border border-gray-300 rounded-full py-2.5 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
-                  />
                 </div>
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-sm font-medium text-gray-700">Quantity:</span>
@@ -1702,7 +1702,7 @@ const fetchBrand = async () => {
                         selectedRelatedProducts={selectedRelatedProducts}
                          warrantyData={selectedWarrantyData}
                         buttonLabel="Add to Cart"
-                        buttonClassName="bg-white hover:bg-blue-50 text-blue-700"
+                        buttonClassName={addToCartOutlineClass}
                            movement={product.movement}         
                         productName={product.name}          
                         productSlug={product.slug}  
@@ -1866,7 +1866,7 @@ const fetchBrand = async () => {
             )}
 
             {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
-              <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide" style={{background:"#eaeaea"}}>
+              <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
                 <div className="px-4 py-4">
                   <h2 className="text-sm font-bold text-customBlue underline mb-2">Add Ons</h2>
                   {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
