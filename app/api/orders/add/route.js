@@ -34,6 +34,8 @@ export async function POST(req) {
       loyalty_redemption_token,
       promotion_code_applied,
        promotion_discount_applied,
+      pickup_store,
+      store_id,
     } = body;
 
     // Validate required fields
@@ -64,6 +66,8 @@ export async function POST(req) {
       loyalty_redemption_token: loyalty_redemption_token || null,
       promotion_code_applied: promotion_code_applied || null,
      promotion_discount_applied: promotion_discount_applied || 0,
+      pickup_store: pickup_store || null,
+      store_id: store_id || null,
     };
 
     // Check if order already exists (match by order_number if provided, else user + pending order)

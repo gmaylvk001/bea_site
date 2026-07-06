@@ -107,7 +107,7 @@ points_per_currency_unit: { type: Number, default: null },
 promotion_code_applied: { type: String, default: null },
 promotion_discount_applied: { type: Number, default: 0 },
 
-  // NEW: Order History
+
     order_history: [OrderHistorySchema]
 },
 

@@ -947,7 +947,7 @@ const Header = () => {
         const rect = el.getBoundingClientRect();
         // Using fixed positioning => use viewport coords (rect.left / rect.bottom)
         setDropdownLeft(rect.left);
-        setDropdownTop(rect.bottom);
+        setDropdownTop(rect.bottom + 18);
         setDropdownCenterX(rect.left + rect.width / 2);
     };
     // After dropdown mounts, measure and adjust so it never overflows screen or hides under arrows
