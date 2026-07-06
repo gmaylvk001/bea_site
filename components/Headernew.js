@@ -2304,7 +2304,8 @@ const Header = () => {
         */
 
        const renderBrands = () => brands.length > 0 && (
-    <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #e5e7eb', marginLeft: '180px' }}>    <div style={{
+    <div style={{ marginTop: 'auto', paddingTop: '12px', paddingLeft: '196px', borderTop: '1px solid #e5e7eb', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
+      <div style={{
       fontSize: '11px', fontWeight: 700, color: '#1e3a8a',
       textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px',
     }}>
@@ -2312,14 +2313,15 @@ const Header = () => {
     </div>
     <div className="dd-brands" style={{
   display: 'grid',
-  gridTemplateColumns: 'repeat(5, auto)',
+  gridTemplateColumns: 'repeat(5, minmax(80px, 1fr))',
+  gridTemplateRows: 'repeat(2, auto)',
   gap: '8px 16px',
   alignItems: 'center',
   justifyItems: 'start',
 }}>
               {[...brands]
                 .sort((a, b) => alphaSortString(a.brand_name, b.brand_name))
-                .slice(0, 9)
+                .slice(0, 10)
                 .map((brand) => (
                   <Link
                     key={brand._id || brand.brand_slug}
@@ -2351,13 +2353,13 @@ const Header = () => {
   </span>
                   </Link>
   ))}
-              {brands.length > 9 && (
+              {brands.length > 10 && (
                 <Link
                   href={`/category/${hoveredCategory.category_slug}`}
                   onClick={() => setHoveredCategory(null)}
                   style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '5px 6px', fontSize: '11px', fontWeight: 600, color: '#2453D3', textDecoration: 'none' }}
                 >
-                  +{brands.length - 9} more <FiChevronRight size={11} />
+                  +{brands.length - 10} more <FiChevronRight size={11} />
                 </Link>
               )}
             </div>
@@ -2365,12 +2367,13 @@ const Header = () => {
         );
 
         return (
-          <div style={{ display: 'flex', alignItems: 'flex-start', flex: 1, minHeight: '420px' }}>
+          <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: '420px' }}>
 
-            <div style={{ flex: 1, padding: '16px 20px', minWidth: 0 }}>
+            <div style={{ flex: 1, padding: '16px 20px', minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '420px' }}>
 
               {activeSub ? (
                 /* ── MODE A: Single sub's children in columns of 9 ── */
+                <div style={{ flex: 1, minHeight: 0 }}>
                 <>
                   {/* Sub title */}
                   <div style={{ marginBottom: '10px', paddingBottom: '8px', borderBottom: 'none' }}>
@@ -2479,10 +2482,11 @@ const Header = () => {
                     );
                   })()}
 
-                  {renderBrands()}
                 </>
+                </div>
               ) : (
                 /* ── MODE B: ALL subs as columns — Image 2 exact layout ── */
+                <div style={{ flex: 1, minHeight: 0 }}>
                 <>
                  <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
                     {[...hoveredCategory.subcategories]
@@ -2544,9 +2548,11 @@ const Header = () => {
                       })}
                   </div>
 
-                  {renderBrands()}
                 </>
+                </div>
               )}
+
+              {renderBrands()}
 
             </div>
 
