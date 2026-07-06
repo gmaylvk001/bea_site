@@ -1,27 +1,19 @@
-import store from "@/models/store"; // Adjust path to your Store model as necessary
-import connectDB from "@/lib/db"; // Adjust path to your database connection utility
+import store from "@/models/store";
+import connectDB from "@/lib/db";
 
 export async function GET() {
-  await connectDB(); // Connect to your database
-
+  await connectDB();
   try {
-    // Fetch all stores from the database
-    const stores = await store.find({});
-
-    // Return the stores as a JSON response
+    const stores = await store.find({}).lean();
     return new Response(JSON.stringify({ success: true, data: stores }), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error("Failed to fetch stores:", error);
-    return new Response(JSON.stringify({ success: false, error: error.message || "Failed to fetch stores" }), {
-      status: 500, // Internal Server Error
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return new Response(
+      JSON.stringify({ success: false, error: error.message || "Failed to fetch stores" }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }

@@ -6,6 +6,7 @@ import Store from '@/models/store';     // Adjust path to your Store model
 import multer from 'multer'; // You might need a file upload library like multer or formidable for Node.js
 import path from 'path';
 import fs from 'fs/promises'; // For file system operations
+import Product from '@/models/product';
 
 // Configure Multer for file uploads (assuming you're storing files locally)
 // For production, consider cloud storage like AWS S3, Cloudinary, etc.
@@ -53,7 +54,8 @@ export async function GET(request, context) {
     await connectDB();
 
     // 🔥 FIND BY SLUG instead of ID
-    const store = await Store.findOne({ slug: storeId });
+    const store = await Store.findOne({ slug: storeId })
+    .populate("featuredProducts");
 
     if (!store) {
       return NextResponse.json(
