@@ -39,12 +39,19 @@ export async function POST(req) {
       );
     }
 
-    // Return success response
+    const payment = await razorpay.payments.fetch(razorpay_payment_id);
+    const isEmiPayment =
+      payment.method === 'emi' ||
+      payment.method === 'cardless_emi' ||
+      (payment.method === 'card' && payment.card?.emi === true);
+
     return NextResponse.json(
       { 
         success: true,
         paymentId: razorpay_payment_id,
-        orderId: razorpay_order_id
+        orderId: razorpay_order_id,
+        method: payment.method,
+        isEmiPayment,
       }, 
       { status: 200 }
     );

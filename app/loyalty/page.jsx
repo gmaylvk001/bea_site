@@ -93,7 +93,7 @@ export default function LoyaltyPage() {
         <div className="absolute inset-0 bg-[#0B1D3F]/50 hidden lg:block" />
        <div className="absolute inset-0 bg-[#0B1D3F] block lg:hidden" />
 
-       <div className="relative z-10 w-full px-10 xl:px-20 py-12 flex flex-col lg:flex-row items-center justify-between gap-10">
+       <div className="relative z-10 w-full px-4 sm:px-10 xl:px-20 py-12 flex flex-col lg:flex-row items-center justify-between gap-10">
 
           {/* LEFT */}
           <div className="flex-1 text-white max-w-[600px]">
@@ -133,20 +133,20 @@ export default function LoyaltyPage() {
               <p className="text-white/60 text-xs mb-4">Enter your mobile number to check your rewards balance.</p>
 
               <div className="space-y-3">
-                <div className="flex bg-white rounded-xl overflow-hidden">
-                  <span className="bg-[#F8FAFD] px-3 flex items-center text-sm font-semibold text-[#1a2236] border-r border-[#D1DCF0]">+91</span>
+                <div className="flex bg-white rounded-xl overflow-hidden min-w-0">
+                  <span className="bg-[#F8FAFD] px-3 flex items-center text-sm font-semibold text-[#1a2236] border-r border-[#D1DCF0] flex-shrink-0">+91</span>
                   <input
                     type="tel"
                     value={checkPhone}
                     onChange={(e) => setCheckPhone(e.target.value.replace(/\D/g, ""))}
                     placeholder="Enter mobile number"
                     maxLength={10}
-                    className="flex-1 px-3 py-3 text-sm text-[#1a2236] placeholder-[#94A3B8] outline-none bg-white"
+                    className="flex-1 min-w-0 px-3 py-3 text-sm text-[#1a2236] placeholder-[#94A3B8] outline-none bg-white"
                   />
                   <button
                     onClick={handleCheckPoints}
                     disabled={checkLoading || checkPhone.length < 10}
-                    className="bg-[#1D4ED8] text-white px-4 text-sm font-bold hover:bg-[#1a44c4] transition disabled:bg-[#94A3B8] disabled:text-white"
+                    className="flex-shrink-0 bg-[#1D4ED8] text-white px-4 py-3 text-sm font-bold hover:bg-[#1a44c4] transition disabled:bg-[#94A3B8] disabled:text-white whitespace-nowrap"
                   >
                     {checkLoading ? <div className="w-4 h-4 border-2 border-[#94A3B8] border-t-[#1D4ED8] rounded-full animate-spin" /> : "Check"}
                   </button>
