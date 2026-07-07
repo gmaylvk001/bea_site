@@ -1183,6 +1183,34 @@ const fetchBrand = async () => {
   </div>
 )}
 </div>
+  {/* Add Ons — Mobile */}
+  {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
+    <div className="mt-4 border border-gray-300 rounded-lg bg-white">
+      <div className="px-4 py-4">
+        <h2 className="text-sm font-bold text-customBlue underline mb-2">Add Ons</h2>
+        {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
+          <div key={item._id} className="flex items-start mb-4">
+            <input type="checkbox" className="mt-2 mr-3"
+              checked={selectedRelatedProducts.some(p => p._id === item._id)}
+              onChange={() => toggleRelatedProduct(item)} />
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              {item.images?.[0] && (
+                <img src={`/uploads/products/${item.images[0]}`} alt={item.name} className="w-14 h-14 object-contain" />
+              )}
+              <div className="text-sm flex-1 min-w-0">
+                <Link href={`/product/${item.slug}`}>
+                  <h3 className="text-xs font-medium text-[#0069c6] line-clamp-2">{item.name}</h3>
+                </Link>
+                <span className="text-sm font-semibold text-red-600">
+                  ₹ {(item.special_price > 0 ? item.special_price : item.price).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
   {/* Extended Warranty — Mobile */}
 {warranties.length > 0 && (
   <div className="border border-gray-200 rounded-lg p-4 mt-3">
@@ -1278,36 +1306,7 @@ const fetchBrand = async () => {
     </div>
   )}
 
-  {/* 6. Add Ons */}
-  {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
-    <div className="mt-4 border border-gray-300 rounded-lg bg-white">
-      <div className="px-4 py-4">
-        <h2 className="text-sm font-bold text-customBlue underline mb-2">Add Ons</h2>
-        {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
-          <div key={item._id} className="flex items-start mb-4">
-            <input type="checkbox" className="mt-2 mr-3"
-              checked={selectedRelatedProducts.some(p => p._id === item._id)}
-              onChange={() => toggleRelatedProduct(item)} />
-            <div className="flex items-start gap-3 flex-1 min-w-0">
-              {item.images?.[0] && (
-                <img src={`/uploads/products/${item.images[0]}`} alt={item.name} className="w-14 h-14 object-contain" />
-              )}
-              <div className="text-sm flex-1 min-w-0">
-                <Link href={`/product/${item.slug}`}>
-                  <h3 className="text-xs font-medium text-[#0069c6] line-clamp-2">{item.name}</h3>
-                </Link>
-                <span className="text-sm font-semibold text-red-600">
-                  ₹ {(item.special_price > 0 ? item.special_price : item.price).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )}
-
-  {/* 7. Similar Products */}
+  {/* Similar Products */}
   {relatedProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
     <div className="mt-4 border border-gray-300 rounded-lg bg-white">
       <div className="px-4 py-4">
@@ -1556,60 +1555,59 @@ const fetchBrand = async () => {
                   {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
                   {product.item_code && <span>SKU: {product.item_code}</span>}
                 </div>
-                <div className="flex items-center gap-3 mb-3">
-                  {avgRating > 0 && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-yellow-400 text-sm">★</span>
-                      <span className="text-sm font-semibold text-gray-800">{avgRating}</span>
-                      <span className="text-xs text-blue-600 underline cursor-pointer">({reviewCount} Reviews)</span>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {avgRating > 0 && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-400 text-sm">★</span>
+                        <span className="text-sm font-semibold text-gray-800">{avgRating}</span>
+                        <span className="text-xs text-blue-600 underline cursor-pointer">({reviewCount} Reviews)</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Verified Purchase
                     </div>
-                  )}
-                  <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Verified Purchase
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({
+                            title: product.name,
+                            text: `Check out ${product.name}`,
+                            url: window.location.href,
+                          });
+                        } else {
+                          navigator.clipboard.writeText(window.location.href);
+                          alert("Link copied to clipboard!");
+                        }
+                      }}
+                      className={outlineActionBtnClass}
+                      title="Share this product"
+                    >
+                      <FaShareAlt className="w-4 h-4 text-blue-800" />
+                      <span>Share</span>
+                    </button>
+                    <AddToWishlistButton
+                      productId={product._id}
+                      label="Add to Wishlist"
+                      iconSize={16}
+                      className={outlineActionBtnClass}
+                    />
                   </div>
                 </div>
                 <div className="border-t border-gray-200 pt-3 mb-3">
-<div className="flex items-start justify-between gap-4">
-  <div className="flex flex-col leading-tight">
-    <span className="text-3xl font-bold text-blue-800">
-      ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
-    </span>
-    {product.special_price > 0 && (
-      <span className="text-xs text-gray-500 mt-0.5">Special Price</span>
-    )}
-  </div>
-
-  <div className="flex items-center gap-2 flex-shrink-0 pt-1">
-    <button
-      onClick={() => {
-        if (navigator.share) {
-          navigator.share({
-            title: product.name,
-            text: `Check out ${product.name}`,
-            url: window.location.href,
-          });
-        } else {
-          navigator.clipboard.writeText(window.location.href);
-          alert("Link copied to clipboard!");
-        }
-      }}
-      className={outlineActionBtnClass}
-      title="Share this product"
-    >
-      <FaShareAlt className="w-4 h-4 text-blue-800" />
-      <span>Share</span>
-    </button>
-    <AddToWishlistButton
-      productId={product._id}
-      label="Add to Wishlist"
-      iconSize={16}
-      className={outlineActionBtnClass}
-    />
-  </div>
-</div>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-3xl font-bold text-blue-800">
+                      ₹ {Number(product.special_price > 0 ? product.special_price : product.price).toLocaleString()}
+                    </span>
+                    {product.special_price > 0 && (
+                      <span className="text-xs text-gray-500 mt-0.5">Special Price</span>
+                    )}
+                  </div>
 
 {product.special_price > 0 && product.price > product.special_price && (
   <div className="flex w-full items-start justify-between gap-6 mt-3">
@@ -1756,6 +1754,40 @@ const fetchBrand = async () => {
     <RazorpayOffers amount={Number(product.special_price) || Number(product.price)} />
   </div>
 )}
+  {/* Add Ons — Desktop Sidebar */}
+            {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
+              <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
+                <div className="px-4 py-4">
+                  <h2 className="text-sm font-bold text-customBlue underline mb-2">Add Ons</h2>
+                  {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
+                    <div key={item._id} className="flex items-start mb-4">
+                      {item.quantity > 0 && (
+                        <input type="checkbox" className="mt-2 mr-3"
+                          checked={selectedRelatedProducts.some(p => p._id === item._id)}
+                          onChange={() => toggleRelatedProduct(item)} />
+                      )}
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <Link href={`/product/${item.slug}`}>
+                          {item.images?.[0] && <img src={`/uploads/products/${item.images[0]}`} alt={item.name} className="w-16 h-16 object-contain" />}
+                        </Link>
+                        <div className="text-sm flex-1 min-w-0">
+                          <Link href={`/product/${item.slug}`}>
+                            <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">{item.name}</h3>
+                          </Link>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base font-semibold text-red-600">
+                              ₹ {(item.special_price > 0 ? item.special_price : item.price).toLocaleString()}
+                            </span>
+                          </div>
+                          <h4 className={`text-xs ${item.stock_status === "In Stock" ? "text-green-600" : "text-red-600"}`}>{item.stock_status}</h4>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
   {/* Extended Warranty — Desktop Sidebar */}
 {warranties.length > 0 && (
   <div className="border border-gray-200 rounded-lg shadow-sm bg-white p-4">
@@ -1829,6 +1861,7 @@ const fetchBrand = async () => {
       ))}
   </div>
 )}
+
             {featuredProducts?.filter(item => item.stock_status === "In Stock").length > 0 && (
               <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
                 <div className="px-4 py-4 border-b border-gray-300">
@@ -1857,39 +1890,6 @@ const fetchBrand = async () => {
                           <h4 className={`text-xs ${item.stock_status === "In Stock" ? "text-green-600" : "text-red-600"}`}>
                             {item.stock_status}{item.stock_status === "In Stock" && item.quantity ? `, ${item.quantity} units` : ""}
                           </h4>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").length > 0 && (
-              <div className="border border-gray-300 rounded-lg shadow-md bg-white max-h-[500px] overflow-y-scroll scrollbar-hide">
-                <div className="px-4 py-4">
-                  <h2 className="text-sm font-bold text-customBlue underline mb-2">Add Ons</h2>
-                  {addOnProducts.filter(item => item.quantity > 0 && item.status === "Active").slice(0, 3).map((item) => (
-                    <div key={item._id} className="flex items-start mb-4">
-                      {item.quantity > 0 && (
-                        <input type="checkbox" className="mt-2 mr-3"
-                          checked={selectedRelatedProducts.some(p => p._id === item._id)}
-                          onChange={() => toggleRelatedProduct(item)} />
-                      )}
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <Link href={`/product/${item.slug}`}>
-                          {item.images?.[0] && <img src={`/uploads/products/${item.images[0]}`} alt={item.name} className="w-16 h-16 object-contain" />}
-                        </Link>
-                        <div className="text-sm flex-1 min-w-0">
-                          <Link href={`/product/${item.slug}`}>
-                            <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">{item.name}</h3>
-                          </Link>
-                          <div className="flex items-center gap-2">
-                            <span className="text-base font-semibold text-red-600">
-                              ₹ {(item.special_price > 0 ? item.special_price : item.price).toLocaleString()}
-                            </span>
-                          </div>
-                          <h4 className={`text-xs ${item.stock_status === "In Stock" ? "text-green-600" : "text-red-600"}`}>{item.stock_status}</h4>
                         </div>
                       </div>
                     </div>

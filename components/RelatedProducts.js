@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Addtocart from "@/components/AddToCart";
 import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
+import { FaShareAlt } from "react-icons/fa";
 
 // const RelatedProducts = ({ currentProductId,categoryId }) => {
   const RelatedProducts = ({ relatedProducts: relatedIds = [] }) => {
@@ -38,7 +39,27 @@ import Link from "next/link";
       setLoading(false);
     }
   }; */
-
+  
+  const handleShare = async (product) => {
+    const productUrl = `${window.location.origin}/product/${product.slug}`;
+    const shareText = `Check out ${product.name}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: product.name,
+          text: shareText,
+          url: productUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(`${shareText}\n${productUrl}`);
+        toast.success("Link copied to clipboard!");
+      }
+    } catch (err) {
+      if (err?.name !== "AbortError") {
+        console.error("Share failed:", err);
+      }
+    }
+  };
   const fetchRelatedProducts = async () => {
   try {
     setLoading(true);
@@ -272,7 +293,7 @@ import Link from "next/link";
                      productName={product.name}
                      productSlug={product.slug}
                     />
-                    <a
+                    {/* <a
                       href={`https://wa.me/?text=Check this out: ${product.name}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -286,7 +307,15 @@ import Link from "next/link";
                       >
                         <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
                       </svg>
-                    </a>
+                    </a> */}
+                     <button
+                    type="button"
+                    onClick={() => handleShare(product)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-full transition-colors duration-300 flex items-center justify-center flex-shrink-0"
+                    title="Share this product"
+                  >
+                    <FaShareAlt className="w-5 h-5" />
+                  </button>
                   </div>
                 </div>
               </div>

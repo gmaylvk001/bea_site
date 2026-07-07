@@ -1470,15 +1470,15 @@ const Header = () => {
                     </div>
                 </div>
                 {/* NEW MOBILE SEARCH BAR */}
-                <div className="sm:hidden mt-2 -mx-4 px-0">
-                  <div className="bg-[#2453D3] w-full px-3 py-3">
-                    <div className="flex items-center bg-white h-10 rounded-xl border border-gray-300 shadow-sm overflow-hidden w-full transition-all duration-150 focus-within:border-[#2453d3] focus-within:shadow-[0_0_0_2px_rgba(36,83,211,0.15)] flex-nowrap">
+                <div className="sm:hidden mt-2 px-3">
+                  <div className="bg-[#2453D3] w-full px-2 py-2.5 rounded-lg">
+                    <div className="flex items-center bg-white h-9 rounded-xl border border-gray-300 shadow-sm overflow-hidden w-[76%] max-w-[250px] mx-auto transition-all duration-150 focus-within:border-[#2453d3] focus-within:shadow-[0_0_0_2px_rgba(36,83,211,0.15)] flex-nowrap">
                       
                       {/* Category select */}
                       <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="h-full text-[11px] xs:text-xs bg-white  border-r border-gray-300 outline-none flex-shrink-0 min-w-[120px] w-auto"
+                        className="h-full text-[10px] bg-white border-r border-gray-300 outline-none flex-shrink-0 min-w-[76px] max-w-[84px] w-auto"
                         aria-label="Category"
                       >
                         <option value="All Category">All Category</option>
@@ -1513,7 +1513,7 @@ const Header = () => {
                           }}
                         />
                         {searchQuery.trim() === "" && (
-                          <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[11px] pointer-events-none z-10">
+                          <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] pointer-events-none z-10 truncate max-w-[calc(100%-8px)]">
                             <span className="text-gray-400">Search for</span>
                             <span className="text-gray-900">"{typedPreview }"</span>
                           </div>
@@ -1523,9 +1523,9 @@ const Header = () => {
                       <button
                         onClick={handleSearch}
                         aria-label="Search"
-                        className="h-full px-4 bg-[#2453D3] text-white flex items-center justify-center active:scale-[0.97] transition"
+                        className="h-full px-2.5 bg-[#2453D3] text-white flex items-center justify-center active:scale-[0.97] transition flex-shrink-0"
                       >
-                        <FaSearch size={16} />
+                        <FaSearch size={13} />
                       </button>
                     </div>
                   </div>

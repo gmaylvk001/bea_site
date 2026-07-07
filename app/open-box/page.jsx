@@ -7,9 +7,11 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
+  Filter,
 } from "react-feather";
 import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
+import { FaShareAlt } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import { Range as ReactRange } from "react-range";
 
@@ -142,6 +144,9 @@ const [filterGroups, setFilterGroups] = useState({});
 const [filterDefMap, setFilterDefMap] = useState({});
 const [expandedGroups, setExpandedGroups] = useState({});
 const [selectedProductFilters, setSelectedProductFilters] = useState([]);
+const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+const FILTER_LIST_MAX_HEIGHT = "max-h-[7.75rem]";
 
   const STEP = 100;
   const MIN = priceRange[0];
@@ -175,18 +180,27 @@ const toggleProductFilter = (id) => {
   setSelectedProductFilters(next);
 };
 
-// Auto-expand all filter groups
-useEffect(() => {
-  if (Object.keys(filterGroups).length > 0) {
-    const expanded = {};
-    Object.values(filterGroups).forEach((g) => {
-      expanded[g._id] = true;
-    });
-    setExpandedGroups(expanded);
+const handleShare = async (product) => {
+  const productUrl = `${window.location.origin}/product/${product.slug}`;
+  const shareText = `Check out ${product.name}`;
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: product.name,
+        text: shareText,
+        url: productUrl,
+      });
+    } else {
+      await navigator.clipboard.writeText(`${shareText}\n${productUrl}`);
+      toast.success("Link copied to clipboard!");
+    }
+  } catch (err) {
+    if (err?.name !== "AbortError") {
+      console.error("Share failed:", err);
+    }
   }
-}, [filterGroups]);
+};
 
-   
   useEffect(() => {
     if (isInitialLoad.current) {
       isInitialLoad.current = false;
@@ -331,7 +345,18 @@ useEffect(() => {
       category: "",
       subCategory: "",
     });
+    setSelectedProductFilters([]);
   };
+
+  const activeFilterCount =
+    selectedFilters.brands.length +
+    selectedProductFilters.length +
+    (selectedFilters.category ? 1 : 0) +
+    (selectedFilters.subCategory ? 1 : 0) +
+    (selectedFilters.price.min !== priceRange[0] ||
+    selectedFilters.price.max !== priceRange[1]
+      ? 1
+      : 0);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= pagination.totalPages) {
@@ -560,7 +585,7 @@ useEffect(() => {
                    productName={product.name}
                    productSlug={product.slug}
                   />
-                  <a
+                  {/* <a
                     href={`https://wa.me/?text=Check this out: ${product.name}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -574,7 +599,15 @@ useEffect(() => {
                     >
                       <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
                     </svg>
-                  </a>
+                  </a> */}
+                  <button
+                    type="button"
+                    onClick={() => handleShare(product)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-full transition-colors duration-300 flex items-center justify-center flex-shrink-0"
+                    title="Share this product"
+                  >
+                    <FaShareAlt className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -768,10 +801,29 @@ useEffect(() => {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-700">Open Box Products</h1>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setShowMobileFilters((prev) => !prev)}
+        className="md:hidden w-full mb-3 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-blue-200 bg-white text-blue-700 font-semibold text-sm shadow-sm"
+      >
+        <Filter size={16} />
+        {showMobileFilters ? "Hide Filters" : "Filters"}
+        {activeFilterCount > 0 && (
+          <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-blue-600 text-white text-xs">
+            {activeFilterCount}
+          </span>
+        )}
+      </button>
+
       <div className="flex flex-col md:flex-row gap-4 md:gap-6">
         {/* Sidebar */}
 
-        <div className="w-full md:w-[250px] shrink-0">
+        <div
+          className={`w-full md:w-[250px] shrink-0 ${
+            showMobileFilters ? "block" : "hidden"
+          } md:block`}
+        >
           {/* Active Filters */}
           {(selectedFilters.brands.length > 0 ||
             selectedFilters.price.min !== priceRange[0] ||
@@ -930,7 +982,7 @@ useEffect(() => {
             </div>
 
             {isCategoriesExpanded && (
-              <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+              <ul className={`mt-2 ${FILTER_LIST_MAX_HEIGHT} overflow-y-auto pr-2`}>
                 <li>
                   <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
                     <input
@@ -1017,7 +1069,7 @@ useEffect(() => {
                       {selectedFilters.category}
                     </h3>
                   </div>
-                  <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+                  <ul className={`mt-2 ${FILTER_LIST_MAX_HEIGHT} overflow-y-auto pr-2`}>
                     <li>
                       <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
                         <input
@@ -1089,7 +1141,7 @@ useEffect(() => {
               </button>
             </div>
             {isBrandsExpanded && (
-              <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
+              <ul className={`mt-2 ${FILTER_LIST_MAX_HEIGHT} overflow-y-auto pr-2`}>
                 {brands.map((brand) => (
                   <li key={brand._id} className="flex items-center">
                     <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
@@ -1127,7 +1179,7 @@ useEffect(() => {
           </button>
 
           {expandedGroups[g._id] && (
-            <ul className="mt-2 max-h-48 overflow-y-auto">
+            <ul className={`mt-2 ${FILTER_LIST_MAX_HEIGHT} overflow-y-auto pr-2`}>
               {g.filters.map((f) => {
                 const cnt =
                   (filterSummaryRaw.find(
@@ -1294,21 +1346,29 @@ useEffect(() => {
                         productName={product.name}
                          productSlug={product.slug}
                         />
-                        <a
-                          href={`https://wa.me/?text=Check this out: ${product.name}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-green-500 hover:bg-green-600 text-white p-1 rounded-full transition-colors duration-300 flex items-center justify-center"
+                  {/* <a
+                    href={`https://wa.me/?text=Check this out: ${product.name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-green-500 hover:bg-green-600 text-white p-1 rounded-full transition-colors duration-300 flex items-center justify-center"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 32 32"
+                      fill="currentColor"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
+                    </svg>
+                  </a> */}
+                        <button
+                          type="button"
+                          onClick={() => handleShare(product)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-full transition-colors duration-300 flex items-center justify-center flex-shrink-0"
+                          title="Share this product"
                         >
-                          <svg
-                            className="w-5 h-5"
-                            viewBox="0 0 32 32"
-                            fill="currentColor"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M16.003 2.667C8.64 2.667 2.667 8.64 2.667 16c0 2.773.736 5.368 2.009 7.629L2 30l6.565-2.643A13.254 13.254 0 0016.003 29.333C23.36 29.333 29.333 23.36 29.333 16c0-7.36-5.973-13.333-13.33-13.333zm7.608 18.565c-.32.894-1.87 1.749-2.574 1.865-.657.104-1.479.148-2.385-.148-.55-.175-1.256-.412-2.162-.812-3.8-1.648-6.294-5.77-6.49-6.04-.192-.269-1.55-2.066-1.55-3.943 0-1.878.982-2.801 1.33-3.168.346-.364.75-.456 1.001-.456.25 0 .5.002.719.013.231.01.539-.088.845.643.32.768 1.085 2.669 1.18 2.863.096.192.16.423.03.683-.134.26-.2.423-.39.65-.192.231-.413.512-.589.689-.192.192-.391.401-.173.788.222.392.986 1.625 2.116 2.636 1.454 1.298 2.682 1.7 3.075 1.894.393.192.618.173.845-.096.23-.27.975-1.136 1.237-1.527.262-.392.524-.32.894-.192.375.13 2.35 1.107 2.75 1.308.393.205.656.308.75.48.096.173.096 1.003-.224 1.897z" />
-                          </svg>
-                        </a>
+                          <FaShareAlt className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
                   </div>

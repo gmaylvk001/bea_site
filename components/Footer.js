@@ -659,10 +659,10 @@ const Footer = () => {
       </div>
 
       {/* Our App Section */}
-      <div className="sm:col-span-2 lg:col-span-2 bottom-0 xl:bottom-6 flex px-2 lg:px-4 min-w-0 relative h-[196px] lg:h-[210px] items-center">
+      <div className="sm:col-span-2  lg:col-span-2 bottom-0 xl:bottom-6 flex px-2 lg:px-4 min-w-0 relative h-[196px] lg:h-[210px] items-center">
         
         {/* Text & Badges */}
-        <div className="relative z-10 flex flex-col pt-0.5 w-[60%] sm:w-[50%] md:w-[90%] lg:w-[90%]">
+        <div className="relative z-10 mb-2 flex flex-col pt-0.5 w-[60%] sm:w-[50%] md:w-[90%] lg:w-[90%]">
           <h4 className="font-bold text-white mb-6 text-[14px] mb-1 leading-tight">
             Download BEA TRUCO App
           </h4>
@@ -695,7 +695,7 @@ const Footer = () => {
         </div>
 
         {/* Phone Image at the end (right) - hidden on very small screens, visible from sm up */}
-        <div className="absolute right-[-2px]  md:right-[90px] top-[80px] right-[70px] md:top-[80px] top-5 xl:top-[80px] bottom-4 xl:bottom-[-2px] z-0 pointer-events-none flex items-center lg:right-[-20px]">
+        <div className="absolute right-[-2px] mb-2 md:right-[90px] top-[80px] right-[70px] md:top-[80px] top-5 xl:top-[80px] bottom-4 xl:bottom-[-2px] z-0 pointer-events-none flex items-center lg:right-[-20px]">
   <Image
     src="/uploads/truco_app_phone.png"
     alt="BEA Mobile App Mockup"

@@ -196,7 +196,21 @@ function DynamicTabs({ tabs, activeName, onTabChange }) {
     </div>
   );
 }
-  
+
+function parseProductHighlights(highlights) {
+  if (!Array.isArray(highlights)) return [];
+  return highlights
+    .flatMap((item) => String(item).split(/[\n,]+/).map((x) => x.trim()))
+    .filter((item) => item.length > 0);
+}
+
+function parseKeyFeatures(keySpecs) {
+  if (!Array.isArray(keySpecs)) return [];
+  return keySpecs
+    .flatMap((item) => String(item).split(/,(?![^(]*\))/))
+    .map((f) => String(f).replace(/[{}\[\]"]/g, "").trim())
+    .filter((f) => f.length > 0);
+}
 
 export default function ProductDetailsSection({ product, reviews=[], avgRating=0, reviewCount=0, manufacturerName="", manufacturerAddress=""}) {
   const [brand, setBrand] = useState([]);
@@ -216,6 +230,15 @@ export default function ProductDetailsSection({ product, reviews=[], avgRating=0
   const [flixLoaded, setFlixLoaded] = useState(false);
   // NEW: observer ref to watch for injected Flix nodes
   const flixObserverRef = useRef(null);
+
+  const productHighlights = useMemo(
+    () => parseProductHighlights(product?.product_highlights),
+    [product?.product_highlights],
+  );
+  const keyFeatures = useMemo(
+    () => parseKeyFeatures(product?.key_specifications),
+    [product?.key_specifications],
+  );
  
   const tabData = {
     overview: product.overview || "No overview available.",
@@ -1038,16 +1061,11 @@ const overviewContent = (
       </div>
     )}
 
-    {Array.isArray(product.key_specifications) && 
-     product.key_specifications.flatMap(i => i.split(/,(?![^(]*\))/)).map(f => f.replace(/[{}\[\]"]/g,"").trim()).filter(f=>f.length>0).length > 0 && (
+    {keyFeatures.length > 0 && (
       <div className="mb-4">
         <h3 className="text-base font-bold text-gray-900 mb-3">Key Features</h3>
         <ul className="space-y-2">
-          {product.key_specifications
-            .flatMap(item => item.split(/,(?![^(]*\))/))
-            .map(f => String(f).replace(/[{}\[\]"]/g, "").trim())
-            .filter(f => f.length > 0)
-            .map((feature, index) => (
+          {keyFeatures.map((feature, index) => (
               <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
                 <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
                 {feature.charAt(0).toUpperCase() + feature.slice(1)}
@@ -1057,8 +1075,8 @@ const overviewContent = (
       </div>
     )}
     {!product.overviewdescription &&
-     !(Array.isArray(product.key_specifications) && product.key_specifications.length > 0) &&
-     !(Array.isArray(product.product_highlights) && product.product_highlights.length > 0) && (
+     keyFeatures.length === 0 &&
+     productHighlights.length === 0 && (
       <p className="text-gray-500 text-sm py-4">There is no product overview available for this item.</p>
     )}
   </div>
@@ -1505,15 +1523,11 @@ return (
               <p className="text-sm text-gray-700 leading-relaxed">{product.overviewdescription}</p>
             </div>
           )}
-          {Array.isArray(product.product_highlights) && 
-           product.product_highlights.flatMap(i => i.split(/[\n,]+/).map(x=>x.trim())).filter(i=>i.length>0).length > 0 && (
+          {productHighlights.length > 0 ? (
             <div className="mb-4">
               <h3 className="text-base font-bold text-gray-900 mb-3">Product Highlights</h3>
               <ul className="space-y-2">
-                {product.product_highlights
-                  .flatMap(item => item.split(/[\n,]+/).map(i => i.trim()))
-                  .filter(item => item.length > 0)
-                  .map((item, index) => {
+                {productHighlights.map((item, index) => {
                     const cleaned = item.replace(/[\[\]{}"]/g, '').trim();
                     const [key, ...rest] = cleaned.split(':');
                     const value = rest.join(':').trim();
@@ -1526,11 +1540,23 @@ return (
                   })}
               </ul>
             </div>
-          )}
+          ) : keyFeatures.length > 0 ? (
+            <div className="mb-4">
+              <h3 className="text-base font-bold text-gray-900 mb-3">Key Features</h3>
+              <ul className="space-y-2">
+                {keyFeatures.map((feature, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                    <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+                    {feature.charAt(0).toUpperCase() + feature.slice(1)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           {!product.overviewdescription &&
-           !(Array.isArray(product.key_specifications) && product.key_specifications.length > 0) &&
-           !(Array.isArray(product.product_highlights) && product.product_highlights.length > 0) && (
+           productHighlights.length === 0 &&
+           keyFeatures.length === 0 && (
             <p className="text-gray-500 text-sm">No overview available.</p>
           )}
         </div>

@@ -1,5 +1,5 @@
 "use client";
-import { FaShoppingCart, FaPhoneAlt, FaEnvelope, FaTimes } from "react-icons/fa";
+import { FaShoppingCart, FaPhoneAlt, FaEnvelope, FaTimes, FaShareAlt } from "react-icons/fa";
 import { FaWhatsapp } from "react-icons/fa";
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
@@ -347,6 +347,26 @@ function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hi, I'm interested in this product: ${productName}\n${productUrl}`)}`;
   const mailUrl = `mailto:${email}?subject=${encodeURIComponent(`Enquiry: ${productName}`)}&body=${encodeURIComponent(`Hi,\n\nI'm interested in the following product:\n\nProduct: ${productName}\nLink: ${productUrl}\n\nPlease assist me.`)}`;
 
+  const handleShare = async () => {
+    const shareText = `Hi, I'm interested in this product: ${productName}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: productName,
+          text: shareText,
+          url: productUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(`${shareText}\n${productUrl}`);
+        toast.success("Link copied to clipboard!");
+      }
+    } catch (err) {
+      if (err?.name !== "AbortError") {
+        console.error("Share failed:", err);
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.55)" }}>
       <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-sm relative px-5 py-3 md:py-4">
@@ -418,14 +438,25 @@ function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
 
         {/* 3 Contact Buttons */}
         <div className="flex flex-col gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+          {/* <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
            className="flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white rounded-xl px-4 py-2 md:py-2.5 transition-colors">
             <FaWhatsapp size={20} />
             <div>
               <div className="text-[12px] font-semibold leading-tight">WhatsApp Us</div>
               <div className="text-[10.5px] opacity-80 leading-tight">Chat with our team</div>
             </div>
-          </a>
+          </a> */}
+          <button
+            type="button"
+            onClick={handleShare}
+            className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4 py-2 md:py-2.5 transition-colors w-full"
+          >
+            <FaShareAlt size={18} />
+            <div className="text-left">
+              <div className="text-[12px] font-semibold leading-tight">Share</div>
+              <div className="text-[10.5px] opacity-80 leading-tight">Share this product</div>
+            </div>
+          </button>
           <a href={`tel:${phone}`}
             className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2.5 transition-colors">
             <FaPhoneAlt size={16} />

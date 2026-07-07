@@ -102,7 +102,7 @@ async function addProductToCart({ productId, quantity = 1, updateCartCount, apiU
 // ─── Banner ───────────────────────────────────────────────────────────────────
 function WishlistBanner({ count }) {
   return (
-    <div className="mb-5">
+    <div className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
       <div
         className="relative bg-white rounded-2xl shadow-sm overflow-hidden"
         style={{ minHeight: "clamp(100px, 20vw, 290px)" }}
@@ -752,6 +752,29 @@ function LoadingState() {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+const PAGE_OUTER_CLASS =
+  "w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8 py-5 pb-16";
+const PAGE_CONTENT_CLASS = "max-w-7xl mx-auto px-4 md:px-6 lg:px-8";
+
+function WishlistPageShell({ children }) {
+  return (
+    <>
+      <div className="bg-blue-50 py-4 px-4 md:px-8 lg:px-10">
+        <nav className="flex items-center gap-2 text-sm text-gray-500 max-w-7xl mx-auto">
+          <Link href="/" className="text-gray-600 hover:text-blue-600">
+            Home
+          </Link>
+          <span>›</span>
+          <span className="text-blue-600 font-semibold">Wishlist</span>
+        </nav>
+      </div>
+      <section className={PAGE_OUTER_CLASS}>
+        <div className={PAGE_CONTENT_CLASS}>{children}</div>
+      </section>
+    </>
+  );
+}
+
 export default function WishlistPage() {
   const router = useRouter();
   const [items, setItems] = useState([]);
@@ -874,18 +897,24 @@ export default function WishlistPage() {
     }
   };
 
-  if (loading) return <LoadingState />;
-  if (!isLoggedIn) return <LoginPrompt />;
+  if (loading) {
+    return (
+      <WishlistPageShell>
+        <LoadingState />
+      </WishlistPageShell>
+    );
+  }
+  if (!isLoggedIn) {
+    return (
+      <WishlistPageShell>
+        <LoginPrompt />
+      </WishlistPageShell>
+    );
+  }
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-5 pb-16 lg:px-1">
+    <WishlistPageShell>
       <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} />
-
-      <nav className="text-xs text-gray-500 mb-4">
-        <Link href="/" className="hover:underline">Home</Link>
-        <span className="mx-1.5">›</span>
-        <span className="text-gray-800 font-medium">Wishlist</span>
-      </nav>
 
       <WishlistBanner count={items.length} />
 
@@ -932,10 +961,10 @@ export default function WishlistPage() {
         </>
       )}
 
-<section className="mt-12 flex flex-col lg:flex-row gap-6 items-start overflow-hidden"> 
-         <YouMayLike relatedProducts={relatedProducts} />
+      <section className="mt-12 flex flex-col lg:flex-row gap-6 items-start overflow-hidden">
+        <YouMayLike relatedProducts={relatedProducts} />
         <RecentlyViewed />
       </section>
-    </div>
+    </WishlistPageShell>
   );
 }
