@@ -196,19 +196,16 @@ export default function CategoryPage() {
     },
     [selectedFilters],
   );
-
   const handleShare = async (product) => {
     const productUrl = `${window.location.origin}/product/${product.slug}`;
-    const shareText = `Check out ${product.name}`;
     try {
       if (navigator.share) {
         await navigator.share({
           title: product.name,
-          text: shareText,
           url: productUrl,
         });
       } else {
-        await navigator.clipboard.writeText(`${shareText}\n${productUrl}`);
+        await navigator.clipboard.writeText(productUrl);
         toast.success("Link copied to clipboard!");
       }
     } catch (err) {

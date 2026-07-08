@@ -476,6 +476,29 @@ const handleBuyNow = async () => {
   }
 };
 
+const handleShareProduct = useCallback(async () => {
+  const url = window.location.href;
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: product?.name,
+        url,
+      });
+    } catch (err) {
+      if (err?.name !== "AbortError") {
+        console.error("Share failed:", err);
+      }
+    }
+  } else {
+    try {
+      await navigator.clipboard.writeText(url);
+      alert("Link copied to clipboard!");
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+  }
+}, [product?.name]);
+
 
 
 
@@ -1100,18 +1123,7 @@ const fetchBrand = async () => {
    {/* Share / Wishlist */}
     <div className="flex items-center gap-2 mt-3">
       <button
-        onClick={() => {
-          if (navigator.share) {
-            navigator.share({
-              title: product.name,
-              text: `Check out ${product.name}`,
-              url: window.location.href,
-            });
-          } else {
-            navigator.clipboard.writeText(window.location.href);
-            alert("Link copied to clipboard!");
-          }
-        }}
+        onClick={handleShareProduct}
         className={`flex-1 ${outlineActionBtnClass}`}
         title="Share this product"
       >
@@ -1573,18 +1585,7 @@ const fetchBrand = async () => {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
-                      onClick={() => {
-                        if (navigator.share) {
-                          navigator.share({
-                            title: product.name,
-                            text: `Check out ${product.name}`,
-                            url: window.location.href,
-                          });
-                        } else {
-                          navigator.clipboard.writeText(window.location.href);
-                          alert("Link copied to clipboard!");
-                        }
-                      }}
+                      onClick={handleShareProduct}
                       className={outlineActionBtnClass}
                       title="Share this product"
                     >
