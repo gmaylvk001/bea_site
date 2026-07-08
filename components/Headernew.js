@@ -24,6 +24,13 @@ const alphaSortString = (a, b) => {
   return sa.localeCompare(sb, undefined, { sensitivity: 'base' });
 };
 
+const HEADER_ACTION_LINK_CLASS =
+  "group flex flex-col items-center gap-0.5 rounded-lg px-1.5 py-1 transition-all duration-200 hover:bg-orange-50 hover:-translate-y-0.5 active:translate-y-0 active:scale-95";
+const HEADER_ACTION_ICON_CLASS =
+  "text-customBlue transition-all duration-200 group-hover:text-orange-500 group-hover:scale-110";
+const HEADER_ACTION_LABEL_CLASS =
+  "text-customBlue font-medium leading-none transition-colors duration-200 group-hover:text-orange-500";
+
 
 
 const Header = () => {
@@ -1407,36 +1414,36 @@ const Header = () => {
                       <img src="/user/bea-new.png" alt="Logo" width={70} height={45} className="h-auto" />
                     </Link>
                     <div className="flex items-center gap-2 pr-1 text-customBlue mt-0.5">
-                      <Link href="/feedback" className="flex flex-col items-center gap-0.5 min-w-[40px]">
-                          <FiMessageSquare size={16} />
-                          <span className="text-[9px] font-medium leading-none">Feedback</span>
+                      <Link href="/feedback" className={`${HEADER_ACTION_LINK_CLASS} min-w-[40px]`}>
+                          <FiMessageSquare size={16} className={HEADER_ACTION_ICON_CLASS} />
+                          <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Feedback</span>
                       </Link>
 
-                      <Link href="/contact" className="flex flex-col items-center gap-0.5 min-w-[40px]">
-                          <FiPhoneCall size={16} />
-                          <span className="text-[9px] font-medium leading-none">Contact</span>
+                      <Link href="/contact" className={`${HEADER_ACTION_LINK_CLASS} min-w-[40px]`}>
+                          <FiPhoneCall size={16} className={HEADER_ACTION_ICON_CLASS} />
+                          <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Contact</span>
                       </Link>
-                      <Link href="/location" className="flex flex-col items-center gap-0.5 min-w-[40px]">
-                        <FiMapPin size={16} />
-                        <span className="text-[9px] font-medium leading-none">Store</span>
+                      <Link href="/location" className={`${HEADER_ACTION_LINK_CLASS} min-w-[40px]`}>
+                        <FiMapPin size={16} className={HEADER_ACTION_ICON_CLASS} />
+                        <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Store</span>
                       </Link>
-                        <Link href="/wishlist" className="relative flex flex-col items-center gap-0.5 min-w-[40px]">
+                        <Link href="/wishlist" className={`${HEADER_ACTION_LINK_CLASS} relative min-w-[40px]`}>
                           <div className="relative">
-                            <FiHeart size={16} />
+                            <FiHeart size={16} className={HEADER_ACTION_ICON_CLASS} />
                             <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
                               {wishlistCount}
                             </span>
                           </div>
-                          <span className="text-[9px] font-medium leading-none">Wishlist</span>
+                          <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Wishlist</span>
                         </Link>
-                        <Link href="/cart" className="relative flex flex-col items-center gap-0.5 min-w-[40px]">
+                        <Link href="/cart" className={`${HEADER_ACTION_LINK_CLASS} relative min-w-[40px]`}>
                           <div className="relative">
-                            <FiShoppingCart size={16} />
+                            <FiShoppingCart size={16} className={HEADER_ACTION_ICON_CLASS} />
                             <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
                               {cartCount}
                             </span>
                           </div>
-                          <span className="text-[9px] font-medium leading-none">Cart</span>
+                          <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Cart</span>
                         </Link>
                         <div className="relative">
                           {userData ? (
@@ -1664,39 +1671,39 @@ const Header = () => {
                             <FiSearch size={20} />
                         </button>
 
-						<Link href="/feedback" className="hidden sm:flex flex-col items-center gap-0.5 min-w-[52px]">
-						  <FiMessageSquare size={18} className="text-customBlue" />
-						  <span className="text-[10px] text-customBlue font-medium leading-none">Feedback</span>
+						<Link href="/feedback" className={`${HEADER_ACTION_LINK_CLASS} hidden sm:flex min-w-[52px]`}>
+						  <FiMessageSquare size={18} className={HEADER_ACTION_ICON_CLASS} />
+						  <span className={`text-[10px] ${HEADER_ACTION_LABEL_CLASS}`}>Feedback</span>
 						</Link>
 
-                        <Link href="/contact" className="hidden sm:flex flex-col items-center gap-0.5 min-w-[52px]">
-                            <FiPhoneCall size={18} className="text-customBlue" />
-							<span className="text-[10px] text-customBlue font-medium leading-none">Contact</span>
+                        <Link href="/contact" className={`${HEADER_ACTION_LINK_CLASS} hidden sm:flex min-w-[52px]`}>
+                            <FiPhoneCall size={18} className={HEADER_ACTION_ICON_CLASS} />
+							<span className={`text-[10px] ${HEADER_ACTION_LABEL_CLASS}`}>Contact</span>
                         </Link>
 
-                        <Link href="/location" className="hidden sm:flex flex-col items-center gap-0.5 min-w-[52px]">
-                            <FiMapPin size={18} className="text-customBlue" />
-							<span className="text-[10px] text-customBlue font-medium leading-none">Store</span>
+                        <Link href="/location" className={`${HEADER_ACTION_LINK_CLASS} hidden sm:flex min-w-[52px]`}>
+                            <FiMapPin size={18} className={HEADER_ACTION_ICON_CLASS} />
+							<span className={`text-[10px] ${HEADER_ACTION_LABEL_CLASS}`}>Store</span>
                         </Link>
 
-                        <Link href="/wishlist" className="flex flex-col items-center gap-0.5 min-w-[52px] relative">
+                        <Link href="/wishlist" className={`${HEADER_ACTION_LINK_CLASS} flex min-w-[52px] relative`}>
                             <div className="relative">
-                              <FiHeart size={18} className="text-customBlue" />
+                              <FiHeart size={18} className={HEADER_ACTION_ICON_CLASS} />
                               <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
                                   {wishlistCount}
                               </span>
                             </div>
-							<span className="text-[10px] text-customBlue font-medium leading-none">Wishlist</span>
+							<span className={`text-[10px] ${HEADER_ACTION_LABEL_CLASS}`}>Wishlist</span>
                         </Link>
 
-                        <Link href="/cart" className="flex flex-col items-center gap-0.5 min-w-[52px] relative">
+                        <Link href="/cart" className={`${HEADER_ACTION_LINK_CLASS} flex min-w-[52px] relative`}>
                             <div className="relative">
-                              <FiShoppingCart size={18} className="text-customBlue" />
+                              <FiShoppingCart size={18} className={HEADER_ACTION_ICON_CLASS} />
                               <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
                                   {cartCount}
                               </span>
                             </div>
-							<span className="text-[10px] text-customBlue font-medium leading-none">Cart</span>
+							<span className={`text-[10px] ${HEADER_ACTION_LABEL_CLASS}`}>Cart</span>
                         </Link>
 
                         {/* User Account */}
