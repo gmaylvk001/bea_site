@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 import { useState, useEffect, useRef } from "react";
 import { useCart } from '@/context/CartContext';
 import { ToastContainer, toast } from 'react-toastify';
@@ -1421,58 +1421,53 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
               </div>
 
               {/* Truco box */}
-<div className="mx-5 my-4 border border-gray-200 rounded-xl bg-white overflow-hidden flex items-stretch">
-  {/* Left — content */}
-  <div className="flex-1 p-4 flex flex-col justify-between">
-    <div>
-      <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5 mb-0.5">
-        BEA TRUCO Rewards
-        <svg className="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M20 7h-3.5a2.5 2.5 0 100-5 2.5 2.5 0 00-2.5 2.5V7m-4 0H6.5a2.5 2.5 0 110-5 2.5 2.5 0 012.5 2.5V7m-7 0h16v4H3V7zm0 4h16v9a1 1 0 01-1 1H4a1 1 0 01-1-1v-9z" />
-        </svg>
-      </p>
-      <p className="text-[10px] text-gray-500 mb-3">Earn points on every purchase</p>
-      <ul className="space-y-1.5 mb-4">
-        {[
-          'Earn reward points',
-          'Exclusive member offers',
-          'Track orders easily',
-          'Priority service support',
-        ].map(item => (
-          <li key={item} className="flex items-center gap-1.5 text-[11px] text-gray-700">
-            <svg className="w-3 h-3 text-indigo-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-     <a
-      href="https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-gray-900 hover:bg-gray-800 px-3 py-2 rounded-lg transition w-fit"
-    >
-      Download TRUCO App
-      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-      </svg>
-    </a>
-  </div>
-  {/* Right — phone image */}
-<div className="w-20 flex-shrink-0 flex items-center justify-center relative overflow-hidden">
-    <img
-      src="/uploads/truco_app_phone.png"
-      alt="BEA Truco App"
-      className="w-full h-full object-cover object-center"
-      onError={(e) => {
-        e.target.style.display = 'none';
-        e.target.parentElement.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-3 text-center"><div class="bg-white rounded-xl px-3 py-2"><p class="text-indigo-700 text-xs font-bold leading-tight">BEA</p><p class="text-indigo-500 text-[9px] font-semibold">TRUCO</p></div></div>`;
-      }}
-    />
-  </div>
-</div>
+              <div className="mx-5 my-4 rounded-2xl bg-[#FFF9F2] overflow-hidden flex items-stretch min-h-[180px]">
+                {/* Left — content */}
+                <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between">
+                  <div>
+                    <p className="text-sm sm:text-base font-bold text-gray-900 mb-1">
+                      BEA TRUCO Rewards 🎁
+                    </p>
+                    <p className="text-xs sm:text-sm font-bold text-gray-900 mb-3">
+                      Earn points on every purchase
+                    </p>
+                    <ul className="space-y-1.5 mb-4">
+                      {[
+                        'Earn reward points',
+                        'Exclusive member offers',
+                        'Track orders easily',
+                        'Priority service support',
+                      ].map(item => (
+                        <li key={item} className="flex items-center gap-2 text-[11px] sm:text-xs font-medium text-gray-900">
+                          <span className="text-[10px] leading-none flex-shrink-0">▶</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <a
+                    href="https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-white bg-[#0047CC] hover:bg-[#003db3] px-4 py-2.5 rounded-xl transition w-fit"
+                  >
+                    Download TRUCO App
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </div>
+                {/* Right — phone image */}
+                <div className="w-24 sm:w-32 flex-shrink-0 flex items-center justify-center pr-2 sm:pr-3">
+                  <img
+                    src="/uploads/truco_app_phone.png"
+                    alt="BEA Truco App"
+                    className="w-full h-auto max-h-[170px] object-contain -rotate-6"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.parentElement.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-3 text-center"><div class="bg-white rounded-xl px-3 py-2"><p class="text-indigo-700 text-xs font-bold leading-tight">BEA</p><p class="text-indigo-500 text-[9px] font-semibold">TRUCO</p></div></div>`;
+                    }}
+                  />
+                </div>
+              </div>
 
               {/* Help box */}
               <div className="mx-5 mb-4 border border-gray-200 rounded-xl p-3">

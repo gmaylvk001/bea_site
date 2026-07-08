@@ -86,14 +86,16 @@ export default function LoyaltyPage() {
       {/* ═══════════════════════════════════════════════════════
           SECTION 1 — HERO BANNER
       ═══════════════════════════════════════════════════════ */}
-      <section
-        className="w-full relative min-h-[520px] flex items-center"
-        style={{ backgroundImage: "url('/loyalty/banner1.png')", backgroundSize: "cover", backgroundPosition: "center" }}
-      >
-        <div className="absolute inset-0 bg-[#0B1D3F]/50 hidden lg:block" />
-       <div className="absolute inset-0 bg-[#0B1D3F] block lg:hidden" />
+      <section className="w-full bg-[#0B1D3F]">
+        <div className="relative w-full">
+          <img
+            src="/loyalty/banner1.png"
+            alt="BEA Loyalty Rewards Programme"
+            className="w-full h-auto block"
+          />
+          <div className="hidden lg:block absolute inset-0 bg-[#0B1D3F]/50 pointer-events-none" />
 
-       <div className="relative z-10 w-full px-4 sm:px-10 xl:px-20 py-12 flex flex-col lg:flex-row items-center justify-between gap-10">
+          <div className="relative lg:absolute lg:inset-0 z-10 w-full px-4 sm:px-10 xl:px-20 py-10 lg:py-12 flex flex-col lg:flex-row items-center justify-between gap-10">
 
           {/* LEFT */}
           <div className="flex-1 text-white max-w-[600px]">
@@ -188,6 +190,7 @@ export default function LoyaltyPage() {
                 )}
               </div>
             </div>
+          </div>
           </div>
         </div>
       </section>

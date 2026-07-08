@@ -88,7 +88,7 @@ const Header = () => {
       }
     };
 
-    // ADD: fetch latest cart from API (auth or guest), sync cartData and cartCount
+    
     const fetchCartLatest = useCallback(async () => {
       try {
         const token = localStorage.getItem('token');
