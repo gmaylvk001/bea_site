@@ -277,12 +277,30 @@ const router = useRouter();
   setIsParticularDataBulkUploadLoading(true);
 
   try {
+    console.log("[Particular Bulk Upload One] Uploading file:", excelFile?.name);
+
     const res = await fetch("/api/categories/particularDataBulkupload", {
       method: "POST",
       body: formData,
     });
 
     const data = await res.json();
+    console.log("[Particular Bulk Upload One] API response:", data);
+
+    if (data.detectedHeaders) {
+      console.log(
+        "[Particular Bulk Upload One] Detected Excel headers:",
+        data.detectedHeaders
+      );
+    }
+
+    if (data.skipDetails?.length) {
+      console.table(data.skipDetails);
+      console.warn(
+        "[Particular Bulk Upload One] Skip reasons:",
+        data.skipDetails
+      );
+    }
 
     if (res.ok) {
       showToast(

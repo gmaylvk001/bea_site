@@ -25,15 +25,50 @@ export async function POST(req) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const workbook = XLSX.read(buffer, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet);
+    const rawRows = XLSX.utils.sheet_to_json(sheet);
+
+    const rows = rawRows.map((row) => {
+      const normalizedRow = {};
+      for (const [key, value] of Object.entries(row)) {
+        normalizedRow[key.trim()] = value;
+      }
+      return normalizedRow;
+    });
+
+    console.log("[particularDataBulkupload] Sheet:", workbook.SheetNames[0]);
+    console.log("[particularDataBulkupload] Total rows:", rows.length);
+    if (rows.length > 0) {
+      console.log(
+        "[particularDataBulkupload] Column headers:",
+        Object.keys(rows[0])
+      );
+      console.log("[particularDataBulkupload] First row:", rows[0]);
+    }
 
     let updated = 0;
     let skipped = 0;
+    const skipDetails = [];
 
     /* ---------- HELPERS ---------- */
 
-    const normalize = (val) =>
-      val?.toString().trim().replace(/\s+/g, " ");
+    const normalize = (val) => {
+      if (val === undefined || val === null) return "";
+      return val.toString().trim().replace(/\s+/g, " ");
+    };
+
+    const isPlaceholderCategory = (val) =>
+      !val ||
+      ["no category", "no subcategory", "no childcategory", "-", "n/a"].includes(
+        val.toLowerCase()
+      );
+
+    const getRowValue = (row, keys) => {
+      for (const key of keys) {
+        const value = normalize(row[key]);
+        if (value) return value;
+      }
+      return "";
+    };
 
     const escapeRegex = (str) =>
       str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -43,29 +78,68 @@ export async function POST(req) {
 
     /* ---------- LOOP ---------- */
 
-    for (const row of rows) {
-      const itemCode = normalize(
-        row["Item No."] ||
-          row["Item No"] ||
-          row["ITEM NO."] ||
-          row["Item Code"] ||
-          row["item_code"]
-      );
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      const row = rows[rowIndex];
+      const rowNumber = rowIndex + 2; // Excel row number (header is row 1)
 
-      const childName = normalize(row["Subcategory"]);
-      const productName = normalize(row["Product Name"]);
-      const size = normalize(row["Size"]);
-      const brand = normalize(row["Brand"]);
-      const star = normalize(row["Star"]);
-      const description = normalize(row["Description"]);
-      const keyFeatures = normalize(row["Key Features"]);
+      const itemCode = getRowValue(row, [
+        "Item No.",
+        "Item No",
+        "ITEM NO.",
+        "Item Code",
+        "item_code",
+        "item code",
+      ]);
+
+      const mainCategoryName = getRowValue(row, ["Category", "category"]);
+      const subCategoryName = getRowValue(row, [
+        "Subcategory",
+        "Sub Category",
+        "sub_category",
+        "sub category",
+      ]);
+      const childCategoryName = getRowValue(row, [
+        "Childcategory",
+        "Child Category",
+        "childcategory",
+        "child category",
+      ]);
+
+      const childName = [
+        childCategoryName,
+        subCategoryName,
+        mainCategoryName,
+      ].find((name) => !isPlaceholderCategory(name));
+      const productName = getRowValue(row, ["Product Name", "product name"]);
+      const size = getRowValue(row, ["Size", "size"]);
+      const brand = getRowValue(row, ["Brand", "brand"]);
+      const star = getRowValue(row, ["Star", "star"]);
+      const description = getRowValue(row, ["Description", "description"]);
+      const keyFeatures = getRowValue(row, ["Key Features", "key features"]);
 
       if (!itemCode || !childName) {
+        const reason = !itemCode
+          ? "Missing item code (expected column: Item No.)"
+          : "Missing category (expected: Childcategory, Subcategory, or Category)";
+
+        console.log(
+          `[particularDataBulkupload] SKIPPED row ${rowNumber}:`,
+          reason,
+          { itemCode, mainCategoryName, subCategoryName, childCategoryName, row }
+        );
+
+        skipDetails.push({ row: rowNumber, itemCode: itemCode || null, reason });
         skipped++;
         continue;
       }
 
-      console.log("➡ Processing:", itemCode, childName);
+      console.log(
+        "[particularDataBulkupload] Processing row",
+        rowNumber,
+        ":",
+        itemCode,
+        childName
+      );
 
       /* =========================================================
          FIND CATEGORY
@@ -79,14 +153,15 @@ export async function POST(req) {
       });
 
       if (!childCategory) {
+        const reason = `Category not found in DB: "${childName}"`;
+
         console.log(
-          "⚠️ SKIPPED - itemCode:",
-          itemCode,
-          "| childName:",
-          childName,
-          "| REASON: Category not found in DB"
+          `[particularDataBulkupload] SKIPPED row ${rowNumber}:`,
+          reason,
+          { itemCode, mainCategoryName, subCategoryName, childCategoryName }
         );
 
+        skipDetails.push({ row: rowNumber, itemCode, reason });
         skipped++;
         continue;
       }
@@ -143,12 +218,15 @@ export async function POST(req) {
       }
 
       if (!mainCategory) {
+        const reason = "Main category could not be resolved from hierarchy";
+
         console.log(
-          "⚠️ SKIPPED - itemCode:",
-          itemCode,
-          "| REASON: Main category not found"
+          `[particularDataBulkupload] SKIPPED row ${rowNumber}:`,
+          reason,
+          { itemCode, childName }
         );
 
+        skipDetails.push({ row: rowNumber, itemCode, reason });
         skipped++;
         continue;
       }
@@ -270,7 +348,10 @@ export async function POST(req) {
         updateData.key_specifications = keySpecsArray;
       }
 
-      console.log("✅ FINAL UPDATE DATA:", updateData);
+      console.log(
+        `[particularDataBulkupload] Row ${rowNumber} update data:`,
+        updateData
+      );
 
       /* =========================================================
          UPDATE PRODUCT
@@ -288,21 +369,45 @@ export async function POST(req) {
       );
 
       if (result.upsertedCount > 0) {
-        console.log("✅ Created new product:", itemCode);
+        console.log(
+          `[particularDataBulkupload] Created new product row ${rowNumber}:`,
+          itemCode
+        );
         updated++;
       } else if (result.matchedCount > 0) {
-        console.log("✅ Updated product:", itemCode);
+        console.log(
+          `[particularDataBulkupload] Updated product row ${rowNumber}:`,
+          itemCode
+        );
         updated++;
       } else {
+        const reason = "Product update did not match or create any record";
+
+        console.log(
+          `[particularDataBulkupload] SKIPPED row ${rowNumber}:`,
+          reason,
+          { itemCode, result }
+        );
+
+        skipDetails.push({ row: rowNumber, itemCode, reason });
         skipped++;
       }
     }
+
+    console.log("[particularDataBulkupload] Result:", {
+      total: rows.length,
+      updated,
+      skipped,
+      skipDetails,
+    });
 
     return NextResponse.json({
       success: true,
       total: rows.length,
       updated,
       skipped,
+      skipDetails,
+      detectedHeaders: rows.length > 0 ? Object.keys(rows[0]) : [],
     });
   } catch (error) {
     console.error("❌ Upload error:", error);
