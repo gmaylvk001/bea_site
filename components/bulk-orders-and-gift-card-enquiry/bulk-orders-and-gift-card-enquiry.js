@@ -930,77 +930,62 @@ const removeProductRow = (index) => {
             </section>
 
             {/* STATS BAR */}
-            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 py-10">
-                <div className="max-w-12xl mx-auto px-4 md:px-6">
-                    <div className="bg-gradient-to-r from-[#041b63] to-[#0050d0] rounded-[28px] px-6 md:px-3 py-3">
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 text-white">
+            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-3 sm:px-4 md:px-6 py-8 sm:py-10">
+                <div className="w-full mx-auto">
+                    <div className="bg-gradient-to-r from-[#041b63] to-[#0050d0] rounded-2xl sm:rounded-[28px] px-3 py-5 sm:px-5 sm:py-6 md:px-6 md:py-5">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5 lg:gap-4 text-white">
                             {/* ITEM */}
-                            <div className="flex items-center gap-5 border-r border-white/20 pr-6">
-                                {/* ICON */}
-                                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
-                                    <FaAward className="text-[30px] text-white" />
+                            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 md:gap-4 text-center sm:text-left p-2 sm:p-0 sm:border-r sm:border-white/20 sm:pr-4 lg:pr-5">
+                                <div className="w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
+                                    <FaAward className="text-[20px] sm:text-[26px] md:text-[30px] text-white" />
                                 </div>
-
-                                {/* CONTENT */}
-                                <div>
-                                    <h3 className="text-[30px] leading-none font-extrabold text-white mb-2">25+</h3>
-                                    <p className="text-[16px] text-gray-200">Years of Trust</p>
+                                <div className="min-w-0">
+                                    <h3 className="text-xl sm:text-2xl md:text-[30px] leading-none font-extrabold text-white mb-1 sm:mb-2">25+</h3>
+                                    <p className="text-[12px] sm:text-sm md:text-[16px] text-gray-200 leading-snug">Years of Trust</p>
                                 </div>
                             </div>
 
                             {/* ITEM */}
-                            <div className="flex items-center gap-5 border-r border-white/20 pr-6">
-                                {/* ICON */}
-                                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
-                                    <FaStore className="text-[30px] text-white" />
+                            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 md:gap-4 text-center sm:text-left p-2 sm:p-0 sm:border-r sm:border-white/20 sm:pr-4 lg:pr-5">
+                                <div className="w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
+                                    <FaStore className="text-[20px] sm:text-[26px] md:text-[30px] text-white" />
                                 </div>
-
-                                {/* CONTENT */}
-                                <div>
-                                    <h3 className="text-[30px] leading-none font-extrabold text-white mb-2">47+</h3>
-                                    <p className="text-[16px] text-gray-200 leading-6">Stores Across Tamil Nadu</p>
+                                <div className="min-w-0">
+                                    <h3 className="text-xl sm:text-2xl md:text-[30px] leading-none font-extrabold text-white mb-1 sm:mb-2">47+</h3>
+                                    <p className="text-[12px] sm:text-sm md:text-[16px] text-gray-200 leading-snug">Stores Across Tamil Nadu</p>
                                 </div>
                             </div>
 
                             {/* ITEM */}
-                            <div className="flex items-center gap-5 border-r border-white/20 pr-6">
-                                {/* ICON */}
-                                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
-                                    <FaUsers className="text-[30px] text-white" />
+                            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 md:gap-4 text-center sm:text-left p-2 sm:p-0 sm:border-r sm:border-white/20 sm:pr-4 lg:pr-5">
+                                <div className="w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
+                                    <FaUsers className="text-[20px] sm:text-[26px] md:text-[30px] text-white" />
                                 </div>
-
-                                {/* CONTENT */}
-                                <div>
-                                    <h3 className="text-[30px] leading-none font-extrabold text-white mb-2">50L+</h3>
-                                    <p className="text-[16px] text-gray-200">Happy Customers</p>
+                                <div className="min-w-0">
+                                    <h3 className="text-xl sm:text-2xl md:text-[30px] leading-none font-extrabold text-white mb-1 sm:mb-2">50L+</h3>
+                                    <p className="text-[12px] sm:text-sm md:text-[16px] text-gray-200 leading-snug">Happy Customers</p>
                                 </div>
                             </div>
 
                             {/* ITEM */}
-                            <div className="flex items-center gap-5 border-r border-white/20 pr-6">
-                                {/* ICON */}
-                                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
-                                    <FaTags className="text-[30px] text-white" />
+                            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 md:gap-4 text-center sm:text-left p-2 sm:p-0 sm:border-r sm:border-white/20 sm:pr-4 lg:pr-5">
+                                <div className="w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
+                                    <FaTags className="text-[20px] sm:text-[26px] md:text-[30px] text-white" />
                                 </div>
-
-                                {/* CONTENT */}
-                                <div>
-                                    <h3 className="text-[30px] leading-none font-extrabold text-white mb-2">50+</h3>
-                                    <p className="text-[16px] text-gray-200">Leading Brands</p>
+                                <div className="min-w-0">
+                                    <h3 className="text-xl sm:text-2xl md:text-[30px] leading-none font-extrabold text-white mb-1 sm:mb-2">50+</h3>
+                                    <p className="text-[12px] sm:text-sm md:text-[16px] text-gray-200 leading-snug">Leading Brands</p>
                                 </div>
                             </div>
 
                             {/* ITEM */}
-                            <div className="flex items-center gap-5">
-                                {/* ICON */}
-                                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
-                                    <FaBuilding className="text-[30px] text-white" />
+                            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 md:gap-4 text-center sm:text-left p-2 sm:p-0 col-span-2 sm:col-span-1 justify-self-center sm:justify-self-auto w-full sm:w-auto max-w-[220px] sm:max-w-none">
+                                <div className="w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
+                                    <FaBuilding className="text-[20px] sm:text-[26px] md:text-[30px] text-white" />
                                 </div>
-
-                                {/* CONTENT */}
-                                <div>
-                                    <h3 className="text-[30px] leading-none font-extrabold text-white mb-2">100+</h3>
-                                    <p className="text-[16px] text-gray-200 leading-6">Corporate Clients Served</p>
+                                <div className="min-w-0">
+                                    <h3 className="text-xl sm:text-2xl md:text-[30px] leading-none font-extrabold text-white mb-1 sm:mb-2">100+</h3>
+                                    <p className="text-[12px] sm:text-sm md:text-[16px] text-gray-200 leading-snug">Corporate Clients Served</p>
                                 </div>
                             </div>
                         </div>

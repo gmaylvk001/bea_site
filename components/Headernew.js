@@ -1377,7 +1377,7 @@ const Header = () => {
 
     return (
       <>
-        <header className="sticky top-0 z-50">
+        <header className="sticky top-0 z-50 w-full max-w-[100vw] overflow-x-hidden">
             <style jsx global>{`
               :root{--height:34px;--radius:12px;--outline:#e3e3e9;--bg:#ffffff;--accent:#5b46f0;--muted:#6b7280;--shadow:0 8px 18px rgba(36,83,211,0.04)}
               .search-bar{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:10px;padding:3px 6px;border:2px solid var(--outline);box-shadow:var(--shadow);transition:box-shadow .25s ease,transform .12s ease,border-color .18s ease;width:100%;max-width:680px;margin:0 auto}
@@ -1407,51 +1407,38 @@ const Header = () => {
                @media (max-width:900px){:root{--height:36px}.search-btn{width:48px;color:#2453d3;}.search-select{min-width:100px}}
             `}</style>
             {/* Main Header */}
-            <div className={`${isMobileMenuOpen ? "fixed inset-0 mt-0 pt-0 z-50 overflow-y-auto" : "bg-white px-4 sm:px-6 md:px-6 py-1 sticky top-0 z-40"}`}>
-                {/* NEW MOBILE TOP ROW (from reference) */}
-                <div className="sm:hidden flex items-center justify-between w-full relative">
-                    <Link href="/" className="p-1 rounded-lg">
-                      <img src="/user/bea-new.png" alt="Logo" width={70} height={45} className="h-auto" />
+            <div className={`${isMobileMenuOpen ? "fixed inset-0 mt-0 pt-0 z-50 overflow-y-auto overflow-x-hidden" : "bg-white px-3 sm:px-6 md:px-6 py-1 sticky top-0 z-40 overflow-x-hidden"}`}>
+                {/* NEW MOBILE TOP ROW — compact so it never overflows viewport */}
+                <div className="sm:hidden flex items-center justify-between w-full max-w-full min-w-0 relative">
+                    <Link href="/" className="p-1 rounded-lg flex-shrink-0">
+                      <img src="/user/bea-new.png" alt="Logo" width={64} height={40} className="h-9 w-auto" />
                     </Link>
-                    <div className="flex items-center gap-2 pr-1 text-customBlue mt-0.5">
-                      <Link href="/feedback" className={`${HEADER_ACTION_LINK_CLASS} min-w-[40px]`}>
-                          <FiMessageSquare size={16} className={HEADER_ACTION_ICON_CLASS} />
-                          <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Feedback</span>
-                      </Link>
-
-                      <Link href="/contact" className={`${HEADER_ACTION_LINK_CLASS} min-w-[40px]`}>
-                          <FiPhoneCall size={16} className={HEADER_ACTION_ICON_CLASS} />
-                          <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Contact</span>
-                      </Link>
-                      <Link href="/location" className={`${HEADER_ACTION_LINK_CLASS} min-w-[40px]`}>
-                        <FiMapPin size={16} className={HEADER_ACTION_ICON_CLASS} />
-                        <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Store</span>
-                      </Link>
-                        <Link href="/wishlist" className={`${HEADER_ACTION_LINK_CLASS} relative min-w-[40px]`}>
+                    <div className="flex items-center gap-1 text-customBlue flex-shrink-0">
+                        <Link href="/wishlist" className={`${HEADER_ACTION_LINK_CLASS} relative min-w-[36px]`}>
                           <div className="relative">
                             <FiHeart size={16} className={HEADER_ACTION_ICON_CLASS} />
-                            <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
+                            <span className="absolute -top-2 -right-2 text-[9px] bg-customBlue text-white rounded-full w-3.5 h-3.5 flex items-center justify-center">
                               {wishlistCount}
                             </span>
                           </div>
-                          <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Wishlist</span>
+                          <span className={`text-[8px] ${HEADER_ACTION_LABEL_CLASS}`}>Wishlist</span>
                         </Link>
-                        <Link href="/cart" className={`${HEADER_ACTION_LINK_CLASS} relative min-w-[40px]`}>
+                        <Link href="/cart" className={`${HEADER_ACTION_LINK_CLASS} relative min-w-[36px]`}>
                           <div className="relative">
                             <FiShoppingCart size={16} className={HEADER_ACTION_ICON_CLASS} />
-                            <span className="absolute -top-2 -right-2 text-[10px] bg-customBlue text-white rounded-full w-4 h-4 flex items-center justify-center">
+                            <span className="absolute -top-2 -right-2 text-[9px] bg-customBlue text-white rounded-full w-3.5 h-3.5 flex items-center justify-center">
                               {cartCount}
                             </span>
                           </div>
-                          <span className={`text-[9px] ${HEADER_ACTION_LABEL_CLASS}`}>Cart</span>
+                          <span className={`text-[8px] ${HEADER_ACTION_LABEL_CLASS}`}>Cart</span>
                         </Link>
-                        <div className="relative">
+                        <div className="relative flex-shrink-0 px-0.5">
                           {userData ? (
-                            <button onClick={() => setDropdownOpen(!dropdownOpen)}>
+                            <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} aria-label="Account">
                               <FiUser size={16} />
                             </button>
                           ) : (
-                            <button onClick={() => setShowAuthModal(true)}>
+                            <button type="button" onClick={() => setShowAuthModal(true)} aria-label="Login">
                               <FiUser size={16} />
                             </button>
                           )}
@@ -1471,21 +1458,26 @@ const Header = () => {
                             </div>
                           )}
                         </div>
-                        <button onClick={toggleMobileMenu} aria-label="Menu" className="relative">
-                          {isMobileMenuOpen ? <FiX size={16} /> : <FaBars size={16} />}
+                        <button
+                          type="button"
+                          onClick={toggleMobileMenu}
+                          aria-label="Menu"
+                          className="relative flex-shrink-0 p-1.5 -mr-1 rounded-md active:bg-orange-50"
+                        >
+                          {isMobileMenuOpen ? <FiX size={18} /> : <FaBars size={17} />}
                         </button>
                     </div>
                 </div>
                 {/* NEW MOBILE SEARCH BAR */}
-                <div className="sm:hidden mt-2 px-3">
+                <div className="sm:hidden mt-2 w-full max-w-full">
                   <div className="bg-[#2453D3] w-full px-2 py-2.5 rounded-lg">
-                    <div className="flex items-center bg-white h-9 rounded-xl border border-gray-300 shadow-sm overflow-hidden w-[76%] max-w-[250px] mx-auto transition-all duration-150 focus-within:border-[#2453d3] focus-within:shadow-[0_0_0_2px_rgba(36,83,211,0.15)] flex-nowrap">
+                    <div className="flex items-center bg-white h-9 rounded-xl border border-gray-300 shadow-sm overflow-hidden w-full max-w-full transition-all duration-150 focus-within:border-[#2453d3] focus-within:shadow-[0_0_0_2px_rgba(36,83,211,0.15)] flex-nowrap">
                       
                       {/* Category select */}
                       <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="h-full text-[10px] bg-white border-r border-gray-300 outline-none flex-shrink-0 min-w-[76px] max-w-[84px] w-auto"
+                        className="h-full text-[10px] bg-white border-r border-gray-300 outline-none flex-shrink-0 min-w-[72px] max-w-[78px] w-auto"
                         aria-label="Category"
                       >
                         <option value="All Category">All Category</option>
@@ -1795,6 +1787,33 @@ const Header = () => {
                               Loading categories…
                             </div>
                           )}
+                        </div>
+                        {/* Quick links moved from top bar (mobile) */}
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          <Link
+                            href="/feedback"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-3 text-customBlue"
+                          >
+                            <FiMessageSquare size={18} />
+                            <span className="text-[11px] font-medium">Feedback</span>
+                          </Link>
+                          <Link
+                            href="/contact"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-3 text-customBlue"
+                          >
+                            <FiPhoneCall size={18} />
+                            <span className="text-[11px] font-medium">Contact</span>
+                          </Link>
+                          <Link
+                            href="/location"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-3 text-customBlue"
+                          >
+                            <FiMapPin size={18} />
+                            <span className="text-[11px] font-medium">Store</span>
+                          </Link>
                         </div>
                         {/* Open Box Sale - Mobile */}
                            <Link

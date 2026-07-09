@@ -64,11 +64,6 @@ const happyCustomersData = [
   { image: "/uploads/SALEM_HAPPY_CUSTOMER.png", city: "Salem" },
   { image: "/uploads/ERODE_HAPPY_CUSTOMER.png", city: "Madurai" },
   { image: "/uploads/customer.png", city: "Tiruchirappalli" },
-  // Duplicated for dynamic slider effect
-  { image: "/uploads/COIMBATORE_HAPPY_CUSTOMER.png", city: "Coimbatore" },
-  { image: "/uploads/SALEM_HAPPY_CUSTOMER.png", city: "Salem" },
-  { image: "/uploads/ERODE_HAPPY_CUSTOMER.png", city: "Madurai" },
-  { image: "/uploads/customer.png", city: "Tiruchirappalli" },
 ];
 
 export default function ContactForm() {
@@ -98,21 +93,29 @@ export default function ContactForm() {
   const [activeSlide, setActiveSlide] = useState(0);
   const totalDots = 4;
 
+  const getSlideMetrics = () => {
+    if (!sliderRef.current) return { cardWidth: 0, gap: 16 };
+    const card = sliderRef.current.querySelector(".happy-customer-card");
+    const cardWidth = card?.offsetWidth ?? 0;
+    const gap = parseFloat(getComputedStyle(sliderRef.current).columnGap || getComputedStyle(sliderRef.current).gap) || 16;
+    return { cardWidth, gap };
+  };
+
   const handleScroll = () => {
     if (!sliderRef.current) return;
-    const scrollPosition = sliderRef.current.scrollLeft;
-    const maxScroll = sliderRef.current.scrollWidth - sliderRef.current.clientWidth;
-    let newSlide = Math.round((scrollPosition / maxScroll) * (totalDots - 1));
-    if (newSlide < 0) newSlide = 0;
-    if (newSlide >= totalDots) newSlide = totalDots - 1;
+    const { cardWidth, gap } = getSlideMetrics();
+    if (!cardWidth) return;
+    const step = cardWidth + gap;
+    let newSlide = Math.round(sliderRef.current.scrollLeft / step);
+    newSlide = Math.max(0, Math.min(newSlide, totalDots - 1));
     setActiveSlide(newSlide);
   };
 
   const scrollToSlide = (index) => {
     if (!sliderRef.current) return;
-    const maxScroll = sliderRef.current.scrollWidth - sliderRef.current.clientWidth;
-    const scrollTarget = (maxScroll / (totalDots - 1)) * index;
-    sliderRef.current.scrollTo({ left: scrollTarget, behavior: 'smooth' });
+    const { cardWidth, gap } = getSlideMetrics();
+    if (!cardWidth) return;
+    sliderRef.current.scrollTo({ left: index * (cardWidth + gap), behavior: "smooth" });
     setActiveSlide(index);
   };
 
@@ -650,11 +653,11 @@ export default function ContactForm() {
       </section>
 
       {/* FAQ + HAPPY CUSTOMERS */}
-      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8 mb-8 md:mb-12">
-        <div className="grid lg:grid-cols-12 gap-6 items-start">
+      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 sm:px-3 md:px-6 lg:px-8 mb-8 md:mb-12 overflow-x-hidden">
+        <div className="grid lg:grid-cols-12 gap-6 items-start min-w-0">
 
           {/* FAQ SECTION */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 min-w-0">
             <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm h-full flex flex-col">
               <h2 className="text-[20px] font-bold text-[#2453d3] mb-4">
                 Frequently Asked Questions
@@ -708,37 +711,40 @@ export default function ContactForm() {
           </div>
 
           {/* HAPPY CUSTOMERS SECTION */}
-          <div className="lg:col-span-7">
-            <div className="bg-white border border-gray-200 rounded-xl p-5 h-full shadow-sm overflow-hidden flex flex-col">
-              <h2 className="text-[20px] font-bold text-[#2453d3] text-center mb-6">
+          <div className="lg:col-span-7 min-w-0 w-full">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 shadow-sm overflow-hidden flex flex-col min-w-0 w-full">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#2453d3] text-center mb-4 sm:mb-6">
                 Happy Customers Across Tamil Nadu
               </h2>
 
-              {/* Horizontal Scrollable Carousel */}
-              <div 
-                ref={sliderRef}
-                onScroll={handleScroll}
-                className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide hide-scroll scroll-smooth flex-1"
-              >
-                {happyCustomersData.map((item, i) => (
-                  <div
-                    key={i}
-                    className="min-w-[160px] md:min-w-[180px] snap-start border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm flex flex-col shrink-0"
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.city}
-                      className="w-full h-36 object-cover"
-                    />
-                    <div className="py-2.5 text-center text-[13px] font-bold text-gray-800 bg-white">
-                      {item.city}
+              {/* Horizontal Scrollable Carousel — contained so it does not expand the page */}
+              <div className="w-full min-w-0 overflow-hidden">
+                <div
+                  ref={sliderRef}
+                  onScroll={handleScroll}
+                  className="happy-customer-track flex w-full max-w-full overflow-x-auto gap-3 sm:gap-4 pb-4 snap-x snap-mandatory scrollbar-hide scroll-smooth touch-pan-x overscroll-x-contain"
+                  style={{ WebkitOverflowScrolling: "touch" }}
+                >
+                  {happyCustomersData.map((item, i) => (
+                    <div
+                      key={i}
+                      className="happy-customer-card w-[72vw] max-w-[280px] sm:w-[200px] md:w-[220px] snap-start border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm flex flex-col shrink-0 flex-none"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.city}
+                        className="w-full h-36 sm:h-40 md:h-44 object-cover"
+                      />
+                      <div className="py-2.5 text-center text-[13px] font-bold text-gray-800 bg-white">
+                        {item.city}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {/* Functional Slider Dots */}
-              <div className="flex justify-center gap-2 mt-auto">
+              <div className="flex justify-center gap-2 mt-3 sm:mt-4">
                 {Array.from({ length: totalDots }).map((_, index) => (
                   <button
                     key={index}
@@ -844,6 +850,16 @@ export default function ContactForm() {
       
       {/* Custom CSS for hiding scrollbars but keeping functionality */}
       <style dangerouslySetContent={{__html: `
+        .happy-customer-track {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            touch-action: pan-x;
+            overscroll-behavior-x: contain;
+            overscroll-behavior-y: none;
+        }
+        .happy-customer-track::-webkit-scrollbar {
+            display: none;
+        }
         .scrollbar-hide::-webkit-scrollbar {
             display: none;
         }
