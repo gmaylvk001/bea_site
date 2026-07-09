@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { FiSearch, FiMapPin, FiHeart, FiShoppingCart, FiUser, FiMenu, FiX, FiPhoneCall, FiMessageSquare, FiChevronRight } from "react-icons/fi";
 import { FaBars, FaShoppingBag, FaUserShield, FaSearch } from "react-icons/fa";
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { IoLogOut } from "react-icons/io5";
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from "@/context/WishlistContext";
@@ -208,7 +209,9 @@ const Header = () => {
         router.push(path);
     }, [router]);
     const dropdownRef = useRef(null);
-    const mobileDropdownRef = useRef(null);
+    const profileDropdownRef = useRef(null);
+    const profileButtonRef = useRef(null);
+    const mobileProfileButtonRef = useRef(null);
     const [activeTab, setActiveTab] = useState('login');
     // const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -216,6 +219,7 @@ const Header = () => {
     const [hasMounted, setHasMounted] = useState(false);
     const { userData, isLoggedIn, setIsLoggedIn, setUserData, isAdmin, setIsAdmin } = useHeaderdetails();
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [profileMenuPos, setProfileMenuPos] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState("All Category");
     const [searchQuery, setSearchQuery] = useState("");
     const [placeholder, setPlaceholder] = useState("Search for");
@@ -478,9 +482,11 @@ const Header = () => {
     // Close mobile menu when clicking outside
 
     const handleClickOutside = (event) => {
-      const inDesktopDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
-      const inMobileDropdown = mobileDropdownRef.current && mobileDropdownRef.current.contains(event.target);
-      if (!inDesktopDropdown && !inMobileDropdown) {
+      const inProfileDropdown = profileDropdownRef.current?.contains(event.target);
+      const inProfileButton = profileButtonRef.current?.contains(event.target);
+      const inMobileProfileButton = mobileProfileButtonRef.current?.contains(event.target);
+
+      if (!inProfileDropdown && !inProfileButton && !inMobileProfileButton) {
         setDropdownOpen(false);
       }
     };
@@ -492,6 +498,38 @@ const Header = () => {
           document.removeEventListener('mousedown', handleClickOutside);
       };
     }, []);
+
+    useLayoutEffect(() => {
+      if (!dropdownOpen) {
+        setProfileMenuPos(null);
+        return;
+      }
+
+      const updatePosition = () => {
+        const isMobile = window.innerWidth < 640;
+        const button = isMobile
+          ? mobileProfileButtonRef.current
+          : profileButtonRef.current;
+
+        if (!button) return;
+
+        const rect = button.getBoundingClientRect();
+        setProfileMenuPos({
+          top: rect.bottom + (isMobile ? 8 : 12),
+          right: Math.max(8, window.innerWidth - rect.right),
+          isMobile,
+        });
+      };
+
+      updatePosition();
+      window.addEventListener('resize', updatePosition);
+      window.addEventListener('scroll', updatePosition, true);
+
+      return () => {
+        window.removeEventListener('resize', updatePosition);
+        window.removeEventListener('scroll', updatePosition, true);
+      };
+    }, [dropdownOpen]);
 
     const checkAuthStatus = async () => {
         try {
@@ -1434,28 +1472,13 @@ const Header = () => {
                         </Link>
                         <div className="relative flex-shrink-0 px-0.5">
                           {userData ? (
-                            <button type="button" onClick={() => setDropdownOpen(!dropdownOpen)} aria-label="Account">
+                            <button ref={mobileProfileButtonRef} type="button" onClick={() => setDropdownOpen(!dropdownOpen)} aria-label="Account">
                               <FiUser size={16} />
                             </button>
                           ) : (
                             <button type="button" onClick={() => setShowAuthModal(true)} aria-label="Login">
                               <FiUser size={16} />
                             </button>
-                          )}
-                          {dropdownOpen && userData && (
-                            <div ref={mobileDropdownRef} className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-50">
-                              {isAdmin && (
-                                <Link href="/admin/dashboard" className="block px-3 py-2 text-xs hover:bg-blue-50">
-                                  Admin Panel
-                                </Link>
-                              )}
-                              <Link href="/orders" className="block px-3 py-2 text-xs hover:bg-blue-50">
-                                My Orders
-                              </Link>
-                              <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-xs hover:bg-red-50">
-                                Logout
-                              </button>
-                            </div>
                           )}
                         </div>
                         <button
@@ -1699,51 +1722,15 @@ const Header = () => {
                         </Link>
 
                         {/* User Account */}
-                        <div className="relative" >
+                        <div className="relative">
                             {userData ? (
                                 <>
-                                    <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center text-black focus:outline-none p-1 sm:p-0">
+                                    <button ref={profileButtonRef} onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center text-black focus:outline-none p-1 sm:p-0">
                                         <FiUser size={18} className="text-customBlue" />
                                         <span className="ml-1 font-bold text-xs sm:text-sm text-customBlue hidden lg:inline">
                                             Hi, {userData.name || userData.username || "User"}
                                         </span>
                                     </button>
-                                    {dropdownOpen && (
-                                        <div ref={dropdownRef} className="absolute right-0 mt-3 w-48 sm:w-56 bg-white rounded-xl shadow-xl z-50 transition-all">
-                                            <div className="py-2 px-2">
-                                                {isAdmin && (
-                                                    <>
-                                                        <Link href="/admin/dashboard" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                                                            <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
-                                                                <FaUserShield className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                            </span>
-                                                            Admin Panel
-                                                        </Link>
-                                                    </>
-                                                )}
-                                                
-                                                   {isLoggedIn && (
-                                                      <Link href="/loyalty" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                                                   <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
-                                                    🏆
-                                                  </span>
-                                           Loyalty Points
-                                     <span className="ml-auto text-xs font-bold text-customBlue">{loyaltyPoints} pts</span>
-                                                </Link>
-                                          )}
-                                                <Link href="/orders" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                                                    <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
-                                                        <FaShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                    </span>My Orders</Link>
-                                                <hr className="my-2 border-gray-200" />
-                                                <button onClick={handleLogout} className="flex items-center gap-2 sm:gap-3 w-full text-left px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-red-50 transition-colors">
-                                                    <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
-                                                        <IoLogOut className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                    </span>Logout
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
                                 </>
                             ) : (
                                 <button onClick={() => setShowAuthModal(true)} className="flex items-center text-black p-1 sm:p-0" aria-label="Sign in">
@@ -2657,6 +2644,71 @@ const Header = () => {
               }
             </div>
           </div>
+        )}
+
+        {dropdownOpen && userData && profileMenuPos && typeof document !== 'undefined' && createPortal(
+          <div
+            ref={profileDropdownRef}
+            className={`bg-white rounded-xl shadow-xl border border-gray-100 ${
+              profileMenuPos.isMobile ? 'w-40 rounded-md' : 'w-48 sm:w-56'
+            }`}
+            style={{
+              position: 'fixed',
+              top: profileMenuPos.top,
+              right: profileMenuPos.right,
+              zIndex: 9999,
+            }}
+          >
+            {profileMenuPos.isMobile ? (
+              <>
+                {isAdmin && (
+                  <Link href="/admin/dashboard" onClick={() => setDropdownOpen(false)} className="block px-3 py-2 text-xs hover:bg-blue-50">
+                    Admin Panel
+                  </Link>
+                )}
+                <Link href="/orders" onClick={() => setDropdownOpen(false)} className="block px-3 py-2 text-xs hover:bg-blue-50">
+                  My Orders
+                </Link>
+                <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-xs hover:bg-red-50">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <div className="py-2 px-2">
+                {isAdmin && (
+                  <Link href="/admin/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                    <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
+                      <FaUserShield className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </span>
+                    Admin Panel
+                  </Link>
+                )}
+                {isLoggedIn && (
+                  <Link href="/loyalty" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                    <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
+                      🏆
+                    </span>
+                    Loyalty Points
+                    <span className="ml-auto text-xs font-bold text-customBlue">{loyaltyPoints} pts</span>
+                  </Link>
+                )}
+                <Link href="/orders" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                  <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
+                    <FaShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </span>
+                  My Orders
+                </Link>
+                <hr className="my-2 border-gray-200" />
+                <button onClick={handleLogout} className="flex items-center gap-2 sm:gap-3 w-full text-left px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm text-gray-700 hover:bg-red-50 transition-colors">
+                  <span className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-customBlue text-white">
+                    <IoLogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </span>
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>,
+          document.body
         )}
       </>
     );
