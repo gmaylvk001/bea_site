@@ -7,6 +7,8 @@ import ProductFilter from "@/models/ecom_productfilter_info";
 import Filter from "@/models/ecom_filter_infos";
 import FilterGroup from "@/models/ecom_filter_group_infos";
 import mongoose from "mongoose";
+import { buildSearchOrConditions, scoreProductMatch, getBrandSearchConstraints } from "@/lib/searchMatch";
+import { getActiveBrandsForSearch } from "@/lib/brandSearch";
 
 export const runtime = "nodejs";
 
@@ -61,11 +63,14 @@ export async function GET(req) {
 
   const minPrice = Number(searchParams.get("minPrice") || 0);
   const maxPrice = Number(searchParams.get("maxPrice") || 1000000);
+  const hasPriceFilter =
+    searchParams.has("minPrice") || searchParams.has("maxPrice");
 
   const skip = (page - 1) * limit;
 
   try {
     await dbConnect();
+    const allBrands = await getActiveBrandsForSearch();
 
     let searchFilter = {
       status: "Active",
@@ -73,22 +78,33 @@ export async function GET(req) {
 
     /* ---------------- TEXT SEARCH ---------------- */
     if (query) {
-      const safe = escapeRegExp(query);
-      const regex = new RegExp(safe, "i");
-      searchFilter.$and = [
-        ...(searchFilter.$and || []),
-        {
-          $or: [
-            { name: regex },
-            { item_code: regex },
-            { search_keywords: regex },
-          ],
-        },
-      ];
+      const brandConstraints = getBrandSearchConstraints(query, allBrands);
+
+      if (brandConstraints?.mode === "brand_product") {
+        searchFilter.$and = [
+          ...(searchFilter.$and || []),
+          { brand: brandConstraints.brandId },
+          {
+            $or: buildSearchOrConditions(brandConstraints.productQuery, []),
+          },
+        ];
+      } else if (brandConstraints?.mode === "exact") {
+        searchFilter.$and = [
+          ...(searchFilter.$and || []),
+          { brand: brandConstraints.brandId },
+        ];
+      } else {
+        searchFilter.$and = [
+          ...(searchFilter.$and || []),
+          {
+            $or: buildSearchOrConditions(query, allBrands),
+          },
+        ];
+      }
     }
 
     /* ---------------- CATEGORY MAPPING ---------------- */
-    if (category && category !== "All Categories") {
+    if (category && category !== "All Categories" && category !== "All Category") {
       const categoryDoc = await Category.findOne({
         category_name: category,
         status: "Active",
@@ -175,7 +191,7 @@ if (subcategoryIds.length > 0) {
   }
 }
     /* ---------------- PRICE FILTER ---------------- */
-  
+    if (hasPriceFilter) {
 searchFilter.$and = [
   ...(searchFilter.$and || []),
   {
@@ -197,6 +213,7 @@ searchFilter.$and = [
     ],
   },
 ];
+    }
 
     /* ---------------- BASE PRODUCT QUERY ---------------- */
     let productsQuery = Product.find(searchFilter);
@@ -230,13 +247,31 @@ searchFilter.$and = [
     }
 
     /* ---------------- PAGINATION ---------------- */
-    const total = await Product.countDocuments(searchFilter);
+    let total;
+    let products;
 
-    const products = await productsQuery
-      .sort({ createdAt: -1, _id: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    if (query) {
+      const candidateLimit = query.length <= 3 ? 500 : 250;
+      const candidates = await productsQuery.limit(candidateLimit).lean();
+
+      const ranked = candidates
+        .map((product) => ({
+          product,
+          score: scoreProductMatch(product, query, { brands: allBrands }),
+        }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      total = ranked.length;
+      products = ranked.slice(skip, skip + limit).map(({ product }) => product);
+    } else {
+      total = await Product.countDocuments(searchFilter);
+      products = await productsQuery
+        .sort({ createdAt: -1, _id: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+    }
 
     /* ---------------- GLOBAL BRAND COUNT ---------------- */
     const brandAggMatch = { ...searchFilter };
@@ -305,13 +340,18 @@ searchFilter.$and = [
 /* ---------------- CATEGORY TREE ---------------- */
 const categoryOnlyFilter = { status: "Active" };
 if (query) {
-  const safe = escapeRegExp(query);
-  const regex = new RegExp(safe, "i");
-  categoryOnlyFilter.$or = [
-    { name: regex },
-    { item_code: regex },
-    { search_keywords: regex },
-  ];
+  const brandConstraints = getBrandSearchConstraints(query, allBrands);
+  if (brandConstraints?.mode === "brand_product") {
+    categoryOnlyFilter.brand = brandConstraints.brandId;
+    categoryOnlyFilter.$or = buildSearchOrConditions(
+      brandConstraints.productQuery,
+      []
+    );
+  } else if (brandConstraints?.mode === "exact") {
+    categoryOnlyFilter.brand = brandConstraints.brandId;
+  } else {
+    categoryOnlyFilter.$or = buildSearchOrConditions(query, allBrands);
+  }
 }
 
 // Search results products-ல இருக்க category/sub_category IDs 

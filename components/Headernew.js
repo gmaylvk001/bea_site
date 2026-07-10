@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { Navigation, Scrollbar } from 'swiper/modules';
 import { useHeaderdetails } from "@/context/HeaderContext"; 
 import { getProducts } from '@/lib/productApi';
+import { filterAndRankProducts } from '@/lib/searchMatch';
 
 // ADD: alphaSortString - case-insensitive, null-safe string comparator
 const alphaSortString = (a, b) => {
@@ -226,6 +227,7 @@ const Header = () => {
     const [typedPreview, setTypedPreview] = useState("");
     const [words, setWords] = useState([]);
     const [categorieslist, setCategorieslist] = useState([]);
+    const [brandsForSearch, setBrandsForSearch] = useState([]);
     const wordIndex = useRef(0);
     const charIndex = useRef(0);
     const isDeleting = useRef(false);
@@ -596,6 +598,21 @@ const Header = () => {
         
         router.push(`/search?${params.toString()}`);
     };
+    useEffect(() => {
+      let mounted = true;
+      const loadBrands = async () => {
+        try {
+          const res = await fetch("/api/brand");
+          const data = await res.json();
+          if (mounted) setBrandsForSearch(Array.isArray(data?.data) ? data.data : []);
+        } catch (err) {
+          console.error("Error loading brands for search", err);
+        }
+      };
+      loadBrands();
+      return () => { mounted = false; };
+    }, []);
+
     // Load products once using shared util (for instant local filtering)
     useEffect(() => {
       let mounted = true;
@@ -631,19 +648,37 @@ const Header = () => {
         return;
       }
 
-      // Use local products (sorted) for instant client-side suggestions
+      const trimmed = q.trim();
+
+      try {
+        const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(trimmed)}`);
+        if (res.ok) {
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : (data?.results || []);
+          if (items.length > 0) {
+            setSuggestions(items.slice(0, 12));
+            setSearchDropdownVisible(true);
+            if (searchInputRef.current) {
+              const rect = searchInputRef.current.getBoundingClientRect();
+              setSearchDropdownLeft(rect.left);
+              setSearchDropdownTop(rect.bottom + window.scrollY);
+              setSearchDropdownWidth(rect.width);
+            }
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching suggestions:', err);
+      }
+
+      // Fallback: ranked local cache when API returns nothing
       try {
         if (Array.isArray(sortedProducts) && sortedProducts.length > 0) {
-          const ql = q.toLowerCase();
-          const filtered = sortedProducts.filter(p => {
-            const name = (p.name || '').toLowerCase();
-            const code = (p.item_code || '').toLowerCase();
-            const brand = ((p.brand_name || p.brand || '') + '').toLowerCase();
-            return name.includes(ql) || code.includes(ql) || brand.includes(ql);
-          }).slice(0, 12);
-
+          const filtered = filterAndRankProducts(sortedProducts, trimmed, 12, {
+            brands: brandsForSearch,
+          });
           setSuggestions(filtered);
-          setSearchDropdownVisible(true);
+          setSearchDropdownVisible(filtered.length > 0);
 
           if (searchInputRef.current) {
             const rect = searchInputRef.current.getBoundingClientRect();
@@ -651,38 +686,14 @@ const Header = () => {
             setSearchDropdownTop(rect.bottom + window.scrollY);
             setSearchDropdownWidth(rect.width);
           }
-          return;
+        } else {
+          setSuggestions([]);
         }
       } catch (err) {
         console.error('Local filter error', err);
-      }
-
-      // Fallback: server-side suggestions
-      try {
-        const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(q)}`);
-        if (!res.ok) {
-          setSuggestions([]);
-          return;
-        }
-        const text = await res.text();
-        if (!text) { setSuggestions([]); return; }
-        let data;
-        try { data = JSON.parse(text); } catch { setSuggestions([]); return; }
-        const items = Array.isArray(data) ? data : (data?.results || []);
-        setSuggestions(items.slice(0, 12));
-        setSearchDropdownVisible(true);
-
-        if (searchInputRef.current) {
-          const rect = searchInputRef.current.getBoundingClientRect();
-          setSearchDropdownLeft(rect.left);
-          setSearchDropdownTop(rect.bottom + window.scrollY);
-          setSearchDropdownWidth(rect.width);
-        }
-      } catch (err) {
-        console.error('Error fetching suggestions:', err);
         setSuggestions([]);
       }
-    }, [sortedProducts]);
+    }, [sortedProducts, brandsForSearch]);
   
     // Debounced effect: call fetchSuggestions while typing
     useEffect(() => {

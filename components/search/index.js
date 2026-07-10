@@ -128,12 +128,16 @@ useEffect(() => {
     const brands = overrides.brands ?? selectedBrands;
     const filters = overrides.filters ?? selectedFilters;
     const p = overrides.page ?? page;
-    const min = overrides.min ?? values[0];
-    const max = overrides.max ?? values[1];
+    const includePrice =
+      overrides.includePrice ?? (params.has("minPrice") || params.has("maxPrice"));
     if (brands.length) qp.set("brands", brands.join(","));
     if (filters.length) qp.set("filters", filters.join(","));
-    if (min != null) qp.set("minPrice", min);
-    if (max != null) qp.set("maxPrice", max);
+    if (includePrice) {
+      const min = overrides.min ?? values[0];
+      const max = overrides.max ?? values[1];
+      qp.set("minPrice", min);
+      qp.set("maxPrice", max);
+    }
     qp.set("page", p);
     qp.set("limit", 12);
     const categoryIds = overrides.categoryIds ?? selectedCategories.join(',');
@@ -157,20 +161,8 @@ if (subcategoryIds) qp.set("subcategoryIds", subcategoryIds);
         setBrandSummaryRaw(Array.isArray(data.brandSummary) ? data.brandSummary : []);
         setFilterSummaryRaw(Array.isArray(data.filterSummary) ? data.filterSummary : []);
       setAllFiltersFromResults(Array.isArray(data.filterDefs) ? data.filterDefs : []);
-      console.log("Categories from API:", data.categories); 
-            const cats = Array.isArray(data.categories) ? data.categories : [];
-      setCategoryData({ categories: cats }); 
-      if (cats.length > 0 && selectedCategories.length === 0 && selectedSubcategories.length === 0) {
-        const queryLower = searchQuery.toLowerCase();
-        const matchedCat = cats.find(c =>
-          c.category_name?.toLowerCase().includes(queryLower) ||
-          queryLower.includes(c.category_name?.toLowerCase())
-        );
-        if (matchedCat) {
-          const catId = matchedCat._id?.toString();
-          setSelectedCategories([catId]);
-        }
-      }
+      const cats = Array.isArray(data.categories) ? data.categories : [];
+      setCategoryData({ categories: cats });
       } catch (err) {
         console.error("Search API error", err);
         setProducts([]);
@@ -267,7 +259,7 @@ if (subcategoryIds) qp.set("subcategoryIds", subcategoryIds);
   const applyPrice = (min, max) => {
     setValues([min, max]);
     setPage(1);
-    const qs = buildQueryParams({ min, max, page: 1 });
+    const qs = buildQueryParams({ min, max, page: 1, includePrice: true });
     router.push(`/search?${qs}`);
   };
 
@@ -286,9 +278,11 @@ if (subcategoryIds) qp.set("subcategoryIds", subcategoryIds);
   };
   const clearPriceChip = () => {
     setValues(priceRange);
-    const qs = buildQueryParams({ min: priceRange[0], max: priceRange[1], page: 1 });
+    const qs = buildQueryParams({ page: 1, includePrice: false });
     router.push(`/search?${qs}`);
   };
+
+  const hasActivePriceFilter = params.has("minPrice") || params.has("maxPrice");
 
   useEffect(() => {
   if (Object.keys(filterGroups).length > 0) {
@@ -501,7 +495,7 @@ useEffect(() => {
         <h1 className="text-3xl font-bold mb-3 text-gray-600">Search Results {category && `in ${category}`} {searchQuery && `for '${searchQuery}'`}</h1>
 
         {/* Applied Filter Chips */}
-        {(selectedBrands.length > 0 || selectedFilters.length > 0 || (values[0] !== priceRange[0] || values[1] !== priceRange[1])) && (
+        {(selectedBrands.length > 0 || selectedFilters.length > 0 || hasActivePriceFilter) && (
           <div className="flex flex-wrap gap-2 mb-4">
             {selectedBrands.map((id) => (
               <span key={`chip-brand-${id}`} className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs">
@@ -517,7 +511,7 @@ useEffect(() => {
               </span>
             ))}
 
-            {(values[0] !== priceRange[0] || values[1] !== priceRange[1]) && (
+            {hasActivePriceFilter && (
               <span key="chip-price" className="flex items-center gap-2 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs">
                 ₹{values[0]} - ₹{values[1]}
                 <button onClick={clearPriceChip} className="ml-1 font-bold">×</button>
@@ -561,7 +555,7 @@ useEffect(() => {
             <div className="bg-white p-4 rounded shadow-sm border">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-base font-semibold text-gray-700">Price</h3>
-                <button onClick={() => { setValues(priceRange); const qs = buildQueryParams({ min: priceRange[0], max: priceRange[1], page: 1 }); router.push(`/search?${qs}`); }} className="text-sm text-gray-500">Reset</button>
+                <button onClick={clearPriceChip} className="text-sm text-gray-500">Reset</button>
               </div>
 
               <div className="mt-2">
