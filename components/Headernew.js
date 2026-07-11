@@ -2167,14 +2167,17 @@ const Header = () => {
                                 <SwiperSlide className="!w-auto overflow-visible flex justify-center">
                                   <Link
                                     href="/loyalty"
-                                    className="relative px-5 py-2 flex flex-col items-center text-center"
+                                    className="relative flex items-center justify-center h-[40px] px-3"
+                                    aria-label="Loyalty"
                                   >
-                                    <span className="loyalty-new-badge absolute top-0 right-0 z-10 text-[9px] font-bold px-1.5 py-0.5 rounded leading-none">
-                                      NEW
-                                    </span>
-                                    <span className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap">
-                                      Loyalty
-                                    </span>
+                                    <Image
+                                      src="/uploads/loyaltyIcon.png"
+                                      alt="Loyalty"
+                                      width={120}
+                                      height={44}
+                                      className="h-[36px] sm:h-[40px] w-auto object-contain hover:opacity-90 transition-opacity"
+                                      unoptimized
+                                    />
                                   </Link>
                                 </SwiperSlide>
  </Swiper>
