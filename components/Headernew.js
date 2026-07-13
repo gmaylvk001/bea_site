@@ -2164,18 +2164,18 @@ const Header = () => {
     />
   </Link>
 </SwiperSlide>
-                                <SwiperSlide className="!w-auto overflow-visible flex justify-center">
+                                <SwiperSlide className="!w-[140px] overflow-visible flex justify-center">
                                   <Link
                                     href="/loyalty"
-                                    className="relative flex items-center justify-center h-[40px] px-3"
+                                    className="relative flex items-center justify-center h-[40px]"
                                     aria-label="Loyalty"
                                   >
                                     <Image
                                       src="/uploads/loyaltyIcon.png"
                                       alt="Loyalty"
-                                      width={120}
-                                      height={44}
-                                      className="h-[36px] sm:h-[40px] w-auto object-contain hover:opacity-90 transition-opacity"
+                                      width={150}
+                                      height={125}
+                                      className="h-[125px] w-auto object-contain hover:opacity-90 transition-opacity"
                                       unoptimized
                                     />
                                   </Link>

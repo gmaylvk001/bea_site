@@ -21,6 +21,33 @@ const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY || '';
 const IS_RAZORPAY_TEST_MODE = RAZORPAY_KEY.startsWith('rzp_test_');
 const RAZORPAY_EMI_TEST_CARD = '5241 8100 0000 0000';
 
+const BEA_CONTACT_PHONE = '9842344323';
+const BEA_CONTACT_EMAIL = 'customercare@bharathelectronics.in';
+
+const FloatInput = ({ label, name, type = 'text', required, readOnly, value, onChange, onBlur, error, inputMode, maxLength }) => (
+  <div className="relative">
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      onBlur={onBlur}
+      readOnly={readOnly}
+      inputMode={inputMode}
+      maxLength={maxLength}
+      className={`peer w-full border rounded-lg pt-5 pb-1.5 px-3 text-sm outline-none transition
+        ${readOnly ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white'}
+        ${error ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-300'
+          : 'border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200'}`}
+    />
+    <label className={`absolute left-3 transition-all duration-150 pointer-events-none
+      ${value ? 'top-1 text-[10px] text-gray-500' : 'top-3.5 text-sm text-gray-400'}`}>
+      {label}{required && '*'}
+    </label>
+    {error && <p className="text-red-500 text-xs mt-0.5">{error}</p>}
+  </div>
+);
+
 // ─── Haversine distance (km) ────────────────────────────────────────────────
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -74,9 +101,7 @@ const findNearestStores = async (pincode) => {
     const data = await res.json();
 
     if (!data.success || !data.stores?.length) {
-      toast.error("This pincode is not serviceable. Please select a store manually.");
       setNearestStores(stores.slice(0, 3).map(s => ({ ...s, distanceKm: null })));
-      setLoadingStores(false);
       return;
     }
 
@@ -89,7 +114,7 @@ const findNearestStores = async (pincode) => {
 
   } catch (err) {
     console.error("Pincode check error:", err);
-    toast.error("Unable to find nearest store. Please select manually.");
+    setNearestStores(stores.slice(0, 3).map(s => ({ ...s, distanceKm: null })));
   } finally {
     setLoadingStores(false);
   }
@@ -190,10 +215,8 @@ const findNearestStores = async (pincode) => {
               {/* Top 3 stores side-by-side on desktop, stacked on mobile */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
                 {displayedStores.map((store) => {
-                  const storePhone = store.phone || store.phonenumber || '9842344323';
-                  const storeEmail = store.email || 'customercare@bharathelectronics.in';
-                  const waLink = `https://wa.me/91${storePhone}?text=${encodeURIComponent(productMsg)}`;
-                  const mailLink = `mailto:${storeEmail}?subject=${encodeURIComponent('Product availability check')}&body=${encodeURIComponent(productMsg)}`;
+                  const waLink = `https://wa.me/91${BEA_CONTACT_PHONE}?text=${encodeURIComponent(productMsg)}`;
+                  const mailLink = `mailto:${BEA_CONTACT_EMAIL}?subject=${encodeURIComponent('Product availability check')}&body=${encodeURIComponent(productMsg)}`;
                   return (
                     <div
                       key={store._id}
@@ -221,13 +244,13 @@ const findNearestStores = async (pincode) => {
                           <span>Call and check the product availability</span>
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
-                        <a href={`tel:${store.phone}`} title="Call store"
+                        <a href={`tel:${BEA_CONTACT_PHONE}`} title="Call store"
                           className="w-7 h-7 flex items-center justify-center rounded-full bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                           </svg>
                         </a>
-                        <a href={`mailto:${store.email}`} title="Email store"
+                        <a href={mailLink} title="Email store"
                           className="w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -840,32 +863,6 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
     }
   };
 
-  // ─── Floating label input helper ──────────────────────────────────────────
-  const FloatInput = ({ label, name, type = 'text', required, readOnly, value, onChange, onBlur }) => {
-    const err = getFieldError(name);
-    return (
-      <div className="relative">
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          onBlur={onBlur}
-          readOnly={readOnly}
-          className={`peer w-full border rounded-lg pt-5 pb-1.5 px-3 text-sm outline-none transition
-            ${readOnly ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white'}
-            ${err ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-300'
-              : 'border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200'}`}
-        />
-        <label className={`absolute left-3 transition-all duration-150 pointer-events-none
-          ${value ? 'top-1 text-[10px] text-gray-500' : 'top-3.5 text-sm text-gray-400'}`}>
-          {label}{required && '*'}
-        </label>
-        {err && <p className="text-red-500 text-xs mt-0.5">{err}</p>}
-      </div>
-    );
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -926,7 +923,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <FloatInput label="Phone number" name="phonenumber" type="tel" required
-                    value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('phonenumber')} />
                   {formData.phonenumber?.length === 10 && (
                     <p className="text-green-600 text-xs mt-1 flex items-center gap-1">
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
@@ -935,7 +933,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                   )}
                 </div>
                 <FloatInput label="Email address" name="email" type="email" required
-                  value={formData.email} onChange={handleChange} onBlur={handleBlur} />
+                  value={formData.email} onChange={handleChange} onBlur={handleBlur}
+                  error={getFieldError('email')} />
               </div>
             </section>
 
@@ -963,22 +962,29 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
               {formData.deliveryType === 'home' && (
                 <div className="mt-4 space-y-3">
                   <FloatInput label="Country" name="country" required
-                    value={formData.country} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.country} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('country')} />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <FloatInput label="First name" name="firstName" required
-                      value={formData.firstName} onChange={handleChange} onBlur={handleBlur} />
+                      value={formData.firstName} onChange={handleChange} onBlur={handleBlur}
+                      error={getFieldError('firstName')} />
                     <FloatInput label="Last name" name="lastName" required
-                      value={formData.lastName} onChange={handleChange} onBlur={handleBlur} />
+                      value={formData.lastName} onChange={handleChange} onBlur={handleBlur}
+                      error={getFieldError('lastName')} />
                   </div>
                   <FloatInput label="Company name (optional)" name="businessName"
-                    value={formData.businessName} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.businessName} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('businessName')} />
                   <FloatInput label="House number and street name" name="address" required
-                    value={formData.address} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.address} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('address')} />
                   <FloatInput label="Landmark, suite, unit, etc. (optional)" name="landmark"
-                    value={formData.landmark} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.landmark} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('landmark')} />
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <FloatInput label="State" name="state" readOnly
-                      value={formData.state} onChange={handleChange} onBlur={handleBlur} />
+                      value={formData.state} onChange={handleChange} onBlur={handleBlur}
+                      error={getFieldError('state')} />
                     <div className="relative">
                       <select
                         name="city" value={formData.city}
@@ -996,10 +1002,13 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       {getFieldError('city') && <p className="text-red-500 text-xs mt-0.5">{getFieldError('city')}</p>}
                     </div>
                     <FloatInput label="Pincode" name="postCode" required
-                      value={formData.postCode} onChange={handleChange} onBlur={handleBlur} />
+                      value={formData.postCode} onChange={handleChange} onBlur={handleBlur}
+                      error={getFieldError('postCode')}
+                      inputMode="numeric" maxLength={6} />
                   </div>
                   <FloatInput label="Phone" name="phonenumber" type="tel" required
-                    value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('phonenumber')} />
                 </div>
               )}
 
@@ -1007,16 +1016,21 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
               {formData.deliveryType === 'store' && (
                 <div className="mt-4 space-y-3">
                   <FloatInput label="Country" name="country" required
-                    value={formData.country} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.country} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('country')} />
                   <FloatInput label="Full Name" name="firstName" required
-                    value={formData.firstName} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.firstName} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('firstName')} />
                   <FloatInput label="Address" name="address" required
-                    value={formData.address} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.address} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('address')} />
                   <FloatInput label="Landmark (Optional)" name="landmark"
-                    value={formData.landmark} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.landmark} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('landmark')} />
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <FloatInput label="State" name="state" readOnly
-                      value={formData.state} onChange={handleChange} onBlur={handleBlur} />
+                      value={formData.state} onChange={handleChange} onBlur={handleBlur}
+                      error={getFieldError('state')} />
                     <div className="relative">
                       <select
                         name="city" value={formData.city}
@@ -1034,10 +1048,13 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       {getFieldError('city') && <p className="text-red-500 text-xs mt-0.5">{getFieldError('city')}</p>}
                     </div>
                     <FloatInput label="Pincode" name="postCode" required
-                      value={formData.postCode} onChange={handleChange} onBlur={handleBlur} />
+                      value={formData.postCode} onChange={handleChange} onBlur={handleBlur}
+                      error={getFieldError('postCode')}
+                      inputMode="numeric" maxLength={6} />
                   </div>
                   <FloatInput label="Phone" name="phonenumber" type="tel" required
-                    value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur} />
+                    value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('phonenumber')} />
                 </div>
               )}
             </section>
