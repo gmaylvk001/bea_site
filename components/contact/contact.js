@@ -119,7 +119,7 @@ function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Name + Email */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-[12.5px] font-medium text-gray-700 mb-1">
             Name <span className="text-red-500">*</span>
@@ -136,7 +136,7 @@ function ContactForm() {
         </div>
       </div>
       {/* Phone + City */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-[12.5px] font-medium text-gray-700 mb-1">
             Phone <span className="text-red-500">*</span>
@@ -153,7 +153,7 @@ function ContactForm() {
         </div>
       </div>
       {/* Enquiry Type + Invoice */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-[12.5px] font-medium text-gray-700 mb-1">
             Enquiry Type <span className="text-red-500">*</span>
@@ -189,7 +189,7 @@ function ContactForm() {
         <input type="text" name="_hp" value={form._hp} onChange={handleChange} tabIndex="-1" autoComplete="off" />
       </div>
       {/* Submit */}
-      <div className="flex items-center gap-4 pt-1">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-1">
         <button type="submit" disabled={loading} className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white font-semibold rounded-lg px-5 py-2.5 text-[13px] transition-colors">
           <FaPaperPlane size={12} />
           {loading ? "Submitting..." : "Submit Message"}
@@ -210,9 +210,9 @@ function StoreCard({ store }) {
     `${store.organisation_name} ${store.website || ""}`
   )}`;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col" style={{ minWidth: "180px", maxWidth: "200px" }}>
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col w-full min-w-[170px] max-w-[200px] sm:min-w-[180px]">
       {/* Image */}
-      <div className="relative w-full bg-blue-900 overflow-hidden flex-shrink-0" style={{ height: "110px" }}>
+      <div className="relative w-full bg-blue-900 overflow-hidden flex-shrink-0 h-[100px] sm:h-[110px]">
         {store.banners?.[0] ? (
           <img src={store.banners[0]} alt={store.organisation_name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = "none"; }} />
         ) : store.logo ? (
@@ -309,10 +309,7 @@ const results = stores.filter(
 {/* ══════════════════════════════════════════════════
     SECTION 1 — HERO BANNER
 ══════════════════════════════════════════════════ */}
-<section
-  className="relative w-full overflow-hidden"
-  style={{ minHeight: "300px", maxHeight: "360px" }}
->
+<section className="relative w-full overflow-hidden min-h-[280px] sm:min-h-[320px] md:min-h-[360px] lg:min-h-[400px] xl:min-h-[420px]">
   <img
     src="/contact/banner1.png"
     alt="Contact BEA"
@@ -326,79 +323,71 @@ const results = stores.filter(
         "linear-gradient(to right, rgba(5,13,40,0.97) 0%, rgba(5,13,40,0.93) 20%, rgba(5,13,40,0.72) 42%, rgba(5,13,40,0.28) 62%, rgba(5,13,40,0.06) 78%, transparent 92%)",
     }}
   />
-  <div
-    className="absolute inset-0 flex flex-col justify-between"
-    style={{ padding: "22px 16px 20px 40px" }}
-  >
-    {/* Top — Heading + subtitle */}
-    <div className="my-8 ms-5">
-      <h1
-        className="font-black text-white leading-tight mb-1.5"
-        style={{ fontSize: "38px" }}
-      >
-        Get in Touch With BEA
-      </h1>
-      <p style={{ fontSize: "12.5px", color: "#ffffff", lineHeight: "1.55", maxWidth: "290px", margin: 0 }}>
-        We&apos;re here to help you with any queries, support,<br />
-        or feedback. Reach out to us, we&apos;d love to hear from you!
-      </p>
-    </div>
+  <div className="absolute inset-0 flex items-center px-[clamp(1rem,3vw,2.5rem)] py-[clamp(0.75rem,2vw,1.5rem)]">
+    <div className="ms-0 sm:ms-2 md:ms-4 lg:ms-6 space-y-[clamp(0.65rem,1.8vw,1.25rem)] max-w-5xl w-full">
+      {/* Heading + subtitle */}
+      <div>
+        <h1 className="font-black text-white leading-tight mb-1 sm:mb-1.5 text-[clamp(1.35rem,2.6vw+0.45rem,2.375rem)]">
+          Get in Touch With BEA
+        </h1>
+        <p className="text-[clamp(0.68rem,0.85vw+0.4rem,0.8125rem)] text-white leading-snug max-w-full sm:max-w-[min(300px,85vw)] md:max-w-[min(360px,70vw)] lg:max-w-[380px]">
+          We&apos;re here to help you with any queries, support,
+          or feedback. Reach out to us, we&apos;d love to hear from you!
+        </p>
+      </div>
 
-    {/* Bottom — 3 chips */}
-    <div style={{ display: "flex",marginBottom:"25px", alignItems: "center", gap: "28px" }}>
+      {/* Contact chips */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-[clamp(0.5rem,1.2vw,1.25rem)] w-full sm:max-w-[min(42rem,95vw)] lg:max-w-4xl">
 
       {/* Call Us */}
-      <a href="tel:9842344323" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
-        <div style={{ marginBottom:"18px", width: "33px", height: "33px", borderRadius: "50%", border: "1.2px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <a href="tel:9842344323" className="flex items-center gap-[clamp(0.4rem,0.8vw,0.65rem)] no-underline min-w-0">
+        <div className="rounded-full border border-white/30 flex items-center justify-center flex-shrink-0 w-[clamp(1.65rem,1.4vw+1rem,2.1rem)] h-[clamp(1.65rem,1.4vw+1rem,2.1rem)]">
+          <svg className="w-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)] h-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)]" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.57 3.54 2 2 0 0 1 3.54 1.35h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.9a16 16 0 0 0 5.86 5.86l.88-.88a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.99 17z"/>
           </svg>
         </div>
-        <div>
-          <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 500, lineHeight: 1, marginBottom: "2px" }}>Call Us</div>
-          <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 700, lineHeight: 1.2 }}>98423 44323</div>
-          <div style={{ fontSize: "14px", color: "#ffffff", lineHeight: 1, marginTop: "2px" }}>9:30 AM – 9:30 PM</div>
+        <div className="min-w-0">
+          <div className="text-[clamp(0.6rem,0.55vw+0.42rem,0.72rem)] text-white font-medium leading-none mb-0.5">Call Us</div>
+          <div className="text-[clamp(0.72rem,0.7vw+0.45rem,0.9rem)] text-white font-bold leading-tight">98423 44323</div>
+          <div className="text-[clamp(0.62rem,0.55vw+0.4rem,0.82rem)] text-white leading-tight mt-0.5">9:30 AM – 9:30 PM</div>
         </div>
       </a>
 
-      <div style={{ width: "1px", height: "33px", background: "rgba(255,255,255,0.14)", flexShrink: 0 }} />
-
       {/* Email Us */}
-      <a href="mailto:customercare@bharathelectronics.in" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
-        <div style={{marginBottom:"18px", width: "33px", height: "33px", borderRadius: "50%", border: "1.2px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <a href="mailto:customercare@bharathelectronics.in" className="flex items-center gap-[clamp(0.4rem,0.8vw,0.65rem)] no-underline min-w-0 sm:border-l sm:border-white/15 sm:pl-[clamp(0.5rem,1vw,1rem)]">
+        <div className="rounded-full border border-white/30 flex items-center justify-center flex-shrink-0 w-[clamp(1.65rem,1.4vw+1rem,2.1rem)] h-[clamp(1.65rem,1.4vw+1rem,2.1rem)]">
+          <svg className="w-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)] h-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)]" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
             <polyline points="22,6 12,13 2,6"/>
           </svg>
         </div>
-        <div>
-          <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 500, lineHeight: 1, marginBottom: "2px" }}>Email Us</div>
-          <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 700, lineHeight: 1.2 }}>customercare@</div>
-          <div style={{ fontSize: "14px", color: "#ffffff", lineHeight: 1, marginTop: "2px" }}>bharathelectronics.in</div>
+        <div className="min-w-0">
+          <div className="text-[clamp(0.6rem,0.55vw+0.42rem,0.72rem)] text-white font-medium leading-none mb-0.5">Email Us</div>
+          <div className="text-[clamp(0.72rem,0.7vw+0.45rem,0.9rem)] text-white font-bold leading-tight break-all">customercare@</div>
+          <div className="text-[clamp(0.62rem,0.55vw+0.4rem,0.82rem)] text-white leading-tight mt-0.5 break-all">bharathelectronics.in</div>
         </div>
       </a>
 
-      <div style={{ width: "1px", height: "33px", background: "rgba(255,255,255,0.14)", flexShrink: 0 }} />
-
       {/* Stores */}
-      <Link href="/our-branches" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
-        <div style={{marginBottom:"18px",width: "33px", height: "33px", borderRadius: "50%", border: "1.2px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <Link href="/our-branches" className="flex items-center gap-[clamp(0.4rem,0.8vw,0.65rem)] no-underline min-w-0 sm:border-l sm:border-white/15 sm:pl-[clamp(0.5rem,1vw,1rem)]">
+        <div className="rounded-full border border-white/30 flex items-center justify-center flex-shrink-0 w-[clamp(1.65rem,1.4vw+1rem,2.1rem)] h-[clamp(1.65rem,1.4vw+1rem,2.1rem)]">
+          <svg className="w-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)] h-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)]" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             <polyline points="9 22 9 12 15 12 15 22"/>
           </svg>
         </div>
-        <div>
-          <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 500, lineHeight: 1, marginBottom: "2px" }}>
+        <div className="min-w-0">
+          <div className="text-[clamp(0.6rem,0.55vw+0.42rem,0.72rem)] text-white font-medium leading-none mb-0.5">
             {totalStores > 0 ? `${totalStores}+` : "47+"} Stores
           </div>
-          <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 700, lineHeight: 1.2 }}>Across Tamil Nadu</div>
-          <div style={{ fontSize: "14px", color: "#ffffff", lineHeight: 1, marginTop: "2px", textDecoration: "underline" }}>
+          <div className="text-[clamp(0.72rem,0.7vw+0.45rem,0.9rem)] text-white font-bold leading-tight">Across Tamil Nadu</div>
+          <div className="text-[clamp(0.62rem,0.55vw+0.4rem,0.82rem)] text-white leading-tight mt-0.5 underline">
             Find Nearest Store →
           </div>
         </div>
       </Link>
 
+      </div>
     </div>
   </div>
 </section>
@@ -406,13 +395,13 @@ const results = stores.filter(
       {/* ══════════════════════════════════════════════════
           SECTION 2 — 3 SUPPORT CARDS
       ══════════════════════════════════════════════════ */}
-      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
-        <div className="max-w-12xl mx-auto px-4 md:px-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8 mt-6 md:mt-8">
+        <div className="max-w-12xl mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 
           {/* Talk to Experts */}
-          <div className="border border-gray-200 rounded-xl p-5 flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <FaPhoneAlt size={18} className="text-white" />
+          <div className="border border-gray-200 rounded-xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <FaPhoneAlt className="text-white text-[15px] sm:text-[17px]" />
             </div>
             <div>
               <div className="text-[14px] font-bold text-gray-900 mb-1.5">Talk to Our Experts</div>
@@ -427,9 +416,9 @@ const results = stores.filter(
           </div>
 
           {/* Email Support */}
-          <div className="border border-gray-200 rounded-xl p-5 flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <FaEnvelope size={18} className="text-white" />
+          <div className="border border-gray-200 rounded-xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <FaEnvelope className="text-white text-[15px] sm:text-[17px]" />
             </div>
             <div>
               <div className="text-[14px] font-bold text-gray-900 mb-1.5">Email Support</div>
@@ -443,9 +432,9 @@ const results = stores.filter(
           </div>
 
           {/* Visit Our Stores */}
-          <div className="border border-gray-200 rounded-xl p-5 flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <FaStore size={18} className="text-white" />
+          <div className="border border-gray-200 rounded-xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <FaStore className="text-white text-[15px] sm:text-[17px]" />
             </div>
             <div>
               <div className="text-[14px] font-bold text-gray-900 mb-1.5">Visit Our Stores</div>
@@ -463,12 +452,12 @@ const results = stores.filter(
       {/* ══════════════════════════════════════════════════
           SECTION 3 — FORM (left) + MAP (right)
       ══════════════════════════════════════════════════ */}
-      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
-        <div className="max-w-12xl mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-8 items-start">
+      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8 mt-8 md:mt-10">
+        <div className="max-w-12xl mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:gap-8 items-start">
 
           {/* Left — Form */}
           <div>
-            <h2 className="text-[20px] font-bold text-gray-900 mb-1">Send Us a Message</h2>
+            <h2 className="text-lg sm:text-[20px] font-bold text-gray-900 mb-1">Send Us a Message</h2>
             <p className="text-[13px] text-gray-500 mb-5">
               Fill out the form and our team will get back to you.
             </p>
@@ -477,13 +466,13 @@ const results = stores.filter(
 
           {/* Right — Map + Corporate */}
           <div>
-            <h2 className="text-[17px] font-bold text-gray-900 mb-4">Our Corporate Office</h2>
+            <h2 className="text-base sm:text-[17px] font-bold text-gray-900 mb-4">Our Corporate Office</h2>
             {/* Map */}
-            <div className="rounded-xl overflow-hidden border border-gray-200 mb-4" style={{ height: "280px" }}>
+            <div className="rounded-xl overflow-hidden border border-gray-200 mb-4 h-[220px] sm:h-[260px] md:h-[280px]">
               <iframe
                 title="BEA Corporate Office"
                 width="100%"
-                height="280"
+                height="100%"
                 frameBorder="0"
                 style={{ border: 0 }}
                 referrerPolicy="no-referrer-when-downgrade"
@@ -521,29 +510,29 @@ const results = stores.filter(
       {/* ══════════════════════════════════════════════════
           SECTION 4 — FIND NEAREST STORE
       ══════════════════════════════════════════════════ */}
-      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 lg:px-8 py-10">
+      <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-4 md:px-6 lg:px-8 mt-8 md:mt-10 py-8 md:py-10">
         <div className="max-w-12xl mx-auto px-4 md:px-6">
 
-          <h2 className="text-center text-[22px] font-bold text-gray-900 mb-1">
+          <h2 className="text-center text-lg sm:text-[22px] font-bold text-gray-900 mb-1 px-2">
             Find Your Nearest Store
           </h2>
-          <p className="text-center text-[13px] text-gray-500 mb-6">
+          <p className="text-center text-[12px] sm:text-[13px] text-gray-500 mb-6 px-2">
             Search by city or pincode to locate a BEA showroom near you.
           </p>
 
           {/* Search bar */}
-          <div className="flex max-w-xl mx-auto mb-8 gap-0 rounded-lg overflow-hidden border border-gray-300">
+          <div className="flex flex-col sm:flex-row max-w-xl mx-auto mb-8 gap-2 sm:gap-0 rounded-lg overflow-hidden border border-gray-300">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Enter city name or pincode"
-              className="flex-1 px-4 py-2.5 text-[13.5px] text-gray-700 placeholder-gray-400 focus:outline-none bg-white"
+              className="flex-1 w-full px-4 py-2.5 text-[13px] sm:text-[13.5px] text-gray-700 placeholder-gray-400 focus:outline-none bg-white"
             />
             <button
               onClick={handleSearch}
-              className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2.5 text-[13.5px] font-semibold flex items-center gap-2 transition-colors flex-shrink-0"
+              className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white px-6 py-2.5 text-[13px] sm:text-[13.5px] font-semibold flex items-center justify-center gap-2 transition-colors flex-shrink-0"
             >
               <FaSearch size={13} />
               Search
@@ -558,14 +547,14 @@ const results = stores.filter(
                 .contact-store-track { -ms-overflow-style: none; scrollbar-width: none; }
               `}</style>
               <div
-               className="contact-store-track flex gap-4 overflow-x-auto pb-2 mb-6 justify-center"
+               className="contact-store-track flex gap-3 sm:gap-4 overflow-x-auto pb-2 mb-6 justify-start sm:justify-center px-1 sm:px-0"
                 style={{ scrollSnapType: "x mandatory" }}
               >
                 {filteredStores.map((store) => (
                   <div
                     key={store._id}
-                    className="flex-shrink-0"
-                    style={{ width: "200px", scrollSnapAlign: "start" }}
+                    className="flex-shrink-0 w-[78vw] max-w-[200px] sm:w-[200px]"
+                    style={{ scrollSnapAlign: "start" }}
                   >
                     <StoreCard store={store} />
                   </div>
@@ -577,7 +566,7 @@ const results = stores.filter(
               {/* View All Stores */}
               <div className="text-center mt-2">
                 <Link href="/location">
-                  <button className="inline-flex items-center gap-2 border border-blue-700 text-blue-700 hover:bg-blue-50 rounded-lg px-8 py-2.5 text-[14px] font-bold transition-colors">
+                  <button className="inline-flex items-center justify-center gap-2 border border-blue-700 text-blue-700 hover:bg-blue-50 rounded-lg px-5 sm:px-8 py-2.5 text-[13px] sm:text-[14px] font-bold transition-colors w-full sm:w-auto max-w-xs sm:max-w-none">
                     View All Stores ({totalStores > 0 ? `${totalStores}+` : "47+"}) <FaArrowRight size={13} />
                   </button>
                 </Link>
