@@ -10,7 +10,7 @@ import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
 //import FlashCategorySlider from "../FlashCategorySlider";
-//import BannerSlider from "../main-cat-banner";
+import { getSortedFilterGroups, getVisibleFilterGroups, VISIBLE_FILTER_GROUP_LIMIT } from "@/lib/filterGroupDefaults";
 
 export default function CategoryPage(params) {
   // For filter group show more
@@ -107,6 +107,10 @@ export default function CategoryPage(params) {
   const router = useRouter(); // Added router
 
   // Fetch initial data
+  useEffect(() => {
+    setShowAllFilterGroups(false);
+  }, [slug]);
+
   useEffect(() => {
     if (slug) {
       fetchInitialData();
@@ -627,6 +631,10 @@ const fetchInitialData = async () => {
   }
 
   console.log("📌 Category Data:", categoryData);
+
+  const sortedFilterGroups = getSortedFilterGroups(filterGroups, { customOrder: CUSTOM_FILTER_ORDER });
+  const visibleFilterGroups = getVisibleFilterGroups(sortedFilterGroups, showAllFilterGroups);
+  const shouldShowMoreFilters = sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
 
   return (
 
@@ -1151,17 +1159,7 @@ const fetchInitialData = async () => {
                     <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
                   </div>
                   <div className="space-y-4">
-                    {(showAllFilterGroups
-                      ? Object.values(filterGroups)
-                      : Object.values(filterGroups).slice(0, 12)
-                    )
-                      .sort((a, b) => {
-                        const order = CUSTOM_FILTER_ORDER.map(i => i.toLowerCase());
-                        const indexA = order.indexOf(a.name.toLowerCase());
-                        const indexB = order.indexOf(b.name.toLowerCase());
-                        return indexA - indexB;
-                      })
-                      .map(group => (
+                    {visibleFilterGroups.map(group => (
                         <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                           <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
                             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-color flex-1 text-left uppercase">
@@ -1193,12 +1191,12 @@ const fetchInitialData = async () => {
                           )}
                         </div>
                       ))}
-                    {Object.values(filterGroups).length > 9 && (
+                    {shouldShowMoreFilters && (
                       <button
                         className="mt-2 text-blue-600 text-sm hover:underline"
                         onClick={() => setShowAllFilterGroups(v => !v)}
                       >
-                        {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                        {showAllFilterGroups ? 'Show less' : 'More filters'}
                       </button>
                     )}
                   </div>
@@ -1394,10 +1392,7 @@ const fetchInitialData = async () => {
                       <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
                     </div>
                     <div className="space-y-4">
-                      {(showAllFilterGroups
-                        ? Object.values(filterGroups)
-                        : Object.values(filterGroups).slice(0, 12)
-                      ).map(group => (
+                      {visibleFilterGroups.map(group => (
                         <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                           <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group ">
                             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
@@ -1433,12 +1428,12 @@ const fetchInitialData = async () => {
                           )}
                         </div>
                       ))}
-                      {Object.values(filterGroups).length > 9 && (
+                      {shouldShowMoreFilters && (
                         <button
                           className="mt-2 text-blue-600 text-sm hover:underline"
                           onClick={() => setShowAllFilterGroups(v => !v)}
                         >
-                          {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                          {showAllFilterGroups ? 'Show less' : 'More filters'}
                         </button>
                       )}
                     </div>

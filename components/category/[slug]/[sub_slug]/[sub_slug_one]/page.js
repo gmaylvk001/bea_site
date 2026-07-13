@@ -10,6 +10,7 @@ import Addtocart from "@/components/AddToCart";
 import ReactPaginate from "react-paginate";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
+import { buildInitialExpandedFilters, getSortedFilterGroups, getVisibleFilterGroups, VISIBLE_FILTER_GROUP_LIMIT } from "@/lib/filterGroupDefaults";
 
 import { FaShareAlt } from "react-icons/fa";
 
@@ -112,48 +113,18 @@ export default function CategoryPage() {
   
 
   useEffect(() => {
+    setShowAllFilterGroups(false);
+  }, [sub_slug]);
+
+  useEffect(() => {
     if (!filterGroups || Object.values(filterGroups).length === 0) return;
-  
-    const initialExpanded = {};
-    let openCount = 1;
-  
-    if (pagination.totalProducts > 24) {
-      openCount = 8;
-    } else if (pagination.totalProducts > 12) {
-      openCount = 4;
-    } else if (pagination.totalProducts > 4) {
-      openCount = 1;
-    }
-  
-    Object.values(filterGroups).forEach((group, index) => {
-      initialExpanded[group._id] = index < openCount;
-    });
-  
-    setExpandedFilters(initialExpanded);
-  }, [filterGroups, pagination.totalProducts]);
-
-  
-/*   useEffect(() => {
-  if (!filterGroups || Object.values(filterGroups).length === 0) return;
-
-  const order = CUSTOM_FILTER_ORDER.map(i => i.toLowerCase());
-
-  // 👇 SAME SORT AS RENDER
-  const sortedGroups = Object.values(filterGroups).sort((a, b) => {
-    const indexA = order.indexOf(a.name.toLowerCase());
-    const indexB = order.indexOf(b.name.toLowerCase());
-    return indexA - indexB;
-  });
-
-  const initialExpanded = {};
-
-  // ❗ only FIRST ONE open
-  sortedGroups.forEach((group, index) => {
-    initialExpanded[group._id] = index === 0;
-  });
-
-  setExpandedFilters(initialExpanded);
-}, [filterGroups, pagination.totalProducts]); */
+    setExpandedFilters(
+      buildInitialExpandedFilters(filterGroups, {
+        subSlug: sub_slug,
+        customOrder: CUSTOM_FILTER_ORDER,
+      })
+    );
+  }, [filterGroups, sub_slug]);
 
 
 const handleShare = async (product) => {
@@ -174,39 +145,6 @@ const handleShare = async (product) => {
     }
   }
 };
-
-useEffect(() => {
-  if (!filterGroups || Object.values(filterGroups).length === 0) return;
-
-  const order = CUSTOM_FILTER_ORDER.map(i => i.toLowerCase());
-
-  const sortedGroups = Object.values(filterGroups).sort((a, b) => {
-    const indexA = order.indexOf(a.name.toLowerCase());
-    const indexB = order.indexOf(b.name.toLowerCase());
-    return indexA - indexB;
-  });
-
-  let openCount = 1; // ✅ default minimum ONE open
-
-  if (pagination.totalProducts > 24) {
-    openCount = 8;
-  } else if (pagination.totalProducts > 12) {
-    openCount = 4;
-  } else if (pagination.totalProducts > 4) {
-    openCount = 1;
-  }
-
-  const initialExpanded = {};
-
-  sortedGroups.forEach((group, index) => {
-    initialExpanded[group._id] = index < openCount;
-  });
-
-  setExpandedFilters(initialExpanded);
-}, [filterGroups, pagination.totalProducts]);
-
-
-
 
 
   useEffect(() => {
@@ -279,12 +217,6 @@ useEffect(() => {
         }
       });
       setFilterGroups(groups);
-       // Expand all filter groups by default
-        const initialExpanded = {};
-        Object.keys(groups).forEach(key => {
-          initialExpanded[key] = true;
-        });
-        setExpandedFilters(initialExpanded);
       
       if (categoryData.products?.length > 0) {
         
@@ -624,25 +556,12 @@ const handlePageChange = (page) => {
   };
   
     
-  const sortedFilterGroups = (() => {
-    const groups = Object.values(filterGroups);
-    if (sub_slug && sub_slug.includes('washing-machine')) {
-      const priority = ['operation', 'washer capacity'];
-      return [...groups].sort((a, b) => {
-        const aIdx = priority.indexOf(a.name.toLowerCase());
-        const bIdx = priority.indexOf(b.name.toLowerCase());
-        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-        if (aIdx !== -1) return -1;
-        if (bIdx !== -1) return 1;
-        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
-      });
-    }
-    return [...groups].sort((a, b) => {
-      if (a.name.toLowerCase() === 'capacity') return -1;
-      if (b.name.toLowerCase() === 'capacity') return 1;
-      return a.name.localeCompare(b.name);
-    });
-  })();
+  const sortedFilterGroups = getSortedFilterGroups(filterGroups, {
+    subSlug: sub_slug,
+    customOrder: CUSTOM_FILTER_ORDER,
+  });
+  const visibleFilterGroups = getVisibleFilterGroups(sortedFilterGroups, showAllFilterGroups);
+  const shouldShowMoreFilters = sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
 
   if ((loading || !categoryData.category) && page == 1) {
     return (
@@ -1079,7 +998,7 @@ const handlePageChange = (page) => {
              </div>
          
              <div className="space-y-4">
-               {sortedFilterGroups
+               {visibleFilterGroups
                  .map(group => (
                    <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                      <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
@@ -1118,12 +1037,12 @@ const handlePageChange = (page) => {
                      )}
                    </div>
                  ))}
-                 {Object.values(filterGroups).length > 9 && (
+                 {shouldShowMoreFilters && (
                       <button
                         className="mt-2 text-blue-600 text-sm hover:underline"
                         onClick={() => setShowAllFilterGroups(v => !v)}
                       >
-                        {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                        {showAllFilterGroups ? 'Show less' : 'More filters'}
                       </button>
                     )}
              </div>
@@ -1325,7 +1244,7 @@ const handlePageChange = (page) => {
                 <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
               </div>
               <div className="space-y-4">
-                {sortedFilterGroups.map(group => (
+                {visibleFilterGroups.map(group => (
                   <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                     {/* Filter Group Header */}
                     <button  onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
@@ -1363,12 +1282,12 @@ const handlePageChange = (page) => {
                     )}
                   </div>
                 ))}
-                {Object.values(filterGroups).length > 9 && (
+                {shouldShowMoreFilters && (
                         <button
                           className="mt-2 text-blue-600 text-sm hover:underline"
                           onClick={() => setShowAllFilterGroups(v => !v)}
                         >
-                          {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                          {showAllFilterGroups ? 'Show less' : 'More filters'}
                         </button>
                       )}
               </div>

@@ -14,6 +14,11 @@ import Addtocart from "@/components/AddToCart";
 import { FaShareAlt } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import { Range as ReactRange } from "react-range";
+import {
+  getSortedFilterGroups,
+  getVisibleFilterGroups,
+  VISIBLE_FILTER_GROUP_LIMIT,
+} from "@/lib/filterGroupDefaults";
 
 const CategoryTreeFilter = ({
   categories,
@@ -143,6 +148,7 @@ const [filterSummaryRaw, setFilterSummaryRaw] = useState([]);
 const [filterGroups, setFilterGroups] = useState({});
 const [filterDefMap, setFilterDefMap] = useState({});
 const [expandedGroups, setExpandedGroups] = useState({});
+const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
 const [selectedProductFilters, setSelectedProductFilters] = useState([]);
 const [showMobileFilters, setShowMobileFilters] = useState(false);
 
@@ -171,6 +177,7 @@ const FILTER_LIST_MAX_HEIGHT = "max-h-[7.75rem]";
   });
   setFilterGroups(groups);
   setFilterDefMap(map);
+  setShowAllFilterGroups(false);
 }, [filterDefs]);
 
 const toggleProductFilter = (id) => {
@@ -665,11 +672,19 @@ const handleShare = async (product) => {
     }
   };
 
+  const sortedFilterGroups = getSortedFilterGroups(filterGroups);
+  const visibleFilterGroups = getVisibleFilterGroups(
+    sortedFilterGroups,
+    showAllFilterGroups
+  );
+  const shouldShowMoreFilters =
+    sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
+
   return (
-    <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
+    <div className="container mx-auto px-4 py-2 pb-3 max-w-[1400px]">
       {/* Marquee Banner */}
       <div
-        className="w-full overflow-hidden mb-4"
+        className="w-full overflow-hidden mb-4 rounded-xl"
         style={{ backgroundColor: "#1E5FA8" }}
       >
         <div
@@ -720,9 +735,9 @@ const handleShare = async (product) => {
 
       {/* Banners */}
       {banners.length > 0 && (
-        <div className="relative w-full mb-6 overflow-hidden">
+        <div className="relative w-full mb-6 overflow-hidden rounded-xl">
           <div
-            className="relative w-full cursor-pointer"
+            className="relative w-full cursor-pointer overflow-hidden rounded-xl"
             onClick={() => {
               const url = banners[currentBannerIndex]?.redirect_url;
               if (url) window.location.href = url;
@@ -733,7 +748,7 @@ const handleShare = async (product) => {
               alt={`Open Box Banner ${currentBannerIndex + 1}`}
               width={1920}
               height={600}
-              className="w-full h-auto object-cover"
+              className="w-full h-auto object-cover rounded-xl"
               unoptimized
             />
           </div>
@@ -1162,7 +1177,7 @@ const handleShare = async (product) => {
         <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
           <h3 className="text-base font-semibold text-gray-700 mb-2">Product Filters</h3>
           <div className="space-y-4">
-          {Object.values(filterGroups).map((g) => (
+          {visibleFilterGroups.map((g) => (
          <div key={g._id} className="border-b last:border-0 pb-2">
         <button
           onClick={() =>
@@ -1205,6 +1220,15 @@ const handleShare = async (product) => {
           )}
         </div>
       ))}
+      {shouldShowMoreFilters && (
+        <button
+          type="button"
+          className="mt-2 text-blue-600 text-sm hover:underline"
+          onClick={() => setShowAllFilterGroups((v) => !v)}
+        >
+          {showAllFilterGroups ? "Show less" : "More filters"}
+        </button>
+      )}
     </div>
   </div>
 )}

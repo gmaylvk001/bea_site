@@ -10,7 +10,7 @@ import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
 //import FlashCategorySlider from "../FlashCategorySlider";
-//import BannerSlider from "../main-cat-banner";
+import { getSortedFilterGroups, getVisibleFilterGroups, VISIBLE_FILTER_GROUP_LIMIT } from "@/lib/filterGroupDefaults";
 
 export default function CategoryPage(params) {
   const [categoryData, setCategoryData] = useState({
@@ -80,6 +80,10 @@ export default function CategoryPage(params) {
   const router = useRouter(); // Added router
 
   // Fetch initial data
+  useEffect(() => {
+    setShowAllFilterGroups(false);
+  }, [slug]);
+
   useEffect(() => {
     if (slug) {
       fetchInitialData();
@@ -602,6 +606,10 @@ const getSortedProducts = () => {
   }
 
   console.log("📌 Category Data:", categoryData);
+
+  const sortedFilterGroups = getSortedFilterGroups(filterGroups);
+  const visibleFilterGroups = getVisibleFilterGroups(sortedFilterGroups, showAllFilterGroups);
+  const shouldShowMoreFilters = sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
 
   return (
 
@@ -1129,7 +1137,7 @@ const getSortedProducts = () => {
                     <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
                   </div>
                   <div className="space-y-4">
-                    {Object.values(filterGroups).map(group => (
+                    {visibleFilterGroups.map(group => (
                       <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                         <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
                           <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-color flex-1 text-left uppercase">{group.name}</span>
@@ -1165,12 +1173,12 @@ const getSortedProducts = () => {
                         )}
                       </div>
                     ))}
-                     {Object.values(filterGroups).length > 9 && (
+                     {shouldShowMoreFilters && (
                       <button
                         className="mt-2 text-blue-600 text-sm hover:underline"
                         onClick={() => setShowAllFilterGroups(v => !v)}
                       >
-                        {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                        {showAllFilterGroups ? 'Show less' : 'More filters'}
                       </button>
                     )}
                   </div>
@@ -1366,7 +1374,7 @@ const getSortedProducts = () => {
                       <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
                     </div>
                     <div className="space-y-4">
-                      {Object.values(filterGroups).map(group => (
+                      {visibleFilterGroups.map(group => (
                         <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                           <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
                             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
@@ -1402,12 +1410,12 @@ const getSortedProducts = () => {
                           )}
                         </div>
                       ))}
-                      {Object.values(filterGroups).length > 9 && (
+                      {shouldShowMoreFilters && (
                         <button
                           className="mt-2 text-blue-600 text-sm hover:underline"
                           onClick={() => setShowAllFilterGroups(v => !v)}
                         >
-                          {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                          {showAllFilterGroups ? 'Show less' : 'More filters'}
                         </button>
                       )}
                     </div>

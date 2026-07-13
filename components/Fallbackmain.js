@@ -11,6 +11,7 @@ import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
+import { buildInitialExpandedFilters, getSortedFilterGroups, getVisibleFilterGroups, VISIBLE_FILTER_GROUP_LIMIT } from "@/lib/filterGroupDefaults";
 //import FlashCategorySlider from "../FlashCategorySlider";
 //import BannerSlider from "../main-cat-banner";
 
@@ -44,20 +45,9 @@ const [selectedSubCategory, setSelectedSubCategory] = useState("");
   const [sortOption, setSortOption] = useState('');
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [isBrandsExpanded, setIsBrandsExpanded] = useState(true);
-  const [expandedFilters, setExpandedFilters] = useState(() => {
-  // Initialize all filter groups as expanded
-  const initialExpanded = {};
-  if (categoryData.filters) {
-    categoryData.filters.forEach(filter => {
-      const groupId = filter.filter_group_name;
-      if (groupId) {
-        initialExpanded[groupId] = true;
-      }
-    });
-  }
-  return initialExpanded;
-}); 
+  const [expandedFilters, setExpandedFilters] = useState({});
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
+  const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
   const [wishlist, setWishlist] = useState([]); 
   const toggleFilters = () => setIsFiltersExpanded(!isFiltersExpanded);
   const toggleCategories = () => {
@@ -129,25 +119,14 @@ const [selectedSubCategory, setSelectedSubCategory] = useState("");
   };
 
   useEffect(() => {
-  if (Object.values(filterGroups).length > 0) {
-    const initialExpanded = {};
-    let openCount = 1; // default
+    setShowAllFilterGroups(false);
+  }, [slug]);
 
-    if (pagination.totalProducts > 24) {
-      openCount = 8;
-    } else if (pagination.totalProducts > 12) {
-      openCount = 4;
-    } else if (pagination.totalProducts > 4) {
-      openCount = 1;
+  useEffect(() => {
+    if (Object.values(filterGroups).length > 0) {
+      setExpandedFilters(buildInitialExpandedFilters(filterGroups));
     }
-
-    Object.values(filterGroups).forEach((group, index) => {
-      initialExpanded[group._id] = index < openCount;
-    });
-
-    setExpandedFilters(initialExpanded);
-  }
-}, [filterGroups, pagination.totalProducts]);
+  }, [filterGroups]);
 
 
   // Fetch initial data
@@ -281,13 +260,6 @@ setCategoryTree(directChildren);
       
       console.log('🏷️ Final filter groups:', groups);
       setFilterGroups(groups);
-
-      // Initialize expanded state
-      const initialExpanded = {};
-      Object.keys(groups).forEach(groupId => {
-        initialExpanded[groupId] = true;
-      });
-      setExpandedFilters(initialExpanded);
       
     } else {
      
@@ -781,7 +753,9 @@ const handlePageChange = (page) => {
     );
   }
 
- 
+  const sortedFilterGroups = getSortedFilterGroups(filterGroups);
+  const visibleFilterGroups = getVisibleFilterGroups(sortedFilterGroups, showAllFilterGroups);
+  const shouldShowMoreFilters = sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
 
   return (
 
@@ -1452,7 +1426,7 @@ const children = node?.subCategories || [];
                     <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
                   </div>
                   <div className="space-y-4">
-                    {Object.values(filterGroups).sort((a, b) => { if (a.name.toLowerCase() === 'capacity') return -1; if (b.name.toLowerCase() === 'capacity') return 1; return a.name.localeCompare(b.name); }).map(group => (
+                    {visibleFilterGroups.map(group => (
                       <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                         <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
                           {/* <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span> */}
@@ -1491,6 +1465,14 @@ const children = node?.subCategories || [];
         )}
          </div>
               ))} 
+                    {shouldShowMoreFilters && (
+                      <button
+                        className="mt-2 text-blue-600 text-sm hover:underline"
+                        onClick={() => setShowAllFilterGroups(v => !v)}
+                      >
+                        {showAllFilterGroups ? 'Show less' : 'More filters'}
+                      </button>
+                    )}
                 </div>
               </div>
              )}
@@ -1683,7 +1665,7 @@ const children = node?.subCategories || [];
                       <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
                     </div>
                     <div className="space-y-4">
-                      {Object.values(filterGroups).sort((a, b) => { if (a.name.toLowerCase() === 'capacity') return -1; if (b.name.toLowerCase() === 'capacity') return 1; return a.name.localeCompare(b.name); }).map(group => (
+                      {visibleFilterGroups.map(group => (
                         <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                           <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
                             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
@@ -1719,6 +1701,14 @@ const children = node?.subCategories || [];
                           )}
                         </div>
                       ))}
+                      {shouldShowMoreFilters && (
+                        <button
+                          className="mt-2 text-blue-600 text-sm hover:underline"
+                          onClick={() => setShowAllFilterGroups(v => !v)}
+                        >
+                          {showAllFilterGroups ? 'Show less' : 'More filters'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

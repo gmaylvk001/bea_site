@@ -9,6 +9,7 @@ import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
+import { buildInitialExpandedFilters, getSortedFilterGroups, getVisibleFilterGroups, VISIBLE_FILTER_GROUP_LIMIT } from "@/lib/filterGroupDefaults";
 
 
 export default function CategoryPage() {
@@ -127,25 +128,13 @@ const CUSTOM_FILTER_ORDER = [
 
 
 useEffect(() => {
+  setShowAllFilterGroups(false);
+}, [sub_slug]);
+
+useEffect(() => {
   if (!filterGroups || Object.values(filterGroups).length === 0) return;
-
-  const initialExpanded = {};
-  let openCount = 1;
-
-  if (pagination.totalProducts > 24) {
-    openCount = 8;
-  } else if (pagination.totalProducts > 12) {
-    openCount = 4;
-  } else if (pagination.totalProducts > 4) {
-    openCount = 1;
-  }
-
-  Object.values(filterGroups).forEach((group, index) => {
-    initialExpanded[group._id] = index < openCount;
-  });
-
-  setExpandedFilters(initialExpanded);
-}, [filterGroups, pagination.totalProducts]);
+  setExpandedFilters(buildInitialExpandedFilters(filterGroups, { subSlug: sub_slug }));
+}, [filterGroups, sub_slug]);
 
 
 
@@ -259,12 +248,6 @@ Object.keys(groups).forEach(key => {
 });
 
       setFilterGroups(groups);
-        // Expand all filter groups by default
-        const initialExpanded = {};
-        Object.keys(groups).forEach(key => {
-          initialExpanded[key] = true;
-        });
-        setExpandedFilters(initialExpanded);
       if (categoryData.products?.length > 0) {
       await fetchFilteredProducts(categoryData, 1, true);
       }else{
@@ -700,21 +683,9 @@ const handlePageChange = (page) => {
     );
   };
 
-  const sortedFilterGroups = (() => {
-    const groups = Object.values(filterGroups);
-    if (sub_slug && sub_slug.includes('washing-machine')) {
-      const priority = ['operation', 'washer capacity'];
-      return [...groups].sort((a, b) => {
-        const aIdx = priority.indexOf(a.name.toLowerCase());
-        const bIdx = priority.indexOf(b.name.toLowerCase());
-        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-        if (aIdx !== -1) return -1;
-        if (bIdx !== -1) return 1;
-        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
-      });
-    }
-    return [...groups].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-  })();
+  const sortedFilterGroups = getSortedFilterGroups(filterGroups, { subSlug: sub_slug });
+  const visibleFilterGroups = getVisibleFilterGroups(sortedFilterGroups, showAllFilterGroups);
+  const shouldShowMoreFilters = sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
 
   if ((loading || !categoryData.category) && pagination.currentPage === 1) {
     return (
@@ -1275,7 +1246,7 @@ const handlePageChange = (page) => {
                                              </div>
                                          
                                              <div className="space-y-4">
-                                               {sortedFilterGroups
+                                               {visibleFilterGroups
                                                  .map(group => (
                                                    <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                                                      <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
@@ -1314,12 +1285,12 @@ const handlePageChange = (page) => {
                                                      )}
                                                    </div>
                                                  ))}
-                                                 {Object.values(filterGroups).length > 9 && (
+                                                 {shouldShowMoreFilters && (
                       <button
                         className="mt-2 text-blue-600 text-sm hover:underline"
                         onClick={() => setShowAllFilterGroups(v => !v)}
                       >
-                        {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                        {showAllFilterGroups ? 'Show less' : 'More filters'}
                       </button>
                     )}
                                              </div>
@@ -1563,7 +1534,7 @@ const handlePageChange = (page) => {
                                   <h3 className="text-base font-semibold text-gray-700">Product Filters</h3>
                                 </div>
                                 <div className="space-y-4">
-                                  {sortedFilterGroups.map(group => (
+                                  {visibleFilterGroups.map(group => (
                                     <div key={group._id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                                       <button onClick={() => toggleFilterGroup(group._id)} className="flex justify-between items-center w-full group">
                                         <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">{group.name}</span>
@@ -1599,12 +1570,12 @@ const handlePageChange = (page) => {
                                       )}
                                     </div>
                                   ))}
-                                  {Object.values(filterGroups).length > 9 && (
+                                  {shouldShowMoreFilters && (
                         <button
                           className="mt-2 text-blue-600 text-sm hover:underline"
                           onClick={() => setShowAllFilterGroups(v => !v)}
                         >
-                          {showAllFilterGroups ? 'Show Less' : 'Show More'}
+                          {showAllFilterGroups ? 'Show less' : 'More filters'}
                         </button>
                       )}
                                 </div>
