@@ -7,11 +7,10 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
-  Filter,
 } from "react-feather";
 import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
-import { FaShareAlt } from "react-icons/fa";
+import { FaShareAlt, FaSlidersH } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import { Range as ReactRange } from "react-range";
 import {
@@ -150,7 +149,7 @@ const [filterDefMap, setFilterDefMap] = useState({});
 const [expandedGroups, setExpandedGroups] = useState({});
 const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
 const [selectedProductFilters, setSelectedProductFilters] = useState([]);
-const [showMobileFilters, setShowMobileFilters] = useState(false);
+const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
 const FILTER_LIST_MAX_HEIGHT = "max-h-[7.75rem]";
 
@@ -817,11 +816,11 @@ const handleShare = async (product) => {
 
       <button
         type="button"
-        onClick={() => setShowMobileFilters((prev) => !prev)}
+        onClick={() => setIsFilterPanelOpen(true)}
         className="md:hidden w-full mb-3 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-blue-200 bg-white text-blue-700 font-semibold text-sm shadow-sm"
       >
-        <Filter size={16} />
-        {showMobileFilters ? "Hide Filters" : "Filters"}
+        <FaSlidersH className="text-blue-600 text-sm" />
+        Filters
         {activeFilterCount > 0 && (
           <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-blue-600 text-white text-xs">
             {activeFilterCount}
@@ -830,13 +829,35 @@ const handleShare = async (product) => {
       </button>
 
       <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-        {/* Sidebar */}
+        {/* Mobile backdrop */}
+        {isFilterPanelOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            onClick={() => setIsFilterPanelOpen(false)}
+          />
+        )}
 
+        {/* Sidebar — desktop always visible; mobile slides from left */}
         <div
-          className={`w-full md:w-[250px] shrink-0 ${
-            showMobileFilters ? "block" : "hidden"
-          } md:block`}
+          className={`${
+            isFilterPanelOpen
+              ? "fixed left-0 top-0 w-4/5 h-full bg-white shadow-lg z-50 flex flex-col md:static md:z-auto md:w-[250px] md:h-auto md:shadow-none md:block"
+              : "hidden md:block md:w-[250px] shrink-0"
+          }`}
         >
+          {/* Mobile panel header */}
+          <div className="flex justify-between items-center p-4 border-b flex-shrink-0 bg-white md:hidden">
+            <h2 className="text-lg font-semibold">Filters</h2>
+            <button
+              type="button"
+              onClick={() => setIsFilterPanelOpen(false)}
+              className="text-gray-500 hover:text-gray-700 text-lg"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 md:p-0 md:overflow-visible md:space-y-0">
           {/* Active Filters */}
           {(selectedFilters.brands.length > 0 ||
             selectedFilters.price.min !== priceRange[0] ||
@@ -1232,7 +1253,18 @@ const handleShare = async (product) => {
     </div>
   </div>
 )}
-       
+          </div>
+
+          {/* Mobile panel footer */}
+          <div className="p-4 border-t flex-shrink-0 bg-white md:hidden">
+            <button
+              type="button"
+              onClick={() => setIsFilterPanelOpen(false)}
+              className="w-full bg-blue-600 text-white py-2 rounded-md"
+            >
+              Apply Filters
+            </button>
+          </div>
         </div>
         {/* Products */}
         <div className="flex-1">

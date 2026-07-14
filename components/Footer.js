@@ -659,35 +659,35 @@ const Footer = () => {
       </div>
 
       {/* Our App Section */}
-      <div className="sm:col-span-2  lg:col-span-2 bottom-0 xl:bottom-6 flex px-2 lg:px-4 min-w-0 relative h-[196px] lg:h-[210px] items-center">
+      <div className="sm:col-span-2 lg:col-span-2 bottom-4 flex px-2 lg:px-2 xl:px-4 min-w-0 relative h-[196px] lg:h-[210px] items-center overflow-visible">
         
         {/* Text & Badges */}
-        <div className="relative z-10 mb-2 flex flex-col pt-0.5 w-[60%] sm:w-[50%] md:w-[90%] lg:w-[90%]">
-          <h4 className="font-bold text-white mb-6 text-[14px] mb-1 leading-tight">
+        <div className="relative z-10 mb-2 flex flex-col pt-0.5 w-[60%] sm:w-[50%] md:w-[90%] lg:w-[52%] xl:w-[90%]">
+          <h4 className="font-semibold text-white mb-6 mb-1 leading-tight lg:text-[13px] xl:text-base">
             Download BEA TRUCO App
           </h4>
-          <p className="text-gray-300  text-[10px] leading-snug mb-2">
+          <p className="text-gray-300 text-[14px] leading-snug mb-2 lg:text-[12px] xl:text-[14px]">
             Your rewards, always<br/>in your pocket.
           </p>
 
           <div className="flex flex-col gap-1.5 mt-1">
-            <Link href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-[110px]">
+            <Link href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-[140px] lg:w-[118px] xl:w-[140px]">
               <Image
                 src="/uploads/Play_Store.png" 
                 alt="Get it on Google Play"
-                width={100}
-                height={70}
-                className="object-contain rounded"
+                width={140}
+                height={100}
+                className="object-contain rounded w-full h-auto"
               />
              
             </Link>
-            <Link href="https://apps.apple.com/in/app/bea-truco/id6751942292" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-[110px]">
+            <Link href="https://apps.apple.com/in/app/bea-truco/id6751942292" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-[140px] lg:w-[118px] xl:w-[140px]">
               <Image
                 src="/uploads/App_Store.png" 
                 alt="Download on the App Store"
-                width={100}
-                height={70}
-                className="object-contain rounded"
+                width={140}
+                height={100}
+                className="object-contain rounded w-full h-auto"
               />
              
             </Link>
@@ -695,13 +695,13 @@ const Footer = () => {
         </div>
 
         {/* Phone Image at the end (right) - hidden on very small screens, visible from sm up */}
-        <div className="absolute right-[-2px] mb-2 md:right-[90px] top-[80px] right-[70px] md:top-[80px] top-5 xl:top-[80px] bottom-4 xl:bottom-[-2px] z-0 pointer-events-none flex items-center lg:right-[-20px]">
+        <div className="absolute right-[-2px] mb-2 sm:right-[50px] right-[10px] md:right-[90px] top-[80px] right-[70px] md:top-[80px] top-5 xl:top-[80px] bottom-4 xl:bottom-[-2px] z-0 pointer-events-none flex items-center sm:right-[90px] lg:right-[-18px] xl:right-[-90px] lg:top-[55px] lg:bottom-auto">
   <Image
     src="/uploads/truco_app_phone.png"
     alt="BEA Mobile App Mockup"
     width={110}
     height={140}
-    className="object-contain drop-shadow-xl"
+    className="object-contain drop-shadow-xl lg:w-[92px] xl:w-[110px] h-auto"
   />
 </div>
       </div>
