@@ -659,7 +659,7 @@ const Footer = () => {
       </div>
 
       {/* Our App Section */}
-      <div className="sm:col-span-2 lg:col-span-2 bottom-4 flex px-2 lg:px-2 xl:px-4 min-w-0 relative h-[196px] lg:h-[210px] items-center overflow-visible">
+      <div className="sm:col-span-2 lg:col-span-2 bottom-4 flex px-2 lg:px-2 xl:px-4 min-w-0 relative h-[196px] lg:h-[230px] xl:h-[240px] items-center lg:items-start lg:pt-4 xl:pt-2 overflow-visible">
         
         {/* Text & Badges */}
         <div className="relative z-10 mb-2 flex flex-col pt-0.5 w-[60%] sm:w-[50%] md:w-[90%] lg:w-[52%] xl:w-[90%]">
@@ -695,7 +695,7 @@ const Footer = () => {
         </div>
 
         {/* Phone Image at the end (right) - hidden on very small screens, visible from sm up */}
-        <div className="absolute right-[-2px] mb-2 sm:right-[50px] right-[10px] md:right-[90px] top-[80px] right-[70px] md:top-[80px] top-5 xl:top-[80px] bottom-4 xl:bottom-[-2px] z-0 pointer-events-none flex items-center sm:right-[90px] lg:right-[-18px] xl:right-[-90px] lg:top-[55px] lg:bottom-auto">
+        <div className="absolute right-[-12px] mb-2 sm:right-[90px] md:right-[90px] top-5 md:top-[80px] bottom-4 xl:bottom-[-2px] z-0 pointer-events-none flex items-center lg:right-[-18px] xl:right-[-90px] 2xl:right-[-40px] lg:top-[18px] xl:top-[36px] lg:bottom-auto">
   <Image
     src="/uploads/truco_app_phone.png"
     alt="BEA Mobile App Mockup"
