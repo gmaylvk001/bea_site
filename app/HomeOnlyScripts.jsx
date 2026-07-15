@@ -63,7 +63,7 @@ export default function HomeOnlyScripts() {
           /* webpackIgnore: true */ "https://cdn.jsdelivr.net/npm/@typebot.io/js@0.3.12/dist/web.js"
         );
 
-        if (!typebotCancelled && pathname === "/") {
+        if (!typebotCancelled && !pathname?.startsWith("/admin")) {
           Typebot.initBubble({
             typebot: "bea-chatbot",
             apiHost: "https://chat.infozub.com",
@@ -114,12 +114,12 @@ export default function HomeOnlyScripts() {
     // -------------------------
     // Main SPA logic
     // -------------------------
-    if (pathname === "/") {
+    if (pathname?.startsWith("/admin")) {
+      cleanupDOM();
+    } else {
       loadGTM();
       loadTypebot();
       loadTawk();
-    } else {
-      cleanupDOM();
     }
 
     return () => {

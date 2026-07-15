@@ -6,9 +6,9 @@ import { useState } from "react";
 export default function WhatsAppFloat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const whatsappUrl = "https://wa.me/919585685500?text=hello";
+  const whatsappUrl = "https://wa.me/919842344323?text=hello";
 
-  if (pathname !== "/") return null;
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <>
