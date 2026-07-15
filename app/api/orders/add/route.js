@@ -36,6 +36,7 @@ export async function POST(req) {
        promotion_discount_applied,
       pickup_store,
       store_id,
+      gst_number,
     } = body;
 
     // Validate required fields
@@ -68,6 +69,7 @@ export async function POST(req) {
      promotion_discount_applied: promotion_discount_applied || 0,
       pickup_store: pickup_store || null,
       store_id: store_id || null,
+      gst_number: gst_number || null,
     };
 
     // Check if order already exists (match by order_number if provided, else user + pending order)

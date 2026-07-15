@@ -483,6 +483,7 @@ const Footer = () => {
                       <li><Link href="/cancellation-refund-policy">Cancellation & Refund Policy</Link></li>
                       <li><Link href="/feedback">Customer Support & feedback centre</Link></li>
                       <li><Link href="/contact">Contact</Link></li>
+                      <li><Link href="/live-video-demo">Live Video Demo</Link></li>
                       <li><Link href="/bulk-orders-and-gift-card-enquiry">B2B / Corporate Enquiries</Link></li>
                     </ul>
                   </div>

@@ -10,7 +10,9 @@ import {
   FaPaperPlane,
   FaSearch,
   FaArrowRight,
+  FaVideo,
 } from "react-icons/fa";
+import { useModal } from "@/context/ModalContext";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const titleCase = (str) =>
@@ -264,6 +266,7 @@ function StoreCard({ store }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function ContactPage() {
+  const { openLiveDemoModal } = useModal();
   const [stores, setStores] = useState([]);
   const [totalStores, setTotalStores] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -309,21 +312,22 @@ const results = stores.filter(
 {/* ══════════════════════════════════════════════════
     SECTION 1 — HERO BANNER
 ══════════════════════════════════════════════════ */}
-<section className="relative w-full overflow-hidden min-h-[280px] sm:min-h-[320px] md:min-h-[360px] lg:min-h-[400px] xl:min-h-[420px]">
+<section className="relative w-full overflow-hidden">
+  {/* In-flow image sets height from asset AR — no crop on large screens */}
   <img
     src="/contact/banner1.png"
     alt="Contact BEA"
-    className="absolute inset-0 w-full h-full object-cover"
+    className="relative z-0 block w-full h-auto"
     onError={(e) => { e.target.style.display = "none"; }}
   />
   <div
-    className="absolute inset-0"
+    className="absolute inset-0 z-[1] pointer-events-none"
     style={{
       background:
         "linear-gradient(to right, rgba(5,13,40,0.97) 0%, rgba(5,13,40,0.93) 20%, rgba(5,13,40,0.72) 42%, rgba(5,13,40,0.28) 62%, rgba(5,13,40,0.06) 78%, transparent 92%)",
     }}
   />
-  <div className="absolute inset-0 flex items-center px-[clamp(1rem,3vw,2.5rem)] py-[clamp(0.75rem,2vw,1.5rem)]">
+  <div className="absolute inset-0 z-[2] flex items-center px-[clamp(1rem,3vw,2.5rem)] py-[clamp(0.75rem,2vw,1.5rem)]">
     <div className="ms-0 sm:ms-2 md:ms-4 lg:ms-6 space-y-[clamp(0.65rem,1.8vw,1.25rem)] max-w-5xl w-full">
       {/* Heading + subtitle */}
       <div>
@@ -337,7 +341,7 @@ const results = stores.filter(
       </div>
 
       {/* Contact chips */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-[clamp(0.5rem,1.2vw,1.25rem)] w-full sm:max-w-[min(42rem,95vw)] lg:max-w-4xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[clamp(0.5rem,1.2vw,1.25rem)] w-full sm:max-w-[min(42rem,95vw)] lg:max-w-5xl">
 
       {/* Call Us */}
       <a href="tel:9842344323" className="flex items-center gap-[clamp(0.4rem,0.8vw,0.65rem)] no-underline min-w-0">
@@ -368,6 +372,25 @@ const results = stores.filter(
         </div>
       </a>
 
+      {/* Video Demo Call */}
+      <button
+        type="button"
+        onClick={openLiveDemoModal}
+        className="flex items-center gap-[clamp(0.4rem,0.8vw,0.65rem)] min-w-0 sm:border-l sm:border-white/15 sm:pl-[clamp(0.5rem,1vw,1rem)] bg-transparent border-0 p-0 cursor-pointer text-left"
+      >
+        <div className="rounded-full border border-white/30 flex items-center justify-center flex-shrink-0 w-[clamp(1.65rem,1.4vw+1rem,2.1rem)] h-[clamp(1.65rem,1.4vw+1rem,2.1rem)]">
+          <svg className="w-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)] h-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)]" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 7l-7 5 7 5V7z"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <div className="text-[clamp(0.6rem,0.55vw+0.42rem,0.72rem)] text-white font-medium leading-none mb-0.5">Video Call</div>
+          <div className="text-[clamp(0.72rem,0.7vw+0.45rem,0.9rem)] text-white font-bold leading-tight">BEA Live Demo</div>
+          <div className="text-[clamp(0.62rem,0.55vw+0.4rem,0.82rem)] text-white leading-tight mt-0.5">Demo Video Call</div>
+        </div>
+      </button>
+
       {/* Stores */}
       <Link href="/our-branches" className="flex items-center gap-[clamp(0.4rem,0.8vw,0.65rem)] no-underline min-w-0 sm:border-l sm:border-white/15 sm:pl-[clamp(0.5rem,1vw,1rem)]">
         <div className="rounded-full border border-white/30 flex items-center justify-center flex-shrink-0 w-[clamp(1.65rem,1.4vw+1rem,2.1rem)] h-[clamp(1.65rem,1.4vw+1rem,2.1rem)]">
@@ -396,7 +419,7 @@ const results = stores.filter(
           SECTION 2 — 3 SUPPORT CARDS
       ══════════════════════════════════════════════════ */}
       <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8 mt-6 md:mt-8">
-        <div className="max-w-12xl mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="max-w-12xl mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
 
           {/* Talk to Experts */}
           <div className="border border-gray-200 rounded-xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3">
@@ -430,6 +453,26 @@ const results = stores.filter(
               </a>
             </div>
           </div>
+
+          {/* BEA Live Video Demo */}
+          <button
+            type="button"
+            onClick={openLiveDemoModal}
+            className="border border-[#c4b5fd] rounded-xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3 bg-[#f5f3ff] hover:bg-[#ede9fe] transition-colors text-left w-full"
+          >
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#5B4CF5] flex items-center justify-center flex-shrink-0">
+              <FaVideo className="text-white text-[15px] sm:text-[17px]" />
+            </div>
+            <div>
+              <div className="text-[14px] font-bold text-[#5B4CF5] mb-1.5">BEA Live Video Demo</div>
+              <p className="text-[12px] text-gray-500 leading-relaxed mb-2">
+                See products live on a video call. Compare models and ask our experts anything.
+              </p>
+              <span className="text-[#5B4CF5] font-bold text-[13px] inline-flex items-center gap-1">
+                Demo Video Call <FaArrowRight size={11} />
+              </span>
+            </div>
+          </button>
 
           {/* Visit Our Stores */}
           <div className="border border-gray-200 rounded-xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3">

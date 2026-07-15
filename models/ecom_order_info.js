@@ -106,6 +106,7 @@ loyalty_redemption_token: { type: String, default: null },
 points_per_currency_unit: { type: Number, default: null },
 promotion_code_applied: { type: String, default: null },
 promotion_discount_applied: { type: Number, default: 0 },
+gst_number: { type: String, default: null },
 
 
     order_history: [OrderHistorySchema]

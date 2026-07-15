@@ -6,6 +6,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/AuthModal';
 import { ga4BeginCheckout, ga4Purchase } from "@/utils/nextjs-event-tracking.js";
+import { useModal } from "@/context/ModalContext";
 
 const loadRazorpay = () => {
   return new Promise((resolve) => {
@@ -314,6 +315,7 @@ const findNearestStores = async (pincode) => {
 
 // ─── Main CheckoutPage ───────────────────────────────────────────────────────
 export default function CheckoutPage() {
+  const { openLiveDemoModal } = useModal();
   const { cartCount, updateCartCount } = useCart();
   const router = useRouter();
   const [stores, setStores] = useState([]);
@@ -324,10 +326,11 @@ export default function CheckoutPage() {
 
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', businessName: '',
-    country: '', address: '', landmark: '',
+    country: 'India', address: '', landmark: '',
     city: '', state: 'Tamilnadu', postCode: '',
     phonenumber: '', email: '', additionalInfo: '',
     deliveryType: 'home', selectedStore: '',
+    needGstInvoice: false, gst_number: '',
   });
 
   const [isDeliverySaved, setIsDeliverySaved] = useState(false);
@@ -422,7 +425,7 @@ export default function CheckoutPage() {
         setFormData(prev => ({
           ...prev,
           firstName: addr.firstName || '', lastName: addr.lastName || '',
-          country: addr.country || '', address: addr.address || '',
+          country: 'India', address: addr.address || '',
           city: addr.city || '', state: addr.state || 'Tamilnadu',
           postCode: addr.postCode || '', phonenumber: addr.phonenumber || '',
           landmark: addr.landmark || '', email: addr.email || '',
@@ -670,8 +673,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
       const decoded = jwtDecode(token);
       const userId = decoded.userId;
       const addressData = useSavedAddress && selectedAddress !== null
-        ? { ...useraddress[selectedAddress], state: useraddress[selectedAddress].state || 'Tamilnadu', country: useraddress[selectedAddress].country || 'India' }
-        : { ...formData, state: formData.state || 'Tamilnadu', country: formData.country || 'India' };
+        ? { ...useraddress[selectedAddress], state: useraddress[selectedAddress].state || 'Tamilnadu', country: 'India' }
+        : { ...formData, state: formData.state || 'Tamilnadu', country: 'India' };
 
       if (!useSavedAddress || selectedAddress === null) {
         setTouched({ firstName: true, lastName: true, email: true, phonenumber: true, country: true, address: true, city: true, postCode: true });
@@ -683,6 +686,14 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         if (!phoneRegex.test(addressData.phonenumber)) { toast.error('Please enter a valid 10-digit phone number.'); return; }
         if (!postCodeRegex.test(addressData.postCode)) { toast.error('Please enter a valid postal code.'); return; }
       }
+
+      if (formData.needGstInvoice && !formData.gst_number?.trim()) {
+        setTouched((prev) => ({ ...prev, gst_number: true }));
+        toast.error('Please enter your GST number.');
+        return;
+      }
+
+      const gstNumber = formData.needGstInvoice ? formData.gst_number.trim().toUpperCase() : '';
 
       setIsSubmitting(true);
       const totalAmount = orderSummary.total;
@@ -703,6 +714,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         formDataToSend.append('landmark', addressData.landmark || '');
         formDataToSend.append('phonenumber', addressData.phonenumber);
         formDataToSend.append('additionalInfo', addressData.additionalInfo || '');
+        formDataToSend.append('gst_number', gstNumber);
         const addressRes = await fetch('/api/useraddress/add', { method: 'POST', body: formDataToSend });
         if (!addressRes.ok) throw new Error('Failed to save address');
         const newAddressData = await addressRes.json();
@@ -753,6 +765,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
     delivery_type: formData.deliveryType === 'store' ? 'store_pickup' : 'home',
     pickup_store: pickupStoreName,
     store_id: formData.deliveryType === 'store' ? formData.selectedStore : null,
+    gst_number: gstNumber,
     payment_id: '', payment_status: 'payment_initialized', 
     order_number: order_number || 'ORD' + Date.now(),
     order_details: cartItems.map(item => ({ item_code: `ITEM${item.item_code}`, product_id: item.id, product_name: item.name, product_price: item.price, model: 'N/A', user_id: userId, coupondiscount: 0, created_at: new Date(), updated_at: new Date(), quantity: item.quantity, store_id: formData.deliveryType === 'store' ? formData.selectedStore : 'STORE01', orderNumber: 'ORD' + Date.now() })),
@@ -801,6 +814,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           delivery_type: formData.deliveryType === 'store' ? 'store_pickup' : 'home',
           pickup_store: pickupStoreName,
           store_id: formData.deliveryType === 'store' ? formData.selectedStore : null,
+          gst_number: gstNumber,
           payment_id: paymentData.payment_id, payment_status: paymentData.status,
           order_number: order_number || 'ORD' + Date.now(),
           order_details: cartItems.map(item => ({ item_code: `ITEM${item.item_code}`, product_id: item.id, product_name: item.name, product_price: item.price, model: 'N/A', user_id: userId, coupondiscount: 0, created_at: new Date(), updated_at: new Date(), quantity: item.quantity, store_id: formData.deliveryType === 'store' ? formData.selectedStore : 'STORE01', orderNumber: 'ORD' + Date.now() })),
@@ -961,9 +975,6 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
               {/* Delivery address — shown when home delivery */}
               {formData.deliveryType === 'home' && (
                 <div className="mt-4 space-y-3">
-                  <FloatInput label="Country" name="country" required
-                    value={formData.country} onChange={handleChange} onBlur={handleBlur}
-                    error={getFieldError('country')} />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <FloatInput label="First name" name="firstName" required
                       value={formData.firstName} onChange={handleChange} onBlur={handleBlur}
@@ -1006,6 +1017,9 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       error={getFieldError('postCode')}
                       inputMode="numeric" maxLength={6} />
                   </div>
+                  <FloatInput label="Country" name="country" required readOnly
+                    value={formData.country || 'India'} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('country')} />
                   <FloatInput label="Phone" name="phonenumber" type="tel" required
                     value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur}
                     error={getFieldError('phonenumber')} />
@@ -1015,9 +1029,6 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
               {/* Store pickup — full address block (matches design) */}
               {formData.deliveryType === 'store' && (
                 <div className="mt-4 space-y-3">
-                  <FloatInput label="Country" name="country" required
-                    value={formData.country} onChange={handleChange} onBlur={handleBlur}
-                    error={getFieldError('country')} />
                   <FloatInput label="Full Name" name="firstName" required
                     value={formData.firstName} onChange={handleChange} onBlur={handleBlur}
                     error={getFieldError('firstName')} />
@@ -1052,11 +1063,59 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       error={getFieldError('postCode')}
                       inputMode="numeric" maxLength={6} />
                   </div>
+                  <FloatInput label="Country" name="country" required readOnly
+                    value={formData.country || 'India'} onChange={handleChange} onBlur={handleBlur}
+                    error={getFieldError('country')} />
                   <FloatInput label="Phone" name="phonenumber" type="tel" required
                     value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur}
                     error={getFieldError('phonenumber')} />
                 </div>
               )}
+
+              {/* GST invoice (optional) — after delivery address inputs */}
+              <div className="mt-4">
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200 bg-white cursor-pointer hover:border-gray-300 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.needGstInvoice}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        needGstInvoice: e.target.checked,
+                        gst_number: e.target.checked ? prev.gst_number : '',
+                      }))
+                    }
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-800">
+                      Need a GST Invoice?{' '}
+                      <span className="font-normal text-gray-500">(optional)</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Tick to add your GST details and get a business invoice
+                    </p>
+                  </div>
+                </label>
+                {formData.needGstInvoice && (
+                  <div className="mt-3">
+                    <FloatInput
+                      label="GST number"
+                      name="gst_number"
+                      required
+                      value={formData.gst_number}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      error={
+                        touched.gst_number && !formData.gst_number?.trim()
+                          ? 'GST number is required'
+                          : null
+                      }
+                      maxLength={15}
+                    />
+                  </div>
+                )}
+              </div>
             </section>
 
             {/* 3. Shipping Method */}
@@ -1170,7 +1229,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       onClick={() => {
                         setSelectedAddress(index);
                         const addr = useraddress[index];
-                        setFormData(prev => ({ ...prev, firstName: addr.firstName || '', lastName: addr.lastName || '', businessName: addr.businessName || '', country: addr.country || '', address: addr.address || '', landmark: addr.landmark || '', city: addr.city || '', state: addr.state || 'Tamilnadu', postCode: addr.postCode || '', phonenumber: addr.phonenumber || '', email: addr.email || '', additionalInfo: addr.additionalInfo || '' }));
+                        setFormData(prev => ({ ...prev, firstName: addr.firstName || '', lastName: addr.lastName || '', businessName: addr.businessName || '', country: 'India', address: addr.address || '', landmark: addr.landmark || '', city: addr.city || '', state: addr.state || 'Tamilnadu', postCode: addr.postCode || '', phonenumber: addr.phonenumber || '', email: addr.email || '', additionalInfo: addr.additionalInfo || '' }));
                       }}
                       className={`border-2 rounded-xl p-4 cursor-pointer transition-all
                         ${selectedAddress === index ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}
@@ -1503,22 +1562,34 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                   </svg>
                   Need help before you buy? Our experts are here for you!
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <a href="tel:9842344323"
-                    className="flex items-center justify-center gap-2 border border-green-200 rounded-lg py-2 text-xs font-medium text-green-700 hover:bg-green-50 transition">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    className="flex items-center justify-center gap-1.5 border border-green-200 rounded-lg py-2 px-1 text-[11px] sm:text-xs font-medium text-green-700 hover:bg-green-50 transition">
+                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                     Call expert
                   </a>
-                  <a href="https://web.whatsapp.com/send?phone=919842344323&text=Hi"
+                  <a href={`https://wa.me/91${BEA_CONTACT_PHONE}?text=${encodeURIComponent("Hi")}`}
                     target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 border border-green-200 rounded-lg py-2 text-xs font-medium text-green-700 hover:bg-green-50 transition">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    className="flex items-center justify-center gap-1.5 border border-green-200 rounded-lg py-2 px-1 text-[11px] sm:text-xs font-medium text-green-700 hover:bg-green-50 transition">
+                    <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                     </svg>
-                    WhatsApp expert
+                    WhatsApp
                   </a>
+                  <button
+                    type="button"
+                    onClick={openLiveDemoModal}
+                    className="flex flex-col items-center justify-center gap-1 border border-[#c4b5fd] rounded-lg bg-[#f5f3ff] hover:bg-[#ede9fe] transition py-2 px-1 text-center w-full"
+                  >
+                    <svg className="w-4 h-4 text-[#5B4CF5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-[#5B4CF5] leading-tight">
+                      BEA Live<br />Video Demo
+                    </span>
+                  </button>
                 </div>
               </div>
 
