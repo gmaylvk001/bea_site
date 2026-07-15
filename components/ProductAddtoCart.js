@@ -340,7 +340,7 @@ function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
   const productUrl = `${process.env.NEXT_PUBLIC_API_URL}/product/${productSlug}`;
   const phone = "9842344323";
   const email = "customercare@bharathelectronics.in";
-  const whatsappNumber = "919585685500";
+  const whatsappNumber = "919842344323";
 
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hi, I'm interested in this product: ${productName}\n${productUrl}`)}`;
   const mailUrl = `mailto:${email}?subject=${encodeURIComponent(`Enquiry: ${productName}`)}&body=${encodeURIComponent(`Hi,\n\nI'm interested in the following product:\n\nProduct: ${productName}\nLink: ${productUrl}\n\nPlease assist me.`)}`;
@@ -438,15 +438,15 @@ function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
 
         {/* 3 Contact Buttons */}
         <div className="flex flex-col gap-1.5 md:gap-2 mb-2 md:mb-3">
-          {/* <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white rounded-xl px-4 py-2 md:py-2.5 transition-colors">
             <FaWhatsapp size={20} />
             <div>
               <div className="text-[12px] font-semibold leading-tight">WhatsApp Us</div>
               <div className="text-[10.5px] opacity-80 leading-tight">Chat with our team</div>
             </div>
-          </a> */}
-          <button
+          </a>
+          {/* <button
             type="button"
             onClick={handleShare}
             className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full px-4 py-2 md:py-2.5 transition-colors w-full"
@@ -456,7 +456,7 @@ function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
               <div className="text-[12px] font-semibold leading-tight">Share</div>
               <div className="text-[10.5px] opacity-80 leading-tight">Share this product</div>
             </div>
-          </button>
+          </button> */}
           <a href={`tel:${phone}`}
             className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2.5 transition-colors">
             <FaPhoneAlt size={16} />
