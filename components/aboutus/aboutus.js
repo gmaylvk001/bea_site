@@ -7,9 +7,11 @@ import { GiNetworkBars } from "react-icons/gi";
 import { FaThumbsUp } from "react-icons/fa";
 import { FiHeadphones,  FiSettings,FiTag, FiTarget, FiMapPin, FiAward, FiUsers,FiUser,  FiMonitor, FiSpeaker, FiShoppingCart, FiStar, FiHome, FiBriefcase, FiPackage, FiCreditCard, FiTrendingUp, FiGift } from 'react-icons/fi';
 import { useRouter } from "next/navigation";
+import { useModal } from "@/context/ModalContext";
 
 const AboutUs = () => {
     const router = useRouter();
+    const { openLiveDemoModal } = useModal();
     const chooseData = [{
         image: "/uploads/productss.png",
         icon: <FiMapPin />,
@@ -104,11 +106,11 @@ const AboutUs = () => {
         width={1920}
         height={650}
         alt="BEA Store" 
-        className="w-full h-auto object-cover"
+        className="relative z-0 w-full h-auto block"
         priority
     />
     {/* Adjusted padding to pull content directly to the margin edge */}
-    <div className="absolute inset-0 flex items-center px-4 md:px-8 lg:px-10">
+    <div className="absolute inset-0 z-[2] flex items-center px-4 md:px-8 lg:px-10">
         <div className="w-[50%] lg:w-[45%] xl:w-[40%] 2xl:w-[35%]">
             <p className="text-sm xl:text-base 2xl:text-lg text-gray-500 mb-1">Tamil Nadu's</p>
             <h1 className="text-2xl lg:text-3xl xl:text-4xl 2xl:text-6xl font-bold leading-tight text-[#0a1d56]">Most Trusted <br />Electronics Destination</h1>
@@ -135,7 +137,7 @@ const AboutUs = () => {
             width={1920}
             height={650}
             alt="BEA Store" 
-            className="w-full h-auto object-cover"
+            className="w-full h-auto block"
             priority
         />
         {/* Matched responsive padding */}
@@ -237,6 +239,52 @@ const AboutUs = () => {
                 </div>
             </section>
             
+            {/* BEA Live Demo */}
+            <section className="py-6 bg-white">
+                <div className="w-full px-4 md:px-8 lg:px-10">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 rounded-2xl border border-[#c4b5fd] bg-gradient-to-br from-[#f8f6ff] via-[#f5f7ff] to-[#eef3ff] overflow-hidden px-5 sm:px-8 pt-5 sm:pt-6 pb-0">
+                        <div className="flex-1 min-w-0 py-2 sm:py-4 text-center sm:text-left">
+                            <h2 className="text-[#0a1d56] font-extrabold text-xl sm:text-2xl leading-tight mb-2">
+                                Experience BEA From Anywhere
+                            </h2>
+                            <p className="text-sm sm:text-[15px] text-gray-600 leading-relaxed mb-4 max-w-xl">
+                                Can&apos;t visit one of our 47+ showrooms? Let us bring the showroom to you.
+                            </p>
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mb-5 text-left max-w-lg mx-auto sm:mx-0">
+                                {[
+                                    "Live Product Demonstration",
+                                    "Compare Products",
+                                    "Expert Buying Advice",
+                                    "Google Meet / WhatsApp Video",
+                                ].map((item) => (
+                                    <li key={item} className="flex items-center gap-2 text-sm font-medium text-[#0a1d56]">
+                                        <span className="text-[#2453d3] font-bold shrink-0">✓</span>
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                            <button
+                                type="button"
+                                onClick={openLiveDemoModal}
+                                className="inline-flex items-center justify-center gap-2 bg-[#5B4CF5] hover:bg-[#4a3de0] text-white text-sm font-bold py-3 px-6 rounded-xl transition-colors"
+                            >
+                                Book BEA Live Demo
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="shrink-0 w-[150px] sm:w-[180px] md:w-[210px] self-end">
+                            <img
+                                src="/uploads/live-video-phone.png"
+                                alt="BEA Live Demo"
+                                className="w-full h-auto object-contain bg-transparent"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Store Experience Section (Stretched to margins) */}
             <section className="pb-8 bg-white">
                 <div className="w-full px-4 md:px-8 lg:px-10">

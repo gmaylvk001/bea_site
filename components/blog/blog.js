@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 
 import Link from "next/link";
+import { useModal } from "@/context/ModalContext";
 
 
 
@@ -129,6 +130,8 @@ function Skeleton({ className }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function BlogComponent() {
+
+  const { openLiveDemoModal } = useModal();
 
   const [blogs, setBlogs] = useState([]);
 
@@ -1469,9 +1472,46 @@ export default function BlogComponent() {
 
 
 
-          {/* COLUMN 3: Need Help Choosing + Subscribe */}
+          {/* COLUMN 3: BEA Live Demo + Need Help Choosing + Subscribe */}
 
           <div className="flex flex-col gap-5">
+
+            {/* BEA Live Demo */}
+            <div className="flex items-center gap-2 rounded-xl border border-[#d4d8f0] bg-gradient-to-br from-[#f8f6ff] to-[#eef3ff] overflow-hidden shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)] p-3 sm:p-4">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-extrabold text-[#0a1d56] text-[14px] sm:text-[15px] leading-snug mb-1">
+                  Still confused which model is right for you?
+                </h4>
+                <p className="text-[11px] sm:text-[12px] text-gray-600 leading-relaxed mb-2.5">
+                  Our experts can show you the actual product LIVE.
+                </p>
+                <ul className="flex flex-col gap-1 mb-3">
+                  {["See it live", "Compare models", "Ask anything"].map((item) => (
+                    <li key={item} className="flex items-center gap-1.5 text-[11px] sm:text-[12px] font-medium text-[#0a1d56]">
+                      <span className="text-[#5B4CF5] font-bold">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={openLiveDemoModal}
+                  className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#5B4CF5] to-[#3b5bdb] text-white text-[11px] sm:text-[12px] font-bold py-2 px-3 rounded-lg"
+                >
+                  Demo Video Call
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="shrink-0 w-[90px] sm:w-[110px] self-end">
+                <img
+                  src="/uploads/live-video-phone.png"
+                  alt="BEA Live Demo"
+                  className="w-full h-auto object-contain bg-transparent"
+                />
+              </div>
+            </div>
 
             <div className="bg-[#f5f8ff] p-5 rounded-lg border border-[#e8efff] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)] relative overflow-hidden">
 

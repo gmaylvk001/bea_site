@@ -20,10 +20,13 @@ FaAward,
   Construction,
   GraduationCap,
   ShoppingCart,
-  Cross
+  Cross,
+  Video
 } from "lucide-react";
   import Image from "next/image";
+import { useModal } from "@/context/ModalContext";
 export default function BulkOrdersAndGiftCardEnquiry() {
+    const { openLiveDemoModal } = useModal();
     const [form, setForm] = useState({
         company_name: "",
         name: "",
@@ -270,7 +273,7 @@ const removeProductRow = (index) => {
 </button>
 
                                 {/* WHATSAPP BUTTON */}
-                                <a href="https://wa.me/919842248668" target="_blank" rel="noopener noreferrer">
+                                <a href="https://wa.me/919842344323" target="_blank" rel="noopener noreferrer">
                                     <button className="flex items-center gap-3 border border-white/30 bg-white/5 backdrop-blur-md hover:bg-white hover:text-[#0b1235] transition-all duration-300 text-white font-semibold text-[15px] px-8 py-4 rounded-xl whitespace-nowrap">
                                     <FaWhatsapp className="text-[20px]" />
                                     <span>WhatsApp Our B2B Team</span>
@@ -574,6 +577,52 @@ const removeProductRow = (index) => {
                                     </div>
 
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Corporate Procurement Support */}
+                        <div className="my-8 md:my-10 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                            <div>
+                                <h2 className="text-[28px] md:text-[34px] font-extrabold text-[#081028] leading-tight mb-3">
+                                    Corporate Procurement Support
+                                </h2>
+                                <p className="text-gray-600 text-[15px] md:text-[16px] leading-7 mb-1">
+                                    Need to evaluate multiple products before placing a bulk order?
+                                </p>
+                                <p className="text-gray-600 text-[15px] md:text-[16px] leading-7 mb-6">
+                                    Schedule a dedicated video meeting with our B2B team.
+                                </p>
+                                <ul className="space-y-3 mb-8">
+                                    {[
+                                        "Product demonstrations",
+                                        "Bulk pricing discussion",
+                                        "Brand comparison",
+                                        "Commercial quotations",
+                                        "Installation planning",
+                                    ].map((item) => (
+                                        <li key={item} className="flex items-center gap-3 text-[#081028] text-[15px] md:text-[16px]">
+                                            <FaCheck className="text-[#1e3a5f] shrink-0" size={14} />
+                                            <span>{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <button
+                                    type="button"
+                                    onClick={openLiveDemoModal}
+                                    className="inline-flex items-center justify-center gap-2.5 w-full sm:w-auto min-w-[280px] px-6 py-3.5 rounded-xl bg-[#5B4CF5] hover:bg-[#4a3de0] text-white font-semibold text-[14px] md:text-[15px] transition-colors shadow-sm"
+                                >
+                                    Schedule Corporate BEA Live Meeting
+                                    <Video className="w-5 h-5" strokeWidth={2} />
+                                </button>
+                            </div>
+                            <div className="order-first lg:order-last flex justify-center lg:justify-end">
+                                <Image
+                                    src="/uploads/live-video-phone.png"
+                                    alt="Corporate BEA Live Meeting"
+                                    width={370}
+                                    height={495}
+                                    className="w-[370px] h-[495px] max-w-full object-contain"
+                                />
                             </div>
                         </div>
 
@@ -1051,7 +1100,7 @@ const removeProductRow = (index) => {
                                 <div className="w-full">
                                     <h3 className="font-bold text-[15px] text-[#00a63e] mb-2">WhatsApp Support</h3>
                                     <p className="text-gray-600 text-[15px] leading-7 mb-5">Chat with our B2B team for quick assistance</p>
-                                    <a href="https://wa.me/919842248668" target="_blank" rel="noopener noreferrer">
+                                    <a href="https://wa.me/919842344323" target="_blank" rel="noopener noreferrer">
                                         <button className="w-full h-[50px] rounded-xl bg-[#00b140] hover:bg-[#009b38] transition-all text-white font-semibold text-[13px]">WhatsApp Us</button>
                                     </a>
                                 </div>

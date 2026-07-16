@@ -8,6 +8,7 @@ export const ModalProvider = ({ children }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authError, setAuthError] = useState('');
   const [onAuthSuccess, setOnAuthSuccess] = useState(null);
+  const [showLiveDemoModal, setShowLiveDemoModal] = useState(false);
 
   const openAuthModal = (onSuccessCallback, error = '') => {
     setAuthError(error);
@@ -21,8 +22,22 @@ export const ModalProvider = ({ children }) => {
     setOnAuthSuccess(null);
   };
 
+  const openLiveDemoModal = () => setShowLiveDemoModal(true);
+  const closeLiveDemoModal = () => setShowLiveDemoModal(false);
+
   return (
-    <ModalContext.Provider value={{ showAuthModal, authError, openAuthModal, closeAuthModal, onAuthSuccess }}>
+    <ModalContext.Provider
+      value={{
+        showAuthModal,
+        authError,
+        openAuthModal,
+        closeAuthModal,
+        onAuthSuccess,
+        showLiveDemoModal,
+        openLiveDemoModal,
+        closeLiveDemoModal,
+      }}
+    >
       {children}
     </ModalContext.Provider>
   );

@@ -1,25 +1,38 @@
 'use client';
 
 import { useModal } from '@/context/ModalContext';
-import { AuthModal } from './AuthModal'; // Adjust path if needed
+import { AuthModal } from './AuthModal';
+import LiveDemoModal from './LiveDemoModal';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const GlobalModals = () => {
-  const { showAuthModal, authError, onAuthSuccess, closeAuthModal } = useModal();
-
-  if (!showAuthModal) return null;
+  const {
+    showAuthModal,
+    authError,
+    onAuthSuccess,
+    closeAuthModal,
+    showLiveDemoModal,
+    closeLiveDemoModal,
+  } = useModal();
 
   return (
-    <AuthModal
-      error={authError}
-      onClose={closeAuthModal}
-      onSuccess={() => {
-        closeAuthModal();
-        // if (onAuthSuccess) onAuthSuccess();
-         if (typeof onAuthSuccess === 'function') {
-  onAuthSuccess();
-}
-      }}
-    />
+    <>
+      <ToastContainer position="top-right" autoClose={4000} />
+      {showAuthModal && (
+        <AuthModal
+          error={authError}
+          onClose={closeAuthModal}
+          onSuccess={() => {
+            closeAuthModal();
+            if (typeof onAuthSuccess === 'function') {
+              onAuthSuccess();
+            }
+          }}
+        />
+      )}
+      {showLiveDemoModal && <LiveDemoModal onClose={closeLiveDemoModal} />}
+    </>
   );
 };
 

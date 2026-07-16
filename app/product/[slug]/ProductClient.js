@@ -94,18 +94,10 @@ const addOnIds = Array.isArray(product?.add_ons)
 }, [product?._id]);
 
 useEffect(() => {
-  const fetchFaqs = async () => {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/product/faq/${product._id}`);
-      const data = await res.json();
-      setFaqs(data.faqs || []);
-    } catch (err) {
-      console.error("FAQ fetch error:", err);
-    }
-  };
-
-  if (product?._id) fetchFaqs();
-}, [product?._id]); 
+  if (!product?._id) return;
+  // FAQs are stored on the product document; no separate FAQ API route exists
+  setFaqs(Array.isArray(product.faqs) ? product.faqs : []);
+}, [product?._id, product?.faqs]); 
 
 useEffect(() => {
   if (!Array.isArray(product?.add_ons) || product.add_ons.length === 0) return;
@@ -645,9 +637,14 @@ useEffect(() => {
 }, [featuredProducts]);
 // derived main image
 const mainImage = product?.images?.[selectedImageIndex] || "/no-image.jpg";
-const matchedBrandForManufacturer = Array.isArray(brand)
-  ? brand.find((b) => b.value === product.brand)
-  : null;
+const matchedBrandForManufacturer = (() => {
+  if (!product?.brand || !Array.isArray(brand)) return null;
+  const brandId =
+    typeof product.brand === "object"
+      ? String(product.brand._id || product.brand.id || "")
+      : String(product.brand);
+  return brand.find((b) => String(b.value) === brandId) || null;
+})();
 
 // helper to resolve full path
 const resolveImagePath = (image) => {
@@ -1119,6 +1116,9 @@ const fetchBrand = async () => {
         Sold by <span className="font-semibold">Bharath Electronics & Appliances</span>
       </p>
     </div>
+
+    {/* FlixMedia minisite target */}
+    <div className="key-fea"></div>
 
    {/* Share / Wishlist */}
     <div className="flex items-center gap-2 mt-3">
@@ -1667,6 +1667,10 @@ const fetchBrand = async () => {
                     </svg>
                   </p>
                 </div>
+
+                {/* FlixMedia minisite target */}
+                <div className="key-fea"></div>
+
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-sm font-medium text-gray-700">Quantity:</span>
                   <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">

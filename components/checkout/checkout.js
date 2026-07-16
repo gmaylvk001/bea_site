@@ -25,26 +25,38 @@ const RAZORPAY_EMI_TEST_CARD = '5241 8100 0000 0000';
 const BEA_CONTACT_PHONE = '9842344323';
 const BEA_CONTACT_EMAIL = 'customercare@bharathelectronics.in';
 
-const FloatInput = ({ label, name, type = 'text', required, readOnly, value, onChange, onBlur, error, inputMode, maxLength }) => (
-  <div className="relative">
-    <input
-      type={type}
-      name={name}
-      value={value}
-      onChange={onChange}
-      onBlur={onBlur}
-      readOnly={readOnly}
-      inputMode={inputMode}
-      maxLength={maxLength}
-      className={`peer w-full border rounded-lg pt-5 pb-1.5 px-3 text-sm outline-none transition
-        ${readOnly ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white'}
-        ${error ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-300'
-          : 'border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200'}`}
-    />
-    <label className={`absolute left-3 transition-all duration-150 pointer-events-none
-      ${value ? 'top-1 text-[10px] text-gray-500' : 'top-3.5 text-sm text-gray-400'}`}>
-      {label}{required && '*'}
-    </label>
+const FloatInput = ({ label, name, type = 'text', required, readOnly, value, onChange, onBlur, error, inputMode, maxLength, showLock, hint }) => (
+  <div>
+    <div className="relative">
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        readOnly={readOnly}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        className={`peer w-full border rounded-lg pt-5 pb-1.5 px-3 text-sm outline-none transition
+          ${showLock ? 'pr-10' : ''}
+          ${readOnly ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white'}
+          ${error ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-300'
+            : 'border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-200'}`}
+      />
+      <label className={`absolute left-3 transition-all duration-150 pointer-events-none
+        ${value ? 'top-1 text-[10px] text-gray-500' : 'top-3.5 text-sm text-gray-400'}`}>
+        {label}{required && '*'}
+      </label>
+      {showLock && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </span>
+      )}
+    </div>
+    {hint && <p className="text-xs text-gray-500 mt-1.5">{hint}</p>}
     {error && <p className="text-red-500 text-xs mt-0.5">{error}</p>}
   </div>
 );
@@ -862,8 +874,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           emailFD.append('email', addressData.email);
           emailFD.append('params', JSON.stringify([name, orderData.order.order_number, `₹${Number(orderData.order.order_amount).toFixed(2)}`, orderData.order.payment_method, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
           await fetch('https://bea.eygr.in/api/email/send-msg', { method: 'POST', headers: { Authorization: 'Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L' }, body: emailFD });
-          const adminEmails = ['arunkarthik@bharathelectronics.in','ecom@bharathelectronics.in','itadmin@bharathelectronics.in','telemarketing@bharathelectronics.in','sekarcorp@bharathelectronics.in','abu@bharathelectronics.in','customercare@bharathelectronics.in'];
-        //  const adminEmails = ['hariharann2026@gmail.com']
+          // const adminEmails = ['arunkarthik@bharathelectronics.in','ecom@bharathelectronics.in','itadmin@bharathelectronics.in','telemarketing@bharathelectronics.in','sekarcorp@bharathelectronics.in','abu@bharathelectronics.in','customercare@bharathelectronics.in'];
+        const adminEmails = ['hariharann2026@gmail.com']
           const adminFD = new FormData();
           adminFD.append('campaign_id', 'dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6');
           adminFD.append('params', JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
@@ -1017,9 +1029,10 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       error={getFieldError('postCode')}
                       inputMode="numeric" maxLength={6} />
                   </div>
-                  <FloatInput label="Country" name="country" required readOnly
+                  <FloatInput label="Country" name="country" required readOnly showLock
                     value={formData.country || 'India'} onChange={handleChange} onBlur={handleBlur}
-                    error={getFieldError('country')} />
+                    error={getFieldError('country')}
+                    hint="Only available for delivery within India" />
                   <FloatInput label="Phone" name="phonenumber" type="tel" required
                     value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur}
                     error={getFieldError('phonenumber')} />
@@ -1063,9 +1076,10 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       error={getFieldError('postCode')}
                       inputMode="numeric" maxLength={6} />
                   </div>
-                  <FloatInput label="Country" name="country" required readOnly
+                  <FloatInput label="Country" name="country" required readOnly showLock
                     value={formData.country || 'India'} onChange={handleChange} onBlur={handleBlur}
-                    error={getFieldError('country')} />
+                    error={getFieldError('country')}
+                    hint="Only available for delivery within India" />
                   <FloatInput label="Phone" name="phonenumber" type="tel" required
                     value={formData.phonenumber} onChange={handleChange} onBlur={handleBlur}
                     error={getFieldError('phonenumber')} />
