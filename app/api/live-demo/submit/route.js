@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 
-// const ADMIN_EMAILS = [
-//   "arunkarthik@bharathelectronics.in",
-//   "ecom@bharathelectronics.in",
-//   "itadmin@bharathelectronics.in",
-//   "telemarketing@bharathelectronics.in",
-//   "sekarcorp@bharathelectronics.in",
-//   "abu@bharathelectronics.in",
-//   "customercare@bharathelectronics.in",
-// ];
-
 const ADMIN_EMAILS = [
-  "hariharann2026@gmail.com",
+  "arunkarthik@bharathelectronics.in",
+  "ecom@bharathelectronics.in",
+  "itadmin@bharathelectronics.in",
+  "telemarketing@bharathelectronics.in",
+  "sekarcorp@bharathelectronics.in",
+  "abu@bharathelectronics.in",
+  "customercare@bharathelectronics.in",
 ];
+
+// const ADMIN_EMAILS = [
+//   "hariharann2026@gmail.com",
+// ];
 
 const EMAIL_AUTH = "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L";
 // Contact-form campaign (name, email, mobile, city/category, message)
