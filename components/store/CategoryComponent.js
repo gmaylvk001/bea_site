@@ -352,14 +352,14 @@ export default function StoreDetail() {
     <div className="ml-14 max-w-[420px]">
 
       {/* Breadcrumb */}
-      <div className="text-[11px] text-gray-400 mb-2 flex items-center gap-1">
-        <Link href="/" className="hover:text-blue-600">Home</Link>
-        <span>›</span>
-        <Link href="/our-branches" className="hover:text-blue-600">Our Stores</Link>
-        <span>›</span>
-        <span className="text-gray-600">{store.city}</span>
-        <span>›</span>
-        <span className="text-blue-600 font-medium">{store.organisation_name}</span>
+      <div className="text-[11px] text-gray-400 mt-4 mb-2 flex items-center gap-1 flex-nowrap whitespace-nowrap overflow-hidden">
+        <Link href="/" className="hover:text-blue-600 flex-shrink-0">Home</Link>
+        <span className="flex-shrink-0">›</span>
+        <Link href="/our-branches" className="hover:text-blue-600 flex-shrink-0">Our Stores</Link>
+        <span className="flex-shrink-0">›</span>
+        <span className="text-gray-600 flex-shrink-0">{store.city}</span>
+        <span className="flex-shrink-0">›</span>
+        <span className="text-blue-600 font-medium truncate">{store.organisation_name}</span>
       </div>
 
       {/* Name + Badge */}
@@ -373,10 +373,6 @@ export default function StoreDetail() {
           </span>
         )}
       </div>
-
-      <p className="text-[13px] text-gray-500 mb-2">
-        Electronics & Home Appliances Store in {store.city}
-      </p>
 
       {/* Google Rating */}
       <div className="flex items-center gap-2 mb-3">
@@ -439,7 +435,7 @@ export default function StoreDetail() {
 
   {/* Stats bar — overlapping bottom, full width with side space */}
   <div className="absolute left-0 right-0 bottom-[-6] pt-14  translate-y-1/2 z-10">
-    <div className="mx-10">
+    <div className="mx-10 mt-6">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 grid grid-cols-8 divide-x divide-gray-100">
         {[
           { icon: "/Store/25+year.png", value: "25+",         label: "Years of Trust" },
@@ -495,10 +491,6 @@ export default function StoreDetail() {
       </span>
     )}
   </div>
-
-  <p className="text-[12px] text-gray-500 mb-2">
-    Electronics & Home Appliances Store in {store.city}
-  </p>
 
   {/* Rating */}
   <div className="flex items-center gap-1.5 mb-3">
