@@ -856,31 +856,86 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
             if (loyaltyData.success && loyaltyData.points_awarded > 0) {
               toast.success(`You earned ${loyaltyData.points_awarded} loyalty points!`, { autoClose: 5000 });
               window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
+
+              // Separate loyalty points email
+              try {
+                await fetch('/api/send-loyalty-email', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    customerEmail: addressData.email,
+                    name: `${addressData.firstName} ${addressData.lastName}`,
+                    orderNumber: order_number,
+                    pointsEarned: loyaltyData.points_awarded,
+                    phoneNumber: userPhone,
+                  }),
+                });
+              } catch (mailErr) {
+                console.error('Loyalty email failed:', mailErr);
+              }
             }
           } catch (e) { console.error('Loyalty award failed:', e); }
         }
 
         await fetch('/api/send-order-detail-to-sap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_number: orderData.order.order_number }) });
 
+        try {
+          const name = `${addressData.firstName} ${addressData.lastName}`;
+          const orderDate = new Date().toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
+
+          const adminEmails = [
+            "arunkarthik@bharathelectronics.in",
+            "ecom@bharathelectronics.in",
+            "itadmin@bharathelectronics.in",
+            "telemarketing@bharathelectronics.in",
+            "sekarcorp@bharathelectronics.in",
+            "abu@bharathelectronics.in",
+            "customercare@bharathelectronics.in",
+            // "hariharann2026@gmail.com",
+            // "hariharan.g@eywamedia.com",
+          ];
+
+          const emailRes = await fetch("/api/send-order-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              customerEmail: addressData.email,
+              adminEmails,
+              orderDetails: {
+                order_username: name,
+                order_number: orderData.order.order_number,
+                order_amount: orderData.order.order_amount,
+                payment_method: orderData.order.payment_method,
+                order_deliveryaddress: deliveryAddress,
+                order_phonenumber: addressData.phonenumber,
+                order_date: orderDate,
+                order_item: cartItems.map((item) => ({
+                  name: item.name,
+                  price: item.price,
+                  quantity: item.quantity,
+                  image: item.image || item.images?.[0],
+                  warrantyData: item.warrantyData || null,
+                })),
+              },
+            }),
+          });
+          if (!emailRes.ok) {
+            console.error("Order email failed:", await emailRes.json().catch(() => ({})));
+          }
+        } catch (e) {
+          console.error("Email sending failed:", e);
+        }
+
         toast.success('Order placed successfully!');
         updateCartCount(0);
         router.push('/orders');
-
-        try {
-          const name = `${addressData.firstName} ${addressData.lastName}`;
-          const itemsHtml = cartItems.map(item => { const w = item.warrantyData ? ` | ${item.warrantyData.year} Year Extended Warranty - Rs.${Number(item.warrantyData.price).toFixed(2)}` : ''; return `<li>${item.name} - Rs.${Number(item.price).toFixed(2)} x ${item.quantity}${w}</li>`; }).join('');
-          const emailFD = new FormData();
-          emailFD.append('campaign_id', '0800f221-7805-4b76-988c-bbecd66e7500');
-          emailFD.append('email', addressData.email);
-          emailFD.append('params', JSON.stringify([name, orderData.order.order_number, `₹${Number(orderData.order.order_amount).toFixed(2)}`, orderData.order.payment_method, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
-          await fetch('https://bea.eygr.in/api/email/send-msg', { method: 'POST', headers: { Authorization: 'Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L' }, body: emailFD });
-          const adminEmails = ['arunkarthik@bharathelectronics.in','ecom@bharathelectronics.in','itadmin@bharathelectronics.in','telemarketing@bharathelectronics.in','sekarcorp@bharathelectronics.in','abu@bharathelectronics.in','customercare@bharathelectronics.in'];
-        // const adminEmails = ['hariharann2026@gmail.com']
-          const adminFD = new FormData();
-          adminFD.append('campaign_id', 'dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6');
-          adminFD.append('params', JSON.stringify([name, addressData.email, addressData.phonenumber, deliveryAddress, `<ul style="padding-left:20px;color:#555">${itemsHtml}</ul>`]));
-          for (const email of adminEmails) { adminFD.set('email', email); await fetch('https://bea.eygr.in/api/email/send-msg', { method: 'POST', headers: { Authorization: 'Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L' }, body: adminFD }); }
-        } catch (e) { console.error('Email sending failed:', e); }
       }
     } catch (error) {
       console.error('Submit error:', error);

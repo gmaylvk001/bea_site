@@ -32,8 +32,11 @@ export async function POST(req) {
    
     console.log("AWARD-POINTS called for orderNumber:", orderNumber);
 
+    const trucoUrl = `${process.env.TRUCO_BASE_URL}/external/transaction`;
+    console.log("Truco transaction URL:", trucoUrl);
+
     const trucoRes = await fetch(
-      `${process.env.TRUCO_BASE_URL}/external/transaction`,
+      trucoUrl,
       {
         method: "POST",
         headers: {
@@ -80,7 +83,30 @@ export async function POST(req) {
       }
     );
 
-    const trucoData = await trucoRes.json();
+    const rawBody = await trucoRes.text();
+    const contentType = trucoRes.headers.get("content-type") || "";
+
+    if (!trucoRes.ok || !contentType.includes("application/json")) {
+      console.error(
+        "Truco returned a non-JSON / error response.",
+        "status:", trucoRes.status,
+        "content-type:", contentType,
+        "url:", trucoUrl,
+        "body(first 300 chars):", rawBody.slice(0, 300)
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Truco API error (HTTP ${trucoRes.status}). Endpoint did not return JSON.`,
+          status: trucoRes.status,
+          url: trucoUrl,
+          bodyPreview: rawBody.slice(0, 300),
+        },
+        { status: 502 }
+      );
+    }
+
+    const trucoData = JSON.parse(rawBody);
     console.log("Truco response:", trucoData);
     console.log("Truco invoice_number vs our orderNumber:", trucoData.invoice_number, "vs", orderNumber); // 🆕
 
