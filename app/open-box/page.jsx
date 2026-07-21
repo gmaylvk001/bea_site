@@ -10,7 +10,7 @@ import {
 } from "react-feather";
 import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
-import { FaShareAlt, FaSlidersH } from "react-icons/fa";
+import { FaShareAlt, FaSlidersH, FaBoxOpen, FaAward, FaShieldAlt, FaTruck, FaHeadset, FaUndoAlt } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import { Range as ReactRange } from "react-range";
 import {
@@ -18,6 +18,135 @@ import {
   getVisibleFilterGroups,
   VISIBLE_FILTER_GROUP_LIMIT,
 } from "@/lib/filterGroupDefaults";
+
+const OPEN_BOX_FEATURES = [
+  {
+    title: "Open Box Products",
+    desc: "Display units in excellent condition",
+    Icon: FaBoxOpen,
+  },
+  {
+    title: "Verified Quality",
+    desc: "Checked by experts for top performance",
+    Icon: FaAward,
+  },
+  {
+    title: "Best Price Guaranteed",
+    desc: "Unbeatable prices on top brands",
+    Icon: FaShieldAlt,
+  },
+  {
+    title: "Pan India Delivery",
+    desc: "Safe & secure delivery to your doorstep",
+    Icon: FaTruck,
+  },
+  {
+    title: "Installation Support",
+    desc: "Expert installation available",
+    Icon: FaHeadset,
+  },
+  {
+    title: "Easy Returns",
+    desc: "Hassle-free replacement*",
+    Icon: FaUndoAlt,
+  },
+];
+
+const getDiscountPct = (product) => {
+  if (
+    !product.special_price ||
+    !product.price ||
+    product.special_price >= product.price
+  ) {
+    return 0;
+  }
+  return Math.round(100 - (product.special_price / product.price) * 100);
+};
+
+const getProductImageSrc = (product) => {
+  if (!product.images?.[0]) return null;
+  return product.images[0].startsWith("http")
+    ? product.images[0]
+    : `/uploads/products/${product.images[0]}`;
+};
+
+const buildCategoryNameMap = (tree) => {
+  const map = {};
+  const walk = (nodes) => {
+    (nodes || []).forEach((node) => {
+      if (node._id) map[String(node._id)] = node.category_name || "";
+      walk(node.subCategories);
+    });
+  };
+  walk(tree);
+  return map;
+};
+
+const matchApplianceBucket = (product, categoryNameById) => {
+  const catText = [
+    product.name,
+    categoryNameById[String(product.category || "")],
+    categoryNameById[String(product.sub_category || "")],
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/air.?cond|\bac\b|split.?ac|inverter.?ac|cassette.?ac/.test(catText)) {
+    return "ac";
+  }
+  if (/fridge|refrigerat/.test(catText)) return "fridge";
+  if (/\btv\b|television|smart.?tv|led.?tv|oled|qled|uhd/.test(catText)) {
+    return "tv";
+  }
+  if (/washing|washer|laundry|front.?load|top.?load/.test(catText)) {
+    return "washing";
+  }
+  return null;
+};
+
+const pickEvenHighQty = (list, categoryTree, limit = 8) => {
+  const nameMap = buildCategoryNameMap(categoryTree);
+  const buckets = { ac: [], fridge: [], tv: [], washing: [] };
+  [...list]
+    .sort((a, b) => (b.quantity || 0) - (a.quantity || 0))
+    .forEach((p) => {
+      const key = matchApplianceBucket(p, nameMap);
+      if (key) buckets[key].push(p);
+    });
+
+  const order = ["ac", "fridge", "tv", "washing"];
+  const result = [];
+  let i = 0;
+  while (result.length < limit) {
+    let added = false;
+    for (const key of order) {
+      if (buckets[key][i]) {
+        result.push(buckets[key][i]);
+        added = true;
+        if (result.length >= limit) break;
+      }
+    }
+    if (!added) break;
+    i += 1;
+  }
+  if (result.length === 0) {
+    return [...list]
+      .sort((a, b) => (b.quantity || 0) - (a.quantity || 0))
+      .slice(0, limit);
+  }
+  return result;
+};
+
+/** Mega Clearance: EOL/FOCUS, high stock, even AC/fridge/TV/washing mix */
+const pickMegaDeals = (list, categoryTree, limit = 12) => {
+  const inStock = list.filter(
+    (p) =>
+      (p.movement === "EOL" || p.movement === "FOCUS") &&
+      (p.quantity || 0) > 0,
+  );
+  return pickEvenHighQty(inStock, categoryTree, limit);
+};
 
 const CategoryTreeFilter = ({
   categories,
@@ -141,6 +270,8 @@ export default function OpenBoxPage() {
   const [categories, setCategories] = useState([]);
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [categoryTree, setCategoryTree] = useState([]);
+  const [showcaseProducts, setShowcaseProducts] = useState([]);
+  const [showcaseCategoryTree, setShowcaseCategoryTree] = useState([]);
 
 const [filterDefs, setFilterDefs] = useState([]);
 const [filterSummaryRaw, setFilterSummaryRaw] = useState([]);
@@ -158,6 +289,17 @@ const FILTER_LIST_MAX_HEIGHT = "max-h-[7.75rem]";
   const MAX = priceRange[1];
 
   const isInitialLoad = useRef(true);
+  const megaScrollRef = useRef(null);
+  const allProductsRef = useRef(null);
+
+  const scrollStrip = (ref, direction) => {
+    if (!ref.current) return;
+    const amount = Math.max(280, ref.current.clientWidth * 0.75);
+    ref.current.scrollBy({
+      left: direction === "left" ? -amount : amount,
+      behavior: "smooth",
+    });
+  };
 
 
   useEffect(() => {
@@ -301,8 +443,30 @@ const handleShare = async (product) => {
     }
   };
 
+  const fetchShowcaseProducts = async () => {
+    try {
+      const query = new URLSearchParams({
+        page: "1",
+        limit: "100",
+        sortBy: "quantity-high-to-low",
+      });
+      const res = await fetch(`/api/open-box?${query}`);
+      const data = await res.json();
+      if (data.success) {
+        setShowcaseProducts(data.products || []);
+        setShowcaseCategoryTree(data.categoryTree || []);
+        if (data.brands?.length) {
+          setBrands((prev) => (prev.length ? prev : data.brands));
+        }
+      }
+    } catch (error) {
+      console.error("Showcase fetch error:", error);
+    }
+  };
+
   useEffect(() => {
     fetchBanners();
+    fetchShowcaseProducts();
     fetchProducts(1, true);
   }, []);
 
@@ -679,138 +843,276 @@ const handleShare = async (product) => {
   const shouldShowMoreFilters =
     sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
 
+  const treeForShowcase =
+    showcaseCategoryTree.length > 0 ? showcaseCategoryTree : categoryTree;
+  const megaDealProducts = pickMegaDeals(
+    showcaseProducts,
+    treeForShowcase,
+    12,
+  );
+
+  const scrollToAllProducts = () => {
+    allProductsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const getProductBrandName = (product) => {
+    if (product.brand?.brand_name) return product.brand.brand_name;
+    if (product.brand_name) return product.brand_name;
+    const match = brands.find(
+      (b) => String(b._id) === String(product.brand),
+    );
+    return match?.brand_name || "";
+  };
+
+  const renderShowcaseCard = (product) => {
+    const discount = getDiscountPct(product);
+    const imageSrc = getProductImageSrc(product);
+    const brandName = getProductBrandName(product);
+    const hasDiscount =
+      product.special_price > 0 && product.special_price < product.price;
+    const salePrice = hasDiscount
+      ? Math.round(product.special_price)
+      : Math.round(product.price || 0);
+
+    return (
+      <div
+        key={product._id}
+        className="min-w-[300px] w-[300px] sm:min-w-[340px] sm:w-[340px] snap-start relative flex bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md overflow-hidden h-[168px] sm:h-[185px]"
+      >
+        {discount > 0 && (
+          <span className="absolute top-2.5 left-2.5 z-10 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+            {discount}% OFF
+          </span>
+        )}
+
+        <div className="relative w-[44%] shrink-0 flex items-center justify-center p-3 pt-7 pb-2">
+          {imageSrc ? (
+            <Image
+              src={imageSrc}
+              alt={product.name}
+              width={140}
+              height={120}
+              className="object-contain max-h-[130px] w-auto h-auto"
+              unoptimized
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-50 rounded" />
+          )}
+        </div>
+
+        <div className="flex flex-col justify-center flex-1 py-3 pr-3 pl-0 min-w-0">
+          {brandName && (
+            <p className="text-[11px] sm:text-xs font-bold text-[#1E5FA8] uppercase tracking-wide truncate">
+              {brandName}
+            </p>
+          )}
+          <Link
+            href={`/product/${product.slug}`}
+            className="block mt-0.5"
+            onClick={() => handleProductClick(product)}
+          >
+            <h3 className="text-[11px] sm:text-[13px] font-semibold text-[#1E5FA8] leading-snug line-clamp-3 hover:underline">
+              {product.name}
+            </h3>
+          </Link>
+          <div className="mt-1.5">
+            {hasDiscount && (
+              <span className="text-[11px] text-gray-400 line-through block leading-none mb-0.5">
+                ₹{Math.round(product.price).toLocaleString()}
+              </span>
+            )}
+            <span className="text-lg sm:text-xl font-bold text-[#1E5FA8] leading-tight">
+              ₹{salePrice.toLocaleString()}
+            </span>
+          </div>
+          <Link
+            href={`/product/${product.slug}`}
+            onClick={() => handleProductClick(product)}
+            className="mt-2 inline-flex items-center justify-center self-start rounded-md bg-[#1E5FA8] hover:bg-[#174a86] text-white text-[10px] sm:text-[11px] font-bold tracking-wide px-5 py-1.5 transition-colors"
+          >
+            SHOP NOW
+          </Link>
+        </div>
+      </div>
+    );
+  };
+
+  const renderProductStrip = ({
+    title,
+    products,
+    scrollRef,
+    showViewAll = false,
+  }) => {
+    if (!products.length) return null;
+    return (
+      <section className="mb-10">
+        <div className="relative flex items-center justify-center mb-5">
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:block h-px w-10 bg-[#F7941D]" />
+            <h2 className="text-lg sm:text-xl font-bold tracking-wide text-[#1E5FA8] uppercase text-center">
+              {title}
+            </h2>
+            <span className="hidden sm:block h-px w-10 bg-[#F7941D]" />
+          </div>
+          {showViewAll && (
+            <button
+              type="button"
+              onClick={scrollToAllProducts}
+              className="absolute right-0 text-sm font-semibold text-[#1E5FA8] hover:underline"
+            >
+              View All Deals &gt;
+            </button>
+          )}
+        </div>
+        <div className="relative">
+          <button
+            type="button"
+            aria-label={`Scroll ${title} left`}
+            onClick={() => scrollStrip(scrollRef, "left")}
+            className="absolute -left-1 sm:-left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border border-blue-100 shadow text-[#1E5FA8] flex items-center justify-center hover:bg-blue-50"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div
+            ref={scrollRef}
+            className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 px-1 scrollbar-hide"
+          >
+            {products.map((product) => renderShowcaseCard(product))}
+          </div>
+          <button
+            type="button"
+            aria-label={`Scroll ${title} right`}
+            onClick={() => scrollStrip(scrollRef, "right")}
+            className="absolute -right-1 sm:-right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border border-blue-100 shadow text-[#1E5FA8] flex items-center justify-center hover:bg-blue-50"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </section>
+    );
+  };
+
   return (
     <div className="container mx-auto px-4 py-2 pb-3 max-w-[1400px]">
-      {/* Marquee Banner */}
-      <div
-        className="w-full overflow-hidden mb-4 rounded-xl"
-        style={{ backgroundColor: "#1E5FA8" }}
-      >
-        <div
-          className="flex whitespace-nowrap"
-          style={{
-            animation: "marquee 20s linear infinite",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.animationPlayState = "paused")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.animationPlayState = "running")
-          }
-        >
-          {/* Text 2 times */}
-          {[...Array(2)].map((_, i) => (
-            <span
-              key={i}
-              className="inline-block px-8 py-2 text-sm font-semibold"
-              style={{ color: "#F7941D" }}
+      {/* Banner + overlapping feature bar */}
+      <div className={`relative ${banners.length > 0 ? "mb-16 sm:mb-20" : "mb-6"}`}>
+        {banners.length > 0 && (
+          <div className="relative w-full overflow-hidden rounded-xl z-0">
+            <div
+              className="relative w-full cursor-pointer overflow-hidden rounded-xl"
+              onClick={() => {
+                const url = banners[currentBannerIndex]?.redirect_url;
+                if (url) window.location.href = url;
+              }}
             >
-              🏷️ <span style={{ color: "#ffffff" }}>Open Box Sale</span> — These
-              are products previously used as display units in our showroom. Now
-              available at discounted prices in excellent condition!
-              &nbsp;&nbsp;&nbsp;✅{" "}
-              <span style={{ color: "#ffffff" }}>Verified Quality</span>
-              &nbsp;&nbsp;&nbsp;💰{" "}
-              <span style={{ color: "#F7941D" }}>Best Price Guaranteed</span>
-              &nbsp;&nbsp;&nbsp;🚀{" "}
-              <span style={{ color: "#ffffff" }}>Limited Stock Available</span>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            </span>
-          ))}
+              <Image
+                src={banners[currentBannerIndex].banner_image}
+                alt={`Open Box Banner ${currentBannerIndex + 1}`}
+                width={1920}
+                height={600}
+                className="w-full h-auto object-cover rounded-xl"
+                unoptimized
+              />
+            </div>
+
+            {banners.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentBannerIndex((prev) =>
+                      prev === 0 ? banners.length - 1 : prev - 1,
+                    );
+                  }}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors z-10"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentBannerIndex((prev) =>
+                      prev === banners.length - 1 ? 0 : prev + 1,
+                    );
+                  }}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors z-10"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
+
+            {banners.length > 1 && (
+              <div className="absolute bottom-10 sm:bottom-12 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                {banners.map((_, index) => (
+                  <label
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentBannerIndex(index);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <span
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        index === currentBannerIndex
+                          ? "bg-white border-white"
+                          : "bg-transparent border-white/70"
+                      }`}
+                    >
+                      {index === currentBannerIndex && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                      )}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div
+          className={`relative z-20 bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(30,95,168,0.12)] px-3 py-4 sm:px-5 sm:py-5 ${
+            banners.length > 0
+              ? "-mt-8 sm:-mt-10 mx-2 sm:mx-6"
+              : "mt-0"
+          }`}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            {OPEN_BOX_FEATURES.map(({ title, desc, Icon }) => (
+              <div
+                key={title}
+                className="flex items-center gap-2.5 sm:gap-3 px-1"
+              >
+                <div className="shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-[#1E5FA8]/30 text-[#1E5FA8] flex items-center justify-center">
+                  <Icon className="text-lg sm:text-xl" />
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-gray-800 leading-tight">
+                    {title}
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 leading-snug mt-0.5">
+                    {desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* CSS Animation */}
-      <style jsx>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(0%);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-      `}</style>
+      {renderProductStrip({
+        title: "Mega Clearance Deals",
+        products: megaDealProducts,
+        scrollRef: megaScrollRef,
+        showViewAll: true,
+      })}
 
-      {/* Banners */}
-      {banners.length > 0 && (
-        <div className="relative w-full mb-6 overflow-hidden rounded-xl">
-          <div
-            className="relative w-full cursor-pointer overflow-hidden rounded-xl"
-            onClick={() => {
-              const url = banners[currentBannerIndex]?.redirect_url;
-              if (url) window.location.href = url;
-            }}
-          >
-            <Image
-              src={banners[currentBannerIndex].banner_image}
-              alt={`Open Box Banner ${currentBannerIndex + 1}`}
-              width={1920}
-              height={600}
-              className="w-full h-auto object-cover rounded-xl"
-              unoptimized
-            />
-          </div>
-
-          {/* 👈 Prev/Next buttons சேர்த்தேன் */}
-          {banners.length > 1 && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentBannerIndex((prev) =>
-                    prev === 0 ? banners.length - 1 : prev - 1,
-                  );
-                }}
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-              >
-                <ChevronLeft size={24} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentBannerIndex((prev) =>
-                    prev === banners.length - 1 ? 0 : prev + 1,
-                  );
-                }}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
-              >
-                <ChevronRight size={24} />
-              </button>
-            </>
-          )}
-
-          {/* Dots */}
-          {banners.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {banners.map((_, index) => (
-                <label
-                  key={index}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentBannerIndex(index);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <span
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      index === currentBannerIndex
-                        ? "bg-white border-white"
-                        : "bg-transparent border-white/70"
-                    }`}
-                  >
-                    {index === currentBannerIndex && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                    )}
-                  </span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-      {/* Header */}
-      <div className="mb-6">
+      {/* Header — all EOL & FOCUS (qty 0…n) */}
+      <div ref={allProductsRef} className="mb-6 scroll-mt-4">
         <h1 className="text-3xl font-bold text-gray-700">Open Box Products</h1>
       </div>
 

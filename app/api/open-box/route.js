@@ -28,7 +28,7 @@ export async function GET(req) {
     const query = {
       movement: { $in: ["EOL", "FOCUS"] },
       status: "Active",
-      quantity: { $gt: 0 },
+      quantity: { $gte: 1 },
       special_price: { $gte: minPrice, $lte: maxPrice },
     };
 
@@ -224,7 +224,7 @@ export async function GET(req) {
 const brandFilterQuery = {
   movement: { $in: ["EOL", "FOCUS"] },
   status: "Active",
-  quantity: { $gt: 0 },
+  quantity: { $gte: 1 },
 };
 
 if (query.$or) {
@@ -256,7 +256,7 @@ const allEOLProducts = await Product.find(
       {
         movement: { $in: ["EOL", "FOCUS"] },
         status: "Active",
-        quantity: { $gt: 0 },
+        quantity: { $gte: 1 },
       },
       { category: 1, sub_category: 1 },
     ).lean();

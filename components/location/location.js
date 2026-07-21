@@ -131,7 +131,7 @@ function StoreCard({ store }) {
         </Link>
 
         {/* WhatsApp — icon only */}
-        <a href={`https://wa.me/?text=${whatsappMsg}`} target="_blank" rel="noopener noreferrer">
+        <a href={`https://wa.me/919842344323?text=${whatsappMsg}`} target="_blank" rel="noopener noreferrer">
           <button className="bg-[#25D366] hover:bg-[#1ebe5a] text-white border-none rounded-md py-[7px] px-2.5 cursor-pointer flex items-center justify-center transition-colors">
             <WhatsAppIcon />
           </button>
@@ -217,39 +217,38 @@ export default function BEABranchesPage() {
         <img
           src="/location/LocationBanner1.png"
           alt="BEA Store Network"
-          className="w-full block object-cover"
-          style={{ minHeight: '340px', maxHeight: '600px' }}
+          className="relative z-0 w-full h-auto block"
           onError={(e) => { e.target.style.display = "none"; }}
         />
 
         {/* White gradient overlay */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 z-[1] pointer-events-none"
           style={{
             background: 'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 25%, rgba(255,255,255,0.3) 42%, rgba(255,255,255,0) 58%)',
           }}
         />
 
         {/* Left overlay text */}
-        <div className="absolute inset-0 flex items-center">
-          <div className="ml-14 max-w-[400px]">
-            <p className="text-[36px] font-bold text-blue-900 mb-1">
+        <div className="absolute inset-0 z-[2] flex items-center px-[clamp(1rem,3vw,2.5rem)]">
+          <div className="ml-0 md:ml-8 lg:ml-14 max-w-[min(400px,42vw)]">
+            <p className="text-[clamp(1.1rem,2vw+0.4rem,2.25rem)] font-bold text-blue-900 mb-1">
               BEA Store Network.
             </p>
             <div className="leading-tight mb-0.5">
-              <span className="text-[48px] font-black text-blue-700">
+              <span className="text-[clamp(1.5rem,3vw+0.5rem,3rem)] font-black text-blue-700">
                 {totalStores > 0 ? `${totalStores}+` : "47+"}
               </span>
-              <span className="text-[48px] font-bold text-blue-900 ml-2">Showrooms.</span>
+              <span className="text-[clamp(1.5rem,3vw+0.5rem,3rem)] font-bold text-blue-900 ml-2">Showrooms.</span>
             </div>
             <div className="leading-tight mb-0.5">
-              <span className="text-[48px] font-black text-blue-700">
+              <span className="text-[clamp(1.5rem,3vw+0.5rem,3rem)] font-black text-blue-700">
                 {totalCities > 0 ? `${totalCities}+` : "17+"}
               </span>
-              <span className="text-[48px] font-bold text-blue-900 ml-2">Cities.</span>
+              <span className="text-[clamp(1.5rem,3vw+0.5rem,3rem)] font-bold text-blue-900 ml-2">Cities.</span>
             </div>
-            <div className="text-[38px] font-black text-blue-900 mb-3">One Trusted Name.</div>
-            <p className="text-[14.5px] text-blue-900 leading-relaxed max-w-[300px]">
+            <div className="text-[clamp(1.2rem,2.2vw+0.4rem,2.375rem)] font-black text-blue-900 mb-3">One Trusted Name.</div>
+            <p className="text-[clamp(0.75rem,0.6vw+0.5rem,0.9rem)] text-blue-900 leading-relaxed max-w-[300px]">
               Find your nearest BEA showroom and experience Tamil Nadu&apos;s favourite
               destination for electronics &amp; home appliances.
             </p>
@@ -257,7 +256,7 @@ export default function BEABranchesPage() {
         </div>
 
         {/* Stats bar — overlapping bottom */}
-        <div className="absolute left-0 right-0 bottom-[-0px] translate-y-1/2 z-10">
+        <div className="absolute left-0 right-0 bottom-0 translate-y-1/2 z-10">
           <div style={{ marginLeft: '2.5rem', marginRight: '30%' }}>
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 grid grid-cols-4 divide-x divide-gray-100">
               {[
@@ -296,13 +295,12 @@ export default function BEABranchesPage() {
 
       {/* MOBILE & TABLET — banner image top, content stacked below */}
       <div className="block sm:hidden">
-        {/* Banner image */}
-        <div className="w-full overflow-hidden" style={{ maxHeight: '200px' }}>
+        {/* Banner image — full width, natural height (no crop) */}
+        <div className="relative w-full overflow-hidden">
           <img
             src="/location/LocationBanner1.png"
             alt="BEA Store Network"
-            className="w-full object-cover block"
-            style={{ maxHeight: '200px' }}
+            className="relative z-0 w-full h-auto block"
             onError={(e) => { e.target.style.display = "none"; }}
           />
         </div>
@@ -465,11 +463,11 @@ className="h-[44px]  flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none
       <div className="bg-white px-6 sm:px-10 pt-12 pb-0">
 
         {/* LocationBanner2 */}
-        <div className="rounded-xl overflow-hidden mb-7">
+        <div className="relative rounded-xl overflow-hidden mb-7">
           <img
             src="/location/LocationBanner2.png"
             alt=""
-            className="w-full object-cover block"
+            className="relative z-0 w-full h-auto block"
             onError={(e) => { e.target.style.display = "none"; }}
           />
         </div>
@@ -505,24 +503,24 @@ className="h-[44px]  flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none
         {/* LocationBanner3 */}
         <div className="rounded-xl overflow-hidden">
 
-          {/* DESKTOP — buttons overlay on banner (unchanged) */}
+          {/* DESKTOP — buttons overlay on banner */}
           <div className="relative hidden sm:block">
             <img
               src="/location/LocationBanner3.png"
               alt="Visit BEA Store"
-              className="w-full max-h-[260px] object-cover block"
+              className="relative z-0 w-full h-auto block"
               onError={(e) => { e.target.style.display = "none"; }}
             />
-            <div className="absolute inset-0 flex items-center justify-end pr-10">
-              <div className="flex  items-center gap-3">
+            <div className="absolute inset-0 z-[2] flex items-center justify-end pr-[clamp(1rem,4vw,2.5rem)]">
+              <div className="flex items-center gap-3">
                 <a href="#find-store-section">
-                  <button className="flex  items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg px-5 py-2.5 text-[13.5px] transition-colors whitespace-nowrap">
+                  <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg px-5 py-2.5 text-[clamp(0.75rem,0.8vw+0.5rem,0.85rem)] transition-colors whitespace-nowrap">
                     Find Store
                     <LocationPinIcon color="white" size={15} />
                   </button>
                 </a>
                 <Link href="/">
-                  <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-blue-700 font-bold rounded-lg px-5 py-2.5 text-[13.5px] border border-white transition-colors whitespace-nowrap">
+                  <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-blue-700 font-bold rounded-lg px-5 py-2.5 text-[clamp(0.75rem,0.8vw+0.5rem,0.85rem)] border border-white transition-colors whitespace-nowrap">
                     Shop Online
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -539,7 +537,7 @@ className="h-[44px]  flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none
             <img
               src="/location/LocationBanner3.png"
               alt="Visit BEA Store"
-              className="w-full max-h-[200px] object-cover block"
+              className="w-full h-auto block"
               onError={(e) => { e.target.style.display = "none"; }}
             />
             <div className="flex items-center gap-3 justify-center py-4">

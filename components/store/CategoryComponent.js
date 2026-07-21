@@ -55,14 +55,38 @@ const STATIC_PAYMENT_SERVICES = [
 ];
 
 const STATIC_FAQS = [
-  { q: "Which is the best electronics showroom in Singanallur?", a: "BEA Singanallur is one of the most trusted electronics showrooms offering 5000+ products from leading brands." },
-  { q: "Does BEA Singanallur provide AC installation?", a: "Yes, we provide professional installation for all ACs purchased from our store." },
-  { q: "Can I buy LG, Samsung, Sony products at BEA Singanallur?", a: "Yes, we are an authorized dealer for all major brands including LG, Samsung, Sony, Whirlpool and more." },
-  { q: "Are EMI options available at this store?", a: "Yes, easy EMI and No Cost EMI options are available on select products with leading banks." },
-  { q: "Do you offer home delivery in Coimbatore?", a: "Yes, we offer fast and safe home delivery across Coimbatore and nearby areas." },
-  { q: "Which brands are available at this store?", a: "We carry 100+ authorized brands including LG, Samsung, Sony, Whirlpool, Panasonic, Bosch, Daikin, and many more." },
-  { q: "What are the store timings?", a: "Our store is open from 9:30 AM to 9:30 PM, all days of the week." },
-  { q: "Do you provide installation for AC & other appliances?", a: "Yes, professional installation is available for ACs, washing machines, and other appliances." },
+  {
+    q: "What is Bharath Electronics & Appliances (BEA)?",
+    a: "Bharath Electronics & Appliances (BEA) is one of South India's leading electronics and home appliances retailers, trusted by thousands of customers for genuine products, competitive prices, and reliable after-sales support across 47+ showrooms.",
+  },
+  {
+    q: "Which brands are available at BEA?",
+    a: "BEA is an authorized dealer for 100+ leading brands including LG, Samsung, Sony, Whirlpool, Panasonic, Bosch, Daikin, Haier, Voltas, and many more across TVs, ACs, refrigerators, washing machines, and kitchen appliances.",
+  },
+  {
+    q: "Are EMI and No Cost EMI options available?",
+    a: "Yes. BEA offers easy EMI and No Cost EMI on select products through leading banks and finance partners, making it easier to purchase appliances and electronics in convenient monthly instalments.",
+  },
+  {
+    q: "Does BEA provide home delivery?",
+    a: "Yes. BEA offers safe and timely home delivery across our service areas. Delivery availability and timelines may vary by product category and location.",
+  },
+  {
+    q: "Does BEA provide installation for appliances?",
+    a: "Yes. Professional installation support is available for air conditioners, televisions, washing machines, and other appliances as per brand guidelines and product requirements.",
+  },
+  {
+    q: "What are BEA showroom timings?",
+    a: "Most BEA showrooms are open from 10:00 AM to 9:00 PM. Store timings may vary slightly by location — please check the store details above or contact the showroom directly.",
+  },
+  {
+    q: "Does BEA provide after-sales support?",
+    a: "Yes. BEA provides after-sales assistance for products purchased from our showrooms and website, including help with warranty guidance, brand service coordination, and customer support queries.",
+  },
+  {
+    q: "How can I contact BEA customer care?",
+    a: "You can reach BEA Customer Care at 9842344323 or email customercare@bharathelectronics.in for product enquiries, delivery support, installation assistance, and service-related help.",
+  },
 ];
 
 const STATIC_AREAS = [
@@ -258,7 +282,7 @@ export default function StoreDetail() {
  const mapsUrl = `https://www.google.com/maps?q=${encodeURIComponent(
   `${store.organisation_name} ${store.website || ""}`
 )}`;
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Hi, I'm interested in visiting ${store.organisation_name}, ${store.city}`)}`;
+  const whatsappUrl = `https://wa.me/919842344323?text=${encodeURIComponent(`Hi, I'm interested in visiting ${store.organisation_name}, ${store.city}`)}`;
   const callUrl = `tel:+91${store.phone}`;
 
   // Determine today's hours
