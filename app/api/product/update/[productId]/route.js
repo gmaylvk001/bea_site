@@ -249,9 +249,8 @@ const chain = await buildCategoryChain(productData.sub_category);
 
 
 console.log("Normalized brand_code:", productData);
-const updatedProduct = await Product.findByIdAndUpdate(
-  productId,
-  {
+
+const updatePayload = {
     ...productData,
     // Ensure new fields are properly set
       model_number: productData.model_number || "",
@@ -271,7 +270,15 @@ const updatedProduct = await Product.findByIdAndUpdate(
     overview_image: finalOverviewImages.length > 0 ? finalOverviewImages : [],
     filters: filterIds,  // ✅ Save filters directly to product
     extend_warranty: extend_warranty,
-  },
+};
+
+// Mail-sending flag is controlled by wishlist add / cron only
+delete updatePayload.productMailsending;
+delete updatePayload.mailSendingStartedAt;
+
+const updatedProduct = await Product.findByIdAndUpdate(
+  productId,
+  updatePayload,
   { new: true }
 ); 
 

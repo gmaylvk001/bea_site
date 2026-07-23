@@ -12,6 +12,18 @@ const wishlistSchema = new mongoose.Schema({
     ref: 'Product',
     required: true
   },
+  mailsSent: {
+    type: Number,
+    default: 0
+  },
+  lastNotifiedAt: {
+    type: Date,
+    default: null
+  },
+  alertsEnabled: {
+    type: Boolean,
+    default: true
+  },
   createdAt: {
     type: Date,
     default: Date.now

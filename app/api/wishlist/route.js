@@ -2,7 +2,9 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Wishlist from "@/models/ecom_wishlist_info";
+import Product from "@/models/product";
 import jwt from "jsonwebtoken";
+import { enableProductMailSending } from "@/lib/wishlistMail";
 
 export async function POST(req) {
   try {
@@ -34,9 +36,15 @@ export async function POST(req) {
       );
     }
 
-    // Add to wishlist
-    const wishlistItem = new Wishlist({  userId, productId });
+    const wishlistItem = new Wishlist({
+      userId,
+      productId,
+      mailsSent: 0,
+      alertsEnabled: true,
+    });
     await wishlistItem.save();
+
+    await enableProductMailSending(productId);
 
     const items = await Wishlist.find({ userId }).lean();
     const count = items.length;

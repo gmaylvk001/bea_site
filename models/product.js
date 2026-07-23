@@ -61,6 +61,8 @@ warranty_ids: {
   sub_category_new: { type: String, default: "" },
   search_keywords: { type: String, default: "" },
   sub_category_new_name: { type: String, default: "" },
+  productMailsending: { type: Boolean, default: false },
+  mailSendingStartedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
