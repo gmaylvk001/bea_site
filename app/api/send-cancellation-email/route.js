@@ -1,116 +1,173 @@
-import nodemailer from 'nodemailer';
+import { NextResponse } from "next/server";
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+const EMAIL_AUTH =
+  process.env.EYGR_EMAIL_AUTH ||
+  "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L";
+
+/** Eygr campaign — paste templates/eygr-order-cancellation-campaign.html */
+const CANCEL_CAMPAIGN_ID =
+  process.env.EYGR_CANCEL_CAMPAIGN_ID ||
+  "04f143b9-492e-4a5b-97b8-52a2c9c879a4";
+
+const DEFAULT_ADMIN_EMAILS = [
+  "arunkarthik@bharathelectronics.in",
+  "ecom@bharathelectronics.in",
+  "itadmin@bharathelectronics.in",
+  "telemarketing@bharathelectronics.in",
+  "sekarcorp@bharathelectronics.in",
+];
+
+const formatINR = (value) =>
+  `Rs. ${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+function isEygrSendSuccessful(httpOk, data) {
+  if (!httpOk) return false;
+  if (!data || typeof data !== "object") return true;
+  if (data.success === false) return false;
+  if (data.status === "error" || data.status === "failed") return false;
+  if (data.error) return false;
+  return true;
+}
+
+/** {{2}} product name + qty + price (+ warranty if any) */
+function buildCancelledItemsText(items = []) {
+  if (!Array.isArray(items) || !items.length) {
+    return "Product details not available.";
   }
 
-  const { orderDetails, customerEmail, adminEmail } = req.body;
+  return items
+    .map((item) => {
+      const name = item.name || item.product_name || "Product";
+      const price = Number(item.price || item.product_price || 0);
+      const qty = Number(item.quantity || 1);
+      const subtotal = price * qty;
+      const warranty =
+        item.warrantyData?.year && item.warrantyData?.price
+          ? `<br/>+ ${item.warrantyData.year} Year Extended Warranty (${formatINR(item.warrantyData.price)})`
+          : "";
+      return `<strong>${name}</strong><br/>${formatINR(price)} x ${qty} = ${formatINR(subtotal)}${warranty}`;
+    })
+    .join("<br/><br/>");
+}
 
-  // Validate required fields
-  if (!orderDetails || !customerEmail || !adminEmail) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+async function sendEygrEmail(campaignId, email, params) {
+  const formData = new FormData();
+  formData.append("campaign_id", campaignId);
+  formData.append("email", email);
+  formData.append(
+    "params",
+    JSON.stringify(params.map((p) => (p == null ? "" : String(p)))),
+  );
 
+  const response = await fetch("https://bea.eygr.in/api/email/send-msg", {
+    method: "POST",
+    headers: { Authorization: EMAIL_AUTH },
+    body: formData,
+  });
+
+  let data = null;
   try {
-    // Create transporter with more robust configuration
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        type: 'OAuth2',
-        user: process.env.EMAIL_USER,
-        clientId: process.env.OAUTH_CLIENT_ID,
-        clientSecret: process.env.OAUTH_CLIENT_SECRET,
-        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
-        accessToken: process.env.OAUTH_ACCESS_TOKEN,
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
+    data = await response.json();
+  } catch {
+    data = { raw: await response.text().catch(() => "") };
+  }
+
+  return {
+    ok: isEygrSendSuccessful(response.ok, data),
+    status: response.status,
+    data,
+    email,
+    campaignId,
+  };
+}
+
+export async function POST(req) {
+  try {
+    const body = await req.json();
+    const {
+      orderDetails,
+      customerEmail,
+      adminEmails = DEFAULT_ADMIN_EMAILS,
+    } = body;
+
+    if (!orderDetails) {
+      return NextResponse.json(
+        { success: false, error: "orderDetails is required" },
+        { status: 400 },
+      );
+    }
+
+    const orderNumber = String(orderDetails.order_number || "")
+      .replace(/^#/, "")
+      .trim();
+    if (!orderNumber) {
+      return NextResponse.json(
+        { success: false, error: "order_number is required" },
+        { status: 400 },
+      );
+    }
+
+    const itemsText = buildCancelledItemsText(orderDetails.order_item || []);
+
+    // Exactly 2 params — must match Eygr template:
+    // {{1}} order number  {{2}} cancelled product details
+    const params = [orderNumber, itemsText];
+
+    const recipients = [
+      ...new Set(
+        [customerEmail, ...(adminEmails || [])]
+          .map((e) => String(e || "").trim())
+          .filter(Boolean),
+      ),
+    ];
+
+    if (!recipients.length) {
+      return NextResponse.json(
+        { success: false, error: "No recipient emails provided" },
+        { status: 400 },
+      );
+    }
+
+    const results = [];
+    for (const email of recipients) {
+      results.push(await sendEygrEmail(CANCEL_CAMPAIGN_ID, email, params));
+    }
+
+    const success = results.some((r) => r.ok);
+
+    console.log("Cancellation email (Eygr) result:", {
+      orderNumber,
+      paramsPreview: [orderNumber, itemsText.slice(0, 120)],
+      results: results.map((r) => ({
+        ok: r.ok,
+        status: r.status,
+        email: r.email,
+        message: r.data?.message || r.data,
+      })),
     });
 
-    // Alternatively, if you want to keep using basic auth:
-    /*
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-      }
-    });
-    */
+    if (!success) {
+      return NextResponse.json(
+        { success: false, error: "Eygr delivery failed", results, params },
+        { status: 502 },
+      );
+    }
 
-    // Validate order items structure
-    const itemsHtml = Array.isArray(orderDetails.order_item) 
-      ? orderDetails.order_item.map(item => `
-          <li>${item.product_name || 'Product'} - ₹${item.price || '0'} x ${item.quantity || '1'}</li>
-        `).join('')
-      : '<li>Product details not available</li>';
-
-    // Customer email
-    const customerMailOptions = {
-      from: `"Your Store Name" <${process.env.EMAIL_USER}>`,
-      to: customerEmail,
-      subject: `Order #${orderDetails.order_number} Cancellation Confirmation`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #d9534f;">Order Cancellation Confirmation</h2>
-          <p>Your order #${orderDetails.order_number} has been successfully cancelled.</p>
-          
-          <h3 style="margin-top: 20px;">Order Summary</h3>
-          <p><strong>Order Number:</strong> ${orderDetails.order_number}</p>
-          <p><strong>Order Amount:</strong> ₹${orderDetails.order_amount}</p>
-          <p><strong>Cancellation Date:</strong> ${orderDetails.cancellation_date}</p>
-          
-          <p style="margin-top: 30px;">If you have any questions, please contact our support team.</p>
-          <p>Thank you for shopping with us.</p>
-        </div>
-      `
-    };
-
-    // Admin email
-    const adminMailOptions = {
-      from: `"Your Store Name" <${process.env.EMAIL_USER}>`,
-      to: adminEmail,
-      subject: `Order #${orderDetails.order_number} Cancelled`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #d9534f;">Order Cancellation Notification</h2>
-          <p>Order #${orderDetails.order_number} has been cancelled by the customer.</p>
-          
-          <h3 style="margin-top: 20px;">Order Details</h3>
-          <p><strong>Order Number:</strong> ${orderDetails.order_number}</p>
-          <p><strong>Order Amount:</strong> ₹${orderDetails.order_amount}</p>
-          <p><strong>Cancellation Date:</strong> ${orderDetails.cancellation_date}</p>
-          
-          <h3 style="margin-top: 20px;">Items</h3>
-          <ul>
-            ${itemsHtml}
-          </ul>
-        </div>
-      `
-    };
-
-    // Test the transporter connection first
-    await transporter.verify();
-
-    // Send both emails
-    const customerResult = await transporter.sendMail(customerMailOptions);
-    const adminResult = await transporter.sendMail(adminMailOptions);
-
-    res.status(200).json({ 
-      message: 'Cancellation emails sent successfully',
-      customerMessageId: customerResult.messageId,
-      adminMessageId: adminResult.messageId
-    });
+    return NextResponse.json(
+      { success: true, orderNumber, params, results },
+      { status: 200 },
+    );
   } catch (error) {
-    console.error('Error sending cancellation emails:', error);
-    res.status(500).json({ 
-      error: 'Failed to send cancellation emails',
-      details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    console.error("Error sending cancellation email:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || "Failed to send cancellation email",
+      },
+      { status: 500 },
+    );
   }
 }

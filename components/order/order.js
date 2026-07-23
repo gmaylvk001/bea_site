@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
-import { FiChevronRight, FiClock, FiCheckCircle, FiTruck, FiShoppingBag, FiXCircle, FiMail } from 'react-icons/fi';
+import { FiChevronRight, FiClock, FiCheckCircle, FiTruck, FiShoppingBag, FiXCircle } from 'react-icons/fi';
 import { RiAccountCircleFill } from "react-icons/ri";
 import { ToastContainer, toast } from 'react-toastify';
 import { FaAddressBook } from "react-icons/fa";
@@ -19,7 +19,6 @@ export default function Order() {
   const [loading, setLoading] = useState(true);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [showEmailConfirm, setShowEmailConfirm] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const router = useRouter();
 
@@ -112,9 +111,33 @@ export default function Order() {
       }
 
       toast.success("Order cancelled successfully");
-      
-      // Show email confirmation modal
-      setShowEmailConfirm(true);
+
+      // Send cancellation confirmation via Eygr (loyalty/wishlist-style template)
+      try {
+        const emailRes = await fetch("/api/send-cancellation-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerEmail: selectedOrder.email_address,
+            orderDetails: {
+              order_number: selectedOrder.order_number,
+              order_amount: selectedOrder.order_amount,
+              order_item: selectedOrder.order_item || [],
+              order_username: selectedOrder.order_username,
+            },
+          }),
+        });
+        const emailData = await emailRes.json();
+        if (!emailRes.ok || !emailData.success) {
+          throw new Error(emailData.error || "Failed to send cancellation email");
+        }
+        toast.success("Cancellation email sent");
+      } catch (emailError) {
+        console.error(emailError);
+        toast.error(emailError.message || "Order cancelled, but email failed");
+      } finally {
+        setSelectedOrder(null);
+      }
     } catch (error) {
       toast.error(error.message || "Failed to cancel order");
       console.error(error);
@@ -124,65 +147,6 @@ export default function Order() {
   const handleCancelReject = () => {
     setShowCancelConfirm(false);
     setSelectedOrder(null);
-  };
-
-  const handleEmailConfirm = async (order) => {
-    console.log("order",order);
-    setShowEmailConfirm(false);
-    
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setShowAuthModal(true);
-      return;
-    }
-   try {
-    const name = order.order_username || "Customer";
-
-    // List of emails: customer + admins
-    const emailList = [
-      order.email_address || "kbsiva1234@gmail.com",
-       "arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","itadmin@bharathelectronics.in","telemarketing@bharathelectronics.in","sekarcorp@bharathelectronics.in","siva96852@gmail.com"
-    ];
-    //  const emailList = [
-    //   order.email_address || "kbsiva1234@gmail.com","siva96852@gmail.com"
-    // ];
-
-    // Loop through each email and send
-    const results = [];
-    for (const email of emailList) {
-      const emailFormData = new FormData();
-      emailFormData.append("campaign_id", "04f143b9-492e-4a5b-97b8-52a2c9c879a4");
-      emailFormData.append("email", email);
-      emailFormData.append(
-        "params",
-        JSON.stringify([name, order.order_number])
-      );
-
-      const response = await fetch("https://bea.eygr.in/api/email/send-msg", {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L",
-        },
-        body: emailFormData,
-      });
-
-      const data = await response.json();
-      results.push({ email, data });
-    }
-
-    toast.success("Cancellation email sent successfully");
-    } catch (error) {
-      toast.error(error.message || "Failed to send cancellation email");
-      console.error(error);
-    } finally {
-      setSelectedOrder(null);
-    }
-  };
-
-  const handleEmailReject = () => {
-    setShowEmailConfirm(false);
-    setSelectedOrder(null);
-    toast.info("Cancellation email was not sent");
   };
 
   return (
@@ -441,39 +405,6 @@ export default function Order() {
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
                 Yes, Cancel Order
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Email Confirmation Modal */}
-      {showEmailConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 animate-scale-in">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                <FiMail className="text-blue-600 text-xl" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">Send Cancellation Email</h3>
-            </div>
-            
-            <p className="text-gray-600 mb-6">
-              Would you like to send a cancellation confirmation email for order <span className="font-semibold">#{selectedOrder?.order_number}</span>?
-            </p>
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={handleEmailReject}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                No, Don't Send
-              </button>
-              <button
-                onClick={handleEmailConfirm(selectedOrder)}
-                className="px-4 py-2 bg-customBlue text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Yes, Send Email
               </button>
             </div>
           </div>

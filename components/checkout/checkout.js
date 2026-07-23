@@ -846,7 +846,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         const orderData = await orderRes.json();
         ga4Purchase({ orderId: orderData.order.order_number, value: orderSummary.total, items: cartItems });
 
-        if (paymentMode !== 'EMI') {
+        // Earn loyalty points (online only) — not COD / Pay at Store / EMI
+        if (paymentMode === 'online') {
           try {
             const loyaltyRes = await fetch('/api/award-points', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -856,28 +857,12 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
             if (loyaltyData.success && loyaltyData.points_awarded > 0) {
               toast.success(`You earned ${loyaltyData.points_awarded} loyalty points!`, { autoClose: 5000 });
               window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
-
-              // Separate loyalty points email
-              try {
-                await fetch('/api/send-loyalty-email', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    customerEmail: addressData.email,
-                    name: `${addressData.firstName} ${addressData.lastName}`,
-                    orderNumber: order_number,
-                    pointsEarned: loyaltyData.points_awarded,
-                    phoneNumber: userPhone,
-                  }),
-                });
-              } catch (mailErr) {
-                console.error('Loyalty email failed:', mailErr);
-              }
             }
           } catch (e) { console.error('Loyalty award failed:', e); }
         }
 
-        await fetch('/api/send-order-detail-to-sap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_number: orderData.order.order_number }) });
+        // TESTING: SAP sync disabled — uncomment below to re-enable
+        // await fetch('/api/send-order-detail-to-sap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_number: orderData.order.order_number }) });
 
         try {
           const name = `${addressData.firstName} ${addressData.lastName}`;
@@ -891,15 +876,15 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           });
 
           const adminEmails = [
-            "arunkarthik@bharathelectronics.in",
-            "ecom@bharathelectronics.in",
-            "itadmin@bharathelectronics.in",
-            "telemarketing@bharathelectronics.in",
-            "sekarcorp@bharathelectronics.in",
-            "abu@bharathelectronics.in",
-            "customercare@bharathelectronics.in",
-            // "hariharann2026@gmail.com",
-            // "hariharan.g@eywamedia.com",
+            // "arunkarthik@bharathelectronics.in",
+            // "ecom@bharathelectronics.in",
+            // "itadmin@bharathelectronics.in",
+            // "telemarketing@bharathelectronics.in",
+            // "sekarcorp@bharathelectronics.in",
+            // "abu@bharathelectronics.in",
+            // "customercare@bharathelectronics.in",
+            "hariharann2026@gmail.com",
+            "hariharan.g@eywamedia.com",
           ];
 
           const emailRes = await fetch("/api/send-order-email", {
@@ -909,6 +894,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
               customerEmail: addressData.email,
               adminEmails,
               orderDetails: {
+                order_id: String(orderData.order._id || ""),
                 order_username: name,
                 order_number: orderData.order.order_number,
                 order_amount: orderData.order.order_amount,
@@ -964,29 +950,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
     <div className="min-h-screen bg-white">
       <ToastContainer position="top-right" autoClose={5000} />
 
-      {/* ── Top header bar ─────────────────────────────────────────────────── */}
-      {/* <div className="border-b bg-white px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-20">
-        <a href="/" className="flex items-center gap-2">
-          <img src="/bea-new.png" alt="BEA" className="h-8 w-auto" />
-        </a>
-        
-        <div className="hidden sm:flex items-center gap-0 text-xs">
-          {['Cart', 'Delivery', 'Payment', 'Confirmation'].map((step, i) => (
-            <div key={step} className="flex items-center gap-0">
-              <div className={`flex items-center gap-1.5 px-1
-                ${i === 0 ? 'text-gray-400' : i === 1 ? 'text-blue-600 font-semibold' : 'text-gray-400'}`}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold
-                  ${i === 0 ? 'bg-green-500 text-white' : i === 1 ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-400'}`}>
-                  {i === 0 ? '✓' : i + 1}
-                </div>
-                {step}
-              </div>
-              {i < 3 && <div className="w-8 h-px bg-gray-200 mx-1" />}
-            </div>
-          ))}
-        </div>
-        <div className="sm:hidden text-xs text-gray-500 font-medium">Step 2 of 4</div>
-      </div> */}
+      
 
       {/* ── Main layout ────────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
