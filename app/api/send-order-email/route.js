@@ -79,27 +79,22 @@ function buildSummaryBlock({
 }
 
 function buildAdminItemsText(items = []) {
-  if (!items.length) {
-    return `<div style="color:#64748b;font-size:13px;">No items found.</div>`;
-  }
+  if (!items.length) return "No items found.";
 
+  // Plain text + <br/> only — nested tables/divs collapse inside Eygr params.
   return items
     .map((item) => {
       const price = Number(item.price || item.product_price || 0);
       const qty = Number(item.quantity || 1);
       const subtotal = price * qty;
+      const name = item.name || item.product_name || "Product";
       const warranty =
         item.warrantyData?.year && item.warrantyData?.price
-          ? `<div style="font-size:11px;color:#64748b;margin-top:4px;">+ ${item.warrantyData.year} Year Extended Warranty (${formatINR(item.warrantyData.price)})</div>`
+          ? `<br/>+ ${item.warrantyData.year} Year Extended Warranty (${formatINR(item.warrantyData.price)})`
           : "";
-
-      return `<div style="padding:12px 0;border-bottom:1px solid #eef2f7;">
-        <div style="font-size:13px;font-weight:700;color:#0f172a;line-height:1.4;">${item.name || item.product_name || ""}</div>
-        <div style="font-size:12px;color:#64748b;margin-top:6px;">${formatINR(price)} x ${qty} = <strong style="color:#0f172a;">${formatINR(subtotal)}</strong></div>
-        ${warranty}
-      </div>`;
+      return `${name}<br/>${formatINR(price)} x ${qty} = ${formatINR(subtotal)}${warranty}`;
     })
-    .join("");
+    .join("<br/><br/>");
 }
 
 async function sendEygrEmail(campaignId, email, params) {
@@ -180,12 +175,11 @@ export async function POST(req) {
       ? `${IMAGE_BASE}/admin/Allorder/${encodeURIComponent(adminOrderId)}`
       : `${IMAGE_BASE}/admin/Allorder`;
 
-    const adminDetailsHtml = `<div style="margin-bottom:12px;">
-        <div style="font-size:12px;color:#64748b;padding:2px 0;">Order Number: <strong style="color:#0f172a;">#${orderNumber}</strong></div>
-        <div style="font-size:12px;color:#64748b;padding:2px 0;">Order Date: <strong style="color:#0f172a;">${orderDate}</strong></div>
-        <div style="font-size:12px;color:#64748b;padding:2px 0;">Total Amount: <strong style="color:#0f172a;">${amount}</strong></div>
-        <div style="font-size:12px;color:#64748b;padding:2px 0;">Payment Method: <strong style="color:#0f172a;">${paymentMethod}</strong></div>
-      </div>`;
+    const adminDetailsHtml =
+      `Order Number: #${orderNumber}<br/>` +
+      `Order Date: ${orderDate}<br/>` +
+      `Total Amount: ${amount}<br/>` +
+      `Payment Method: ${paymentMethod}`;
 
     const adminParams = [
       name, // {{1}} customer name
@@ -195,7 +189,7 @@ export async function POST(req) {
       adminDetailsHtml, // {{5}} order meta
       adminItemsHtml, // {{6}} items list
       adminPanelUrl, // {{7}} full admin order URL
-      adminOrderId, // {{8}} order id (for /admin/Allorder/{{8}})
+      adminOrderId, // {{8}} order id
     ];
 
     console.log("Admin order link:", { adminOrderId, adminPanelUrl });
