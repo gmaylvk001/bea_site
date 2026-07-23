@@ -10,7 +10,7 @@ import {
 } from "react-feather";
 import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
-import { FaShareAlt, FaSlidersH, FaBoxOpen, FaAward, FaShieldAlt, FaTruck, FaHeadset, FaUndoAlt } from "react-icons/fa";
+import { FaShareAlt, FaSlidersH, FaBoxOpen, FaAward, FaShieldAlt, FaHeadset, FaUndoAlt } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import { Range as ReactRange } from "react-range";
 import {
@@ -34,11 +34,6 @@ const OPEN_BOX_FEATURES = [
     title: "Best Price Guaranteed",
     desc: "Unbeatable prices on top brands",
     Icon: FaShieldAlt,
-  },
-  {
-    title: "Pan India Delivery",
-    desc: "Safe & secure delivery to your doorstep",
-    Icon: FaTruck,
   },
   {
     title: "Installation Support",
@@ -858,19 +853,34 @@ const handleShare = async (product) => {
     });
   };
 
-  const getProductBrandName = (product) => {
-    if (product.brand?.brand_name) return product.brand.brand_name;
-    if (product.brand_name) return product.brand_name;
-    const match = brands.find(
-      (b) => String(b._id) === String(product.brand),
+  const getProductBrand = (product) => {
+    if (product.brand && typeof product.brand === "object") {
+      return product.brand;
+    }
+    return (
+      brands.find((b) => String(b._id) === String(product.brand)) || null
     );
-    return match?.brand_name || "";
+  };
+
+  const getProductBrandImage = (product) => {
+    const brand = getProductBrand(product);
+    const image = brand?.image;
+    if (!image) return null;
+    return image.startsWith("http") ? image : `/uploads/Brands/${image}`;
+  };
+
+  const getProductBrandName = (product) => {
+    const brand = getProductBrand(product);
+    if (brand?.brand_name) return brand.brand_name;
+    if (product.brand_name) return product.brand_name;
+    return "";
   };
 
   const renderShowcaseCard = (product) => {
     const discount = getDiscountPct(product);
     const imageSrc = getProductImageSrc(product);
     const brandName = getProductBrandName(product);
+    const brandImage = getProductBrandImage(product);
     const hasDiscount =
       product.special_price > 0 && product.special_price < product.price;
     const salePrice = hasDiscount
@@ -882,36 +892,50 @@ const handleShare = async (product) => {
         key={product._id}
         className="min-w-[300px] w-[300px] sm:min-w-[340px] sm:w-[340px] snap-start relative flex bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md overflow-hidden h-[168px] sm:h-[185px]"
       >
-        {discount > 0 && (
-          <span className="absolute top-2.5 left-2.5 z-10 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
-            {discount}% OFF
-          </span>
-        )}
-
-        <div className="relative w-[44%] shrink-0 flex items-center justify-center p-3 pt-7 pb-2">
-          {imageSrc ? (
-            <Image
-              src={imageSrc}
-              alt={product.name}
-              width={140}
-              height={120}
-              className="object-contain max-h-[130px] w-auto h-auto"
-              unoptimized
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-50 rounded" />
+        <div className="relative w-[48%] shrink-0 flex flex-col items-center p-2 pt-2 pb-2">
+          {discount > 0 && (
+            <span className="absolute top-2 right-2 z-10 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+              {discount}% OFF
+            </span>
           )}
+
+          {brandImage ? (
+            <div className="relative w-full h-7 sm:h-8 mb-1 shrink-0 flex items-center justify-start pl-1">
+              <Image
+                src={brandImage}
+                alt={brandName || "Brand"}
+                width={90}
+                height={32}
+                className="object-contain max-h-7 sm:max-h-8 w-auto h-auto"
+                unoptimized
+              />
+            </div>
+          ) : brandName ? (
+            <p className="w-full text-[10px] sm:text-[11px] font-bold text-[#1E5FA8] uppercase tracking-wide truncate pl-1 mb-1">
+              {brandName}
+            </p>
+          ) : null}
+
+          <div className="flex-1 w-full flex items-center justify-center min-h-0">
+            {imageSrc ? (
+              <Image
+                src={imageSrc}
+                alt={product.name}
+                width={160}
+                height={140}
+                className="object-contain max-h-[120px] sm:max-h-[130px] w-auto h-auto"
+                unoptimized
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-50 rounded" />
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col justify-center flex-1 py-3 pr-3 pl-0 min-w-0">
-          {brandName && (
-            <p className="text-[11px] sm:text-xs font-bold text-[#1E5FA8] uppercase tracking-wide truncate">
-              {brandName}
-            </p>
-          )}
           <Link
             href={`/product/${product.slug}`}
-            className="block mt-0.5"
+            className="block"
             onClick={() => handleProductClick(product)}
           >
             <h3 className="text-[11px] sm:text-[13px] font-semibold text-[#1E5FA8] leading-snug line-clamp-3 hover:underline">
@@ -1077,11 +1101,11 @@ const handleShare = async (product) => {
         <div
           className={`relative z-20 bg-white rounded-2xl border border-gray-100 shadow-[0_8px_30px_rgba(30,95,168,0.12)] px-3 py-4 sm:px-5 sm:py-5 ${
             banners.length > 0
-              ? "-mt-8 sm:-mt-10 mx-2 sm:mx-6"
+              ? "-mt-4 sm:-mt-6 mx-2 sm:mx-6"
               : "mt-0"
           }`}
         >
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {OPEN_BOX_FEATURES.map(({ title, desc, Icon }) => (
               <div
                 key={title}
