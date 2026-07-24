@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
-import { processWishlistMails } from "@/lib/wishlistMail";
+import {
+  processWishlistMails,
+  isWishlistMailTestAllowlistEnabled,
+  getWishlistMailTestAllowlist,
+} from "@/lib/wishlistMail";
 
 function isAuthorized(req) {
   const secret = process.env.CRON_SECRET;
@@ -18,9 +22,24 @@ export async function GET(req) {
     }
 
     await connectDB();
-    const force = req.nextUrl.searchParams.get("force") === "1";
-    const result = await processWishlistMails({ force });
-    return NextResponse.json({ success: true, result });
+    const forceParam = req.nextUrl.searchParams.get("force") === "1";
+    const testAllowlist = isWishlistMailTestAllowlistEnabled();
+    // While test allowlist is ON, always force (bypass schedule window) — only 3 emails.
+    const force = forceParam || testAllowlist;
+
+    const result = await processWishlistMails({
+      force,
+      ignoreLimits: testAllowlist,
+      maxForceSends: testAllowlist ? 10 : 20,
+    });
+
+    return NextResponse.json({
+      success: true,
+      testAllowlistEnabled: testAllowlist,
+      testAllowlist: testAllowlist ? getWishlistMailTestAllowlist() : undefined,
+      forced: force,
+      result,
+    });
   } catch (error) {
     console.error("cron wishlist-mail error:", error);
     return NextResponse.json(

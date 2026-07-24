@@ -298,7 +298,7 @@ const removeProductRow = (index) => {
             </section>
 
             {/* SOLUTIONS SECTION */}
-            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8">
+            <section className="w-full max-w-full sm:max-w-[720px] md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1520px] 2xl:max-w-[1680px] mx-auto px-0 sm:px-3 md:px-6 lg:px-8 mt-10 md:mt-14 lg:mt-16">
                 <div className="max-w-12xl mx-auto px-4 md:px-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
                         {/* LEFT CONTENT */}

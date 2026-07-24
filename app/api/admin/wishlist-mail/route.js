@@ -96,9 +96,19 @@ export async function POST(req) {
   try {
     await connectDB();
     const body = await req.json().catch(() => ({}));
-    const force = body?.force !== false;
 
-    const result = await processWishlistMails({ force });
+    const force = body?.force === true;
+    const ignoreLimits = body?.ignoreLimits === true;
+    const maxForceSends = Math.min(
+      100,
+      Math.max(1, Number(body?.maxForceSends) || 10),
+    );
+
+    const result = await processWishlistMails({
+      force,
+      ignoreLimits,
+      maxForceSends,
+    });
     return NextResponse.json({ success: true, result });
   } catch (error) {
     console.error("wishlist-mail POST error:", error);

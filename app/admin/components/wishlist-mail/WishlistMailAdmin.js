@@ -28,12 +28,14 @@ export default function WishlistMailAdmin() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
   const [message, setMessage] = useState("");
   const [config, setConfig] = useState({
     enabled: true,
-    maxMailsPerUser: 5,
-    mailCooldownDays: 7,
-    cronTime: "09:00",
+    maxMailsPerUser: 2,
+    mailCooldownDays: 15,
+    cronTime: "12:00",
     cronDays: [0, 1, 2, 3, 4, 5, 6],
     lastRunAt: null,
     lastRunStats: {},
@@ -103,26 +105,38 @@ export default function WishlistMailAdmin() {
   };
 
   const runNow = async () => {
+    const ok = window.confirm(
+      "Run now will send wishlist reminder mails to up to 10 users (from the database).\n\nContinue?",
+    );
+    if (!ok) return;
+
     setRunning(true);
     setMessage("");
     try {
       const res = await fetch("/api/admin/wishlist-mail", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ force: true }),
+        body: JSON.stringify({
+          force: true,
+          ignoreLimits: true,
+          maxForceSends: 10,
+        }),
       });
       const data = await res.json();
       if (data.success) {
         const r = data.result || {};
         const failed = (r.details || []).filter((d) => d.error);
+        const s = r.stats || {};
         setMessage(
           r.skipped
             ? `Skipped: ${r.reason}`
-            : `Run complete — sent ${r.sent || 0} mail(s).${
-                failed.length
-                  ? ` Failed: ${failed.map((f) => `${f.userEmail}: ${f.error}`).join("; ")}`
-                  : ""
-              }`
+            : `Run complete — sent ${r.sent || 0} mail(s) (max 10 per click).` +
+                (failed.length
+                  ? ` Failed: ${failed
+                      .slice(0, 3)
+                      .map((f) => `${f.userEmail}: ${f.error}`)
+                      .join("; ")}`
+                  : "")
         );
         await loadData();
       } else {
@@ -132,6 +146,44 @@ export default function WishlistMailAdmin() {
       setMessage(err.message);
     } finally {
       setRunning(false);
+    }
+  };
+
+  const sendTestMail = async () => {
+    const email = String(testEmail || "").trim();
+    if (!email) {
+      setMessage("Enter an email for the test send");
+      return;
+    }
+    setTesting(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin/wishlist-mail/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          name: "Test Customer",
+          productName: "Sample Wishlist Product",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessage(
+          `Test mail sent to ${email}. Params: ${JSON.stringify(
+            data.customerParams || data.params || [],
+          )}`
+        );
+      } else {
+        setMessage(
+          data.error ||
+            `Test failed: ${JSON.stringify(data.customerResult?.data || data)}`
+        );
+      }
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -157,15 +209,36 @@ export default function WishlistMailAdmin() {
             mail sending stops for that product.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={runNow}
-          disabled={running}
-          className="inline-flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 disabled:opacity-60"
-        >
-          <Icon icon="mdi:play" width={18} />
-          {running ? "Running…" : "Run now"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="email"
+            value={testEmail}
+            onChange={(e) => setTestEmail(e.target.value)}
+            placeholder="test@email.com"
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-56"
+          />
+          <button
+            type="button"
+            onClick={sendTestMail}
+            disabled={testing}
+            className="inline-flex items-center gap-2 bg-slate-700 text-white px-4 py-2 rounded-md hover:bg-slate-800 disabled:opacity-60"
+          >
+            <Icon icon="mdi:email-fast-outline" width={18} />
+            {testing ? "Sending…" : "Send test"}
+          </button>
+          <button
+            type="button"
+            onClick={runNow}
+            disabled={running}
+            className="inline-flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 disabled:opacity-60"
+          >
+            <Icon icon="mdi:play" width={18} />
+            {running ? "Running…" : "Run now"}
+          </button>
+          <span className="text-xs text-gray-500 max-w-[140px] leading-snug">
+            Sends up to 10 users per click
+          </span>
+        </div>
       </div>
 
       {message && (
@@ -251,7 +324,7 @@ export default function WishlistMailAdmin() {
             </label>
             <input
               type="time"
-              value={config.cronTime || "09:00"}
+              value={config.cronTime || "12:00"}
               onChange={(e) =>
                 setConfig((prev) => ({ ...prev, cronTime: e.target.value }))
               }

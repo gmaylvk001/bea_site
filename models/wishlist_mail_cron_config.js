@@ -4,9 +4,9 @@ const WishlistMailCronConfigSchema = new mongoose.Schema(
   {
     key: { type: String, default: "default", unique: true },
     enabled: { type: Boolean, default: true },
-    maxMailsPerUser: { type: Number, default: 5 },
-    mailCooldownDays: { type: Number, default: 7 },
-    cronTime: { type: String, default: "09:00" }, // HH:mm local server time
+    maxMailsPerUser: { type: Number, default: 2 },
+    mailCooldownDays: { type: Number, default: 15 },
+    cronTime: { type: String, default: "12:00" }, // HH:mm local server time
     cronDays: {
       type: [Number],
       default: [0, 1, 2, 3, 4, 5, 6], // 0=Sun .. 6=Sat

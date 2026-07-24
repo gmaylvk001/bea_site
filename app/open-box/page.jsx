@@ -100,47 +100,80 @@ const matchApplianceBucket = (product, categoryNameById) => {
   return null;
 };
 
-const pickEvenHighQty = (list, categoryTree, limit = 8) => {
-  const nameMap = buildCategoryNameMap(categoryTree);
-  const buckets = { ac: [], fridge: [], tv: [], washing: [] };
-  [...list]
-    .sort((a, b) => (b.quantity || 0) - (a.quantity || 0))
-    .forEach((p) => {
-      const key = matchApplianceBucket(p, nameMap);
-      if (key) buckets[key].push(p);
-    });
-
-  const order = ["ac", "fridge", "tv", "washing"];
-  const result = [];
-  let i = 0;
-  while (result.length < limit) {
-    let added = false;
-    for (const key of order) {
-      if (buckets[key][i]) {
-        result.push(buckets[key][i]);
-        added = true;
-        if (result.length >= limit) break;
-      }
-    }
-    if (!added) break;
-    i += 1;
+const getEffectivePrice = (product) => {
+  if (
+    product.special_price > 0 &&
+    product.special_price < product.price
+  ) {
+    return product.special_price;
   }
-  if (result.length === 0) {
-    return [...list]
-      .sort((a, b) => (b.quantity || 0) - (a.quantity || 0))
-      .slice(0, limit);
-  }
-  return result;
+  return product.price || 0;
 };
 
-/** Mega Clearance: EOL/FOCUS, high stock, even AC/fridge/TV/washing mix */
-const pickMegaDeals = (list, categoryTree, limit = 12) => {
+const shuffleArray = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+/**
+ * Mega Clearance: EOL/FOCUS in stock, high-price pool per category,
+ * randomly pick 2–3 products each time page opens.
+ */
+const pickMegaDeals = (list, categoryTree, perCategory = 3) => {
+  const nameMap = buildCategoryNameMap(categoryTree);
+  const buckets = { ac: [], fridge: [], tv: [], washing: [] };
   const inStock = list.filter(
     (p) =>
       (p.movement === "EOL" || p.movement === "FOCUS") &&
       (p.quantity || 0) > 0,
   );
-  return pickEvenHighQty(inStock, categoryTree, limit);
+
+  inStock.forEach((p) => {
+    const key = matchApplianceBucket(p, nameMap);
+    if (key) buckets[key].push(p);
+  });
+
+  const order = ["ac", "fridge", "tv", "washing"];
+  const result = [];
+
+  for (const key of order) {
+    const items = buckets[key];
+    if (!items.length) continue;
+
+    // High price first
+    const byPrice = [...items].sort(
+      (a, b) => getEffectivePrice(b) - getEffectivePrice(a),
+    );
+
+    // Top half = high-price candidate pool (min enough for variety)
+    const poolSize = Math.max(
+      perCategory * 2,
+      Math.ceil(byPrice.length * 0.5),
+    );
+    const highPricePool = byPrice.slice(0, Math.min(poolSize, byPrice.length));
+
+    // Random 2 or 3 from that pool
+    const pickCount = Math.min(
+      highPricePool.length,
+      2 + Math.floor(Math.random() * 2),
+    );
+    result.push(...shuffleArray(highPricePool).slice(0, pickCount));
+  }
+
+  if (result.length === 0) {
+    const byPrice = [...inStock].sort(
+      (a, b) => getEffectivePrice(b) - getEffectivePrice(a),
+    );
+    const pool = byPrice.slice(0, Math.min(24, byPrice.length));
+    return shuffleArray(pool).slice(0, Math.min(8, pool.length));
+  }
+
+  // Mix category order so strip not always AC→fridge→TV→washing
+  return shuffleArray(result);
 };
 
 const CategoryTreeFilter = ({
@@ -267,6 +300,7 @@ export default function OpenBoxPage() {
   const [categoryTree, setCategoryTree] = useState([]);
   const [showcaseProducts, setShowcaseProducts] = useState([]);
   const [showcaseCategoryTree, setShowcaseCategoryTree] = useState([]);
+  const [megaDealProducts, setMegaDealProducts] = useState([]);
 
 const [filterDefs, setFilterDefs] = useState([]);
 const [filterSummaryRaw, setFilterSummaryRaw] = useState([]);
@@ -440,10 +474,10 @@ const handleShare = async (product) => {
 
   const fetchShowcaseProducts = async () => {
     try {
+      // Wide pool so each appliance category has high-price candidates
       const query = new URLSearchParams({
         page: "1",
-        limit: "100",
-        sortBy: "quantity-high-to-low",
+        limit: "200",
       });
       const res = await fetch(`/api/open-box?${query}`);
       const data = await res.json();
@@ -840,11 +874,15 @@ const handleShare = async (product) => {
 
   const treeForShowcase =
     showcaseCategoryTree.length > 0 ? showcaseCategoryTree : categoryTree;
-  const megaDealProducts = pickMegaDeals(
-    showcaseProducts,
-    treeForShowcase,
-    12,
-  );
+
+  // Fresh random high-price mix only when showcase data loads (each page open)
+  useEffect(() => {
+    if (!showcaseProducts.length) {
+      setMegaDealProducts([]);
+      return;
+    }
+    setMegaDealProducts(pickMegaDeals(showcaseProducts, treeForShowcase, 3));
+  }, [showcaseProducts, showcaseCategoryTree, categoryTree]);
 
   const scrollToAllProducts = () => {
     allProductsRef.current?.scrollIntoView({
