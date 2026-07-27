@@ -4,6 +4,8 @@ import {
   processWishlistMails,
   isWishlistMailTestAllowlistEnabled,
   getWishlistMailTestAllowlist,
+  getWishlistMailConfig,
+  isWithinCronWindow,
 } from "@/lib/wishlistMail";
 
 function isAuthorized(req) {
@@ -22,22 +24,27 @@ export async function GET(req) {
     }
 
     await connectDB();
-    const forceParam = req.nextUrl.searchParams.get("force") === "1";
+    const config = await getWishlistMailConfig();
+    const force = req.nextUrl.searchParams.get("force") === "1";
     const testAllowlist = isWishlistMailTestAllowlistEnabled();
-    // While test allowlist is ON, always force (bypass schedule window) — only 3 emails.
-    const force = forceParam || testAllowlist;
+    const inWindow = isWithinCronWindow(config, new Date());
 
+    // Normal cron: only inside schedule window. ?force=1 bypasses window (still allowlisted).
     const result = await processWishlistMails({
       force,
-      ignoreLimits: testAllowlist,
-      maxForceSends: testAllowlist ? 10 : 20,
+      ignoreLimits: false,
+      maxForceSends: testAllowlist ? 5 : 50,
     });
 
     return NextResponse.json({
       success: true,
+      timezone: "Asia/Kolkata",
+      cronTime: config.cronTime,
+      enabled: config.enabled,
+      inWindow,
+      forced: force,
       testAllowlistEnabled: testAllowlist,
       testAllowlist: testAllowlist ? getWishlistMailTestAllowlist() : undefined,
-      forced: force,
       result,
     });
   } catch (error) {

@@ -27,7 +27,6 @@ const formatDate = (d) => {
 export default function WishlistMailAdmin() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [running, setRunning] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -55,7 +54,11 @@ export default function WishlistMailAdmin() {
       const res = await fetch("/api/admin/wishlist-mail");
       const data = await res.json();
       if (data.success) {
-        setConfig((prev) => ({ ...prev, ...data.config }));
+        setConfig((prev) => ({
+          ...prev,
+          ...data.config,
+          cronTime: "12:00",
+        }));
         setStats(data.stats || {});
         setLogs(data.logs || []);
       } else {
@@ -88,7 +91,7 @@ export default function WishlistMailAdmin() {
       const res = await fetch("/api/admin/wishlist-mail", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
+        body: JSON.stringify({ ...config, cronTime: "12:00" }),
       });
       const data = await res.json();
       if (data.success) {
@@ -101,51 +104,6 @@ export default function WishlistMailAdmin() {
       setMessage(err.message);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const runNow = async () => {
-    const ok = window.confirm(
-      "Run now will send wishlist reminder mails to up to 10 users (from the database).\n\nContinue?",
-    );
-    if (!ok) return;
-
-    setRunning(true);
-    setMessage("");
-    try {
-      const res = await fetch("/api/admin/wishlist-mail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          force: true,
-          ignoreLimits: true,
-          maxForceSends: 10,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        const r = data.result || {};
-        const failed = (r.details || []).filter((d) => d.error);
-        const s = r.stats || {};
-        setMessage(
-          r.skipped
-            ? `Skipped: ${r.reason}`
-            : `Run complete — sent ${r.sent || 0} mail(s) (max 10 per click).` +
-                (failed.length
-                  ? ` Failed: ${failed
-                      .slice(0, 3)
-                      .map((f) => `${f.userEmail}: ${f.error}`)
-                      .join("; ")}`
-                  : "")
-        );
-        await loadData();
-      } else {
-        setMessage(data.error || "Run failed");
-      }
-    } catch (err) {
-      setMessage(err.message);
-    } finally {
-      setRunning(false);
     }
   };
 
@@ -203,10 +161,8 @@ export default function WishlistMailAdmin() {
             Wishlist Mail Alerts
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            When a user adds a product to wishlist, reminder emails are sent to
-            that user using the max mail count, send time, and days-between
-            settings below. When every user for a product has hit the limit,
-            mail sending stops for that product.
+            Reminder emails are sent only by the scheduled cron (IST time).
+            Configure max mail count, send time, and days-between below.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -226,18 +182,6 @@ export default function WishlistMailAdmin() {
             <Icon icon="mdi:email-fast-outline" width={18} />
             {testing ? "Sending…" : "Send test"}
           </button>
-          <button
-            type="button"
-            onClick={runNow}
-            disabled={running}
-            className="inline-flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 disabled:opacity-60"
-          >
-            <Icon icon="mdi:play" width={18} />
-            {running ? "Running…" : "Run now"}
-          </button>
-          <span className="text-xs text-gray-500 max-w-[140px] leading-snug">
-            Sends up to 10 users per click
-          </span>
         </div>
       </div>
 
@@ -320,16 +264,18 @@ export default function WishlistMailAdmin() {
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">
-              Cron time (HH:mm)
+              Cron time (HH:mm, IST)
             </label>
             <input
               type="time"
-              value={config.cronTime || "12:00"}
-              onChange={(e) =>
-                setConfig((prev) => ({ ...prev, cronTime: e.target.value }))
-              }
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              value="12:00"
+              disabled
+              readOnly
+              className="w-full border border-gray-200 rounded-md px-3 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
             />
+            <p className="text-xs text-gray-400 mt-1">
+              Fixed at 12:00 IST — cannot be changed
+            </p>
           </div>
         </div>
 
@@ -361,6 +307,12 @@ export default function WishlistMailAdmin() {
           {config.lastRunStats?.sent != null && (
             <> — sent {config.lastRunStats.sent} mail(s)</>
           )}
+          <div className="mt-1 text-xs text-gray-400">
+            Cron runs daily at 12:00 IST. Hit{" "}
+            <code className="text-gray-500">/api/cron/wishlist-mail?secret=…</code>
+            {" "}around that time (or add <code className="text-gray-500">&force=1</code>{" "}
+            only for testing).
+          </div>
         </div>
 
         <button

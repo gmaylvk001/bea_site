@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
-import {
-  getWishlistMailConfig,
-  processWishlistMails,
-} from "@/lib/wishlistMail";
+import { getWishlistMailConfig } from "@/lib/wishlistMail";
 import { mergeEmailContent } from "@/lib/wishlistMailEmailDefaults";
 import WishlistMailLog from "@/models/wishlist_mail_log";
 import Product from "@/models/product";
@@ -63,7 +60,8 @@ export async function PUT(req) {
       config.maxMailsPerUser = Math.max(1, Number(body.maxMailsPerUser) || 1);
     if (body.mailCooldownDays !== undefined)
       config.mailCooldownDays = Math.max(0, Number(body.mailCooldownDays) || 0);
-    if (body.cronTime) config.cronTime = String(body.cronTime);
+    // Cron time is fixed at 12:00 IST — admin cannot change it
+    config.cronTime = "12:00";
     if (Array.isArray(body.cronDays)) {
       config.cronDays = body.cronDays
         .map((d) => Number(d))
@@ -92,29 +90,12 @@ export async function PUT(req) {
   }
 }
 
-export async function POST(req) {
-  try {
-    await connectDB();
-    const body = await req.json().catch(() => ({}));
-
-    const force = body?.force === true;
-    const ignoreLimits = body?.ignoreLimits === true;
-    const maxForceSends = Math.min(
-      100,
-      Math.max(1, Number(body?.maxForceSends) || 10),
-    );
-
-    const result = await processWishlistMails({
-      force,
-      ignoreLimits,
-      maxForceSends,
-    });
-    return NextResponse.json({ success: true, result });
-  } catch (error) {
-    console.error("wishlist-mail POST error:", error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
+export async function POST() {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Run now is disabled. Wishlist mails are sent only by cron.",
+    },
+    { status: 405 },
+  );
 }
