@@ -861,8 +861,12 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           } catch (e) { console.error('Loyalty award failed:', e); }
         }
 
-        // TESTING: SAP sync disabled — uncomment below to re-enable
-        // await fetch('/api/send-order-detail-to-sap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_number: orderData.order.order_number }) });
+        // SAP sync disabled for live — uncomment to send order data to SAP
+        await fetch('/api/send-order-detail-to-sap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_number: orderData.order.order_number }),
+        });
 
         try {
           const name = `${addressData.firstName} ${addressData.lastName}`;
@@ -876,15 +880,13 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           });
 
           const adminEmails = [
-            // "arunkarthik@bharathelectronics.in",
-            // "ecom@bharathelectronics.in",
-            // "itadmin@bharathelectronics.in",
-            // "telemarketing@bharathelectronics.in",
-            // "sekarcorp@bharathelectronics.in",
-            // "abu@bharathelectronics.in",
-            // "customercare@bharathelectronics.in",
-            "hariharann2026@gmail.com",
-            "hariharan.g@eywamedia.com",
+            "arunkarthik@bharathelectronics.in",
+            "ecom@bharathelectronics.in",
+            "itadmin@bharathelectronics.in",
+            "telemarketing@bharathelectronics.in",
+            "sekarcorp@bharathelectronics.in",
+            "abu@bharathelectronics.in",
+            "customercare@bharathelectronics.in",
           ];
 
           const emailRes = await fetch("/api/send-order-email", {
