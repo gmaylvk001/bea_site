@@ -353,7 +353,7 @@ const results = stores.filter(
         <div className="min-w-0">
           <div className="text-[clamp(0.6rem,0.55vw+0.42rem,0.72rem)] text-white font-medium leading-none mb-0.5">Call Us</div>
           <div className="text-[clamp(0.72rem,0.7vw+0.45rem,0.9rem)] text-white font-bold leading-tight">98423 44323</div>
-          <div className="text-[clamp(0.62rem,0.55vw+0.4rem,0.82rem)] text-white leading-tight mt-0.5">9:30 AM – 9:30 PM</div>
+          <div className="text-[clamp(0.62rem,0.55vw+0.4rem,0.82rem)] text-white leading-tight mt-0.5">10:00 AM – 9:00 PM</div>
         </div>
       </a>
 
@@ -434,7 +434,7 @@ const results = stores.filter(
               <a href="tel:9842344323" className="text-blue-700 font-bold text-[13px] block hover:underline">
                 ☎ 98423 44323
               </a>
-              <div className="text-[11px] text-gray-400 mt-0.5">Mon to Sun: 09:30 AM – 09:30 PM</div>
+              <div className="text-[11px] text-gray-400 mt-0.5">Mon to Sun: 10:00 AM – 9:00 PM</div>
             </div>
           </div>
 
