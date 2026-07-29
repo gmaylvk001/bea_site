@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {images: {
+const nextConfig = {
+  images: {
     remotePatterns: [
       {
         protocol: "http",
@@ -8,6 +9,21 @@ const nextConfig = {images: {
         pathname: "/uploads/categories/**",
       },
     ],
-  },};
+  },
+  async redirects() {
+    return [
+      {
+        source: "/products/:slug",
+        destination: "/product/:slug",
+        permanent: true,
+      },
+      {
+        source: "/brand",
+        destination: "/",
+        permanent: true,
+      },
+    ];
+  },
+};
 
 export default nextConfig;
