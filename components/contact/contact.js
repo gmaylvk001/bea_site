@@ -392,7 +392,7 @@ const results = stores.filter(
       </button>
 
       {/* Stores */}
-      <Link href="/our-branches" className="flex items-center gap-[clamp(0.4rem,0.8vw,0.65rem)] no-underline min-w-0 sm:border-l sm:border-white/15 sm:pl-[clamp(0.5rem,1vw,1rem)]">
+      <Link href="/location" className="flex items-center gap-[clamp(0.4rem,0.8vw,0.65rem)] no-underline min-w-0 sm:border-l sm:border-white/15 sm:pl-[clamp(0.5rem,1vw,1rem)]">
         <div className="rounded-full border border-white/30 flex items-center justify-center flex-shrink-0 w-[clamp(1.65rem,1.4vw+1rem,2.1rem)] h-[clamp(1.65rem,1.4vw+1rem,2.1rem)]">
           <svg className="w-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)] h-[clamp(0.7rem,0.5vw+0.55rem,0.9rem)]" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>

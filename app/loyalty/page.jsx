@@ -177,10 +177,10 @@ export default function LoyaltyPage() {
                 <p className="text-white/40 text-xs text-center mb-3">New to BEA Loyalty? Download the TRUCO app to start earning!</p>
                 <div className="flex gap-2 justify-center">
                   <a href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">
-                    <img src="/loyalty/playstore.jpg" alt="Google Play" className="h-9 w-auto rounded object-contain" />
+                    <img src="/uploads/GooglePlayDark.png" alt="Google Play" className="h-9 w-auto rounded object-contain" />
                   </a>
                   <a href="https://apps.apple.com/in/app/bea-truco/id6751942292" target="_blank" rel="noopener noreferrer">
-                    <img src="/loyalty/appstore.jpg" alt="App Store" className="h-9 w-auto rounded object-contain" />
+                    <img src="/uploads/AppStoreDark.png" alt="App Store" className="h-9 w-auto rounded object-contain" />
                   </a>
                 </div>
                 {!isLoggedIn && (
