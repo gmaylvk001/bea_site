@@ -97,6 +97,9 @@ export async function PUT(request, { params }) {
     // ---------- BASIC FIELDS ----------
     const updateData = {
       organisation_name: fields.organisation_name?.[0] || "",
+      store_no: String(fields.store_no?.[0] || "").trim(),
+      multibrandstore:
+        String(fields.multibrandstore?.[0] || "").toLowerCase() === "true",
       category: fields.category?.[0] || null,
       description: fields.description?.[0] || "",
       location: fields.location?.[0] || "",
@@ -121,6 +124,24 @@ export async function PUT(request, { params }) {
       businessHours: JSON.parse(fields.businessHours || "[]"),
       keyHighlights: JSON.parse(fields.keyHighlights || "[]"),
     };
+
+    if (!updateData.store_no) {
+      return NextResponse.json(
+        { error: "Store number is required." },
+        { status: 400 }
+      );
+    }
+
+    const existingStoreNo = await Store.findOne({
+      store_no: updateData.store_no,
+      slug: { $ne: storeId },
+    });
+    if (existingStoreNo) {
+      return NextResponse.json(
+        { error: "Store number already exists." },
+        { status: 400 }
+      );
+    }
 
     // ======================================================
     // SOCIAL TIMELINE with Thumbnail Upload Support

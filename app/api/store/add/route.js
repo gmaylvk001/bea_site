@@ -75,6 +75,26 @@ export async function POST(req) {
     }
 
     // -----------------------
+    // Store number + multi-brand flag
+    // -----------------------
+    newStoreData.store_no = String(newStoreData.store_no || "").trim();
+    if (!newStoreData.store_no) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Store number is required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    const existingStoreNo = await store.findOne({ store_no: newStoreData.store_no });
+    if (existingStoreNo) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Store number already exists" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    newStoreData.multibrandstore =
+      String(newStoreData.multibrandstore || "").toLowerCase() === "true";
+
+    // -----------------------
     // Generate unique slug
     // -----------------------
     const baseSlug = slugify(newStoreData.organisation_name || "");

@@ -76,6 +76,8 @@ export default function CreateStoreForm({ storeId = null }) {
 
   const [newStore, setNewStore] = useState({
     organisation_name: "",
+    store_no: "",
+    multibrandstore: false,
     description: "",
     logo: null,
     store_images: [null, null, null], // up to 3
@@ -138,6 +140,8 @@ export default function CreateStoreForm({ storeId = null }) {
         setNewStore((prev) => ({
           ...prev,
           organisation_name: result.organisation_name || "",
+          store_no: result.store_no || "",
+          multibrandstore: result.multibrandstore === true,
           description: result.description || "",
           logo: result.logo || null,
           store_images: result.store_images || [null, null, null],
@@ -394,6 +398,8 @@ export default function CreateStoreForm({ storeId = null }) {
     if (currentStep === 1) {
       if (!newStore.organisation_name.trim())
         currentStepErrors.organisation_name = "Organisation Name is required";
+      if (!String(newStore.store_no || "").trim())
+        currentStepErrors.store_no = "Store number is required";
     } else if (currentStep === 2) {
       if (!newStore.address.trim()) currentStepErrors.address = "Address is required";
       if (!newStore.city.trim()) currentStepErrors.city = "City is required";
@@ -434,6 +440,8 @@ export default function CreateStoreForm({ storeId = null }) {
     // Append simple fields (category removed)
     const scalarKeys = [
       "organisation_name",
+      "store_no",
+      "multibrandstore",
       "description",
       "location",
       "zipcode",
@@ -453,7 +461,13 @@ export default function CreateStoreForm({ storeId = null }) {
       "user",
       "status",
     ];
-    scalarKeys.forEach((k) => formData.append(k, newStore[k] ?? ""));
+    scalarKeys.forEach((k) => {
+      if (k === "multibrandstore") {
+        formData.append(k, newStore.multibrandstore ? "true" : "false");
+      } else {
+        formData.append(k, newStore[k] ?? "");
+      }
+    });
 
     // Handle tags array (string input -> try to split by comma if string)
     if (Array.isArray(newStore.tags)) {
@@ -591,6 +605,46 @@ formData.append("existing_customer_images", JSON.stringify(customerExisting));
               <input type="text" name="organisation_name" className="p-2 border rounded w-full"
                 onChange={handleInputChange} value={newStore.organisation_name} />
               {errors.organisation_name && <span className="text-red-500 text-sm">{errors.organisation_name}</span>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Store Number</label>
+              <input
+                type="text"
+                name="store_no"
+                className="p-2 border rounded w-full"
+                onChange={handleInputChange}
+                value={newStore.store_no}
+                placeholder="e.g. ST001"
+              />
+              {errors.store_no && <span className="text-red-500 text-sm">{errors.store_no}</span>}
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Store Type</label>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setNewStore((prev) => ({
+                      ...prev,
+                      multibrandstore: !prev.multibrandstore,
+                    }))
+                  }
+                  className={`px-4 py-2 rounded-md text-sm font-semibold border transition ${
+                    newStore.multibrandstore
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                  }`}
+                >
+                  Multi Brand Store
+                </button>
+                <span className="text-sm text-gray-500">
+                  {newStore.multibrandstore
+                    ? "Selected: Multi Brand Store"
+                    : "Selected: Executive Store"}
+                </span>
+              </div>
             </div>
 
             <div className="col-span-1 md:col-span-2">

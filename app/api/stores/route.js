@@ -3,14 +3,21 @@ import connectDB from "@/lib/db";
 import Store from "@/models/store";
 import { attachFeaturedProductsToStores } from "@/lib/storesWithFeaturedProducts";
 
-export async function GET() {
+export async function GET(req) {
   await connectDB();
 
   try {
-    const stores = await Store.find({}).lean();
-    const data = await attachFeaturedProductsToStores(stores);
+    const storeType = req.nextUrl?.searchParams?.get("storeType")?.trim().toLowerCase();
+    let stores = await Store.find({}).lean();
+    stores = await attachFeaturedProductsToStores(stores);
 
-    return NextResponse.json({ success: true, data }, { status: 200 });
+    if (storeType === "multi-brand" || storeType === "multi brand store") {
+      stores = stores.filter((s) => s.multibrandstore === true);
+    } else if (storeType === "executive" || storeType === "executive store") {
+      stores = stores.filter((s) => s.multibrandstore !== true);
+    }
+
+    return NextResponse.json({ success: true, data: stores }, { status: 200 });
   } catch (error) {
     console.error("Failed to fetch stores:", error);
     return NextResponse.json(

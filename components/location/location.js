@@ -3,6 +3,26 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 
+const STORE_TYPE_OPTIONS = [
+  "All Store Types",
+  "Multi Brand Store",
+  "Executive Store",
+];
+
+function getStoreTypeLabel(store) {
+  return store?.multibrandstore === true
+    ? "Multi Brand Store"
+    : "Executive Store";
+}
+
+function matchesStoreTypeFilter(store, filterValue = "") {
+  const value = String(filterValue || "").trim();
+  if (!value || value === "All Store Types") return true;
+  if (value === "Multi Brand Store") return store?.multibrandstore === true;
+  if (value === "Executive Store") return store?.multibrandstore !== true;
+  return true;
+}
+
 // ─── Why Shop Items with asset icons ─────────────────────────────────────────
 const WHY_SHOP_ITEMS = [
   { icon: "/location/AuthraizedBrand.png", title: "Authorized Brand Partner",  desc: "100% genuine products with official warranty" },
@@ -98,9 +118,9 @@ function StoreCard({ store }) {
           <div className="font-bold text-[13px] text-gray-900 mb-1 leading-snug">
             {store.organisation_name}
           </div>
-          {(store.category || store.service_area) && (
+          {(store.multibrandstore === true || store.multibrandstore === false || store.category || store.service_area) && (
             <span className="bg-blue-100 text-blue-700 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-block mb-1.5">
-              {store.category || store.service_area}
+              {getStoreTypeLabel(store)}
             </span>
           )}
           {store.city && (
@@ -188,18 +208,12 @@ export default function BEABranchesPage() {
     return ["All Cities", ...unique];
   }, [stores]);
 
-  const storeTypes = useMemo(() => {
-    const unique = [...new Set(stores.map((s) => s.category || s.service_area).filter(Boolean))].sort();
-    return ["All Store Types", ...unique];
-  }, [stores]);
+  const storeTypes = STORE_TYPE_OPTIONS;
 
   const filtered = useMemo(() => {
     return stores.filter((s) => {
       const cityMatch = appliedCity === "All Cities" || s.city === appliedCity;
-      const typeMatch =
-        appliedType === "All Store Types" ||
-        s.category === appliedType ||
-        s.service_area === appliedType;
+      const typeMatch = matchesStoreTypeFilter(s, appliedType);
       return cityMatch && typeMatch;
     });
   }, [stores, appliedCity, appliedType]);

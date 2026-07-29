@@ -16,6 +16,18 @@ const StoreSchema = new mongoose.Schema(
       index: true,
     },
 
+    store_no: {
+      type: String,
+      trim: true,
+      index: true,
+      sparse: true,
+    },
+
+    multibrandstore: {
+      type: Boolean,
+      default: false,
+    },
+
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
