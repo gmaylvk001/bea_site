@@ -2210,6 +2210,10 @@ const Header = () => {
       .dd-brands::-webkit-scrollbar { width: 3px; }
       .dd-brands::-webkit-scrollbar-thumb { background: #2453D3; border-radius: 2px; }
       .dd-brands::-webkit-scrollbar-track { background: #f1f1f1; }
+      .dd-sub-scroll { overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #2453D3 #f1f1f1; }
+      .dd-sub-scroll::-webkit-scrollbar { width: 3px; }
+      .dd-sub-scroll::-webkit-scrollbar-thumb { background: #2453D3; border-radius: 2px; }
+      .dd-sub-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
       .dd-child-link { display:block; font-size:13px; color:#374151; text-decoration:none; padding:5px 8px; border-radius:4px; white-space:nowrap; transition: color 0.1s, background 0.1s; }
       .dd-child-link:hover { color:#2453D3; background:#EFF6FF; }
       .dd-brand-item { display:flex; align-items:center; justify-content:center; padding:5px 6px; border:none; border-radius:6px; text-decoration:none; transition: background 0.1s; }
@@ -2311,41 +2315,95 @@ const Header = () => {
 
       {/* ── RIGHT CONTENT AREA ── */}
       {(() => {
-        const ROWS_PER_COL = 9;
+        const ROWS_VISIBLE = 9;
+        const ROW_HEIGHT_PX = 28;
         const brands = hoveredCategory.brands || [];
         const navImgs = hoveredCategory?.navImage
           ? (typeof hoveredCategory.navImage === 'string'
               ? hoveredCategory.navImage.split(',').map(s => s.trim()).filter(Boolean)
               : Array.isArray(hoveredCategory.navImage) ? hoveredCategory.navImage : [])
           : [];
-
         const activeSub = activeSubCategory;
-
-        /*
-          MODE A — activeSubCategory is set (user hovered a sub):
-            Show that sub's children as columns of 9
-
-          MODE B — no activeSubCategory (default / first load):
-            Show ALL subs as separate columns (each sub = 1 column header + its children)
-            Image 2 exact layout: AIR CONDITIONERS | REFRIGERATORS | WASHING MACHINES | DISHWASHERS
-        */
-
-       const renderBrands = () => brands.length > 0 && (
-    <div style={{ marginTop: 'auto', paddingTop: '12px', paddingLeft: '196px', borderTop: '1px solid #e5e7eb', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
-      <div style={{
-      fontSize: '11px', fontWeight: 700, color: '#1e3a8a',
-      textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px',
-    }}>
-      Top Brands
-    </div>
-    <div className="dd-brands" style={{
-  display: 'grid',
-  gridTemplateColumns: 'repeat(5, minmax(80px, 1fr))',
-  gridTemplateRows: 'repeat(2, auto)',
-  gap: '8px 16px',
-  alignItems: 'center',
-  justifyItems: 'start',
-}}>
+        // Children if any; otherwise brand names for that subcategory (e.g. Audio)
+        const getSubListItems = (sub) => {
+          const children = Array.isArray(sub?.subcategories) && sub.subcategories.length > 0
+            ? [...sub.subcategories].sort((a, b) => alphaSortString(a.category_name, b.category_name))
+            : [];
+          if (children.length > 0) {
+            return children.map((child) => ({
+              key: child._id,
+              label: child.category_name,
+              href: `/category/${hoveredCategory.category_slug}/${sub.category_slug}/${child.category_slug}`,
+              kind: 'child',
+            }));
+          }
+          const subBrands = Array.isArray(sub?.brands) && sub.brands.length > 0
+            ? sub.brands
+            : brands;
+          return [...subBrands]
+            .sort((a, b) => alphaSortString(a.brand_name, b.brand_name))
+            .map((brand) => ({
+              key: brand._id || brand.brand_slug,
+              label: brand.brand_name,
+              href: `/category/brand/${hoveredCategory.category_slug}/${brand.brand_slug}`,
+              kind: 'brand',
+            }));
+        };
+        const renderListColumn = (items, key, opts = {}) => {
+          const needsScroll = items.length > ROWS_VISIBLE;
+          return (
+            <div
+              key={key}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: '180px',
+                maxWidth: '220px',
+                borderRight: opts.showBorder ? '1px solid #e5e7eb' : 'none',
+                paddingRight: opts.showBorder ? '16px' : '0',
+                paddingLeft: opts.padLeft ? '16px' : '0',
+                alignSelf: 'flex-start',
+              }}
+            >
+              {opts.header}
+              <div
+                className={needsScroll ? 'dd-sub-scroll' : undefined}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  maxHeight: needsScroll ? `${ROWS_VISIBLE * ROW_HEIGHT_PX}px` : undefined,
+                }}
+              >
+                {items.map((item) => (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    onClick={() => setHoveredCategory(null)}
+                    className="dd-child-link"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        };
+        const renderBrands = () => brands.length > 0 && (
+          <div style={{ marginTop: 'auto', paddingTop: '12px', paddingLeft: '196px', borderTop: '1px solid #e5e7eb', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
+            <div style={{
+              fontSize: '11px', fontWeight: 700, color: '#1e3a8a',
+              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px',
+            }}>
+              Top Brands
+            </div>
+            <div className="dd-brands" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(5, minmax(80px, 1fr))',
+              gridTemplateRows: 'repeat(2, auto)',
+              gap: '8px 16px',
+              alignItems: 'center',
+              justifyItems: 'start',
+            }}>
               {[...brands]
                 .sort((a, b) => alphaSortString(a.brand_name, b.brand_name))
                 .slice(0, 10)
@@ -2356,30 +2414,29 @@ const Header = () => {
                     onClick={() => setHoveredCategory(null)}
                     className="dd-brand-item"
                   >
-                {brand.image ? (
-                <img
-                src={`/uploads/Brands/${brand.image}`}
-                alt={brand.brand_name}
-                style={{ height: '32px', maxWidth: '80px', objectFit: 'contain' }}
-                onError={(e) => {
-      
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.nextElementSibling.style.display = 'block';
-                 }}
-               />
-            ) : null}
-           <span
-             style={{
-        display: brand.image ? 'none' : 'block',
-        fontSize: '11px',
-        fontWeight: 600,
-        color: '#374151'
-         }}
-         >
-          {brand.brand_name}
-  </span>
+                    {brand.image ? (
+                      <img
+                        src={`/uploads/Brands/${brand.image}`}
+                        alt={brand.brand_name}
+                        style={{ height: '32px', maxWidth: '80px', objectFit: 'contain' }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling.style.display = 'block';
+                        }}
+                      />
+                    ) : null}
+                    <span
+                      style={{
+                        display: brand.image ? 'none' : 'block',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#374151'
+                      }}
+                    >
+                      {brand.brand_name}
+                    </span>
                   </Link>
-  ))}
+                ))}
               {brands.length > 10 && (
                 <Link
                   href={`/category/${hoveredCategory.category_slug}`}
@@ -2392,156 +2449,76 @@ const Header = () => {
             </div>
           </div>
         );
-
         return (
           <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: '420px' }}>
-
             <div style={{ flex: 1, padding: '16px 20px', minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '420px' }}>
-
               {activeSub ? (
-                /* ── MODE A: Single sub's children in columns of 9 ── */
                 <div style={{ flex: 1, minHeight: 0 }}>
-                <>
-                  {/* Sub title */}
-                  <div style={{ marginBottom: '10px', paddingBottom: '8px', borderBottom: 'none' }}>
-                    <Link
-                      href={`/category/${hoveredCategory.category_slug}/${activeSub.category_slug}`}
-                      onClick={() => setHoveredCategory(null)}
-                      style={{
-                        fontSize: '13px', fontWeight: 700, color: '#2453D3',
-                        textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em',
-                      }}
-                    >
-                      {activeSub.category_name}
-                    </Link>
-                  </div>
-
-                  {/* Children split into columns of 9 */}
-                  {(() => {
-                        const children = activeSub?.subcategories
-                      ? [...activeSub.subcategories].sort((a, b) => alphaSortString(a.category_name, b.category_name))
-                     : [];
-                 const activeColsNeeded = Math.max(1, Math.ceil(children.length / ROWS_PER_COL));
-                 const remainingCols = 4 - activeColsNeeded;
-
+                  <>
+                    <div style={{ marginBottom: '10px', paddingBottom: '8px', borderBottom: 'none' }}>
+                      <Link
+                        href={`/category/${hoveredCategory.category_slug}/${activeSub.category_slug}`}
+                        onClick={() => setHoveredCategory(null)}
+                        style={{
+                          fontSize: '13px', fontWeight: 700, color: '#2453D3',
+                          textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em',
+                        }}
+                      >
+                        {activeSub.category_name}
+                      </Link>
+                    </div>
+                    {(() => {
+                      const activeItems = getSubListItems(activeSub);
                       const otherSubs = [...hoveredCategory.subcategories]
-                         .sort((a, b) => alphaSortString(a.category_name, b.category_name))
-                         .filter(s => s._id !== activeSub._id)
-                   .reduce((acc, sub) => {
-                    const need = Math.max(1, Math.ceil((sub.subcategories?.length || 0) / ROWS_PER_COL));
-                 if (acc.usedCols + need > remainingCols) return acc;
-                 return { subs: [...acc.subs, sub], usedCols: acc.usedCols + need };
-                   }, { subs: [], usedCols: 0 }).subs;
-
-                const cols = [];
-            for (let i = 0; i < activeColsNeeded; i++) {
-         cols.push(children.slice(i * ROWS_PER_COL, (i + 1) * ROWS_PER_COL));
-               }
-                    return (
-                    <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
-                       {cols.map((col, ci) => (
-                      <div key={ci} style={{
-                      display: 'flex', flexDirection: 'column', minWidth: '170px',
-                      borderRight: ci < cols.length - 1 ? '1px solid #e5e7eb' : 'none',
-                      paddingRight: ci < cols.length - 1 ? '16px' : '0',
-                      paddingLeft: ci > 0 ? '16px' : '0',
-                     alignSelf: 'flex-start',
-                       }}>
-                            {col.map((child, ri) => (
-                              <Link
-                                key={child._id}
-                                href={`/category/${hoveredCategory.category_slug}/${activeSub.category_slug}/${child.category_slug}`}
-                                onClick={() => setHoveredCategory(null)}
-                                className="dd-child-link"
-                                style={{ }}
-                              >
-                                {child.category_name}
-                              </Link>
-                            ))}
-                          </div>
-                        ))}
-{otherSubs.map((sub) => {
-  const subChildren = sub.subcategories
-    ? [...sub.subcategories].sort((a, b) => alphaSortString(a.category_name, b.category_name))
-    : [];
-  const subCols = [];
-  for (let i = 0; i < Math.max(1, Math.ceil(subChildren.length / ROWS_PER_COL)); i++) {
-    subCols.push(subChildren.slice(i * ROWS_PER_COL, (i + 1) * ROWS_PER_COL));
-  }
-  return subCols.map((col, ci) => (
-    <div key={`${sub._id}-${ci}`} style={{
-      display: 'flex', flexDirection: 'column', minWidth: '180px',
-      borderLeft: '1px solid #e5e7eb',
-      paddingLeft: '16px',
-      alignSelf: 'flex-start',
-    }}>
-
-        {ci === 0 && (
-          <Link
-            href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
-            onClick={() => setHoveredCategory(null)}
-            style={{
-              fontSize: '13px', fontWeight: 700, color: '#2453D3',
-              textDecoration: 'none', textTransform: 'uppercase',
-              letterSpacing: '0.04em', marginBottom: '8px',
-              paddingBottom: '6px', borderBottom: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {sub.category_name}
-          </Link>
-        )}
-        {col.map((child, ri) => (
-          <Link
-            key={child._id}
-            href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}/${child.category_slug}`}
-            onClick={() => setHoveredCategory(null)}
-            className="dd-child-link"
-            style={{}}
-          >
-             {child.category_name}
-                        </Link>
-                        ))}
-                         </div>
-                       ));
-                      })}
-                  </div>
-                    );
-                  })()}
-
-                </>
+                        .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                        .filter((s) => s._id !== activeSub._id)
+                        .slice(0, 3);
+                      return (
+                        <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+                          {renderListColumn(activeItems, activeSub._id, {
+                            showBorder: otherSubs.length > 0,
+                            padLeft: false,
+                          })}
+                          {otherSubs.map((sub, idx) => {
+                            const items = getSubListItems(sub);
+                            return renderListColumn(items, sub._id, {
+                              showBorder: idx < otherSubs.length - 1,
+                              padLeft: true,
+                              header: (
+                                <Link
+                                  href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
+                                  onClick={() => setHoveredCategory(null)}
+                                  style={{
+                                    fontSize: '13px', fontWeight: 700, color: '#2453D3',
+                                    textDecoration: 'none', textTransform: 'uppercase',
+                                    letterSpacing: '0.04em', marginBottom: '8px',
+                                    paddingBottom: '6px', borderBottom: 'none',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {sub.category_name}
+                                </Link>
+                              ),
+                            });
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </>
                 </div>
               ) : (
-                /* ── MODE B: ALL subs as columns — Image 2 exact layout ── */
                 <div style={{ flex: 1, minHeight: 0 }}>
-                <>
-                 <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
-                    {[...hoveredCategory.subcategories]
-                      .sort((a, b) => alphaSortString(a.category_name, b.category_name))
-                       .reduce((acc, sub) => {
-                              const usedCols = acc.usedCols;
-                             const colsNeeded = Math.max(1, Math.ceil((sub.subcategories?.length || 0) / 9));
-                             if (usedCols + colsNeeded > 4) return acc;
-                             return { subs: [...acc.subs, sub], usedCols: usedCols + colsNeeded };
-                              }, { subs: [], usedCols: 0 }).subs
-                      .map((sub, si, arr) => {
-                        const children = sub.subcategories
-                          ? [...sub.subcategories].sort((a, b) => alphaSortString(a.category_name, b.category_name))
-                          : [];
-                        // Each sub = 1 column (or more if children > 9)
-                        const subCols = [];
-                        for (let i = 0; i < Math.max(1, Math.ceil(children.length / ROWS_PER_COL)); i++) {
-                          subCols.push(children.slice(i * ROWS_PER_COL, (i + 1) * ROWS_PER_COL));
-                        }
-                        return subCols.map((col, ci) => (
-                          <div key={`${sub._id}-${ci}`} style={{
-                            display: 'flex', flexDirection: 'column', minWidth: '180px',
-                            borderRight: (si < arr.length - 1 || ci < subCols.length - 1) ? '1px solid #e5e7eb' : 'none',
-                            paddingRight: '16px',
-                            paddingLeft: ci > 0 || si > 0 ? '16px' : '0',
-                          }}>
-                            {/* Column header — only on first col of each sub */}
-                            {ci === 0 && (
+                  <>
+                    <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+                      {[...hoveredCategory.subcategories]
+                        .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                        .slice(0, 4)
+                        .map((sub, si, arr) => {
+                          const items = getSubListItems(sub);
+                          return renderListColumn(items, sub._id, {
+                            showBorder: si < arr.length - 1,
+                            padLeft: si > 0,
+                            header: (
                               <Link
                                 href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
                                 onClick={() => setHoveredCategory(null)}
@@ -2556,34 +2533,15 @@ const Header = () => {
                               >
                                 {sub.category_name}
                               </Link>
-                            )}
-
-                            {/* Children */}
-                            {col.map((child, ri) => (
-                              <Link
-                                key={child._id}
-                                href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}/${child.category_slug}`}
-                                onClick={() => setHoveredCategory(null)}
-                                className="dd-child-link"
-                                style={{  }}
-                              >
-                                {child.category_name}
-                              </Link>
-                            ))}
-                          </div>
-                        ));
-                      })}
-                  </div>
-
-                </>
+                            ),
+                          });
+                        })}
+                    </div>
+                  </>
                 </div>
               )}
-
               {renderBrands()}
-
             </div>
-
-            {/* Nav image — only if backend set navImage */}
             {navImgs.length > 0 && (
               <div style={{
                 flexShrink: 0, width: '250px', alignSelf: 'stretch',
@@ -2602,7 +2560,6 @@ const Header = () => {
                 </Link>
               </div>
             )}
-
           </div>
         );
       })()}

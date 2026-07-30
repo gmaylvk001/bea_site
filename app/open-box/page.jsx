@@ -928,40 +928,42 @@ const handleShare = async (product) => {
     return (
       <div
         key={product._id}
-        className="min-w-[300px] w-[300px] sm:min-w-[340px] sm:w-[340px] snap-start relative flex bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md overflow-hidden h-[168px] sm:h-[185px]"
+        className="min-w-[300px] w-[300px] sm:min-w-[340px] sm:w-[340px] snap-start relative flex bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md overflow-hidden h-[300px]"
       >
-        <div className="relative w-[48%] shrink-0 flex flex-col items-center p-2 pt-2 pb-2">
-          {discount > 0 && (
-            <span className="absolute top-2 right-2 z-10 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
-              {discount}% OFF
-            </span>
-          )}
+        {discount > 0 && (
+          <span className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded">
+            {discount}% OFF
+          </span>
+        )}
 
-          {brandImage ? (
-            <div className="relative w-full h-7 sm:h-8 mb-1 shrink-0 flex items-center justify-start pl-1">
+        {(brandImage || brandName) && (
+          <div className="absolute top-3 right-3 z-10 max-w-[40%] flex items-center justify-end">
+            {brandImage ? (
               <Image
                 src={brandImage}
                 alt={brandName || "Brand"}
-                width={90}
-                height={32}
-                className="object-contain max-h-7 sm:max-h-8 w-auto h-auto"
+                width={110}
+                height={40}
+                className="object-contain max-h-9 sm:max-h-10 w-auto h-auto"
                 unoptimized
               />
-            </div>
-          ) : brandName ? (
-            <p className="w-full text-[10px] sm:text-[11px] font-bold text-[#1E5FA8] uppercase tracking-wide truncate pl-1 mb-1">
-              {brandName}
-            </p>
-          ) : null}
+            ) : (
+              <p className="text-[11px] sm:text-xs font-bold text-[#1E5FA8] uppercase tracking-wide truncate text-right">
+                {brandName}
+              </p>
+            )}
+          </div>
+        )}
 
+        <div className="relative w-[48%] shrink-0 flex flex-col items-center justify-center p-3 pt-12 pb-3">
           <div className="flex-1 w-full flex items-center justify-center min-h-0">
             {imageSrc ? (
               <Image
                 src={imageSrc}
                 alt={product.name}
-                width={160}
-                height={140}
-                className="object-contain max-h-[120px] sm:max-h-[130px] w-auto h-auto"
+                width={220}
+                height={220}
+                className="object-contain max-h-[200px] w-auto h-auto"
                 unoptimized
               />
             ) : (
@@ -970,30 +972,30 @@ const handleShare = async (product) => {
           </div>
         </div>
 
-        <div className="flex flex-col justify-center flex-1 py-3 pr-3 pl-0 min-w-0">
+        <div className="flex flex-col justify-center flex-1 py-5 pt-12 pr-4 pl-1 min-w-0 gap-2">
           <Link
             href={`/product/${product.slug}`}
             className="block"
             onClick={() => handleProductClick(product)}
           >
-            <h3 className="text-[11px] sm:text-[13px] font-semibold text-[#1E5FA8] leading-snug line-clamp-3 hover:underline">
+            <h3 className="text-sm sm:text-[15px] font-semibold text-[#1E5FA8] leading-snug line-clamp-4 hover:underline">
               {product.name}
             </h3>
           </Link>
-          <div className="mt-1.5">
+          <div className="mt-1">
             {hasDiscount && (
-              <span className="text-[11px] text-gray-400 line-through block leading-none mb-0.5">
+              <span className="text-xs text-gray-400 line-through block leading-none mb-1">
                 ₹{Math.round(product.price).toLocaleString()}
               </span>
             )}
-            <span className="text-lg sm:text-xl font-bold text-[#1E5FA8] leading-tight">
+            <span className="text-xl sm:text-2xl font-bold text-[#1E5FA8] leading-tight">
               ₹{salePrice.toLocaleString()}
             </span>
           </div>
           <Link
             href={`/product/${product.slug}`}
             onClick={() => handleProductClick(product)}
-            className="mt-2 inline-flex items-center justify-center self-start rounded-md bg-[#1E5FA8] hover:bg-[#174a86] text-white text-[10px] sm:text-[11px] font-bold tracking-wide px-5 py-1.5 transition-colors"
+            className="mt-3 inline-flex items-center justify-center self-start rounded-md bg-[#1E5FA8] hover:bg-[#174a86] text-white text-xs sm:text-sm font-bold tracking-wide px-6 py-2.5 transition-colors"
           >
             SHOP NOW
           </Link>
