@@ -16,7 +16,7 @@ const StoreSchema = new mongoose.Schema(
       index: true,
     },
 
-    store_no: {
+    location_id: {
       type: String,
       trim: true,
       index: true,

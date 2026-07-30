@@ -75,22 +75,24 @@ export async function POST(req) {
     }
 
     // -----------------------
-    // Store number + multi-brand flag
+    // Location ID + multi-brand flag
     // -----------------------
-    newStoreData.store_no = String(newStoreData.store_no || "").trim();
-    if (!newStoreData.store_no) {
+    newStoreData.location_id = String(newStoreData.location_id || "").trim();
+    if (!newStoreData.location_id) {
       return new Response(
-        JSON.stringify({ success: false, error: "Store number is required" }),
+        JSON.stringify({ success: false, error: "Location ID is required" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-    const existingStoreNo = await store.findOne({ store_no: newStoreData.store_no });
-    if (existingStoreNo) {
+    const existingLocationId = await store.findOne({ location_id: newStoreData.location_id });
+    if (existingLocationId) {
       return new Response(
-        JSON.stringify({ success: false, error: "Store number already exists" }),
+        JSON.stringify({ success: false, error: "Location ID already exists" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
+    // Remove legacy store_no if accidentally sent
+    delete newStoreData.store_no;
     newStoreData.multibrandstore =
       String(newStoreData.multibrandstore || "").toLowerCase() === "true";
 

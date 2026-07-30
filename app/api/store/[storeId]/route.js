@@ -41,11 +41,11 @@ export const config = {
 
 // GET handler to fetch a single store by ID
 export async function GET(request, context) {
-  const { storeId } = context.params; // ⚠️ This is slug now
+  const { storeId } = context.params;
 
   if (!storeId) {
     return NextResponse.json(
-      { error: "Store slug is required." },
+      { error: "Store identifier is required." },
       { status: 400 }
     );
   }
@@ -53,9 +53,9 @@ export async function GET(request, context) {
   try {
     await connectDB();
 
-    // 🔥 FIND BY SLUG instead of ID
-    const store = await Store.findOne({ slug: storeId })
-    .populate("featuredProducts");
+    const store = await Store.findOne({
+      $or: [{ location_id: storeId }, { slug: storeId }],
+    }).populate("featuredProducts");
 
     if (!store) {
       return NextResponse.json(
@@ -97,7 +97,7 @@ export async function PUT(request, { params }) {
     // ---------- BASIC FIELDS ----------
     const updateData = {
       organisation_name: fields.organisation_name?.[0] || "",
-      store_no: String(fields.store_no?.[0] || "").trim(),
+      location_id: String(fields.location_id?.[0] || "").trim(),
       multibrandstore:
         String(fields.multibrandstore?.[0] || "").toLowerCase() === "true",
       category: fields.category?.[0] || null,
@@ -125,20 +125,23 @@ export async function PUT(request, { params }) {
       keyHighlights: JSON.parse(fields.keyHighlights || "[]"),
     };
 
-    if (!updateData.store_no) {
+    if (!updateData.location_id) {
       return NextResponse.json(
-        { error: "Store number is required." },
+        { error: "Location ID is required." },
         { status: 400 }
       );
     }
 
-    const existingStoreNo = await Store.findOne({
-      store_no: updateData.store_no,
-      slug: { $ne: storeId },
+    const currentStore = await Store.findOne({
+      $or: [{ location_id: storeId }, { slug: storeId }],
     });
-    if (existingStoreNo) {
+    const existingLocationId = await Store.findOne({
+      location_id: updateData.location_id,
+      _id: { $ne: currentStore?._id },
+    });
+    if (existingLocationId) {
       return NextResponse.json(
-        { error: "Store number already exists." },
+        { error: "Location ID already exists." },
         { status: 400 }
       );
     }
@@ -262,7 +265,7 @@ if (files.customer_images) {
  
 
     const updated = await Store.findOneAndUpdate(
-      { slug: storeId },        // <--- MATCH BY SLUG
+      { $or: [{ location_id: storeId }, { slug: storeId }] },
       { $set: updateData },  // <--- UPDATE DATA
       { new: true }          // <--- RETURN UPDATED DOC
     );

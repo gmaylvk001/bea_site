@@ -76,7 +76,6 @@ export default function CreateStoreForm({ storeId = null }) {
 
   const [newStore, setNewStore] = useState({
     organisation_name: "",
-    store_no: "",
     multibrandstore: false,
     description: "",
     logo: null,
@@ -91,6 +90,7 @@ export default function CreateStoreForm({ storeId = null }) {
     customer_images: [],
     keyHighlights: [], // same as highlights
     location: "",
+    location_id: "",
     zipcode: "",
     address: "",
     service_area: "",
@@ -140,7 +140,6 @@ export default function CreateStoreForm({ storeId = null }) {
         setNewStore((prev) => ({
           ...prev,
           organisation_name: result.organisation_name || "",
-          store_no: result.store_no || "",
           multibrandstore: result.multibrandstore === true,
           description: result.description || "",
           logo: result.logo || null,
@@ -155,6 +154,7 @@ export default function CreateStoreForm({ storeId = null }) {
           customer_images: result.customer_images || [],
           keyHighlights: result.keyHighlights || [],
           location: result.location || "",
+          location_id: result.location_id || "",
           zipcode: result.zipcode || "",
           address: result.address || "",
           service_area: result.service_area || "",
@@ -398,9 +398,9 @@ export default function CreateStoreForm({ storeId = null }) {
     if (currentStep === 1) {
       if (!newStore.organisation_name.trim())
         currentStepErrors.organisation_name = "Organisation Name is required";
-      if (!String(newStore.store_no || "").trim())
-        currentStepErrors.store_no = "Store number is required";
     } else if (currentStep === 2) {
+      if (!String(newStore.location_id || "").trim())
+        currentStepErrors.location_id = "Location ID is required";
       if (!newStore.address.trim()) currentStepErrors.address = "Address is required";
       if (!newStore.city.trim()) currentStepErrors.city = "City is required";
       if (!newStore.phone.trim()) currentStepErrors.phone = "Phone is required";
@@ -440,10 +440,10 @@ export default function CreateStoreForm({ storeId = null }) {
     // Append simple fields (category removed)
     const scalarKeys = [
       "organisation_name",
-      "store_no",
       "multibrandstore",
       "description",
       "location",
+      "location_id",
       "zipcode",
       "address",
       "service_area",
@@ -607,19 +607,6 @@ formData.append("existing_customer_images", JSON.stringify(customerExisting));
               {errors.organisation_name && <span className="text-red-500 text-sm">{errors.organisation_name}</span>}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Store Number</label>
-              <input
-                type="text"
-                name="store_no"
-                className="p-2 border rounded w-full"
-                onChange={handleInputChange}
-                value={newStore.store_no}
-                placeholder="e.g. ST001"
-              />
-              {errors.store_no && <span className="text-red-500 text-sm">{errors.store_no}</span>}
-            </div>
-
             <div className="col-span-1 md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Store Type</label>
               <div className="flex flex-wrap items-center gap-3">
@@ -725,6 +712,19 @@ formData.append("existing_customer_images", JSON.stringify(customerExisting));
 
         {currentStep === 2 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location ID *</label>
+              <input
+                type="text"
+                name="location_id"
+                className="p-2 border rounded w-full"
+                onChange={handleInputChange}
+                value={newStore.location_id}
+                placeholder="e.g. LOC001"
+              />
+              {errors.location_id && <span className="text-red-500 text-sm">{errors.location_id}</span>}
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
               <input type="text" name="address" className="p-2 border rounded w-full" onChange={handleInputChange} value={newStore.address} />

@@ -144,7 +144,7 @@ function StoreCard({ store }) {
       {/* Action buttons */}
       <div className="flex items-center   px-3.5 pt-2.5 pb-3.5 mt-auto gap-2">
         {/* View Details — takes remaining space */}
-        <Link href={`/store/${store.slug}`} className="flex-1">
+        <Link href={`/store/${store.location_id || store.slug}`} className="flex-1">
           <button className="w-[100px] lg:ml-[10px] bg-blue-600 hover:bg-blue-700 text-white border-none rounded-md py-[7px] px-3 text-[12px] font-semibold cursor-pointer transition-colors whitespace-nowrap">
             View Details
           </button>
