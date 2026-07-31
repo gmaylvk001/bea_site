@@ -4,6 +4,7 @@ import ClientLayout from "@/app/ClientLayout";
 import Script from "next/script";
 import HomeOnlyScripts from "@/app/HomeOnlyScripts";
 import WhatsAppFloat from "@/app/WhatsappFloat";
+import VisitorTracker from "@/components/VisitorTracker";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -107,6 +108,7 @@ export default function RootLayout({ children }) {
         <ClientLayout>{children}</ClientLayout>
         <HomeOnlyScripts/>
        <WhatsAppFloat/>   
+       <VisitorTracker/>
       </body>
     </html>
   );
