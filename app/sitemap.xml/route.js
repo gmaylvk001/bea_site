@@ -3,9 +3,52 @@ import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import Category from "@/models/ecom_category_info";
 
+function escapeXml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function urlEntry(loc, { changefreq, priority, lastmod } = {}) {
+  return `
+      <url>
+        <loc>${escapeXml(loc)}</loc>
+        ${changefreq ? `<changefreq>${changefreq}</changefreq>` : ""}
+        ${priority ? `<priority>${priority}</priority>` : ""}
+        ${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ""}
+      </url>`;
+}
+
+/** Build /category/... path from parentid chain (main / sub / child). */
+function buildCategoryPath(category, byId) {
+  const slugs = [];
+  let current = category;
+  const seen = new Set();
+
+  while (current?.category_slug) {
+    const id = current._id.toString();
+    if (seen.has(id)) break;
+    seen.add(id);
+
+    slugs.unshift(current.category_slug);
+
+    const parentId = current.parentid;
+    if (!parentId || parentId === "none") break;
+
+    current = byId.get(String(parentId));
+    if (!current) break;
+  }
+
+  if (!slugs.length) return null;
+  return `/category/${slugs.join("/")}`;
+}
+
 export async function GET() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
     if (!baseUrl) throw new Error("BASE_URL not defined");
 
     await dbConnect();
@@ -15,59 +58,68 @@ export async function GET() {
       "",
       "/location",
       "/contact",
-      "/wishlist",
-      "/cart",
       "/privacypolicy",
       "/terms-and-condition",
       "/cancellation-refund-policy",
       "/shipping",
       "/aboutus",
       "/blog",
-      "/faq",
       "/feedback",
-      "/careers"
+      "/careers",
     ];
 
-    const staticUrls = staticPages.map(
-      (path) => `
-      <url>
-        <loc>${baseUrl}${path}</loc>
-        <changefreq>monthly</changefreq>
-        <priority>${path === "" ? "1.0" : "0.6"}</priority>
-      </url>`
-    ).join("");
+    const staticUrls = staticPages
+      .map((path) =>
+        urlEntry(`${baseUrl}${path}`, {
+          changefreq: "monthly",
+          priority: path === "" ? "1.0" : "0.6",
+        })
+      )
+      .join("");
 
-    /* ---------------- CATEGORIES (RARE) ---------------- */
+    /* ---------------- CATEGORIES (main / sub / child) ---------------- */
     const categories = await Category.find(
-      { category_slug: { $exists: true, $ne: "" } },
-      { category_slug: 1, updatedAt: 1 }
+      {
+        status: "Active",
+        category_slug: { $exists: true, $ne: "" },
+      },
+      { category_slug: 1, parentid: 1, updatedAt: 1 }
     ).lean();
 
-    const categoryUrls = categories.map(
-      (c) => `
-      <url>
-        <loc>${baseUrl}/category/${c.category_slug}</loc>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-        <lastmod>${(c.updatedAt || new Date()).toISOString()}</lastmod>
-      </url>`
-    ).join("");
+    const byId = new Map(categories.map((c) => [c._id.toString(), c]));
 
-    /* ---------------- PRODUCTS (FREQUENT) ---------------- */
+    const categoryUrls = categories
+      .map((c) => {
+        const path = buildCategoryPath(c, byId);
+        if (!path) return "";
+        const depth = path.split("/").length - 2; // 1=main, 2=sub, 3=child
+        const priority = depth >= 3 ? "0.6" : depth === 2 ? "0.65" : "0.7";
+        return urlEntry(`${baseUrl}${path}`, {
+          changefreq: "monthly",
+          priority,
+          lastmod: c.updatedAt || new Date(),
+        });
+      })
+      .join("");
+
+    /* ---------------- PRODUCTS ---------------- */
     const products = await Product.find(
-      { slug: { $exists: true, $ne: "" },status: "Active" },
+      {
+        status: "Active",
+        slug: { $exists: true, $ne: "" },
+      },
       { slug: 1, updatedAt: 1 }
     ).lean();
 
-    const productUrls = products.map(
-      (p) => `
-      <url>
-        <loc>${baseUrl}/product/${p.slug}</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-        <lastmod>${(p.updatedAt || new Date()).toISOString()}</lastmod>
-      </url>`
-    ).join("");
+    const productUrls = products
+      .map((p) =>
+        urlEntry(`${baseUrl}/product/${p.slug}`, {
+          changefreq: "daily",
+          priority: "0.8",
+          lastmod: p.updatedAt || new Date(),
+        })
+      )
+      .join("");
 
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
   <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -79,7 +131,7 @@ export async function GET() {
     return new NextResponse(sitemap, {
       headers: {
         "Content-Type": "application/xml",
-        "Cache-Control": "public, max-age=3600", // products update frequently
+        "Cache-Control": "public, max-age=3600",
       },
     });
   } catch (error) {
