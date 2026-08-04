@@ -390,7 +390,7 @@ export default function ContactForm() {
                       +91 98423 44323
                     </p>
                     <p className="text-sm text-gray-500">
-                      Mon - Sun : 09:30 AM - 09:30 PM
+                      Mon - Sun : 10:00 AM - 09:00 PM
                     </p>
                   </div>
                 </a>

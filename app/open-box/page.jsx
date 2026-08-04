@@ -1013,10 +1013,10 @@ const handleShare = async (product) => {
     if (!products.length) return null;
     return (
       <section className="mb-10">
-        <div className="relative flex items-center justify-center mb-5">
+        <div className="relative flex items-center justify-center mb-5 mt-4">
           <div className="flex items-center gap-3">
             <span className="hidden sm:block h-px w-10 bg-[#F7941D]" />
-            <h2 className="text-lg sm:text-xl font-bold tracking-wide text-[#1E5FA8] uppercase text-center">
+            <h2 className="text-2xl font-bold tracking-wide text-[#1E5FA8] uppercase text-center">
               {title}
             </h2>
             <span className="hidden sm:block h-px w-10 bg-[#F7941D]" />
@@ -1031,7 +1031,7 @@ const handleShare = async (product) => {
             </button>
           )}
         </div>
-        <div className="relative">
+        <div className="relative pt-2">
           <button
             type="button"
             aria-label={`Scroll ${title} left`}

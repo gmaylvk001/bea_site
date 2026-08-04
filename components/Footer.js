@@ -571,8 +571,8 @@ const Footer = () => {
 <div className="bg-[#041b4d] text-white py-10 overflow-hidden">
   <div className="container mx-auto px-4">
 
-    {/* Changed to 1 column on mobile, 4 on tablet, 10 on desktop */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-y-10 gap-x-6 text-sm">
+    {/* 12-col desktop so TRUCO app block can take extra width */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-y-10 gap-x-4 lg:gap-x-5 text-sm">
 
       {groupedCategories.main.slice(0, 5).map((main) => {
         const Icon =
@@ -659,52 +659,63 @@ const Footer = () => {
         </a>
       </div>
 
-      {/* Our App Section */}
-      <div className="sm:col-span-2 lg:col-span-2 bottom-4 flex px-2 lg:px-2 xl:px-4 min-w-0 relative h-[196px] lg:h-[230px] xl:h-[240px] items-center lg:items-start lg:pt-4 xl:pt-2 overflow-visible">
-        
-        {/* Text & Badges */}
-        <div className="relative z-10 mb-2 flex flex-col pt-0.5 w-[60%] sm:w-[50%] md:w-[90%] lg:w-[52%] xl:w-[90%]">
-          <h4 className="font-semibold text-white mb-6 mb-1 leading-tight lg:text-[13px] xl:text-base">
-            Download BEA TRUCO App
+      {/* Our App Section — wider block: left copy + badges, right phone */}
+      <div className="sm:col-span-2 lg:col-span-4 px-2 lg:px-3 xl:px-4 min-w-0 flex items-start gap-3 xl:gap-4 overflow-visible">
+        <div className="relative z-10 flex flex-col justify-start flex-1 min-w-0">
+          <h4 className="text-white leading-tight mb-4">
+            <span className="block text-sm xl:text-base font-medium relative pb-1.5 w-fit whitespace-nowrap">
+              Download
+              <span className="absolute left-0 bottom-0 h-[2px] w-8 bg-[#3B82F6] rounded-full" />
+            </span>
+            <span className="block text-lg xl:text-xl font-bold mt-1 whitespace-nowrap">
+              BEA TRUCO App
+            </span>
           </h4>
-          <p className="text-gray-300 text-[14px] leading-snug mb-2 lg:text-[12px] xl:text-[14px]">
-            Your rewards, always<br/>in your pocket.
+          <p className="text-gray-300 text-xs xl:text-[13px] leading-snug mb-3 max-w-[280px]">
+            Rewards, exclusive offers &amp; order tracking — always in your pocket.
           </p>
 
-          <div className="flex flex-col gap-1.5 mt-1">
-            <Link href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-[140px] lg:w-[118px] xl:w-[140px]">
+          <div className="flex flex-nowrap items-center gap-2.5">
+            <Link
+              href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity shrink-0"
+            >
               <Image
-                src="/uploads/Play_Store.png" 
+                src="/uploads/GooglePlayDark.png"
                 alt="Get it on Google Play"
-                width={140}
-                height={100}
-                className="object-contain rounded w-full h-auto"
+                width={135}
+                height={40}
+                className="object-contain rounded h-9 xl:h-10 w-auto"
               />
-             
             </Link>
-            <Link href="https://apps.apple.com/in/app/bea-truco/id6751942292" className="flex items-center gap-2 hover:opacity-80 transition-opacity w-[140px] lg:w-[118px] xl:w-[140px]">
+            <Link
+              href="https://apps.apple.com/in/app/bea-truco/id6751942292"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity shrink-0"
+            >
               <Image
-                src="/uploads/App_Store.png" 
+                src="/uploads/AppStoreDark.png"
                 alt="Download on the App Store"
-                width={140}
-                height={100}
-                className="object-contain rounded w-full h-auto"
+                width={135}
+                height={40}
+                className="object-contain rounded h-9 xl:h-10 w-auto"
               />
-             
             </Link>
           </div>
         </div>
 
-        {/* Phone Image at the end (right) - hidden on very small screens, visible from sm up */}
-        <div className="absolute right-[-12px] mb-2 sm:right-[90px] md:right-[90px] top-5 md:top-[80px] bottom-4 xl:bottom-[-2px] z-0 pointer-events-none flex items-center lg:right-[-18px] xl:right-[-90px] 2xl:right-[-40px] lg:top-[18px] xl:top-[36px] lg:bottom-auto">
-  <Image
-    src="/uploads/truco_app_phone.png"
-    alt="BEA Mobile App Mockup"
-    width={110}
-    height={140}
-    className="object-contain drop-shadow-xl lg:w-[92px] xl:w-[110px] h-auto"
-  />
-</div>
+        <div className="shrink-0 self-start pointer-events-none">
+          <Image
+            src="/uploads/mobiletruco.png"
+            alt="BEA Mobile App Mockup"
+            width={150}
+            height={190}
+            className="object-contain drop-shadow-xl w-[95px] sm:w-[110px] lg:w-[120px] xl:w-[140px] h-auto"
+          />
+        </div>
       </div>
     </div>
   </div>
