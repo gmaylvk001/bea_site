@@ -8,7 +8,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import "../styles/slick-custom.css";
 import { motion, useAnimation, useInView } from "framer-motion";
 //import { ShoppingCartSimple, CaretDown } from "@phosphor-icons/react";
-import { X } from "lucide-react"; 
+import { X, LayoutGrid } from "lucide-react";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -36,7 +36,7 @@ export default function HomeComponent() {
         .replace(/\-\-+/g, "-");
     }
     const features = [
-      { image: "/images/delivery-truck.png", title: "Free Shipping", description: "Free shipping all over the US" },
+      { image: "/images/delivery-truck.png", title: "Free Shipping", description: "Free shipping all over Coimbatore" },
       { image: "/images/reputation.png", title: "100% Satisfaction", description: "Guaranteed satisfaction with every order" },
       { image: "/images/payment-protection.png", title: "Secure Payments", description: "We ensure secure transactions" },
       { image: "/images/support.png", title: "24/7 Support", description: "We're here to help anytime" },
@@ -65,6 +65,8 @@ export default function HomeComponent() {
     //const [products, setProducts] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState();
     const [parentCategories, setParentCategories] = useState([]);
+    const [bannerNavCategories, setBannerNavCategories] = useState([]);
+    const [bannerMoreHref, setBannerMoreHref] = useState("/");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [authMode, setAuthMode] = useState('login');
     const [categoryBanner, setCategoryBanner] = useState([]);
@@ -289,11 +291,40 @@ export default function HomeComponent() {
             const response = await fetch("/api/categories/get");
             const data    = await response.json();
             setCategories(data);
-            const rootIds = data
-            .filter(cat => cat.parentid === "none" && cat.status === "Active")
-            .map(cat => cat._id);
+
+            const rootCategories = data
+              .filter((cat) => cat.parentid === "none" && cat.status === "Active")
+              .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+            const rootIds = rootCategories.map((cat) => cat._id);
+            const rootSlugById = Object.fromEntries(
+              rootCategories.map((cat) => [cat._id, cat.category_slug])
+            );
+
+            const subcategories = data
+              .filter((cat) => rootIds.includes(cat.parentid) && cat.status === "Active")
+              .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+              .map((cat) => ({
+                ...cat,
+                href: `/category/${rootSlugById[cat.parentid]}/${cat.category_slug}`,
+              }));
+
+            const navCategories =
+              subcategories.length > 0
+                ? subcategories
+                : rootCategories.map((cat) => ({
+                    ...cat,
+                    href: `/category/${cat.category_slug}`,
+                  }));
+
+            setBannerNavCategories(navCategories);
+            setBannerMoreHref(
+              rootCategories[0]
+                ? `/category/${rootCategories[0].category_slug}`
+                : "/"
+            );
+
             console.log(rootIds);
-            // 2. Get only categories whose parentid is in rootIds → second level
             const secondLevelCategories = data.filter(
               cat => rootIds.includes(cat.parentid) && cat.status === "Active"
             );
@@ -495,6 +526,9 @@ export default function HomeComponent() {
         setIsSectionLoading(false);
       }
     };
+
+    
+
     useEffect(() => {
       fetchHomeSections();
     }, []);
@@ -694,31 +728,33 @@ export default function HomeComponent() {
     };
     const brandSettings = {
       infinite: true,
-      speed: 3000, // Continuous effect
-      slidesToShow: 6, // Default for large screens
+      speed: 900,
+      slidesToShow: 8,
       slidesToScroll: 1,
       autoplay: true,
-      autoplaySpeed: 0,
-      cssEase: "linear",
+      autoplaySpeed: 2200,
+      cssEase: "ease-in-out",
       arrows: false,
       pauseOnHover: true,
+      pauseOnFocus: true,
+      swipeToSlide: true,
       responsive: [
         {
           breakpoint: 1024, // Tablets
           settings: {
-            slidesToShow: 5,
+            slidesToShow: 6,
           },
         },
         {
           breakpoint: 768, // Mobile
           settings: {
-            slidesToShow: 3,
+            slidesToShow: 4,
           },
         },
         {
           breakpoint: 480, // Extra-small devices
           settings: {
-            slidesToShow: 2,
+            slidesToShow: 3,
           },
         },
       ],
@@ -944,12 +980,67 @@ export default function HomeComponent() {
       fetchSingleBannerTwoData();
     }, []);
     console.log(categoryBanner);
+    const BANNER_NAV_LIMIT = 8;
+
+    const renderBannerCategoryNav = () => {
+      if (!bannerNavCategories.length) return null;
+
+      const visibleCategories = bannerNavCategories.slice(0, BANNER_NAV_LIMIT);
+      const itemClass =
+        "group flex flex-1 min-w-[68px] sm:min-w-[96px] md:min-w-[110px] lg:min-w-0 flex-col items-center justify-center gap-2 sm:gap-2.5 md:gap-3 px-1 sm:px-1.5 md:px-2 py-3 sm:py-4 md:py-5 lg:py-6 transition-colors hover:bg-orange-50";
+      const iconClass =
+        "w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 object-contain transition-transform duration-200 group-hover:scale-110";
+      const labelClass =
+        "text-[9px] sm:text-[10px] md:text-xs text-gray-800 font-medium text-center leading-tight line-clamp-2 transition-colors group-hover:text-orange-500";
+
+      return (
+        <div className="hidden sm:block absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[62%] sm:translate-y-[68%] md:translate-y-[72%] z-30 w-full home-section pointer-events-none">
+          <div className="pointer-events-auto hero-category-bar bg-white rounded-lg sm:rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden w-full">
+            <div className="flex items-stretch h-full overflow-x-auto scrollbar-hide">
+              {visibleCategories.map((cat, index) => (
+                <Link
+                  key={cat._id}
+                  href={cat.href || `/category/${cat.category_slug}`}
+                  className={`${itemClass} ${
+                    index < visibleCategories.length ? "border-r border-gray-200" : ""
+                  }`}
+                >
+                  {cat.icon_url ? (
+                    <img
+                      src={cat.icon_url}
+                      alt=""
+                      className={iconClass}
+                    />
+                  ) : (
+                    <div className={`${iconClass} rounded-md bg-blue-50 flex items-center justify-center text-[10px] sm:text-xs md:text-sm font-bold text-[#2453D3] transition-colors group-hover:bg-orange-100 group-hover:text-orange-500`}>
+                      {(cat.category_name || "").charAt(0)}
+                    </div>
+                  )}
+                  <span className={labelClass}>
+                    {cat.category_name}
+                  </span>
+                </Link>
+              ))}
+              <Link
+                href={bannerMoreHref}
+                className={itemClass}
+              >
+                <LayoutGrid className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 text-[#2453D3] transition-colors group-hover:text-orange-500" />
+                <span className={labelClass}>
+                  More Categories
+                </span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     const renderSection = (sectionName) => {
       switch(sectionName) {
           case 'category_banner':
         return (
-          <section id="category_banner">
-            <div className="px-4 md:px-6 py-8">
+          <section id="category_banner" className="home-section py-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {categoryBanner.map((banner, index) => (
                   
@@ -998,7 +1089,6 @@ export default function HomeComponent() {
                   </div>
                 ))}
               </div>
-            </div>
           </section>
           );
           case 'product':
@@ -1013,7 +1103,7 @@ export default function HomeComponent() {
   animate="visible"
   variants={sectionVariants}
   id="flash_sales"
-  className="px-4 md:px-6 py-8 relative"
+  className="home-section py-8 relative"
 >
   {flashSalesData.filter(item => item.bgImage && item.productImage).length > 0 && (
 
@@ -1161,8 +1251,7 @@ export default function HomeComponent() {
           );
           case 'features':
               return (
-              <section className="pt-7 px-4 sm:px-6 md:px-6" id="features">
-                <div className="max-w-7xl mx-auto px-4">
+              <section className="home-section pt-7" id="features">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
                 {features.map((feature, index) => (
                   <div
@@ -1204,7 +1293,6 @@ export default function HomeComponent() {
                   </div>
                 ))}
                 </div>
-                </div>
               </section>
               );
           case 'brands':
@@ -1214,12 +1302,19 @@ export default function HomeComponent() {
                       initial={scrollDirection === 'down' ? 'hiddenDown' : 'hiddenUp'} 
                       animate= 'visible' 
                       variants={sectionVariants} 
-                      className="px-4 sm:px-6 md:px-6 pt-7"
+                      className="home-section pt-4"
                   >
-                      <div>
-                          <motion.div variants={containerVariants} className="  rounded-[23px] mx-2">
-                              <motion.div variants={itemVariants} className="flex justify-between items-center mb-4">
-                                  <h5 className= "text-lg font-semibold">Shop by Brands</h5>
+                      <div className="py-3">
+                          <motion.div variants={containerVariants} className="rounded-xl">
+                              <motion.div variants={itemVariants} className="flex justify-between items-center mb-2">
+                                  <h5 className="text-base font-semibold uppercase tracking-tight text-gray-900">Top Brands</h5>
+                                  <Link
+                                    href="/search"
+                                    className="text-[12px] font-semibold text-[#2453D3] hover:text-orange-500 inline-flex items-center gap-1"
+                                  >
+                                    View All Brands
+                                    <HiArrowRight className="w-3.5 h-3.5" />
+                                  </Link>
                               </motion.div>
 
                               {isBrandsLoading ? (
@@ -1228,21 +1323,21 @@ export default function HomeComponent() {
                                   </div>
                               ) : (
                                   <motion.div variants={itemVariants}>
-                                      <Slider {...brandSettings} className="brand-slider px-2 sm:px-[50px] relative">
+                                      <Slider {...brandSettings} className="brand-slider relative">
                                           {brands.map((brand) => (
                                               <motion.div
-                                                  key={brand.id}
-                                                  className="p-4 flex justify-center items-center"
-                                                  whileHover={{ scale: 1.1 }}
+                                                  key={brand._id || brand.id || brand.brand_name}
+                                                  className="px-1 py-1.5"
+                                                  whileHover={{ scale: 1.03 }}
                                               >
-                                              <div className="w-24 h-24 flex items-center justify-center overflow-hidden">
+                                              <div className="h-14 sm:h-16 flex items-center justify-center overflow-hidden px-3">
                                                 <Link href={`/brand/${slugify(brand.brand_name)}`}>
                                                   <Image
                                                     src={`/uploads/Brands/${brand.image}`}
                                                     alt={brand.brand_name || "Brand Logo"}
-                                                    width={100}
-                                                    height={100}
-                                                    className="object-contain w-full h-full cursor-pointer"
+                                                    width={120}
+                                                    height={56}
+                                                    className="object-contain w-[100px] sm:w-[130px] h-[28px] sm:h-[38px] cursor-pointer"
                                                     unoptimized
                                                   />
                                                 </Link>
@@ -1265,16 +1360,16 @@ export default function HomeComponent() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="overflow-hidden pt-0 m-0"
+      className="home-section-full relative overflow-visible pt-0 m-0 mb-0 sm:mb-20 md:mb-24 lg:mb-28 z-10"
     >
-      <div className="relative">
+      <div className="relative overflow-hidden">
         {isBannerLoading ? (
           <div className="p-6 flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
           </div>
         ) : bannerData.banner.items.length > 0 ? (
           bannerData.banner.items.length > 1 ? (
-            <Slider {...settings} className="relative">
+            <Slider {...settings} className="relative topbanner-slider">
               {bannerData.banner.items.map((banner) => (
                 <motion.div
                   key={banner.id}
@@ -1356,6 +1451,7 @@ export default function HomeComponent() {
           <div></div>
         )}
       </div>
+      {renderBannerCategoryNav()}
     </motion.section>
   )
           case 'singlebanner':
@@ -1365,7 +1461,7 @@ export default function HomeComponent() {
                 initial="hidden"
                 animate="visible"
                 variants={containerVariants}
-                className="overflow-hidden pt-1 px-4 sm:px-6 md:px-6"
+                className="home-section overflow-hidden pt-1"
               >
                 <div className="relative">
                   {isSingleBannerNewLoading ? (
@@ -1419,7 +1515,7 @@ export default function HomeComponent() {
                 initial="hidden"
                 animate="visible"
                 variants={containerVariants}
-                className="overflow-hidden pt-7 px-4 sm:px-6 md:px-6"
+                className="home-section overflow-hidden pt-7"
               >
                 <div className="relative">
                   {isSingleBannerTwoLoading ? (
@@ -1427,48 +1523,57 @@ export default function HomeComponent() {
                       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
                     </div>
                   ) : singleBannerTwoData.singlebanner_two.items.length > 0 ? (
-                    singleBannerTwoData.singlebanner_two.items.length > 1 ? (
-                      <Slider {...settings}>
-                        {singleBannerTwoData.singlebanner_two.items.map((item) => (
-                          <motion.div
-                            key={item.id}
-                            className="relative w-full aspect-[1900/400]"
-                            variants={itemVariants}
-                          >
-                            <Link href={item.redirect_url || "#"} className="block w-full h-full">
-                              <Image
-                                src={item.bgImageUrl}
-                                alt="Single Banner Two"
-                                fill
-                                quality={100}
-                                className="object-fill w-full h-full"
-                                priority
-                              />
-                            </Link>
-                          </motion.div>
-                        ))}
-                      </Slider>
-                    ) : (
-                      <motion.div
-                        className="relative w-full aspect-[1900/400]"
-                        variants={itemVariants}
-                      >
-                        <Link href={singleBannerTwoData.singlebanner_two.items[0].redirect_url || "#"}>
-                          <Image
-                            src={singleBannerTwoData.singlebanner_two.items[0].bgImageUrl}
-                            alt="Single Banner Two"
-                            width={1900}
-                            height={400}
-                            className="w-full h-auto object-fill"
-                            priority
-                          />
-                        </Link>
-                      </motion.div>
-                    )
+                    <div className="flex flex-col gap-3 sm:gap-4">
+                      {Array.from(
+                        {
+                          length: Math.ceil(
+                            singleBannerTwoData.singlebanner_two.items.length / 2
+                          ),
+                        },
+                        (_, rowIndex) => {
+                          const leftItem =
+                            singleBannerTwoData.singlebanner_two.items[rowIndex * 2];
+                          const rightItem =
+                            singleBannerTwoData.singlebanner_two.items[rowIndex * 2 + 1];
+
+                          return (
+                            <div
+                              key={`singlebanner-two-row-${rowIndex}`}
+                              className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-4"
+                            >
+                              {[leftItem, rightItem]
+                                .filter(Boolean)
+                                .map((item, colIndex) => (
+                                  <motion.div
+                                    key={item.id}
+                                    className="relative w-full aspect-[1900/400] overflow-hidden rounded-md"
+                                    variants={itemVariants}
+                                  >
+                                    <Link
+                                      href={item.redirect_url || "#"}
+                                      className="block w-full h-full"
+                                    >
+                                      <Image
+                                        src={item.bgImageUrl}
+                                        alt="Single Banner Two"
+                                        fill
+                                        quality={100}
+                                        className="object-fill w-full h-full"
+                                        priority={rowIndex === 0 && colIndex === 0}
+                                        unoptimized
+                                      />
+                                    </Link>
+                                  </motion.div>
+                                ))}
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
                   ) : null}
                 </div>
               </motion.section>
-          );
+            );
           case 'videocard':
             return(
               <motion.section id="videocard"
@@ -1476,11 +1581,11 @@ export default function HomeComponent() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 0.6 }}
-                className="px-4 sm:px-6 md:px-6 pt-7"
+                className="home-section pt-7"
               >
-                <div className=" rounded-2xl">
+                <div className="rounded-2xl">
                   {/* Header */}
-                  <div className="flex justify-between items-center mb-6 md:px-4">
+                  <div className="flex justify-between items-center mb-6">
                     <h5 className="text-xl font-bold">What's Trending</h5>
                     <div className="flex gap-2">
                       <button
@@ -1589,10 +1694,10 @@ return (
           case 'offer':
             return(
               <>
-                <div className="overflow-hidden pt-6 px-4 sm:px-6 md:px-6">
+                <div className="home-section overflow-hidden pt-6">
                     {offerProducts.length > 0 && (
                       <section id="offer">
-                      <div className="px-2 py-4">
+                      <div className="py-4">
                         <div className="flex justify-between items-center mb-4">
                           <h2 className="text-xl font-semibold">Exciting Offers</h2>
                           {offerProducts.length > 3 && (

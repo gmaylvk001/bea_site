@@ -387,7 +387,7 @@ const Footer = () => {
           </div>
 
           {/* WHITE FOOTER */}
-          <div className="container mx-auto px-4 py-3">
+          <div className="container mx-auto px-4 py-3 lg:max-w-[1240px] lg:px-3 xl:max-w-[1400px] xl:px-2 2xl:max-w-screen-2xl 2xl:px-4">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
               {/* LEFT LOGO SECTION */}
@@ -569,10 +569,11 @@ const Footer = () => {
 
 {/* DARK BLUE CATEGORY FOOTER */}
 <div className="bg-[#041b4d] text-white py-10 overflow-hidden">
-  <div className="container mx-auto px-4">
+  <div className="container mx-auto px-2 sm:px-3 lg:max-w-[1240px] lg:px-3 xl:max-w-[1400px] xl:px-1 2xl:max-w-screen-2xl 2xl:px-3">
 
-    {/* 12-col desktop so TRUCO app block can take extra width */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-y-10 gap-x-4 lg:gap-x-5 text-sm">
+    {/* Categories/brands share leftover space; location + TRUCO keep fixed widths */}
+    {/* Categories/brands capped; at xl (1440) a bit narrower so TRUCO gets more room */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-[repeat(6,minmax(0,1fr))_minmax(170px,190px)_minmax(210px,1fr)] xl:grid-cols-[repeat(6,minmax(0,6.75rem))_minmax(180px,200px)_minmax(300px,1fr)] 2xl:grid-cols-[repeat(6,minmax(0,1fr))_minmax(170px,190px)_minmax(210px,1fr)] gap-y-10 gap-x-4 lg:gap-x-5 text-sm">
 
       {groupedCategories.main.slice(0, 5).map((main) => {
         const Icon =
@@ -632,50 +633,53 @@ const Footer = () => {
         </ul>
       </div>
 
-      {/* Our Location */}
-      <div className="sm:col-span-2 lg:col-span-2 lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0">
-        <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
-          Our Location
-        </h4>
+      {/* Our Location — fixed track width; content fills it */}
+      <div className="sm:col-span-2 lg:col-span-1 lg:border-r border-[#14346d] px-2 lg:px-3 min-w-0">
+        <div className="w-full">
+          <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
+            Our Location
+          </h4>
 
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d391.02517849236526!2d76.9626592!3d11.0194039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8585cc4962b87%3A0x38eddb57f0f66203!2sBharath%20Electronics%20%26%20Appliances!5e0!3m2!1sen!2sin!4v1740660808642!5m2!1sen!2sin"
-          width="100%"
-          height="120"
-          style={{ border: 0, borderRadius: '6px' }}
-          loading="lazy"
-          allowFullScreen
-          referrerPolicy="no-referrer-when-downgrade"
-          title="Google Maps - Bharath Electronics & Appliances Location"
-        />
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d391.02517849236526!2d76.9626592!3d11.0194039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8585cc4962b87%3A0x38eddb57f0f66203!2sBharath%20Electronics%20%26%20Appliances!5e0!3m2!1sen!2sin!4v1740660808642!5m2!1sen!2sin"
+            width="100%"
+            height="110"
+            className="w-full"
+            style={{ border: 0, borderRadius: '6px', display: 'block' }}
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Google Maps - Bharath Electronics & Appliances Location"
+          />
 
-        <a
-          href="https://maps.app.goo.gl/aceBM5ztAjNQLx217"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-300 text-sm mt-3 inline-block whitespace-nowrap hover:text-white transition-colors"
-        >
-          View on Google Maps →
-        </a>
+          <a
+            href="https://maps.app.goo.gl/aceBM5ztAjNQLx217"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-300 text-sm mt-3 inline-block whitespace-nowrap hover:text-white transition-colors"
+          >
+            View on Google Maps →
+          </a>
+        </div>
       </div>
 
-      {/* Our App Section — wider block: left copy + badges, right phone */}
-      <div className="sm:col-span-2 lg:col-span-4 px-2 lg:px-3 xl:px-4 min-w-0 flex items-start gap-3 xl:gap-4 overflow-visible">
-        <div className="relative z-10 flex flex-col justify-start flex-1 min-w-0">
-          <h4 className="text-white leading-tight mb-4">
-            <span className="block text-sm xl:text-base font-medium relative pb-1.5 w-fit whitespace-nowrap">
-              Download
-              <span className="absolute left-0 bottom-0 h-[2px] w-8 bg-[#3B82F6] rounded-full" />
+      {/* Our App Section — fixed track width (unchanged layout) */}
+      <div className="sm:col-span-2 lg:col-span-1 px-2 lg:px-3 xl:pr-0 min-w-0 flex items-start gap-2 overflow-visible">
+        <div className="relative z-10 flex flex-col justify-start min-w-0 flex-1 lg:-translate-x-2 xl:-translate-x-3 2xl:translate-x-0">
+          <h4 className="text-white leading-tight mb-2">
+            <span className="block text-[12px] xl:text-[13px] font-medium relative pb-1 w-fit whitespace-nowrap">
+               Download
+              <span className="absolute left-0 bottom-0 h-[2px] w-6 bg-[#3B82F6] rounded-full" />
             </span>
-            <span className="block text-lg xl:text-xl font-bold mt-1 whitespace-nowrap">
+            <span className="block text-sm xl:text-base font-bold mt-0.5 whitespace-nowrap">
               BEA TRUCO App
             </span>
           </h4>
-          <p className="text-gray-300 text-xs xl:text-[13px] leading-snug mb-3 max-w-[280px]">
+          <p className="text-gray-300 text-[10px] xl:text-[11px] leading-snug mb-2">
             Rewards, exclusive offers &amp; order tracking — always in your pocket.
           </p>
 
-          <div className="flex flex-nowrap items-center gap-2.5">
+          <div className="flex flex-nowrap items-center gap-1.5">
             <Link
               href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share"
               target="_blank"
@@ -685,9 +689,9 @@ const Footer = () => {
               <Image
                 src="/uploads/GooglePlayDark.png"
                 alt="Get it on Google Play"
-                width={135}
-                height={40}
-                className="object-contain rounded h-9 xl:h-10 w-auto"
+                width={95}
+                height={28}
+                className="object-contain rounded h-6 xl:h-7 w-auto"
               />
             </Link>
             <Link
@@ -699,21 +703,21 @@ const Footer = () => {
               <Image
                 src="/uploads/AppStoreDark.png"
                 alt="Download on the App Store"
-                width={135}
-                height={40}
-                className="object-contain rounded h-9 xl:h-10 w-auto"
+                width={95}
+                height={28}
+                className="object-contain rounded h-6 xl:h-7 w-auto"
               />
             </Link>
           </div>
         </div>
 
-        <div className="shrink-0 self-start pointer-events-none">
+        <div className="shrink-0 self-start pointer-events-none lg:translate-x-2 xl:translate-x-1 2xl:translate-x-0">
           <Image
             src="/uploads/mobiletruco.png"
             alt="BEA Mobile App Mockup"
-            width={150}
-            height={190}
-            className="object-contain drop-shadow-xl w-[95px] sm:w-[110px] lg:w-[120px] xl:w-[140px] h-auto"
+            width={100}
+            height={130}
+            className="object-contain drop-shadow-xl w-[70px] sm:w-[80px] lg:w-[85px] xl:w-[95px] h-auto"
           />
         </div>
       </div>
@@ -721,7 +725,7 @@ const Footer = () => {
   </div>
 </div>
           <div className="bg-[#02133a] text-gray-300 py-4">
-            <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="container mx-auto px-3 sm:px-4 lg:max-w-[1240px] lg:px-3 xl:max-w-[1400px] xl:px-2 2xl:max-w-screen-2xl 2xl:px-4 flex flex-col md:flex-row items-center justify-between gap-4">
 
               {/* Left Side */}
               <div className="flex items-center gap-3 text-sm">
