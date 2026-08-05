@@ -387,7 +387,7 @@ const Footer = () => {
           </div>
 
           {/* WHITE FOOTER */}
-          <div className="container mx-auto px-4 py-3 lg:max-w-[1240px] lg:px-3 xl:max-w-[1400px] xl:px-2 2xl:max-w-screen-2xl 2xl:px-4">
+          <div className="container mx-auto px-4 py-3 lg:max-w-[1400px] lg:px-2">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
               {/* LEFT LOGO SECTION */}
@@ -568,12 +568,11 @@ const Footer = () => {
           </div>
 
 {/* DARK BLUE CATEGORY FOOTER */}
-<div className="bg-[#041b4d] text-white py-10 overflow-hidden">
-  <div className="container mx-auto px-2 sm:px-3 lg:max-w-[1240px] lg:px-3 xl:max-w-[1400px] xl:px-1 2xl:max-w-screen-2xl 2xl:px-3">
+<div className="bg-[#041b4d] text-white py-10 overflow-x-hidden lg:overflow-visible">
+  <div className="container mx-auto px-2 sm:px-3 lg:max-w-[1400px] lg:px-1">
 
-    {/* Categories/brands share leftover space; location + TRUCO keep fixed widths */}
-    {/* Categories/brands capped; at xl (1440) a bit narrower so TRUCO gets more room */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-[repeat(6,minmax(0,1fr))_minmax(170px,190px)_minmax(210px,1fr)] xl:grid-cols-[repeat(6,minmax(0,6.75rem))_minmax(180px,200px)_minmax(300px,1fr)] 2xl:grid-cols-[repeat(6,minmax(0,1fr))_minmax(170px,190px)_minmax(210px,1fr)] gap-y-10 gap-x-4 lg:gap-x-5 text-sm">
+    {/* lg (1024): tighter categories; xl+ (1440, 2560): same 1440 grid */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-[repeat(6,minmax(0,4.25rem))_minmax(155px,170px)_minmax(310px,1fr)] xl:grid-cols-[repeat(6,minmax(0,6.75rem))_minmax(180px,200px)_minmax(300px,1fr)] gap-y-10 gap-x-3 lg:gap-x-4 xl:gap-x-5 text-sm">
 
       {groupedCategories.main.slice(0, 5).map((main) => {
         const Icon =
@@ -582,7 +581,7 @@ const Footer = () => {
         return (
           <div
             key={main._id}
-            className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0"
+            className="lg:border-r border-[#14346d] px-2 lg:px-2 xl:px-4 min-w-0"
           >
            <h4 className="flex items-center gap-2 font-semibold uppercase mb-4 flex-wrap">
   <Icon size={18} className="shrink-0" />
@@ -619,7 +618,7 @@ const Footer = () => {
       })}
 
       {/* Top Brands */}
-      <div className="lg:border-r border-[#14346d] px-2 lg:px-4 min-w-0">
+      <div className="lg:border-r border-[#14346d] px-2 lg:px-2 xl:px-4 min-w-0">
         <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
           Top Brands
         </h4>
@@ -663,19 +662,19 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Our App Section — fixed track width (unchanged layout) */}
-      <div className="sm:col-span-2 lg:col-span-1 px-2 lg:px-3 xl:pr-0 min-w-0 flex items-start gap-2 overflow-visible">
-        <div className="relative z-10 flex flex-col justify-start min-w-0 flex-1 lg:-translate-x-2 xl:-translate-x-3 2xl:translate-x-0">
+      {/* Our App Section — same look as 1440 from lg (1024) */}
+      <div className="sm:col-span-2 lg:col-span-1 px-2 lg:px-3 lg:pr-0 min-w-0 lg:min-w-[310px] xl:min-w-0 flex items-start gap-2 lg:gap-3 overflow-visible">
+        <div className="relative z-10 flex flex-col justify-start min-w-0 flex-1 max-w-[58%] lg:max-w-[55%] xl:max-w-none lg:-translate-x-3">
           <h4 className="text-white leading-tight mb-2">
-            <span className="block text-[12px] xl:text-[13px] font-medium relative pb-1 w-fit whitespace-nowrap">
+            <span className="block text-[12px] lg:text-[13px] font-medium relative pb-1 w-fit whitespace-nowrap">
                Download
               <span className="absolute left-0 bottom-0 h-[2px] w-6 bg-[#3B82F6] rounded-full" />
             </span>
-            <span className="block text-sm xl:text-base font-bold mt-0.5 whitespace-nowrap">
+            <span className="block text-sm lg:text-base font-bold mt-0.5 whitespace-nowrap">
               BEA TRUCO App
             </span>
           </h4>
-          <p className="text-gray-300 text-[10px] xl:text-[11px] leading-snug mb-2">
+          <p className="text-gray-300 text-[10px] lg:text-[11px] leading-snug mb-2">
             Rewards, exclusive offers &amp; order tracking — always in your pocket.
           </p>
 
@@ -691,7 +690,7 @@ const Footer = () => {
                 alt="Get it on Google Play"
                 width={95}
                 height={28}
-                className="object-contain rounded h-6 xl:h-7 w-auto"
+                className="object-contain rounded h-6 lg:h-7 w-auto"
               />
             </Link>
             <Link
@@ -705,19 +704,19 @@ const Footer = () => {
                 alt="Download on the App Store"
                 width={95}
                 height={28}
-                className="object-contain rounded h-6 xl:h-7 w-auto"
+                className="object-contain rounded h-6 lg:h-7 w-auto"
               />
             </Link>
           </div>
         </div>
 
-        <div className="shrink-0 self-start pointer-events-none lg:translate-x-2 xl:translate-x-1 2xl:translate-x-0">
+        <div className="shrink-0 self-start pointer-events-none lg:translate-x-1">
           <Image
             src="/uploads/mobiletruco.png"
             alt="BEA Mobile App Mockup"
             width={100}
             height={130}
-            className="object-contain drop-shadow-xl w-[70px] sm:w-[80px] lg:w-[85px] xl:w-[95px] h-auto"
+            className="object-contain drop-shadow-xl w-[70px] sm:w-[80px] lg:w-[95px] h-auto"
           />
         </div>
       </div>
@@ -725,7 +724,7 @@ const Footer = () => {
   </div>
 </div>
           <div className="bg-[#02133a] text-gray-300 py-4">
-            <div className="container mx-auto px-3 sm:px-4 lg:max-w-[1240px] lg:px-3 xl:max-w-[1400px] xl:px-2 2xl:max-w-screen-2xl 2xl:px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="container mx-auto px-3 sm:px-4 lg:max-w-[1400px] lg:px-2 flex flex-col md:flex-row items-center justify-between gap-4">
 
               {/* Left Side */}
               <div className="flex items-center gap-3 text-sm">
