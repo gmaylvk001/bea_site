@@ -686,10 +686,10 @@ export default function HomeComponent() {
       }
     }, [isInView.banner, controls]);
     const CustomPrevArrow = ({ onClick }) => (
-      <button onClick={onClick} className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full shadow-md z-10 hover:bg-gray-600"> ◀ </button>
+      <button type="button" onClick={onClick} className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full shadow-md z-10 hover:bg-gray-600" aria-label="Previous slide">◀</button>
     );
     const CustomNextArrow = ({ onClick }) => (
-      <button onClick={onClick} className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full shadow-md z-10 hover:bg-gray-600"> ▶ </button>
+      <button type="button" onClick={onClick} className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full shadow-md z-10 hover:bg-gray-600" aria-label="Next slide">▶</button>
     );
     const settings = {
       dots: true,
@@ -1004,11 +1004,12 @@ export default function HomeComponent() {
                   className={`${itemClass} ${
                     index < visibleCategories.length ? "border-r border-gray-200" : ""
                   }`}
+                  aria-label={`View ${cat.category_name || "category"}`}
                 >
                   {cat.icon_url ? (
                     <img
                       src={cat.icon_url}
-                      alt=""
+                      alt={cat.category_name || "Category"}
                       className={iconClass}
                     />
                   ) : (
@@ -1024,8 +1025,9 @@ export default function HomeComponent() {
               <Link
                 href={bannerMoreHref}
                 className={itemClass}
+                aria-label="View more categories"
               >
-                <LayoutGrid className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 text-[#2453D3] transition-colors group-hover:text-orange-500" />
+                <LayoutGrid className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 text-[#2453D3] transition-colors group-hover:text-orange-500" aria-hidden="true" />
                 <span className={labelClass}>
                   More Categories
                 </span>
@@ -1113,7 +1115,7 @@ export default function HomeComponent() {
       {flashSalesData.length > 3 && (
         <>
           {/* Left Arrow */}
-<button className="flash-prev absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg transition">
+<button type="button" className="flash-prev absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg transition" aria-label="Previous flash sale">
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="18"
@@ -1124,13 +1126,14 @@ export default function HomeComponent() {
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true"
   >
     <path d="m15 18-6-6 6-6" />
   </svg>
 </button>
 
 {/* Right Arrow */}
-<button className="flash-next absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg transition">
+<button type="button" className="flash-next absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg transition" aria-label="Next flash sale">
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="18"
@@ -1141,6 +1144,7 @@ export default function HomeComponent() {
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true"
   >
     <path d="m9 18 6-6-6-6" />
   </svg>
@@ -1379,7 +1383,7 @@ export default function HomeComponent() {
                   <div className="absolute inset-0 overflow-hidden">
                     <Image
                       src={banner.bgImageUrl}
-                      alt="Banner"
+                      alt={banner?.alt || banner?.title || "Homepage banner"}
                       fill
                       quality={100}
                       className="object-fill w-full h-full"
@@ -1438,7 +1442,7 @@ export default function HomeComponent() {
               <div className="absolute inset-0 flex justify-center items-center bg-white">
                 <Image
                   src={bannerData.banner.items[0].bgImageUrl}
-                  alt="Banner"
+                  alt={bannerData.banner.items[0]?.alt || bannerData.banner.items[0]?.title || "Homepage banner"}
                   fill
                   className="object-fill w-full h-full"
                   priority
@@ -1477,10 +1481,10 @@ export default function HomeComponent() {
                             className="relative w-full aspect-[1900/400]"
                             variants={itemVariants}
                           >
-                            <Link href={item.redirect_url || "#"} className="block w-full h-full">
+                            <Link href={item.redirect_url || "#"} className="block w-full h-full" aria-label={item.alt || item.title || "View promotional banner"}>
                               <Image
                                 src={item.bgImageUrl}
-                                alt="Single Banner New"
+                                alt={item.alt || item.title || "Promotional banner"}
                                 fill
                                 quality={100}
                                 className="object-fill w-full h-full"
@@ -1492,10 +1496,10 @@ export default function HomeComponent() {
                       </Slider>
                     ) : (
                       <motion.div className="relative w-full aspect-[1900/400]" variants={itemVariants}>
-                        <Link href={singleBannerNewData.singlebanner_new.items[0].redirect_url || "#"}>
+                        <Link href={singleBannerNewData.singlebanner_new.items[0].redirect_url || "#"} aria-label={singleBannerNewData.singlebanner_new.items[0].alt || singleBannerNewData.singlebanner_new.items[0].title || "View promotional banner"}>
                           <Image
                             src={singleBannerNewData.singlebanner_new.items[0].bgImageUrl}
-                            alt="Single Banner New"
+                            alt={singleBannerNewData.singlebanner_new.items[0].alt || singleBannerNewData.singlebanner_new.items[0].title || "Promotional banner"}
                             width={1900}
                             height={400}
                             className="w-full h-auto object-fill"
@@ -1552,10 +1556,11 @@ export default function HomeComponent() {
                                     <Link
                                       href={item.redirect_url || "#"}
                                       className="block w-full h-full"
+                                      aria-label={item.alt || item.title || "View promotional banner"}
                                     >
                                       <Image
                                         src={item.bgImageUrl}
-                                        alt="Single Banner Two"
+                                        alt={item.alt || item.title || "Promotional banner"}
                                         fill
                                         quality={100}
                                         className="object-fill w-full h-full"
@@ -1589,16 +1594,20 @@ export default function HomeComponent() {
                     <h5 className="text-xl font-bold">What's Trending</h5>
                     <div className="flex gap-2">
                       <button
+                        type="button"
                         onClick={() => scroll("left")}
                         className="p-2 rounded-full bg-gray-200 hover:bg-gray-300"
+                        aria-label="Scroll videos left"
                       >
-                        <CaretLeft size={20} weight="bold" />
+                        <CaretLeft size={20} weight="bold" aria-hidden="true" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => scroll("right")}
                         className="p-2 rounded-full bg-gray-200 hover:bg-gray-300"
+                        aria-label="Scroll videos right"
                       >
-                        <CaretRight size={20} weight="bold" />
+                        <CaretRight size={20} weight="bold" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -1667,10 +1676,12 @@ return (
                       <div className="bg-white  overflow-hidden relative w-[90%] md:w-[700px] h-[400px]">
                         {/* Close Button */}
                         <button
+                          type="button"
                           className="absolute top-2 right-2 bg-black text-white rounded-full p-1"
                           onClick={() => setActiveVideo(null)}
+                          aria-label="Close video"
                         >
-                          <X size={20} />
+                          <X size={20} aria-hidden="true" />
                         </button>
 
                         {/* YouTube Embed */}
@@ -1717,11 +1728,11 @@ return (
                               >
                                 <div className="flex items-center">
                                   <div className="w-1/3 p-2">
-                                    <Link href={`/product/${product.slug}`} className="block">
+                                    <Link href={`/product/${product.slug}`} className="block" aria-label={`View ${product.name || "product"}`}>
                                       <div className="h-[100px] sm:h-[120px] md:h-[130px] bg-white flex items-center justify-center overflow-hidden rounded-md">
                                         <img
                                           src={`/uploads/products/${product.images?.[0]}` || "/placeholder.jpg"}
-                                          alt={product.item_code}
+                                          alt={product.name || product.item_code || "Product"}
                                           className="object-contain w-full h-full"
                                         />
                                       </div>
@@ -1752,13 +1763,28 @@ return (
                         )}
 
                         {/* Desktop view: Swiper */}
-                        <div className="hidden sm:block">
-                          {offerProducts.length && (
+                        <div className="hidden sm:block relative">
+                          {offerProducts.length > 0 && (
+                            <>
+                            <button
+                              type="button"
+                              className="offer-prev absolute left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center hover:bg-gray-50"
+                              aria-label="Previous offers"
+                            >
+                              <FiChevronLeft size={16} aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              className="offer-next absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center hover:bg-gray-50"
+                              aria-label="Next offers"
+                            >
+                              <FiChevronRight size={16} aria-hidden="true" />
+                            </button>
                             <Swiper
                               modules={[Navigation, Autoplay]}
                               navigation={{
-                                nextEl: ".swiper-button-next",
-                                prevEl: ".swiper-button-prev",
+                                nextEl: ".offer-next",
+                                prevEl: ".offer-prev",
                               }}
                               autoplay={{
                                 delay: 5000,
@@ -1775,11 +1801,11 @@ return (
                                   >
                                     <div className="flex items-center">
                                       <div className="w-1/3 p-2">
-                                        <Link href={`/product/${product.slug}`} className="block">
+                                        <Link href={`/product/${product.slug}`} className="block" aria-label={`View ${product.name || "product"}`}>
                                           <div className="h-[100px] sm:h-[120px] md:h-[130px] flex items-center justify-center overflow-hidden rounded-md">
                                             <img
                                               src={`/uploads/products/${product.images?.[0]}` || "/placeholder.jpg"}
-                                              alt={product.item_code}
+                                              alt={product.name || product.item_code || "Product"}
                                               className="object-contain w-full h-full"
                                             />
                                           </div>
@@ -1808,6 +1834,7 @@ return (
                                 </SwiperSlide>
                               ))}
                             </Swiper>
+                            </>
                           )}
                         </div>
                       </div>

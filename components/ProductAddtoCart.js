@@ -370,13 +370,13 @@ function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
      <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-sm relative px-5 py-3 md:py-4">
 
         {/* Close */}
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10">
-          <FaTimes size={15} />
+        <button type="button" onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10" aria-label="Close">
+          <FaTimes size={15} aria-hidden="true" />
         </button>
 
        {/* Box Image - small */}
         <div className="hidden md:flex justify-center mb-1 md:mb-2">
-          <img src="/uploads/openBoxPopUp.png" alt="Open Box" className="w-9 h-9 md:w-12 md:h-12 object-contain" />
+          <img src="/uploads/openBoxPopUp.png" alt="Open Box Products" className="w-9 h-9 md:w-12 md:h-12 object-contain" />
         </div>
 
         {/* Title */}
@@ -439,8 +439,10 @@ function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
         {/* 3 Contact Buttons */}
         <div className="flex flex-col gap-1.5 md:gap-2 mb-2 md:mb-3">
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white rounded-xl px-4 py-2 md:py-2.5 transition-colors">
-            <FaWhatsapp size={20} />
+            className="flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white rounded-xl px-4 py-2 md:py-2.5 transition-colors"
+            aria-label="Chat on WhatsApp"
+            title="Chat on WhatsApp">
+            <FaWhatsapp size={20} aria-hidden="true" />
             <div>
               <div className="text-[12px] font-semibold leading-tight">WhatsApp Us</div>
               <div className="text-[10.5px] opacity-80 leading-tight">Chat with our team</div>

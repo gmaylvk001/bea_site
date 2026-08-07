@@ -543,23 +543,23 @@ const Footer = () => {
                   Stay Connected for the latest offers & updates
                 </p>
                 <div className="flex gap-4 text-xl mb-6 mt-5">
-                  <Link href="https://web.whatsapp.com/send?phone=919842344323&text=Hi">
-                    <FaWhatsapp className="text-green-500" />
+                  <Link href="https://web.whatsapp.com/send?phone=919842344323&text=Hi" aria-label="Chat on WhatsApp" title="Chat on WhatsApp" target="_blank" rel="noopener noreferrer">
+                    <FaWhatsapp className="text-green-500" aria-hidden="true" />
                   </Link>
-                  <Link href="https://www.facebook.com/BharathElectronics/">
-                    <FaFacebookF className="text-blue-600" />
+                  <Link href="https://www.facebook.com/BharathElectronics/" aria-label="Facebook" title="Facebook" target="_blank" rel="noopener noreferrer">
+                    <FaFacebookF className="text-blue-600" aria-hidden="true" />
                   </Link>
-                  <Link href="https://www.instagram.com/bharathelectronics/">
-                    <FaInstagram className="text-pink-500" />
+                  <Link href="https://www.instagram.com/bharathelectronics/" aria-label="Instagram" title="Instagram" target="_blank" rel="noopener noreferrer">
+                    <FaInstagram className="text-pink-500" aria-hidden="true" />
                   </Link>
-                  <Link href="https://www.youtube.com/@bharathelectronicsandapplian">
-                    <FaYoutube className="text-red-500" />
+                  <Link href="https://www.youtube.com/@bharathelectronicsandapplian" aria-label="YouTube" title="YouTube" target="_blank" rel="noopener noreferrer">
+                    <FaYoutube className="text-red-500" aria-hidden="true" />
                   </Link>
-                  <Link href="https://twitter.com/bharath_bea">
-                    <FaXTwitter />
+                  <Link href="https://twitter.com/bharath_bea" aria-label="X (Twitter)" title="X (Twitter)" target="_blank" rel="noopener noreferrer">
+                    <FaXTwitter aria-hidden="true" />
                   </Link>
-                  <Link href="https://in.linkedin.com/company/bharath-electronics-and-appliances">
-                    <FaLinkedinIn className="text-blue-700" />
+                  <Link href="https://in.linkedin.com/company/bharath-electronics-and-appliances" aria-label="LinkedIn" title="LinkedIn" target="_blank" rel="noopener noreferrer">
+                    <FaLinkedinIn className="text-blue-700" aria-hidden="true" />
                   </Link>
                 </div>
               </div>

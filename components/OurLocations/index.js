@@ -19,6 +19,30 @@ function getStaticCoords(store) {
   return null;
 }
 
+// Corporate / Tatabad store shown by default on location map
+const DEFAULT_STORE_COORDS = { lat: 11.02185, lng: 76.96695 };
+
+function isDefaultLocationStore(store) {
+  const haystack = [
+    store?.address,
+    store?.location,
+    store?.organisation_name,
+    store?.city,
+    store?.zipcode,
+    store?.pincode,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    haystack.includes("tatabad") ||
+    haystack.includes("alagappa") ||
+    haystack.includes("641012") ||
+    haystack.includes("koval scan")
+  );
+}
+
 // Geocode a query string using Nominatim (free, no API key)
 async function nominatimSearch(query) {
   const q = encodeURIComponent(query);
@@ -191,7 +215,33 @@ export default function OurLocations() {
             ...s,
             _coords: getStaticCoords(s),
           }));
-          setStores(withCoords);
+
+          // Put Tatabad / corporate office first and select it by default
+          const defaultIdx = withCoords.findIndex(isDefaultLocationStore);
+          let ordered = withCoords;
+          let defaultStore = null;
+
+          if (defaultIdx >= 0) {
+            defaultStore = {
+              ...withCoords[defaultIdx],
+              _coords:
+                withCoords[defaultIdx]._coords || DEFAULT_STORE_COORDS,
+            };
+            ordered = [
+              defaultStore,
+              ...withCoords.filter((_, i) => i !== defaultIdx),
+            ];
+          }
+
+          setStores(ordered);
+
+          if (defaultStore) {
+            setSelectedStore(defaultStore);
+            setShowDetail(true);
+            if (defaultStore._coords) {
+              geocacheRef.current[defaultStore._id] = defaultStore._coords;
+            }
+          }
         }
       })
       .catch(() => {});

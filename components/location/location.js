@@ -2,6 +2,25 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import OurLocations from "@/components/OurLocations";
+
+const DEFAULT_STORE_MATCH = ["tatabad", "alagappa", "641012", "koval scan"];
+
+function isDefaultLocationStore(store) {
+  const haystack = [
+    store?.address,
+    store?.location,
+    store?.organisation_name,
+    store?.city,
+    store?.zipcode,
+    store?.pincode,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return DEFAULT_STORE_MATCH.some((key) => haystack.includes(key));
+}
 
 const STORE_TYPE_OPTIONS = [
   "All Store Types",
@@ -211,10 +230,17 @@ export default function BEABranchesPage() {
   const storeTypes = STORE_TYPE_OPTIONS;
 
   const filtered = useMemo(() => {
-    return stores.filter((s) => {
+    const list = stores.filter((s) => {
       const cityMatch = appliedCity === "All Cities" || s.city === appliedCity;
       const typeMatch = matchesStoreTypeFilter(s, appliedType);
       return cityMatch && typeMatch;
+    });
+
+    // Keep Tatabad corporate store first by default
+    return [...list].sort((a, b) => {
+      const aDefault = isDefaultLocationStore(a) ? 0 : 1;
+      const bDefault = isDefaultLocationStore(b) ? 0 : 1;
+      return aDefault - bDefault;
     });
   }, [stores, appliedCity, appliedType]);
 
@@ -373,6 +399,11 @@ export default function BEABranchesPage() {
         <h2 className="text-center text-[21px] font-bold text-gray-900 mb-5">
           Find Your Nearest BEA Store
         </h2>
+
+        {/* Default selected store map (Tatabad corporate office) */}
+        <div className="mb-8">
+          <OurLocations />
+        </div>
 
         {/* ── Filters Row ── */}
         <div className="flex flex-col sm:flex-row gap-3 mb-7">

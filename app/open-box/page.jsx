@@ -1085,6 +1085,7 @@ const handleShare = async (product) => {
             {banners.length > 1 && (
               <>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setCurrentBannerIndex((prev) =>
@@ -1092,10 +1093,12 @@ const handleShare = async (product) => {
                     );
                   }}
                   className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors z-10"
+                  aria-label="Previous Open Box banner"
                 >
-                  <ChevronLeft size={24} />
+                  <ChevronLeft size={24} aria-hidden="true" />
                 </button>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setCurrentBannerIndex((prev) =>
@@ -1103,8 +1106,9 @@ const handleShare = async (product) => {
                     );
                   }}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors z-10"
+                  aria-label="Next Open Box banner"
                 >
-                  <ChevronRight size={24} />
+                  <ChevronRight size={24} aria-hidden="true" />
                 </button>
               </>
             )}

@@ -2137,11 +2137,15 @@ const Header = () => {
                 <div className="w-full  relative">
                     <div className="relative">
                         <div className="flex justify-center overflow-x-auto scrollbar-hide">
-                            <Swiper modules={[Navigation]} navigation={{ prevEl: ".custom-swiper-prev", nextEl: ".custom-swiper-next", }} spaceBetween={20} slidesPerView="auto" watchOverflow={true} className="pl-10 pr-14">
+                            <Swiper modules={[Navigation]} navigation={false} spaceBetween={20} slidesPerView="auto" watchOverflow={true} className="pl-10 pr-14">
                                 {categories.map((category) => (
                                     <SwiperSlide key={category._id} className="!w-auto">
                                         <div ref={(el) => (slideRefs.current[category._id] = el)} onMouseEnter={() => handleMouseEnter(category._id)} onMouseLeave={() => startHide(120)} className="px-5 py-2 flex flex-col items-center text-center" >
-                                            <Link href={`/category/${category.category_slug}`} className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap" >
+                                            <Link
+                                              href={`/category/${category.category_slug}`}
+                                              className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap"
+                                              aria-label={`View ${category.category_name}`}
+                                            >
                                                 {category.category_name} 
                                             </Link>
                                             
@@ -2152,6 +2156,8 @@ const Header = () => {
   <Link
     href="/open-box"
     className="relative flex items-center justify-center h-[40px]"
+    aria-label="Open Box Products"
+    title="Open Box Products"
   >
     <video
       src="/assets/open-box-video.mp4"
@@ -2161,6 +2167,7 @@ const Header = () => {
       playsInline
       preload="none"
       className="h-[110px] w-auto object-contain rounded pointer-events-none"
+      aria-hidden="true"
     />
   </Link>
 </SwiperSlide>

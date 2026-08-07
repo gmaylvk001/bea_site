@@ -510,7 +510,7 @@ const results = stores.filter(
           {/* Right — Map + Corporate */}
           <div>
             <h2 className="text-base sm:text-[17px] font-bold text-gray-900 mb-4">Our Corporate Office</h2>
-            {/* Map */}
+            {/* Map — same embed as footer Our Location */}
             <div className="rounded-xl overflow-hidden border border-gray-200 mb-4 h-[220px] sm:h-[260px] md:h-[280px]">
               <iframe
                 title="BEA Corporate Office"
@@ -519,8 +519,9 @@ const results = stores.filter(
                 frameBorder="0"
                 style={{ border: 0 }}
                 referrerPolicy="no-referrer-when-downgrade"
-                src="https://maps.google.com/maps?q=Bharath+Electronics+And+Appliances+Coimbatore&output=embed"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d391.02517849236526!2d76.9626592!3d11.0194039!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8585cc4962b87%3A0x38eddb57f0f66203!2sBharath%20Electronics%20%26%20Appliances!5e0!3m2!1sen!2sin!4v1740660808642!5m2!1sen!2sin"
                 allowFullScreen
+                loading="lazy"
               />
             </div>
             {/* Address */}

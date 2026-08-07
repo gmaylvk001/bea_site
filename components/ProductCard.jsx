@@ -79,6 +79,7 @@ const AddToWishlistButton = ({ productId, onAfterWishlist, className, label, ico
   return (
     <>
        <button
+          type="button"
           className={
             className
               ? `${className} ${isWishlisted ? 'text-red-500 border-red-500' : ''}`
@@ -86,8 +87,10 @@ const AddToWishlistButton = ({ productId, onAfterWishlist, className, label, ico
           }
           onClick={handleWishlistAction}
           disabled={isLoading}
+          aria-label={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+          title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
         >
-          <Heart size={iconSize} fill={isWishlisted ? 'currentColor' : 'none'} />
+          <Heart size={iconSize} fill={isWishlisted ? 'currentColor' : 'none'} aria-hidden="true" />
           {label && <span>{label}</span>}
         </button>
 
