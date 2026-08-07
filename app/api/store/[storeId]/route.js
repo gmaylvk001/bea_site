@@ -7,6 +7,17 @@ import multer from 'multer'; // You might need a file upload library like multer
 import path from 'path';
 import fs from 'fs/promises'; // For file system operations
 import Product from '@/models/product';
+import mongoose from 'mongoose';
+
+function buildStoreQuery(storeId) {
+  const query = {
+    $or: [{ location_id: storeId }, { slug: storeId }],
+  };
+  if (mongoose.Types.ObjectId.isValid(storeId)) {
+    query.$or.push({ _id: storeId });
+  }
+  return query;
+}
 
 // Configure Multer for file uploads (assuming you're storing files locally)
 // For production, consider cloud storage like AWS S3, Cloudinary, etc.
@@ -53,9 +64,7 @@ export async function GET(request, context) {
   try {
     await connectDB();
 
-    const store = await Store.findOne({
-      $or: [{ location_id: storeId }, { slug: storeId }],
-    }).populate("featuredProducts");
+    const store = await Store.findOne(buildStoreQuery(storeId)).populate("featuredProducts");
 
     if (!store) {
       return NextResponse.json(
@@ -132,12 +141,13 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const currentStore = await Store.findOne({
-      $or: [{ location_id: storeId }, { slug: storeId }],
-    });
+    const currentStore = await Store.findOne(buildStoreQuery(storeId));
+    if (!currentStore) {
+      return NextResponse.json({ error: "Store not found." }, { status: 404 });
+    }
     const existingLocationId = await Store.findOne({
       location_id: updateData.location_id,
-      _id: { $ne: currentStore?._id },
+      _id: { $ne: currentStore._id },
     });
     if (existingLocationId) {
       return NextResponse.json(
@@ -265,10 +275,14 @@ if (files.customer_images) {
  
 
     const updated = await Store.findOneAndUpdate(
-      { $or: [{ location_id: storeId }, { slug: storeId }] },
+      buildStoreQuery(storeId),
       { $set: updateData },  // <--- UPDATE DATA
       { new: true }          // <--- RETURN UPDATED DOC
     );
+
+    if (!updated) {
+      return NextResponse.json({ error: "Store not found." }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true, store: updated });
   } catch (err) {

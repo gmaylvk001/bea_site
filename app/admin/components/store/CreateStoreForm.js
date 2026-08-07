@@ -398,6 +398,8 @@ export default function CreateStoreForm({ storeId = null }) {
     if (currentStep === 1) {
       if (!newStore.organisation_name.trim())
         currentStepErrors.organisation_name = "Organisation Name is required";
+      if (!String(newStore.location_id || "").trim())
+        currentStepErrors.location_id = "Location ID is required";
     } else if (currentStep === 2) {
       if (!String(newStore.location_id || "").trim())
         currentStepErrors.location_id = "Location ID is required";
@@ -425,6 +427,8 @@ export default function CreateStoreForm({ storeId = null }) {
     e.preventDefault();
     // basic final validations
     const finalErrors = {};
+    if (!String(newStore.location_id || "").trim())
+      finalErrors.location_id = "Location ID is required";
     if (!newStore.email.trim()) finalErrors.email = "Email is required";
     const phoneRegex = /^[0-9\-\+\s()]+$/;
     if (newStore.phone && !phoneRegex.test(newStore.phone)) finalErrors.phone = "Phone format is invalid";
@@ -432,6 +436,7 @@ export default function CreateStoreForm({ storeId = null }) {
     setErrors(finalErrors);
     if (Object.keys(finalErrors).length > 0) {
       toast.error("Please correct the errors before submitting.");
+      if (finalErrors.location_id) setCurrentStep(1);
       return;
     }
 
@@ -701,6 +706,19 @@ formData.append("existing_customer_images", JSON.stringify(customerExisting));
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
               <input type="text" name="location" className="p-2 border rounded w-full" onChange={handleInputChange} value={newStore.location} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location ID *</label>
+              <input
+                type="text"
+                name="location_id"
+                className="p-2 border rounded w-full"
+                onChange={handleInputChange}
+                value={newStore.location_id}
+                placeholder="e.g. LOC001"
+              />
+              {errors.location_id && <span className="text-red-500 text-sm">{errors.location_id}</span>}
             </div>
 
             <div>

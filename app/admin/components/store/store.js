@@ -416,6 +416,7 @@ const endEntry = Math.min(currentPage * itemsPerPage, totalEntries);
                   <thead>
                     <tr className="bg-gray-200">
                       <th className="p-2 text-left">Title</th>
+                      <th className="p-2 text-left">Location ID</th>
                       <th className="p-2 text-left">Phone</th>
                       <th className="p-2 text-left">Email</th>
                       <th className="p-2 text-left">Zipcode</th>
@@ -427,6 +428,7 @@ const endEntry = Math.min(currentPage * itemsPerPage, totalEntries);
                     { paginatedStores.map((store) => (
                         <tr key={store._id} className="border-b hover:bg-gray-50">
                           <td className="p-2 font-bold">{store.organisation_name}</td>
+                          <td className="p-2 font-bold">{store.location_id || <span className="text-red-500">Missing</span>}</td>
                           <td className="p-2 font bold">{store.phone || "-"}</td>
                           <td className="p-2 font bold">{store.email}</td>
                           <td className="p-2 font bold">{store.zipcode}</td>
@@ -437,7 +439,7 @@ const endEntry = Math.min(currentPage * itemsPerPage, totalEntries);
                           </td>
                           <td className="p-2">
                             <div className="flex items-center gap-2">
-                               <Link href={`/admin/store/edit/${store.slug}`}>
+                               <Link href={`/admin/store/edit/${store.slug || store.location_id || store._id}`}>
                                <button
                                 className="w-7 h-7 bg-red-100 text-red-600 rounded-full inline-flex items-center justify-center hover:bg-red-200 transition"
                                 title="Edit"
