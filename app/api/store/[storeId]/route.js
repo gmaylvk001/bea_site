@@ -10,13 +10,12 @@ import Product from '@/models/product';
 import mongoose from 'mongoose';
 
 function buildStoreQuery(storeId) {
-  const query = {
-    $or: [{ location_id: storeId }, { slug: storeId }],
-  };
   if (mongoose.Types.ObjectId.isValid(storeId)) {
-    query.$or.push({ _id: storeId });
+    return { _id: storeId };
   }
-  return query;
+  return {
+    $or: [{ slug: storeId }, { location_id: storeId }],
+  };
 }
 
 // Configure Multer for file uploads (assuming you're storing files locally)
@@ -134,26 +133,27 @@ export async function PUT(request, { params }) {
       keyHighlights: JSON.parse(fields.keyHighlights || "[]"),
     };
 
-    if (!updateData.location_id) {
-      return NextResponse.json(
-        { error: "Location ID is required." },
-        { status: 400 }
-      );
-    }
-
     const currentStore = await Store.findOne(buildStoreQuery(storeId));
     if (!currentStore) {
       return NextResponse.json({ error: "Store not found." }, { status: 404 });
     }
-    const existingLocationId = await Store.findOne({
-      location_id: updateData.location_id,
-      _id: { $ne: currentStore._id },
-    });
-    if (existingLocationId) {
-      return NextResponse.json(
-        { error: "Location ID already exists." },
-        { status: 400 }
-      );
+    const shouldRemoveLocationId = !updateData.location_id;
+
+    if (updateData.location_id) {
+      const existingLocationId = await Store.findOne({
+        location_id: updateData.location_id,
+        _id: { $ne: currentStore._id },
+      });
+      if (existingLocationId) {
+        return NextResponse.json(
+          {
+            error: `Location ID already belongs to "${existingLocationId.organisation_name}". Please use a unique Location ID.`,
+          },
+          { status: 400 }
+        );
+      }
+    } else {
+      delete updateData.location_id;
     }
 
     // ======================================================
@@ -276,7 +276,12 @@ if (files.customer_images) {
 
     const updated = await Store.findOneAndUpdate(
       buildStoreQuery(storeId),
-      { $set: updateData },  // <--- UPDATE DATA
+      {
+        $set: updateData,
+        ...(shouldRemoveLocationId
+          ? { $unset: { location_id: "" } }
+          : {}),
+      },
       { new: true }          // <--- RETURN UPDATED DOC
     );
 

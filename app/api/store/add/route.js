@@ -78,18 +78,18 @@ export async function POST(req) {
     // Location ID + multi-brand flag
     // -----------------------
     newStoreData.location_id = String(newStoreData.location_id || "").trim();
-    if (!newStoreData.location_id) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Location ID is required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    const existingLocationId = await store.findOne({ location_id: newStoreData.location_id });
-    if (existingLocationId) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Location ID already exists" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+    if (newStoreData.location_id) {
+      const existingLocationId = await store.findOne({
+        location_id: newStoreData.location_id,
+      });
+      if (existingLocationId) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Location ID already exists" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      delete newStoreData.location_id;
     }
     // Remove legacy store_no if accidentally sent
     delete newStoreData.store_no;
