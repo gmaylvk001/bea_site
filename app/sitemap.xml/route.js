@@ -1,141 +1,109 @@
-import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import Category from "@/models/ecom_category_info";
+import Brand from "@/models/ecom_brand_info";
+import Blog from "@/models/ecom_blog_info";
+import Store from "@/models/store";
+import {
+  getBaseUrl,
+  sitemapEntry,
+  wrapSitemapIndex,
+  xmlResponse,
+  SITEMAP_CHUNK_SIZE,
+} from "@/lib/sitemap";
 
-function escapeXml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+async function countActive(Model, filter) {
+  return Model.countDocuments(filter);
 }
 
-function urlEntry(loc, { changefreq, priority, lastmod } = {}) {
-  return `
-      <url>
-        <loc>${escapeXml(loc)}</loc>
-        ${changefreq ? `<changefreq>${changefreq}</changefreq>` : ""}
-        ${priority ? `<priority>${priority}</priority>` : ""}
-        ${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ""}
-      </url>`;
-}
-
-/** Build /category/... path from parentid chain (main / sub / child). */
-function buildCategoryPath(category, byId) {
-  const slugs = [];
-  let current = category;
-  const seen = new Set();
-
-  while (current?.category_slug) {
-    const id = current._id.toString();
-    if (seen.has(id)) break;
-    seen.add(id);
-
-    slugs.unshift(current.category_slug);
-
-    const parentId = current.parentid;
-    if (!parentId || parentId === "none") break;
-
-    current = byId.get(String(parentId));
-    if (!current) break;
+function chunkRanges(total, chunkSize = SITEMAP_CHUNK_SIZE) {
+  if (total <= 0) return [];
+  const ranges = [];
+  for (let from = 1; from <= total; from += chunkSize) {
+    const to = Math.min(from + chunkSize - 1, total);
+    ranges.push({ from, to });
   }
-
-  if (!slugs.length) return null;
-  return `/category/${slugs.join("/")}`;
+  return ranges;
 }
 
 export async function GET() {
   try {
-    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-    if (!baseUrl) throw new Error("BASE_URL not defined");
-
+    const baseUrl = getBaseUrl();
     await dbConnect();
 
-    /* ---------------- STATIC PAGES ---------------- */
-    const staticPages = [
-      "",
-      "/location",
-      "/contact",
-      "/privacypolicy",
-      "/terms-and-condition",
-      "/cancellation-refund-policy",
-      "/shipping",
-      "/aboutus",
-      "/blog",
-      "/feedback",
-      "/careers",
-    ];
+    const now = new Date();
 
-    const staticUrls = staticPages
-      .map((path) =>
-        urlEntry(`${baseUrl}${path}`, {
-          changefreq: "monthly",
-          priority: path === "" ? "1.0" : "0.6",
-        })
-      )
-      .join("");
+    const [categoryCount, brandCount, storeCount, blogCount, productCount] =
+      await Promise.all([
+        countActive(Category, {
+          status: "Active",
+          category_slug: { $exists: true, $ne: "" },
+        }),
+        countActive(Brand, {
+          status: "Active",
+          brand_slug: { $exists: true, $ne: "" },
+        }),
+        countActive(Store, {
+          status: "Active",
+          slug: { $exists: true, $ne: "" },
+        }),
+        countActive(Blog, {
+          status: "Active",
+          blog_slug: { $exists: true, $ne: "" },
+        }),
+        countActive(Product, {
+          status: "Active",
+          slug: { $exists: true, $ne: "" },
+        }),
+      ]);
 
-    /* ---------------- CATEGORIES (main / sub / child) ---------------- */
-    const categories = await Category.find(
-      {
-        status: "Active",
-        category_slug: { $exists: true, $ne: "" },
-      },
-      { category_slug: 1, parentid: 1, updatedAt: 1 }
-    ).lean();
+    const entries = [sitemapEntry(`${baseUrl}/sitemap_pages.xml`, now)];
 
-    const byId = new Map(categories.map((c) => [c._id.toString(), c]));
+    for (const { from, to } of chunkRanges(categoryCount)) {
+      entries.push(
+        sitemapEntry(
+          `${baseUrl}/sitemap_categories.xml?from=${from}&to=${to}`,
+          now
+        )
+      );
+    }
 
-    const categoryUrls = categories
-      .map((c) => {
-        const path = buildCategoryPath(c, byId);
-        if (!path) return "";
-        const depth = path.split("/").length - 2; // 1=main, 2=sub, 3=child
-        const priority = depth >= 3 ? "0.6" : depth === 2 ? "0.65" : "0.7";
-        return urlEntry(`${baseUrl}${path}`, {
-          changefreq: "monthly",
-          priority,
-          lastmod: c.updatedAt || new Date(),
-        });
-      })
-      .join("");
+    for (const { from, to } of chunkRanges(brandCount)) {
+      entries.push(
+        sitemapEntry(
+          `${baseUrl}/sitemap_brands.xml?from=${from}&to=${to}`,
+          now
+        )
+      );
+    }
 
-    /* ---------------- PRODUCTS ---------------- */
-    const products = await Product.find(
-      {
-        status: "Active",
-        slug: { $exists: true, $ne: "" },
-      },
-      { slug: 1, updatedAt: 1 }
-    ).lean();
+    for (const { from, to } of chunkRanges(storeCount)) {
+      entries.push(
+        sitemapEntry(
+          `${baseUrl}/sitemap_stores.xml?from=${from}&to=${to}`,
+          now
+        )
+      );
+    }
 
-    const productUrls = products
-      .map((p) =>
-        urlEntry(`${baseUrl}/product/${p.slug}`, {
-          changefreq: "daily",
-          priority: "0.8",
-          lastmod: p.updatedAt || new Date(),
-        })
-      )
-      .join("");
+    for (const { from, to } of chunkRanges(blogCount)) {
+      entries.push(
+        sitemapEntry(`${baseUrl}/sitemap_blogs.xml?from=${from}&to=${to}`, now)
+      );
+    }
 
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${staticUrls}
-  ${categoryUrls}
-  ${productUrls}
-  </urlset>`;
+    for (const { from, to } of chunkRanges(productCount)) {
+      entries.push(
+        sitemapEntry(
+          `${baseUrl}/sitemap_products.xml?from=${from}&to=${to}`,
+          now
+        )
+      );
+    }
 
-    return new NextResponse(sitemap, {
-      headers: {
-        "Content-Type": "application/xml",
-        "Cache-Control": "public, max-age=3600",
-      },
-    });
+    return xmlResponse(wrapSitemapIndex(entries.join("")));
   } catch (error) {
-    console.error("Sitemap error:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    console.error("Sitemap index error:", error);
+    return new Response("Internal Server Error", { status: 500 });
   }
 }
