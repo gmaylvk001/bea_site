@@ -51,7 +51,7 @@ export const config = {
 
 // GET handler to fetch a single store by ID
 export async function GET(request, context) {
-  const { storeId } = context.params;
+  const { storeId } = await context.params;
 
   if (!storeId) {
     return NextResponse.json(

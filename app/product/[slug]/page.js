@@ -5,11 +5,34 @@ import {
   productImageUrl,
   stripHtml,
   buildProductSchema,
+  buildFAQPageSchema,
   buildBreadcrumbSchema,
 } from "@/lib/schema";
 
 async function getProductData(slug) {
   return fetchJson(`/api/product/${slug}`);
+}
+
+async function getProductReviews(productId) {
+  if (!productId) return { reviews: [], avgRating: 0, count: 0 };
+  const data = await fetchJson(`/api/reviews/${productId}`);
+  if (!data?.success) return { reviews: [], avgRating: 0, count: 0 };
+  return {
+    reviews: data.reviews || [],
+    avgRating: data.avgRating || 0,
+    count: data.count || 0,
+  };
+}
+
+async function getBrandName(brandId) {
+  if (!brandId) return null;
+  const data = await fetchJson("/api/brand");
+  const brands = data?.data || data || [];
+  if (!Array.isArray(brands)) return null;
+  const matched = brands.find(
+    (b) => String(b._id) === String(brandId) || String(b.id) === String(brandId)
+  );
+  return matched?.brand_name || null;
 }
 
 export async function generateMetadata({ params }) {
@@ -71,13 +94,34 @@ export default async function ProductNew({ params }) {
   const baseUrl = getBaseUrl();
 
   let product = null;
+  let reviewData = { reviews: [], avgRating: 0, count: 0 };
+  let brandName = null;
+
   try {
     product = await getProductData(slug);
+    if (product?._id) {
+      [reviewData, brandName] = await Promise.all([
+        getProductReviews(product._id),
+        getBrandName(product.brand),
+      ]);
+    }
   } catch (error) {
     console.error("Product schema fetch error:", error);
   }
 
-  const productSchema = product ? buildProductSchema(baseUrl, product) : null;
+  const productSchema = product
+    ? buildProductSchema(baseUrl, product, {
+        brandName,
+        reviews: reviewData.reviews,
+        avgRating: reviewData.avgRating,
+        reviewCount: reviewData.count,
+      })
+    : null;
+
+  const faqSchema = product
+    ? buildFAQPageSchema(product.faqs || [])
+    : null;
+
   const breadcrumbSchema = product
     ? buildBreadcrumbSchema(baseUrl, [
         { name: product.name, path: `/product/${product.slug || slug}` },
@@ -90,6 +134,12 @@ export default async function ProductNew({ params }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        />
+      )}
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
         />
       )}
       {breadcrumbSchema && (

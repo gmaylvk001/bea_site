@@ -1,7 +1,6 @@
 import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import Category from "@/models/ecom_category_info";
-import Brand from "@/models/ecom_brand_info";
 import Blog from "@/models/ecom_blog_info";
 import Store from "@/models/store";
 import {
@@ -10,6 +9,7 @@ import {
   wrapSitemapIndex,
   xmlResponse,
   SITEMAP_CHUNK_SIZE,
+  getBrandSitemapEntries,
 } from "@/lib/sitemap";
 
 async function countActive(Model, filter) {
@@ -33,16 +33,13 @@ export async function GET() {
 
     const now = new Date();
 
-    const [categoryCount, brandCount, storeCount, blogCount, productCount] =
+    const [categoryCount, brandEntries, storeCount, blogCount, productCount] =
       await Promise.all([
         countActive(Category, {
           status: "Active",
           category_slug: { $exists: true, $ne: "" },
         }),
-        countActive(Brand, {
-          status: "Active",
-          brand_slug: { $exists: true, $ne: "" },
-        }),
+        getBrandSitemapEntries(baseUrl),
         countActive(Store, {
           status: "Active",
           slug: { $exists: true, $ne: "" },
@@ -56,6 +53,8 @@ export async function GET() {
           slug: { $exists: true, $ne: "" },
         }),
       ]);
+
+    const brandCount = brandEntries.length;
 
     const entries = [sitemapEntry(`${baseUrl}/sitemap_pages.xml`, now)];
 

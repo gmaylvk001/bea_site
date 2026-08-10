@@ -35,6 +35,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
        <head>
+        {/*
         <Script
           id="adtarbo-script"
           strategy="afterInteractive"
@@ -52,6 +53,7 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
+        */}
 <Script async src="https://www.googletagmanager.com/gtag/js?id=G-15V9VS13Q7"></Script>
         <Script id="gtm-new" strategy="afterInteractive">
           {`

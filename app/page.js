@@ -1,11 +1,21 @@
-"use client";
-import Image from "next/image";
-//import Register from "../components/Register";
 import IndexComponent from "../components/index";
+import { getBaseUrl, buildHomePageSchema } from "@/lib/schema";
+
 export default function Home() {
+  const baseUrl = getBaseUrl();
+  const homeSchema = buildHomePageSchema(baseUrl);
+
   return (
-    <div className="">
-    <IndexComponent />
-    </div>
+    <>
+      {homeSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema) }}
+        />
+      )}
+      <div className="">
+        <IndexComponent />
+      </div>
+    </>
   );
 }

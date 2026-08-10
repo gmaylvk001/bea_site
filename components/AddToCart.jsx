@@ -180,6 +180,7 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
     });
 
     // ✅ Email marketing track (logged-in only)
+    {/*
     if (isLoggedIn) {
       trackAddToCart({
         user_info: {
@@ -198,6 +199,7 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
         },
       });
     }
+    */}
 
     // ✅ Store frequently bought together
     if (selectedFrequentProducts?.length > 0) {

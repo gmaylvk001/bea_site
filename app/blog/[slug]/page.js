@@ -1,6 +1,12 @@
 // app/blog/[slug]/page.js
 import React from "react";
 import Link from "next/link";
+import {
+  getBaseUrl,
+  stripHtml,
+  buildBlogPostingSchema,
+  buildBreadcrumbSchema,
+} from "@/lib/schema";
 
 async function getBlogPost(slug) {
   try {
@@ -60,6 +66,7 @@ function VideoEmbed({ url }) {
 export default async function BlogPost({ params }) {
   const { slug } = await params;
   const blog = await getBlogPost(slug);
+  const baseUrl = getBaseUrl();
 
   if (!blog) {
     return (
@@ -79,9 +86,26 @@ export default async function BlogPost({ params }) {
   }
 
   const hasVideo = blog.video && blog.video.trim() !== "";
+  const blogSchema = buildBlogPostingSchema(baseUrl, blog);
+  const breadcrumbSchema = buildBreadcrumbSchema(baseUrl, [
+    { name: "Blog", path: "/blog" },
+    { name: blog.blog_name, path: `/blog/${blog.blog_slug}` },
+  ]);
 
   return (
     <article className="min-h-screen bg-gray-50 py-12">
+      {blogSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
+        />
+      )}
+      {breadcrumbSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
+      )}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Breadcrumb */}
@@ -172,7 +196,7 @@ export default async function BlogPost({ params }) {
             <span className="text-sm text-gray-500">Share:</span>
             {/* WhatsApp share */}
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(blog.blog_name + " - " + (typeof window !== "undefined" ? window.location.href : ""))}`}
+              href={`https://wa.me/?text=${encodeURIComponent(`${blog.blog_name} - ${baseUrl}/blog/${blog.blog_slug}`)}`}
               target="_blank"
               rel="noreferrer"
               className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition"
@@ -201,10 +225,14 @@ export async function generateMetadata({ params }) {
 
   return {
     title: blog?.blog_name || "Blog Post | BEA",
-    description: blog?.description?.slice(0, 160) || "Read expert appliance guides from BEA",
+    description:
+      stripHtml(blog?.description || "").slice(0, 160) ||
+      "Read expert appliance guides from BEA",
     openGraph: {
       title: blog?.blog_name || "Blog Post | BEA",
-      description: blog?.description?.slice(0, 160) || "Read expert appliance guides from BEA",
+      description:
+        stripHtml(blog?.description || "").slice(0, 160) ||
+        "Read expert appliance guides from BEA",
       images: blog?.image ? [{ url: blog.image }] : [],
     },
   };

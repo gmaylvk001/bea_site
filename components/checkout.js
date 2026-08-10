@@ -740,6 +740,7 @@ const grandTotal = subtotal - totalDiscount;
         const authData = await authResponse.json();
         //console.log(cartItems);
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        {/*
         trackCheckout({
           user: {
             name: authData.user.name,
@@ -756,6 +757,7 @@ const grandTotal = subtotal - totalDiscount;
             currency: "INR",
           },
         });
+        */}
        
        const trackCheckout = ({ user, product }) => {
   if (typeof window !== "undefined" && window._em_event) {
