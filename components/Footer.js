@@ -860,3 +860,4 @@ const Footer = () => {
   );
 };
 export default Footer;
+//footer bharath electronics and appliances
