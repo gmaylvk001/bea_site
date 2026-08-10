@@ -218,7 +218,8 @@ export default function VideoCardPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Thumbnail Image *</label>
                 <input
-                  type="file"
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) =>
                     setNewVideoCard({ ...newVideoCard, thumbnail_image: e.target.files[0] })
                   }
@@ -298,7 +299,8 @@ export default function VideoCardPage() {
                   className="w-48 h-28 object-cover rounded mb-2"
                 />
                 <input
-                  type="file"
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) => {
                     if (e.target.files[0]) {
                       handleInputChange(videoCard._id, "thumbnail_image", e.target.files[0]);

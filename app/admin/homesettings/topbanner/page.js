@@ -252,7 +252,8 @@ export default function TopBannerPage() {
                 Topbanner size: <span className="font-semibold">2000 × 667 px</span>
                 </p>
                 <input
-                  type="file"
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) =>
                     setNewBanner({ ...newBanner, banner_image: e.target.files[0] })
                   }
@@ -395,6 +396,7 @@ export default function TopBannerPage() {
                           <div className="flex flex-col">
                             <input
                               type="file"
+                              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                               onChange={(e) => {
                                 if (e.target.files[0]) {
                                   handleInputChange(

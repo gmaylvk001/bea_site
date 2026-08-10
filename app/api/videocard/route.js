@@ -3,27 +3,12 @@ import dbConnect from "@/lib/db";
 import VideoCard from "@/models/VideoCard";
 import fs from "fs";
 import path from "path";
-import sharp from "sharp";
+import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
 
-// Save File Function with Dimension Validation
-// Save File Function (accepts any image size)
+// Save File Function (accepts any image size; JPG/PNG/WebP/AVIF)
 async function saveFile(file) {
   try {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "videocard");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const filename = Date.now() + "-" + file.name.replace(/\s/g, "_");
-    const filepath = path.join(uploadDir, filename);
-
-    // just save the file as it is (no size validation)
-    await sharp(buffer).toFile(filepath);
-
-    return "/uploads/videocard/" + filename;
+    return await saveHomeSettingImage(file, { folder: "videocard" });
   } catch (err) {
     console.error("Save file error:", err);
     throw err;

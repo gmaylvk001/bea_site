@@ -663,22 +663,22 @@ const Footer = () => {
       </div>
 
       {/* Our App Section — same look as 1440 from lg (1024) */}
-      <div className="sm:col-span-2 lg:col-span-1 px-2 lg:px-3 lg:pr-0 min-w-0 lg:min-w-[310px] xl:min-w-0 flex items-start gap-2 lg:gap-3 overflow-visible">
+      <div className="sm:col-span-2 lg:col-span-1 px-2 lg:px-3 lg:pr-0 min-w-0 lg:min-w-[310px] xl:min-w-0 flex items-start gap-2 lg:gap-3 overflow-visible min-h-[160px] sm:min-h-[180px] lg:min-h-[200px] py-1">
         <div className="relative z-10 flex flex-col justify-start min-w-0 flex-1 max-w-[58%] lg:max-w-[55%] xl:max-w-none lg:-translate-x-3">
-          <h4 className="text-white leading-tight mb-2">
-            <span className="block text-[12px] lg:text-[13px] font-medium relative pb-1 w-fit whitespace-nowrap">
+          <h4 className="text-white leading-tight mb-3">
+            <span className="block text-[12px] lg:text-[13px] font-medium w-fit whitespace-nowrap">
                Download
-              <span className="absolute left-0 bottom-0 h-[2px] w-6 bg-[#3B82F6] rounded-full" />
             </span>
-            <span className="block text-sm lg:text-base font-bold mt-0.5 whitespace-nowrap">
+            <span className="block text-2xl font-extrabold mt-1 relative pb-1.5 w-fit whitespace-nowrap">
               BEA TRUCO App
+              <span className="absolute left-0 bottom-0 h-[2px] w-full bg-[#3B82F6] rounded-full" />
             </span>
           </h4>
-          <p className="text-gray-300 text-[10px] lg:text-[11px] leading-snug mb-2">
-            Rewards, exclusive offers &amp; order tracking — always in your pocket.
+          <p className="text-gray-300 text-[11px] lg:text-xs leading-relaxed mb-3">
+            Rewards, exclusive offers &amp; order tracking —<br /> always in your pocket.
           </p>
 
-          <div className="flex flex-nowrap items-center gap-1.5">
+          <div className="flex flex-nowrap items-center gap-2 mt-auto">
             <Link
               href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share"
               target="_blank"
@@ -688,9 +688,9 @@ const Footer = () => {
               <Image
                 src="/uploads/GooglePlayDark.png"
                 alt="Get it on Google Play"
-                width={95}
-                height={28}
-                className="object-contain rounded h-6 lg:h-7 w-auto"
+                width={110}
+                height={32}
+                className="object-contain rounded h-7 lg:h-8 w-auto"
               />
             </Link>
             <Link
@@ -702,9 +702,9 @@ const Footer = () => {
               <Image
                 src="/uploads/AppStoreDark.png"
                 alt="Download on the App Store"
-                width={95}
-                height={28}
-                className="object-contain rounded h-6 lg:h-7 w-auto"
+                width={110}
+                height={32}
+                className="object-contain rounded h-7 lg:h-8 w-auto"
               />
             </Link>
           </div>
@@ -714,9 +714,9 @@ const Footer = () => {
           <Image
             src="/uploads/mobiletruco.png"
             alt="BEA Mobile App Mockup"
-            width={100}
-            height={130}
-            className="object-contain drop-shadow-xl w-[70px] sm:w-[80px] lg:w-[95px] h-auto"
+            width={120}
+            height={160}
+            className="object-contain drop-shadow-xl w-[85px] sm:w-[95px] lg:w-[115px] h-auto"
           />
         </div>
       </div>
