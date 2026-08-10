@@ -239,7 +239,8 @@ export default function FlashSalePage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Banner Background Image * (Size: 429x250)</label>
                 <input
-                  type="file"
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) =>
                     setNewFlashSale({ ...newFlashSale, background_image: e.target.files[0] })
                   }
@@ -251,7 +252,8 @@ export default function FlashSalePage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Banner Image * (Size: 260x240)</label>
                 <input
-                  type="file"
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) =>
                     setNewFlashSale({ ...newFlashSale, banner_image: e.target.files[0] })
                   }
@@ -340,7 +342,8 @@ export default function FlashSalePage() {
                 />
                 <label className="block text-sm font-medium mb-1">Background (429x250)</label>
                 <input
-                  type="file"
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) => {
                     if (e.target.files[0]) {
                       handleInputChange(flashSale._id, "background_image", e.target.files[0]);
@@ -375,7 +378,8 @@ export default function FlashSalePage() {
                 />
                 <label className="block text-sm font-medium mb-1">Banner (260x240)</label>
                 <input
-                  type="file"
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) => {
                     if (e.target.files[0]) {
                       handleInputChange(flashSale._id, "banner_image", e.target.files[0]);

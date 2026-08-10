@@ -1364,7 +1364,7 @@ export default function HomeComponent() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="home-section-full relative overflow-visible pt-0 m-0 mb-0 sm:mb-20 md:mb-24 lg:mb-28 z-10"
+      className="home-section-full relative overflow-visible pt-0 m-0 mb-0 z-10"
     >
       <div className="relative overflow-hidden">
         {isBannerLoading ? (
@@ -1455,7 +1455,7 @@ export default function HomeComponent() {
           <div></div>
         )}
       </div>
-      {renderBannerCategoryNav()}
+      {/* {renderBannerCategoryNav()} */}
     </motion.section>
   )
           case 'singlebanner':

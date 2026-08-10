@@ -777,7 +777,7 @@ images.forEach((img, index) => {
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) =>
                     handleMultiImageChange(
                       subcat._id,
@@ -835,7 +835,7 @@ images.forEach((img, index) => {
             </label>
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
               onChange={(e) =>
                 handleInputChange(
                   subcat._id,
@@ -1236,7 +1236,7 @@ images.forEach((img, index) => {
 
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                           onChange={(e) =>
                             handleInputChange(subcat._id, "bannerImage", e.target.files[0])
                           }
@@ -1290,7 +1290,7 @@ images.forEach((img, index) => {
                                   {/* File Input */}
                                   <input
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                                     onChange={(e) =>
                                       handleMultiImageChange(
                                         subcat._id,
@@ -1355,7 +1355,7 @@ images.forEach((img, index) => {
 
                             <input
                               type="file"
-                              accept="image/*"
+                              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                               onChange={(e) =>
                                 handleInputChange(
                                   subcat._id,
