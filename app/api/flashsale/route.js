@@ -3,38 +3,16 @@ import dbConnect from "@/lib/db";
 import FlashSale from "@/models/flashsale";
 import fs from "fs";
 import path from "path";
-import sharp from "sharp";
+import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
 
 // Save File Function with Dimension Validation
 async function saveFile(file, width, height) {
   try {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    let metadata;
-    try {
-      metadata = await sharp(buffer).metadata();
-    } catch (err) {
-      throw new Error("Invalid image file. Please upload a valid image.");
-    }
-
-    if (metadata.width !== width || metadata.height !== height) {
-      throw new Error(
-        `Image must be exactly ${width}x${height} pixels. Your image is ${metadata.width}x${metadata.height} pixels.`
-      );
-    }
-
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "flashsale");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const filename = Date.now() + "-" + file.name.replace(/\s/g, "_");
-    const filepath = path.join(uploadDir, filename);
-
-    await sharp(buffer).toFile(filepath);
-
-    return "/uploads/flashsale/" + filename;
+    return await saveHomeSettingImage(file, {
+      folder: "flashsale",
+      expectedWidth: width,
+      expectedHeight: height,
+    });
   } catch (err) {
     console.error("Save file error:", err);
     throw err;

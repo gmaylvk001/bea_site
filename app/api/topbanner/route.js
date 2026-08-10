@@ -3,38 +3,12 @@ import dbConnect from "@/lib/db";
 import TopBanner from "@/models/topbanner";
 import fs from "fs";
 import path from "path";
-import sharp from "sharp";
+import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
 
-// ✅ Save File Function with Dimension Validation
+// ✅ Save File Function (JPG/PNG/WebP/AVIF)
 async function saveFile(file) {
   try {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    let metadata;
-    try {
-      metadata = await sharp(buffer).metadata();
-    } catch (err) {
-      throw new Error("Invalid image file. Please upload a valid image.");
-    }
-
-    // if (metadata.width !== 1920 || metadata.height !== 550) {
-    //   throw new Error(
-    //     `Image must be exactly 1920x550 pixels. Your image is ${metadata.width}x${metadata.height} pixels.`
-    //   );
-    // }
-
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "topbanner");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const filename = Date.now() + "-" + file.name.replace(/\s/g, "_");
-    const filepath = path.join(uploadDir, filename);
-
-    await sharp(buffer).toFile(filepath);
-
-    return "/uploads/topbanner/" + filename;
+    return await saveHomeSettingImage(file, { folder: "topbanner" });
   } catch (err) {
     console.error("Save file error:", err);
     throw err;

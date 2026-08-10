@@ -201,7 +201,8 @@ export default function CategoryBannerPage() {
               {/* File Input */}
               <div className="mb-3">
                 <input
-                  type="file"
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) =>
                     handleInputChange(index, "banner_image", e.target.files[0])
                   }

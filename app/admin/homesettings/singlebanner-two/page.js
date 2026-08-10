@@ -245,7 +245,8 @@ export default function SingleBannerPage() {
                   Banner size: <span className="font-semibold">1900 × 400 px</span>
                 </p>
                 <input
-                  type="file"
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                   onChange={(e) =>
                     setNewBanner({ ...newBanner, banner_image: e.target.files[0] })
                   }
@@ -388,6 +389,7 @@ export default function SingleBannerPage() {
                           <div className="flex flex-col">
                             <input
                               type="file"
+                              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
                               onChange={(e) => {
                                 if (e.target.files[0]) {
                                   handleInputChange(

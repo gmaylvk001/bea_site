@@ -19,7 +19,15 @@ export const metadata = {
   title: "Bharath Electronics & Appliances",
   description: "Barath Electronics",
   icons: {
-    icon: "/images/logo/bea-favi.png",
+    icon: [
+      { url: "/images/logo/bea-favi-64.png?v=13", sizes: "64x64", type: "image/png" },
+      { url: "/images/logo/bea-favi-192.png?v=13", sizes: "192x192", type: "image/png" },
+      { url: "/images/logo/bea-favi.png?v=13", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/images/logo/bea-favi-64.png?v=13",
+    apple: [
+      { url: "/images/logo/bea-favi-180.png?v=13", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
