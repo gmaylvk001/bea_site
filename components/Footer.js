@@ -64,7 +64,7 @@ const Footer = () => {
       try {
         localStorage.setItem(key, JSON.stringify({ __ts: Date.now(), data }));
       } catch (e) {
-        // ignore
+        // ignore  test pull
       }
     };
 
