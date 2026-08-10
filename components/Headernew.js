@@ -1503,7 +1503,7 @@ const Header = () => {
                     </div>
                 </div>
                 {/* NEW MOBILE SEARCH BAR */}
-                <div className="sm:hidden mt-2 w-full max-w-full">
+                <div className="sm:hidden mt-2 w-full max-w-full" role="search" aria-label="Site search">
                   <div className="bg-[#2453D3] w-full px-2 py-2.5 rounded-lg">
                     <div className="flex items-center bg-white h-9 rounded-xl border border-gray-300 shadow-sm overflow-hidden w-full max-w-full transition-all duration-150 focus-within:border-[#2453d3] focus-within:shadow-[0_0_0_2px_rgba(36,83,211,0.15)] flex-nowrap">
                       
@@ -1512,7 +1512,8 @@ const Header = () => {
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         className="h-full text-[10px] bg-white border-r border-gray-300 outline-none flex-shrink-0 min-w-[72px] max-w-[78px] w-auto"
-                        aria-label="Category"
+                        aria-label="Search category"
+                        id="mobile-search-category"
                       >
                         <option value="All Category">All Category</option>
                         {categories.map((cat) => (
@@ -1527,12 +1528,19 @@ const Header = () => {
                       <div className="flex-1 relative h-full flex items-center">
                         <input
                           type="search"
+                          id="mobile-header-search"
+                          name="q"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           onKeyDown={handleKeyPress}
                           placeholder=" "
                           className="w-full h-full text-sm outline-none bg-transparent px-1 focus:text-[#111] placeholder-transparent"
                           ref={searchInputRef}
+                          aria-label="Search for products or brands"
+                          aria-autocomplete="list"
+                          aria-controls="mobile-search-suggestions"
+                          aria-expanded={searchDropdownVisible && searchContext === "mobileTop"}
+                          autoComplete="off"
                           onFocus={() => {
                             setSearchContext('mobileTop'); // ADDED
                             if (searchInputRef.current) {
@@ -1546,7 +1554,7 @@ const Header = () => {
                           }}
                         />
                         {searchQuery.trim() === "" && (
-                          <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] pointer-events-none z-10 truncate max-w-[calc(100%-8px)]">
+                          <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] pointer-events-none z-10 truncate max-w-[calc(100%-8px)]" aria-hidden="true">
                             <span className="text-gray-400">Search for</span>
                             <span className="text-gray-900">"{typedPreview }"</span>
                           </div>
@@ -1554,18 +1562,25 @@ const Header = () => {
                       </div>
                   
                       <button
+                        type="button"
                         onClick={handleSearch}
-                        aria-label="Search"
+                        aria-label="Search products"
                         className="h-full px-2.5 bg-[#2453D3] text-white flex items-center justify-center active:scale-[0.97] transition flex-shrink-0"
                       >
-                        <FaSearch size={13} />
+                        <FaSearch size={13} aria-hidden="true" />
                       </button>
                     </div>
                   </div>
                 </div>
                 {/* MOBILE TOP SUGGESTIONS (outside menu) */}
                 {searchDropdownVisible && searchContext === 'mobileTop' && !isMobileMenuOpen && (
-                  <div ref={searchDropdownRef} className="sm:hidden absolute z-[70] left-0 right-0 px-3 mt-1">
+                  <div
+                    ref={searchDropdownRef}
+                    id="mobile-search-suggestions"
+                    className="sm:hidden absolute z-[70] left-0 right-0 px-3 mt-1"
+                    role="listbox"
+                    aria-label="Search product suggestions"
+                  >
                     <div className="bg-white rounded-lg shadow-lg border max-h-72 overflow-y-auto">
                       <div className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wide text-gray-500">
                         PRODUCTS
@@ -1612,7 +1627,7 @@ const Header = () => {
                     </div>
 
                     {/* Search Bar (Hidden on mobile - will show in mobile menu) */}
-                    <div className="search-bar relative hidden sm:flex flex-1 w-full max-w-[680px] mx-auto items-center bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200" role="search" style={{minHeight: '36px', display: 'flex',
+                    <div className="search-bar relative hidden sm:flex flex-1 w-full max-w-[680px] mx-auto items-center bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200" role="search" aria-label="Site search" style={{minHeight: '36px', display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
                         background: 'var(--bg)',
@@ -1631,6 +1646,7 @@ const Header = () => {
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
                             className="search-select"
+                            id="desktop-search-category"
                             aria-label="Search category"
                           >
                             <option value="All Category">All Category</option>
@@ -1647,7 +1663,7 @@ const Header = () => {
                           <input
                             type="search"
                             name="q"
-                            id="q"
+                            id="desktop-header-search"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             ref={searchInputRef}
@@ -1665,11 +1681,15 @@ const Header = () => {
                             onKeyDown={handleDesktopKeyDown}  // correct usage
                             className={`search-input ${searchQuery.trim() ? 'has-value' : ''}`}
                             placeholder=" "
-                            aria-label="Search query"
+                            aria-label="Search for products or brands"
+                            aria-autocomplete="list"
+                            aria-controls="desktop-search-suggestions"
+                            aria-expanded={searchDropdownVisible && searchContext === "desktop"}
+                            autoComplete="off"
                           />
                           {/* typed-overlay: "Search for" light gray, typedPreview black */}
                           {searchQuery.trim() === "" && (
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10" aria-hidden="true">
                               <span className="text-gray-400 text-sm">Search for</span>
                               <span className="text-black text-sm">"{typedPreview }"</span>
                             </div>
@@ -1681,9 +1701,9 @@ const Header = () => {
                           className="search-btn"
                           style={{color:'#2453d3'}}
                           onClick={handleSearchBtnClick}
-                          aria-label="Search"
+                          aria-label="Search products"
                         >
-                          <FaSearch />
+                          <FaSearch aria-hidden="true" />
                         </button>
                         <div className="shimmer" aria-hidden="true"></div>
                         {/* DROPDOWN MOVED OUTSIDE TO SUPPORT MOBILE */ }
@@ -1693,8 +1713,8 @@ const Header = () => {
                     {/* Icons Group */}
                     <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 mt-0.5">
                         {/* Mobile Search Button (Hidden on desktop) */}
-                        <button onClick={toggleMobileMenu} className="sm:hidden text-customBlue">
-                            <FiSearch size={20} />
+                        <button type="button" onClick={toggleMobileMenu} className="sm:hidden text-customBlue" aria-label="Open search">
+                            <FiSearch size={20} aria-hidden="true" />
                         </button>
 
 						<Link href="/feedback" className={`${HEADER_ACTION_LINK_CLASS} hidden sm:flex min-w-[52px]`}>
@@ -2588,6 +2608,7 @@ const Header = () => {
               maxHeight: '500px'
             }}
             role="listbox"
+            id="desktop-search-suggestions"
             aria-label="Search product suggestions"
           >
             <div className="px-5 pt-3 pb-2 text-[11px] font-semibold tracking-[0.12em] text-gray-500 uppercase select-none">
