@@ -37,12 +37,16 @@ export async function POST(req) {
       pickup_store,
       store_id,
       gst_number,
+      gst_business_name,
+      gst_name,
     } = body;
 
     // Validate required fields
     if (!user_id || !email_address || !order_phonenumber || !order_item?.length || !order_amount) {
       return Response.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
+
+    const resolvedGstBusinessName = gst_business_name || gst_name || null;
 
     const orderFields = {
       user_id,
@@ -70,6 +74,8 @@ export async function POST(req) {
       pickup_store: pickup_store || null,
       store_id: store_id || null,
       gst_number: gst_number || null,
+      gst_business_name: resolvedGstBusinessName,
+      gst_name: resolvedGstBusinessName,
     };
 
     // Check if order already exists (match by order_number if provided, else user + pending order)

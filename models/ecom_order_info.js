@@ -107,6 +107,8 @@ points_per_currency_unit: { type: Number, default: null },
 promotion_code_applied: { type: String, default: null },
 promotion_discount_applied: { type: Number, default: 0 },
 gst_number: { type: String, default: null },
+  gst_business_name: { type: String, default: null },
+  gst_name: { type: String, default: null },
 
 
     order_history: [OrderHistorySchema]
@@ -115,6 +117,11 @@ gst_number: { type: String, default: null },
   { timestamps: true }
 );
 
-export default mongoose.models.ecom_order_info || mongoose.model("ecom_order_info", OrderSchema);
+// Ensure updated schema fields are applied after hot reload
+if (mongoose.models.ecom_order_info) {
+  delete mongoose.models.ecom_order_info;
+}
+
+export default mongoose.model("ecom_order_info", OrderSchema);
 
 

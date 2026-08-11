@@ -295,7 +295,7 @@ const Footer = () => {
         <footer className="bg-white">
           {/* TOP FEATURES */}
           <div className="py-3 bg-gray-50">
-            <div className="container mx-auto">
+            <div className="container mx-auto px-4 lg:max-w-[1400px] lg:px-2 min-[1440px]:max-w-[1600px] min-[1440px]:px-1 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0">
 
               <div className="w-full lg:w-12/12 mx-auto bg-white rounded-2xl shadow-xl px-6 py-4">
 
@@ -387,7 +387,7 @@ const Footer = () => {
           </div>
 
           {/* WHITE FOOTER */}
-          <div className="container mx-auto px-4 py-3 lg:max-w-[1400px] lg:px-2">
+          <div className="container mx-auto px-4 py-3 lg:max-w-[1400px] lg:px-2 min-[1440px]:max-w-[1600px] min-[1440px]:px-1 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
               {/* LEFT LOGO SECTION */}
@@ -569,10 +569,10 @@ const Footer = () => {
 
 {/* DARK BLUE CATEGORY FOOTER */}
 <div className="bg-[#041b4d] text-white py-10 overflow-x-hidden lg:overflow-visible">
-  <div className="container mx-auto px-2 sm:px-3 lg:max-w-[1400px] lg:px-1">
+  <div className="container mx-auto px-2 sm:px-3 lg:max-w-[1400px] lg:px-1 min-[1440px]:max-w-[1600px] min-[1440px]:px-0.5 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0">
 
-    {/* lg (1024): tighter categories; xl+ (1440, 2560): same 1440 grid */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-[repeat(6,minmax(0,4.25rem))_minmax(155px,170px)_minmax(310px,1fr)] xl:grid-cols-[repeat(6,minmax(0,6.75rem))_minmax(180px,200px)_minmax(300px,1fr)] gap-y-10 gap-x-3 lg:gap-x-4 xl:gap-x-5 text-sm">
+    {/* lg (1024): compact; 1440–2K: wider categories/brands, capped Truco width */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-[repeat(6,minmax(0,4.25rem))_minmax(155px,170px)_minmax(310px,1fr)] xl:grid-cols-[repeat(6,minmax(0,6.75rem))_minmax(180px,200px)_minmax(300px,1fr)] min-[1440px]:grid-cols-[repeat(6,minmax(0,9rem))_minmax(210px,240px)_minmax(300px,380px)] min-[2560px]:grid-cols-[repeat(6,minmax(0,12rem))_minmax(250px,290px)_minmax(340px,440px)] min-[3840px]:grid-cols-[repeat(6,minmax(0,14rem))_minmax(280px,320px)_minmax(380px,480px)] gap-y-10 gap-x-3 lg:gap-x-4 xl:gap-x-5 min-[1440px]:gap-x-6 min-[2560px]:gap-x-8 text-sm">
 
       {groupedCategories.main.slice(0, 5).map((main) => {
         const Icon =
@@ -581,7 +581,7 @@ const Footer = () => {
         return (
           <div
             key={main._id}
-            className="lg:border-r border-[#14346d] px-2 lg:px-2 xl:px-4 min-w-0"
+            className="lg:border-r border-[#14346d] px-2 lg:px-2 xl:px-4 min-[1440px]:px-3 min-[2560px]:px-4 min-w-0"
           >
            <h4 className="flex items-center gap-2 font-semibold uppercase mb-4 flex-wrap">
   <Icon size={18} className="shrink-0" />
@@ -618,7 +618,7 @@ const Footer = () => {
       })}
 
       {/* Top Brands */}
-      <div className="lg:border-r border-[#14346d] px-2 lg:px-2 xl:px-4 min-w-0">
+      <div className="lg:border-r border-[#14346d] px-2 lg:px-2 xl:px-4 min-[1440px]:px-3 min-[2560px]:px-4 min-w-0">
         <h4 className="font-semibold uppercase mb-4 whitespace-nowrap">
           Top Brands
         </h4>
@@ -662,26 +662,26 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Our App Section — same look as 1440 from lg (1024) */}
-      <div className="sm:col-span-2 lg:col-span-1 px-2 lg:px-3 lg:pr-0 min-w-0 lg:min-w-[310px] xl:min-w-0 flex items-start gap-2 lg:gap-3 overflow-visible min-h-[160px] sm:min-h-[180px] lg:min-h-[200px] py-1">
-        <div className="relative z-10 flex flex-col justify-start min-w-0 flex-1 max-w-[58%] lg:max-w-[55%] xl:max-w-none lg:-translate-x-3">
-          <h4 className="text-white leading-tight mb-3">
-            <span className="block text-[12px] lg:text-[13px] font-medium w-fit whitespace-nowrap">
+      {/* Our App Section — baseline at lg (1024); 1440–2K: capped width, tight text↔phone gap */}
+      <div className="sm:col-span-2 lg:col-span-1 px-2 lg:px-3 lg:pr-0 min-w-0 lg:min-w-[310px] xl:min-w-0 flex items-start justify-start gap-2 lg:gap-3 min-[1440px]:gap-2 min-[2560px]:gap-3 overflow-visible min-h-[160px] sm:min-h-[180px] lg:min-h-[200px] min-[1440px]:min-h-[220px] min-[2560px]:min-h-[260px] py-1">
+        <div className="relative z-10 flex flex-col justify-start min-w-0 flex-none w-auto max-w-[58%] lg:max-w-[55%] min-[1440px]:max-w-[58%] lg:-translate-x-3 min-[1440px]:-translate-x-1">
+          <h4 className="text-white leading-tight mb-3 min-[1440px]:mb-3 min-[2560px]:mb-4">
+            <span className="block text-[12px] lg:text-[13px] min-[1440px]:text-[15px] min-[2560px]:text-[18px] font-medium w-fit whitespace-nowrap">
                Download
             </span>
-            <span className="block text-2xl font-extrabold mt-1 pb-1.5 w-fit whitespace-nowrap">
-              <span className="relative inline-block pb-1.5">
+            <span className="block text-2xl min-[1440px]:text-3xl min-[2560px]:text-4xl font-extrabold mt-1 pb-1.5 w-fit whitespace-nowrap">
+              <span className="relative inline-block pb-1.5 min-[1440px]:pb-2">
                 BEA
-                <span className="absolute left-0 bottom-0 h-[2px] w-full bg-[#3B82F6] rounded-full" />
+                <span className="absolute left-0 bottom-0 h-[2px] min-[1440px]:h-[3px] min-[2560px]:h-[4px] w-full bg-[#3B82F6] rounded-full" />
               </span>
               {" "}TRUCO App
             </span>
           </h4>
-          <p className="text-gray-300 text-[11px] lg:text-xs leading-relaxed mb-3">
+          <p className="text-gray-300 text-[11px] lg:text-xs min-[1440px]:text-sm min-[2560px]:text-base leading-relaxed mb-3 min-[1440px]:mb-3 min-[2560px]:mb-4">
             Rewards, exclusive offers &amp; order tracking —<br /> always in your pocket.
           </p>
 
-          <div className="flex flex-nowrap items-center gap-2 mt-auto">
+          <div className="flex flex-nowrap items-center gap-2 min-[1440px]:gap-2 min-[2560px]:gap-3 mt-auto">
             <Link
               href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share"
               target="_blank"
@@ -693,7 +693,7 @@ const Footer = () => {
                 alt="Get it on Google Play"
                 width={110}
                 height={32}
-                className="object-contain rounded h-7 lg:h-8 w-auto"
+                className="object-contain rounded h-7 lg:h-8 min-[1440px]:h-9 min-[2560px]:h-11 w-auto"
               />
             </Link>
             <Link
@@ -707,19 +707,19 @@ const Footer = () => {
                 alt="Download on the App Store"
                 width={110}
                 height={32}
-                className="object-contain rounded h-7 lg:h-8 w-auto"
+                className="object-contain rounded h-7 lg:h-8 min-[1440px]:h-9 min-[2560px]:h-11 w-auto"
               />
             </Link>
           </div>
         </div>
 
-        <div className="shrink-0 self-start pointer-events-none lg:translate-x-1">
+        <div className="shrink-0 self-start pointer-events-none lg:translate-x-2 min-[1440px]:translate-x-4 min-[2560px]:translate-x-5">
           <Image
             src="/uploads/mobiletruco.png"
             alt="BEA Mobile App Mockup"
             width={120}
             height={160}
-            className="object-contain drop-shadow-xl w-[85px] sm:w-[95px] lg:w-[115px] h-auto"
+            className="object-contain drop-shadow-xl w-[85px] sm:w-[95px] lg:w-[115px] min-[1440px]:w-[140px] min-[2560px]:w-[175px] h-auto"
           />
         </div>
       </div>
@@ -727,7 +727,7 @@ const Footer = () => {
   </div>
 </div>
           <div className="bg-[#02133a] text-gray-300 py-4">
-            <div className="container mx-auto px-3 sm:px-4 lg:max-w-[1400px] lg:px-2 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="container mx-auto px-3 sm:px-4 lg:max-w-[1400px] lg:px-2 min-[1440px]:max-w-[1600px] min-[1440px]:px-1 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0 flex flex-col md:flex-row items-center justify-between gap-4">
 
               {/* Left Side */}
               <div className="flex items-center gap-3 text-sm">
@@ -760,9 +760,14 @@ const Footer = () => {
               </div>
 
               {/* Right Side */}
-              <div className="flex items-center gap-4">
-                <img src="/uploads/payment.png" alt="Accepted payment methods" className="h-6" width={120} height={24} />
-                
+              <div className="flex items-center gap-4 shrink-0">
+                <img
+                  src="/uploads/payment.png"
+                  alt="Accepted payment methods"
+                  className="h-7 sm:h-7 lg:h-8 w-auto max-w-[200px] sm:max-w-[220px] lg:max-w-[240px] object-contain"
+                  width={240}
+                  height={32}
+                />
               </div>
 
             </div>

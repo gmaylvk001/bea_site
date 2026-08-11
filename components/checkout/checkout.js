@@ -342,7 +342,7 @@ export default function CheckoutPage() {
     city: '', state: 'Tamilnadu', postCode: '',
     phonenumber: '', email: '', additionalInfo: '',
     deliveryType: 'home', selectedStore: '',
-    needGstInvoice: false, gst_number: '',
+    needGstInvoice: false, gst_number: '', gst_business_name: '',
   });
 
   const [isDeliverySaved, setIsDeliverySaved] = useState(false);
@@ -699,13 +699,21 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         if (!postCodeRegex.test(addressData.postCode)) { toast.error('Please enter a valid postal code.'); return; }
       }
 
-      if (formData.needGstInvoice && !formData.gst_number?.trim()) {
-        setTouched((prev) => ({ ...prev, gst_number: true }));
-        toast.error('Please enter your GST number.');
-        return;
+      if (formData.needGstInvoice) {
+        if (!formData.gst_business_name?.trim()) {
+          setTouched((prev) => ({ ...prev, gst_business_name: true }));
+          toast.error('Please enter your business name for GST invoice.');
+          return;
+        }
+        if (!formData.gst_number?.trim()) {
+          setTouched((prev) => ({ ...prev, gst_number: true }));
+          toast.error('Please enter your GST number.');
+          return;
+        }
       }
 
       const gstNumber = formData.needGstInvoice ? formData.gst_number.trim().toUpperCase() : '';
+      const gstBusinessName = formData.needGstInvoice ? formData.gst_business_name.trim() : '';
 
       setIsSubmitting(true);
       const totalAmount = orderSummary.total;
@@ -727,6 +735,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         formDataToSend.append('phonenumber', addressData.phonenumber);
         formDataToSend.append('additionalInfo', addressData.additionalInfo || '');
         formDataToSend.append('gst_number', gstNumber);
+        formDataToSend.append('gst_name', gstBusinessName);
         const addressRes = await fetch('/api/useraddress/add', { method: 'POST', body: formDataToSend });
         if (!addressRes.ok) throw new Error('Failed to save address');
         const newAddressData = await addressRes.json();
@@ -778,6 +787,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
     pickup_store: pickupStoreName,
     store_id: formData.deliveryType === 'store' ? formData.selectedStore : null,
     gst_number: gstNumber,
+    gst_business_name: gstBusinessName,
+    gst_name: gstBusinessName,
     payment_id: '', payment_status: 'payment_initialized', 
     order_number: order_number || 'ORD' + Date.now(),
     order_details: cartItems.map(item => ({ item_code: `ITEM${item.item_code}`, product_id: item.id, product_name: item.name, product_price: item.price, model: 'N/A', user_id: userId, coupondiscount: 0, created_at: new Date(), updated_at: new Date(), quantity: item.quantity, store_id: formData.deliveryType === 'store' ? formData.selectedStore : 'STORE01', orderNumber: 'ORD' + Date.now() })),
@@ -827,6 +838,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           pickup_store: pickupStoreName,
           store_id: formData.deliveryType === 'store' ? formData.selectedStore : null,
           gst_number: gstNumber,
+          gst_business_name: gstBusinessName,
+          gst_name: gstBusinessName,
           payment_id: paymentData.payment_id, payment_status: paymentData.status,
           order_number: order_number || 'ORD' + Date.now(),
           order_details: cartItems.map(item => ({ item_code: `ITEM${item.item_code}`, product_id: item.id, product_name: item.name, product_price: item.price, model: 'N/A', user_id: userId, coupondiscount: 0, created_at: new Date(), updated_at: new Date(), quantity: item.quantity, store_id: formData.deliveryType === 'store' ? formData.selectedStore : 'STORE01', orderNumber: 'ORD' + Date.now() })),
@@ -847,79 +860,81 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         ga4Purchase({ orderId: orderData.order.order_number, value: orderSummary.total, items: cartItems });
 
         // Earn loyalty points (online only) — not COD / Pay at Store / EMI
-        if (paymentMode === 'online') {
-          try {
-            const loyaltyRes = await fetch('/api/award-points', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ phoneNumber: userPhone, orderNumber: order_number, orderAmount: totalAmount, firstName: addressData.firstName, lastName: addressData.lastName, email: addressData.email, cartItems, loyaltyPointsRedeemedAmount: loyaltyDiscount || 0, loyaltyPointsRedeemedCode: loyaltyToken || '', paymentMode, promotionCode: appliedCoupon?.offer_code || '', promotionDiscount: appliedCoupon ? (orderSummary.discount || 0) : 0, }),
-            });
-            const loyaltyData = await loyaltyRes.json();
-            if (loyaltyData.success && loyaltyData.points_awarded > 0) {
-              toast.success(`You earned ${loyaltyData.points_awarded} loyalty points!`, { autoClose: 5000 });
-              window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
-            }
-          } catch (e) { console.error('Loyalty award failed:', e); }
-        }
+        // DISABLED for local GST invoice testing — uncomment for production
+        // if (paymentMode === 'online') {
+        //   try {
+        //     const loyaltyRes = await fetch('/api/award-points', {
+        //       method: 'POST', headers: { 'Content-Type': 'application/json' },
+        //       body: JSON.stringify({ phoneNumber: userPhone, orderNumber: order_number, orderAmount: totalAmount, firstName: addressData.firstName, lastName: addressData.lastName, email: addressData.email, cartItems, loyaltyPointsRedeemedAmount: loyaltyDiscount || 0, loyaltyPointsRedeemedCode: loyaltyToken || '', paymentMode, promotionCode: appliedCoupon?.offer_code || '', promotionDiscount: appliedCoupon ? (orderSummary.discount || 0) : 0, }),
+        //     });
+        //     const loyaltyData = await loyaltyRes.json();
+        //     if (loyaltyData.success && loyaltyData.points_awarded > 0) {
+        //       toast.success(`You earned ${loyaltyData.points_awarded} loyalty points!`, { autoClose: 5000 });
+        //       window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
+        //     }
+        //   } catch (e) { console.error('Loyalty award failed:', e); }
+        // }
 
-        // SAP sync disabled for live — uncomment to send order data to SAP
+        // SAP sync disabled for testing — uncomment to send order data to SAP
         // await fetch('/api/send-order-detail-to-sap', {
         //   method: 'POST',
         //   headers: { 'Content-Type': 'application/json' },
         //   body: JSON.stringify({ order_number: orderData.order.order_number }),
         // });
 
-        try {
-          const name = `${addressData.firstName} ${addressData.lastName}`;
-          const orderDate = new Date().toLocaleString("en-IN", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          });
+        // Order / admin email disabled for testing — uncomment for production
+        // try {
+        //   const name = `${addressData.firstName} ${addressData.lastName}`;
+        //   const orderDate = new Date().toLocaleString("en-IN", {
+        //     day: "2-digit",
+        //     month: "long",
+        //     year: "numeric",
+        //     hour: "2-digit",
+        //     minute: "2-digit",
+        //     hour12: true,
+        //   });
 
-          const adminEmails = [
-            // "arunkarthik@bharathelectronics.in",
-            // "ecom@bharathelectronics.in",
-            // "itadmin@bharathelectronics.in",
-            // "telemarketing@bharathelectronics.in",
-            // "sekarcorp@bharathelectronics.in",
-            // "abu@bharathelectronics.in",
-            // "customercare@bharathelectronics.in",
-          ];
+        //   const adminEmails = [
+        //     "arunkarthik@bharathelectronics.in",
+        //     "ecom@bharathelectronics.in",
+        //     "itadmin@bharathelectronics.in",
+        //     "telemarketing@bharathelectronics.in",
+        //     "sekarcorp@bharathelectronics.in",
+        //     "abu@bharathelectronics.in",
+        //     "customercare@bharathelectronics.in",
+        //   ];
 
-          const emailRes = await fetch("/api/send-order-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              customerEmail: addressData.email,
-              adminEmails,
-              orderDetails: {
-                order_id: String(orderData.order._id || ""),
-                order_username: name,
-                order_number: orderData.order.order_number,
-                order_amount: orderData.order.order_amount,
-                payment_method: orderData.order.payment_method,
-                order_deliveryaddress: deliveryAddress,
-                order_phonenumber: addressData.phonenumber,
-                order_date: orderDate,
-                order_item: cartItems.map((item) => ({
-                  name: item.name,
-                  price: item.price,
-                  quantity: item.quantity,
-                  image: item.image || item.images?.[0],
-                  warrantyData: item.warrantyData || null,
-                })),
-              },
-            }),
-          });
-          if (!emailRes.ok) {
-            console.error("Order email failed:", await emailRes.json().catch(() => ({})));
-          }
-        } catch (e) {
-          console.error("Email sending failed:", e);
-        }
+        //   const emailRes = await fetch("/api/send-order-email", {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({
+        //       customerEmail: addressData.email,
+        //       adminEmails,
+        //       orderDetails: {
+        //         order_id: String(orderData.order._id || ""),
+        //         order_username: name,
+        //         order_number: orderData.order.order_number,
+        //         order_amount: orderData.order.order_amount,
+        //         payment_method: orderData.order.payment_method,
+        //         order_deliveryaddress: deliveryAddress,
+        //         order_phonenumber: addressData.phonenumber,
+        //         order_date: orderDate,
+        //         order_item: cartItems.map((item) => ({
+        //           name: item.name,
+        //           price: item.price,
+        //           quantity: item.quantity,
+        //           image: item.image || item.images?.[0],
+        //           warrantyData: item.warrantyData || null,
+        //         })),
+        //       },
+        //     }),
+        //   });
+        //   if (!emailRes.ok) {
+        //     console.error("Order email failed:", await emailRes.json().catch(() => ({})));
+        //   }
+        // } catch (e) {
+        //   console.error("Email sending failed:", e);
+        // }
 
         toast.success('Order placed successfully!');
         updateCartCount(0);
@@ -1118,6 +1133,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                         ...prev,
                         needGstInvoice: e.target.checked,
                         gst_number: e.target.checked ? prev.gst_number : '',
+                        gst_business_name: e.target.checked ? prev.gst_business_name : '',
                       }))
                     }
                     className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -1133,9 +1149,22 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                   </div>
                 </label>
                 {formData.needGstInvoice && (
-                  <div className="mt-3">
+                  <div className="mt-3 space-y-3">
                     <FloatInput
-                      label="GST number"
+                      label="Business name"
+                      name="gst_business_name"
+                      required
+                      value={formData.gst_business_name}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      error={
+                        touched.gst_business_name && !formData.gst_business_name?.trim()
+                          ? 'Business name is required'
+                          : null
+                      }
+                    />
+                    <FloatInput
+                      label="GSTN number"
                       name="gst_number"
                       required
                       value={formData.gst_number}
@@ -1143,7 +1172,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       onBlur={handleBlur}
                       error={
                         touched.gst_number && !formData.gst_number?.trim()
-                          ? 'GST number is required'
+                          ? 'GSTN number is required'
                           : null
                       }
                       maxLength={15}

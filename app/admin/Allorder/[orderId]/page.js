@@ -20,6 +20,7 @@ const OrderDetails = () => {
   const [comment, setComment] = useState("");
 
   const [order, setOrder] = useState(null);
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
 
   // const orderr = {
   //   history: [
@@ -103,8 +104,45 @@ const OrderDetails = () => {
     }
   }, [orderId]);
 
+  const handleGenerateInvoice = async () => {
+    const orderNumber = order?.order_number;
+    if (!orderNumber) {
+      toast.error("Order number not found");
+      return;
+    }
 
+    setIsGeneratingInvoice(true);
+    try {
+      const response = await fetch(`/api/orders/invoice?order_id=${encodeURIComponent(orderNumber)}`);
 
+      if (!response.ok) {
+        let errorMsg = "Failed to generate invoice";
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData?.error || errorMsg;
+        } catch {
+          // Response may be non-JSON
+        }
+        throw new Error(errorMsg);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice_${orderNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded successfully");
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      toast.error(error.message || "Failed to generate invoice. Please try again.");
+    } finally {
+      setIsGeneratingInvoice(false);
+    }
+  };
 
   if (!order) return <p className="text-center mt-10">Loading...</p>;
   // console.log('Order:', order);
@@ -247,10 +285,28 @@ const OrderDetails = () => {
                   />
                 </td>
               </tr>
+              {(order.gst_business_name || order.gst_name || order.gst_number) && (
+                <tr className="border-b">
+                  <td className="p-2" colSpan={2}>
+                    <p className="text-xs font-semibold text-gray-600 mb-1">GST Invoice Details</p>
+                    <p className="text-sm text-gray-800">
+                      Business Name: {order.gst_business_name || order.gst_name || "-"}
+                    </p>
+                    <p className="text-sm text-gray-800">
+                      GSTN: {order.gst_number || "-"}
+                    </p>
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td className="p-2" colSpan={2}>
-                  <button className="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 w-full">
-                    Generate Invoice
+                  <button
+                    type="button"
+                    onClick={handleGenerateInvoice}
+                    disabled={isGeneratingInvoice}
+                    className="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isGeneratingInvoice ? "Generating..." : "Generate Invoice"}
                   </button>
                 </td>
               </tr>
