@@ -860,81 +860,83 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         ga4Purchase({ orderId: orderData.order.order_number, value: orderSummary.total, items: cartItems });
 
         // Earn loyalty points (online only) — not COD / Pay at Store / EMI
-        // DISABLED for local GST invoice testing — uncomment for production
-        // if (paymentMode === 'online') {
-        //   try {
-        //     const loyaltyRes = await fetch('/api/award-points', {
-        //       method: 'POST', headers: { 'Content-Type': 'application/json' },
-        //       body: JSON.stringify({ phoneNumber: userPhone, orderNumber: order_number, orderAmount: totalAmount, firstName: addressData.firstName, lastName: addressData.lastName, email: addressData.email, cartItems, loyaltyPointsRedeemedAmount: loyaltyDiscount || 0, loyaltyPointsRedeemedCode: loyaltyToken || '', paymentMode, promotionCode: appliedCoupon?.offer_code || '', promotionDiscount: appliedCoupon ? (orderSummary.discount || 0) : 0, }),
-        //     });
-        //     const loyaltyData = await loyaltyRes.json();
-        //     if (loyaltyData.success && loyaltyData.points_awarded > 0) {
-        //       toast.success(`You earned ${loyaltyData.points_awarded} loyalty points!`, { autoClose: 5000 });
-        //       window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
-        //     }
-        //   } catch (e) { console.error('Loyalty award failed:', e); }
-        // }
+        if (paymentMode === 'online') {
+          try {
+            const loyaltyRes = await fetch('/api/award-points', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phoneNumber: userPhone, orderNumber: order_number, orderAmount: totalAmount, firstName: addressData.firstName, lastName: addressData.lastName, email: addressData.email, cartItems, loyaltyPointsRedeemedAmount: loyaltyDiscount || 0, loyaltyPointsRedeemedCode: loyaltyToken || '', paymentMode, promotionCode: appliedCoupon?.offer_code || '', promotionDiscount: appliedCoupon ? (orderSummary.discount || 0) : 0, }),
+            });
+            const loyaltyData = await loyaltyRes.json();
+            if (loyaltyData.success && loyaltyData.points_awarded > 0) {
+              toast.success(`You earned ${loyaltyData.points_awarded} loyalty points!`, { autoClose: 5000 });
+              window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
+            }
+          } catch (e) { console.error('Loyalty award failed:', e); }
+        }
 
-        // SAP sync disabled for testing — uncomment to send order data to SAP
-        // await fetch('/api/send-order-detail-to-sap', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({ order_number: orderData.order.order_number }),
-        // });
+        // SAP sync — send order data to SAP
+        try {
+          await fetch('/api/send-order-detail-to-sap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_number: orderData.order.order_number }),
+          });
+        } catch (e) {
+          console.error('SAP sync failed:', e);
+        }
 
-        // Order / admin email disabled for testing — uncomment for production
-        // try {
-        //   const name = `${addressData.firstName} ${addressData.lastName}`;
-        //   const orderDate = new Date().toLocaleString("en-IN", {
-        //     day: "2-digit",
-        //     month: "long",
-        //     year: "numeric",
-        //     hour: "2-digit",
-        //     minute: "2-digit",
-        //     hour12: true,
-        //   });
+        try {
+          const name = `${addressData.firstName} ${addressData.lastName}`;
+          const orderDate = new Date().toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
 
-        //   const adminEmails = [
-        //     "arunkarthik@bharathelectronics.in",
-        //     "ecom@bharathelectronics.in",
-        //     "itadmin@bharathelectronics.in",
-        //     "telemarketing@bharathelectronics.in",
-        //     "sekarcorp@bharathelectronics.in",
-        //     "abu@bharathelectronics.in",
-        //     "customercare@bharathelectronics.in",
-        //   ];
+          const adminEmails = [
+            "arunkarthik@bharathelectronics.in",
+            "ecom@bharathelectronics.in",
+            "itadmin@bharathelectronics.in",
+            "telemarketing@bharathelectronics.in",
+            "sekarcorp@bharathelectronics.in",
+            "abu@bharathelectronics.in",
+            "customercare@bharathelectronics.in",
+          ];
 
-        //   const emailRes = await fetch("/api/send-order-email", {
-        //     method: "POST",
-        //     headers: { "Content-Type": "application/json" },
-        //     body: JSON.stringify({
-        //       customerEmail: addressData.email,
-        //       adminEmails,
-        //       orderDetails: {
-        //         order_id: String(orderData.order._id || ""),
-        //         order_username: name,
-        //         order_number: orderData.order.order_number,
-        //         order_amount: orderData.order.order_amount,
-        //         payment_method: orderData.order.payment_method,
-        //         order_deliveryaddress: deliveryAddress,
-        //         order_phonenumber: addressData.phonenumber,
-        //         order_date: orderDate,
-        //         order_item: cartItems.map((item) => ({
-        //           name: item.name,
-        //           price: item.price,
-        //           quantity: item.quantity,
-        //           image: item.image || item.images?.[0],
-        //           warrantyData: item.warrantyData || null,
-        //         })),
-        //       },
-        //     }),
-        //   });
-        //   if (!emailRes.ok) {
-        //     console.error("Order email failed:", await emailRes.json().catch(() => ({})));
-        //   }
-        // } catch (e) {
-        //   console.error("Email sending failed:", e);
-        // }
+          const emailRes = await fetch("/api/send-order-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              customerEmail: addressData.email,
+              adminEmails,
+              orderDetails: {
+                order_id: String(orderData.order._id || ""),
+                order_username: name,
+                order_number: orderData.order.order_number,
+                order_amount: orderData.order.order_amount,
+                payment_method: orderData.order.payment_method,
+                order_deliveryaddress: deliveryAddress,
+                order_phonenumber: addressData.phonenumber,
+                order_date: orderDate,
+                order_item: cartItems.map((item) => ({
+                  name: item.name,
+                  price: item.price,
+                  quantity: item.quantity,
+                  image: item.image || item.images?.[0],
+                  warrantyData: item.warrantyData || null,
+                })),
+              },
+            }),
+          });
+          if (!emailRes.ok) {
+            console.error("Order email failed:", await emailRes.json().catch(() => ({})));
+          }
+        } catch (e) {
+          console.error("Email sending failed:", e);
+        }
 
         toast.success('Order placed successfully!');
         updateCartCount(0);
