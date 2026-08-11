@@ -8,55 +8,22 @@ export default function HomeOnlyScripts() {
 
   useEffect(() => {
     let typebotCancelled = false;
+    let typebotTimer;
 
-    // -------------------------
-    // SPA-safe cleanup function
-    // -------------------------
     const cleanupDOM = () => {
-      // Remove GTM
-      document.getElementById("gtm-script-1")?.remove();
-      Array.from(document.scripts)
-        .filter((s) => s.src.includes("GTM-KVT2Z9RR"))
-        .forEach((s) => s.remove());
-
-      // Remove Typebot
       document
         .querySelectorAll(
           "typebot-bubble, typebot-standard, typebot-container, [id^='typebot'], [class*='typebot']"
         )
         .forEach((el) => el.remove());
+      document.getElementById("typebot-zindex-fix")?.remove();
       window.__Typebot = null;
 
-      // Hide Tawk.to widget instead of removing DOM
       if (window.Tawk_API && typeof window.Tawk_API.hideWidget === "function") {
         window.Tawk_API.hideWidget();
       }
     };
 
-    // -------------------------
-    // Load GTM
-    // -------------------------
-    const loadGTM = () => {
-      if (!document.getElementById("gtm-script-1")) {
-        const gtmScript = document.createElement("script");
-        gtmScript.id = "gtm-script-1";
-        gtmScript.textContent = `
-          (function(w,d,s,l,i){w[l]=w[l]||[];
-          w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
-          var f=d.getElementsByTagName(s)[0],
-          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
-          j.async=true;
-          j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-          f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-KVT2Z9RR');
-        `;
-        document.head.appendChild(gtmScript);
-      }
-    };
-
-    // -------------------------
-    // Load Typebot
-    // -------------------------
     const loadTypebot = async () => {
       try {
         const { default: Typebot } = await import(
@@ -77,19 +44,16 @@ export default function HomeOnlyScripts() {
             },
           });
           window.__Typebot = Typebot;
-              const style = document.createElement("style");
-               style.id = "typebot-zindex-fix";
-               style.textContent = `typebot-bubble { z-index: 100000 !important; }`;
-               document.head.appendChild(style);
+          const style = document.createElement("style");
+          style.id = "typebot-zindex-fix";
+          style.textContent = `typebot-bubble { z-index: 100000 !important; }`;
+          document.head.appendChild(style);
         }
       } catch (e) {
         console.error("Typebot failed to load", e);
       }
     };
 
-    // -------------------------
-    // SPA-safe Tawk.to show/hide
-    // -------------------------
     const showTawk = () => {
       if (window.Tawk_API && typeof window.Tawk_API.showWidget === "function") {
         window.Tawk_API.showWidget();
@@ -103,7 +67,7 @@ export default function HomeOnlyScripts() {
 
         const tawkScript = document.createElement("script");
         tawkScript.async = true;
-        tawkScript.src = "https://embed.tawk.to/YOUR_TAWK_ID/default"; // replace with your Tawk ID
+        tawkScript.src = "https://embed.tawk.to/YOUR_TAWK_ID/default";
         tawkScript.charset = "UTF-8";
         tawkScript.setAttribute("crossorigin", "*");
         document.head.appendChild(tawkScript);
@@ -111,19 +75,28 @@ export default function HomeOnlyScripts() {
       showTawk();
     };
 
-    // -------------------------
-    // Main SPA logic
-    // -------------------------
+    const deferThirdParty = (fn) => {
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(fn, { timeout: 4000 });
+      } else {
+        setTimeout(fn, 3000);
+      }
+    };
+
     if (pathname?.startsWith("/admin")) {
       cleanupDOM();
     } else {
-      loadGTM();
-      loadTypebot();
-      loadTawk();
+      typebotTimer = setTimeout(() => {
+        deferThirdParty(() => {
+          if (!typebotCancelled) loadTypebot();
+        });
+      }, 2000);
+      deferThirdParty(loadTawk);
     }
 
     return () => {
       typebotCancelled = true;
+      clearTimeout(typebotTimer);
       cleanupDOM();
     };
   }, [pathname]);

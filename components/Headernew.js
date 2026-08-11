@@ -1393,7 +1393,7 @@ const Header = () => {
                   return next;
                 });
               }}
-              aria-label="Toggle"
+              aria-label={isOpen ? `Collapse ${node.category_name}` : `Expand ${node.category_name}`}
               className="ml-2"
             >
               <FiChevronRight
@@ -1713,7 +1713,7 @@ const Header = () => {
                     {/* Icons Group */}
                     <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 mt-0.5">
                         {/* Mobile Search Button (Hidden on desktop) */}
-                        <button type="button" onClick={toggleMobileMenu} className="sm:hidden text-customBlue" aria-label="Open search">
+                        <button type="button" onClick={toggleMobileMenu} className="sm:hidden text-customBlue" aria-label="Open menu">
                             <FiSearch size={20} aria-hidden="true" />
                         </button>
 
@@ -1756,7 +1756,7 @@ const Header = () => {
                         <div className="relative">
                             {userData ? (
                                 <>
-                                    <button ref={profileButtonRef} onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center text-black focus:outline-none p-1 sm:p-0">
+                                    <button ref={profileButtonRef} onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center text-black focus:outline-none p-1 sm:p-0" aria-label="Account menu" aria-expanded={dropdownOpen}>
                                         <FiUser size={18} className="text-customBlue" />
                                         <span className="ml-1 font-bold text-xs sm:text-sm text-customBlue hidden lg:inline">
                                             Hi, {userData.name || userData.username || "User"}
@@ -1860,7 +1860,7 @@ const Header = () => {
                 {showAuthModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white rounded-lg p-8 w-96 max-w-full relative">
-                            <button onClick={() => { setShowAuthModal(false); setFormError(''); setError(''); setErrors({ login: {}, register: {} }); setLoginData({ email: "", password: "" }); setRegisterData({ name: "", email: "", mobile: "", password: "" }); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">
+                            <button onClick={() => { setShowAuthModal(false); setFormError(''); setError(''); setErrors({ login: {}, register: {} }); setLoginData({ email: "", password: "" }); setRegisterData({ name: "", email: "", mobile: "", password: "" }); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl" aria-label="Close login dialog">
                                 &times;
                             </button>
                             <div className="flex gap-4 mb-6 border-b">
@@ -1875,7 +1875,9 @@ const Header = () => {
                               {/* Register Name Field */}
                               {activeTab === "register" && (
                                 <>
+                                  <label htmlFor="header-auth-name" className="sr-only">Name</label>
                                   <input
+                                    id="header-auth-name"
                                     type="text"
                                     placeholder="Name"
                                     value={registerData.name}
@@ -1893,7 +1895,9 @@ const Header = () => {
                               )}
 
                               {/* Email Field */}
+                              <label htmlFor="header-auth-email" className="sr-only">Email</label>
                               <input
+                                id="header-auth-email"
                                 type="text"
                                 placeholder="Email"
                                 value={
@@ -1915,7 +1919,9 @@ const Header = () => {
                               {/* Register Mobile Field */}
                               {activeTab === "register" && (
                                 <>
+                                  <label htmlFor="header-auth-mobile" className="sr-only">Mobile</label>
                                   <input
+                                    id="header-auth-mobile"
                                     type="tel"
                                     placeholder="Mobile"
                                     value={registerData.mobile}
@@ -1933,7 +1939,9 @@ const Header = () => {
                               )}
 
                               {/* Password Field */}
+                              <label htmlFor="header-auth-password" className="sr-only">Password</label>
                               <input
+                                id="header-auth-password"
                                 type="password"
                                 placeholder="Password"
                                 value={
@@ -2296,7 +2304,7 @@ const Header = () => {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     {sub.icon_url ? (
-                     <img   src={sub.icon_url} alt=""  style={{ width: 30, height: 30,  objectFit: 'contain',  flexShrink: 0, filter: isActive   ? 'invert(27%) sepia(95%) saturate(1200%) hue-rotate(204deg) brightness(95%) contrast(95%)'    : 'none',   transition: 'filter 0.15s', }}/>
+                     <img src={sub.icon_url} alt="" aria-hidden="true" style={{ width: 30, height: 30,  objectFit: 'contain',  flexShrink: 0, filter: isActive   ? 'invert(27%) sepia(95%) saturate(1200%) hue-rotate(204deg) brightness(95%) contrast(95%)'    : 'none',   transition: 'filter 0.15s', }}/>
                     ) : (
                       <div style={{
                         width: 20, height: 20, borderRadius: '4px',

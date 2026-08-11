@@ -494,12 +494,18 @@ export default function HomeComponent() {
         //fetchProducts();
         fetchSingleBannerData();
         fetchSingleBannerDatatwo();
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 2000);
-
-        return () => clearTimeout(timer);
       }, []);
+
+    useEffect(() => {
+      if (!isBannerLoading && !isSectionLoading) {
+        setIsLoading(false);
+      }
+    }, [isBannerLoading, isSectionLoading]);
+
+    useEffect(() => {
+      const fallbackTimer = setTimeout(() => setIsLoading(false), 3000);
+      return () => clearTimeout(fallbackTimer);
+    }, []);
     const fetchHomeSections = async () => {
       setIsSectionLoading(true);
       try {
@@ -1052,10 +1058,11 @@ export default function HomeComponent() {
                       {/* Image */}
                       <img
                         src={banner.imageUrl}
-                        alt={`Category Banner ${index + 1}`}
+                        alt={banner.categoryname ? `${banner.categoryname} category banner` : `Promotional category banner ${index + 1}`}
                         className="w-full h-[300px] object-cover transform group-hover:scale-105 transition duration-500 ease-in-out"
                         width={400}
-                        height={400}
+                        height={300}
+                        loading="lazy"
                       />
 
                       <div className="absolute top-1 mb-4 left-4 py-6">
@@ -1311,7 +1318,7 @@ export default function HomeComponent() {
                       <div className="py-3">
                           <motion.div variants={containerVariants} className="rounded-xl">
                               <motion.div variants={itemVariants} className="flex justify-between items-center mb-2">
-                                  <h5 className="text-base font-semibold uppercase tracking-tight text-gray-900">Top Brands</h5>
+                                  <h2 className="text-base font-semibold uppercase tracking-tight text-gray-900">Top Brands</h2>
                                   <Link
                                     href="/search"
                                     className="text-[12px] font-semibold text-[#2453D3] hover:text-orange-500 inline-flex items-center gap-1"
@@ -1342,7 +1349,7 @@ export default function HomeComponent() {
                                                     width={120}
                                                     height={56}
                                                     className="object-contain w-[100px] sm:w-[130px] h-[28px] sm:h-[38px] cursor-pointer"
-                                                    unoptimized
+                                                    sizes="130px"
                                                   />
                                                 </Link>
                                               </div>
@@ -1374,30 +1381,17 @@ export default function HomeComponent() {
         ) : bannerData.banner.items.length > 0 ? (
           bannerData.banner.items.length > 1 ? (
             <Slider {...settings} className="relative topbanner-slider">
-              {bannerData.banner.items.map((banner) => (
+              {bannerData.banner.items.map((banner, bannerIndex) => (
                 <motion.div
                   key={banner.id}
                   className="relative w-full aspect-[2000/667] max-h-auto"
                   variants={itemVariants}
                 >
-                  <div className="absolute inset-0 overflow-hidden">
-                    <Image
-                      src={banner.bgImageUrl}
-                      alt={banner?.alt || banner?.title || "Homepage banner"}
-                      fill
-                      quality={100}
-                      className="object-fill w-full h-full"
-                      style={{ objectPosition: "center 30%" }}
-                      priority
-                      unoptimized
-                    />
-                  </div>
-                  {/* Clickable accessible banner - REMOVED HOVER EFFECT */}
                   <div
                     className="absolute inset-0 overflow-hidden cursor-pointer"
                     role="link"
                     tabIndex={0}
-                    aria-label={banner?.alt || banner?.redirectUrl || "Banner"}
+                    aria-label={banner?.alt || banner?.title || banner?.redirectUrl || "Banner"}
                     onClick={() => {
                       const href = banner?.redirectUrl;
                       if (!href) return;
@@ -1422,13 +1416,13 @@ export default function HomeComponent() {
                   >
                     <Image
                       src={banner.bgImageUrl}
-                      alt={banner?.alt || "Banner"}
+                      alt={banner?.alt || banner?.title || "Homepage banner"}
                       fill
-                      quality={100}
+                      quality={85}
+                      sizes="100vw"
                       className="object-fill w-full h-full"
                       style={{ objectPosition: "center 30%" }}
-                      priority
-                      unoptimized
+                      priority={bannerIndex === 0}
                     />
                   </div>
                 </motion.div>
@@ -1444,9 +1438,10 @@ export default function HomeComponent() {
                   src={bannerData.banner.items[0].bgImageUrl}
                   alt={bannerData.banner.items[0]?.alt || bannerData.banner.items[0]?.title || "Homepage banner"}
                   fill
+                  sizes="100vw"
+                  quality={85}
                   className="object-fill w-full h-full"
                   priority
-                  unoptimized
                 />
               </div>
             </motion.div>
@@ -1591,7 +1586,7 @@ export default function HomeComponent() {
                 <div className="rounded-2xl">
                   {/* Header */}
                   <div className="flex justify-between items-center mb-6">
-                    <h5 className="text-xl font-bold">What's Trending</h5>
+                    <h2 className="text-xl font-bold">What's Trending</h2>
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -1650,7 +1645,8 @@ return (
     />
     <img
       src="https://img.poorvika.com//play_video.png"
-      alt="play"
+      alt=""
+      aria-hidden="true"
       className="absolute w-12 h-12"
     />
   </div>
@@ -1877,6 +1873,7 @@ return (
                 </div>
             )}
             {/* main div start */}
+            <h1 className="sr-only">Bharath Electronics &amp; Appliances – Shop Electronics &amp; Home Appliances Online</h1>
             <div className={`relative transition-opacity duration-300 ${isLoading ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`} ref={containerRef} >
                 {/* Banner Section start */}
                 <div className="home-container">

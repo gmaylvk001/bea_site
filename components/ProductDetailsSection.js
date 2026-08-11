@@ -81,6 +81,7 @@ function StarRating({ value, onChange }) {
             type="button"
             onClick={() => onChange(star)}
             className="focus:outline-none"
+            aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
           >
             <span
               className={`text-2xl ${
@@ -103,10 +104,12 @@ function DynamicTabs({ tabs, activeName, onTabChange }) {
 
     return (
       <div>
-<div className={`flex overflow-x-auto scrollbar-hide border-b border-gray-200 gap-6 sm:gap-10 px-1 ${poppins.className}`}>
+<div role="tablist" aria-label="Product details" className={`flex overflow-x-auto scrollbar-hide border-b border-gray-200 gap-6 sm:gap-10 px-1 ${poppins.className}`}>
           {tabs.map((tab) => (
             <button
               key={tab.name}
+              role="tab"
+              aria-selected={activeName === tab.name}
               onClick={() => onTabChange && onTabChange(tab.name)}
            className={`py-3 sm:py-4 text-base sm:text-lg transition-all duration-200 border-b-[3px] -mb-[2px] whitespace-nowrap flex-shrink-0 ${
   activeName === tab.name
@@ -124,6 +127,8 @@ function DynamicTabs({ tabs, activeName, onTabChange }) {
         {tabs.map((tab) => (
           <div
             key={tab.name}
+            role="tabpanel"
+            aria-hidden={activeName !== tab.name}
             style={{ display: activeName === tab.name ? "block" : "none" }}
             className={
   tab.name === "overview"
@@ -142,7 +147,9 @@ function DynamicTabs({ tabs, activeName, onTabChange }) {
     <div>
       <form onSubmit={handleReviewSubmit} className="bg-white p-4 rounded-md shadow mt-3">
         <h3 className="font-semibold text-left mb-2">Write a Review</h3>
+        <label htmlFor="review-title" className="sr-only">Review Title</label>
         <input
+          id="review-title"
           type="text"
           placeholder="Review Title"
           value={reviewForm.title}
@@ -151,7 +158,9 @@ function DynamicTabs({ tabs, activeName, onTabChange }) {
           className="w-full border rounded p-2 mb-2"
         />
         <StarRating value={reviewForm.rating} onChange={(rating) => setReviewForm(prev => ({ ...prev, rating }))} />
+        <label htmlFor="review-comment" className="sr-only">Review comment</label>
         <textarea
+          id="review-comment"
           placeholder="Write your comments..."
           value={reviewForm.comment}
           onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}

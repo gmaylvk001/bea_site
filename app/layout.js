@@ -15,9 +15,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = (process.env.NEXT_PUBLIC_API_URL || "https://www.bharathelectronics.in").replace(/\/$/, "");
+
 export const metadata = {
-  title: "Bharath Electronics & Appliances",
-  description: "Barath Electronics",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Bharath Electronics & Appliances",
+    template: "%s | Bharath Electronics & Appliances",
+  },
+  description: "Shop electronics & home appliances at Bharath Electronics & Appliances. Best brands, unbeatable prices, free delivery in Coimbatore & Tamil Nadu.",
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    siteName: "Bharath Electronics & Appliances",
+  },
   icons: {
     icon: [
       { url: "/images/logo/bea-favi-64.png?v=13", sizes: "64x64", type: "image/png" },
@@ -54,7 +66,7 @@ export default function RootLayout({ children }) {
           }}
         />
         */}
-<Script async src="https://www.googletagmanager.com/gtag/js?id=G-15V9VS13Q7"></Script>
+<Script src="https://www.googletagmanager.com/gtag/js?id=G-15V9VS13Q7" strategy="afterInteractive" />
         <Script id="gtm-new" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];

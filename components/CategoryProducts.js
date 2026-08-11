@@ -475,7 +475,6 @@ const getBannerRedirectUrls = (urls) => {
                                               // ensure the image fits without stretching
                                               className="object-contain p-2 sm:p-3"
                                               sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 18vw"
-                                              unoptimized
                                             />
                                             {Number(product.special_price) > 0 && Number(product.special_price) < Number(product.price) && (
                                               <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded">

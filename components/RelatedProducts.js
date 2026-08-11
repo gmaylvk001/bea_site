@@ -205,7 +205,6 @@ import { FaShareAlt } from "react-icons/fa";
                                               // ensure the image fits without stretching
                                               className="object-contain p-2 sm:p-3"
                                               sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 18vw"
-                                              unoptimized
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = "/uploads/products/placeholder.jpg";

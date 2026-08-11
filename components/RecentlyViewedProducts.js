@@ -244,7 +244,6 @@ const RecentlyViewedProducts = () => {
                               fill
                               className="object-contain p-2"
                               sizes="220px"
-                              unoptimized
                               onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = "/uploads/products/placeholder.jpg";

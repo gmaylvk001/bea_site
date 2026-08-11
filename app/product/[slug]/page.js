@@ -65,6 +65,9 @@ export async function generateMetadata({ params }) {
       title,
       description,
       keywords: product.search_keywords || "",
+      alternates: {
+        canonical: `/product/${slug}`,
+      },
       openGraph: {
         title,
         description,

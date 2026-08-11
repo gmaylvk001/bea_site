@@ -394,7 +394,7 @@ const Footer = () => {
               <div className="lg:col-span-3 lg:border-r border-gray-200 lg:pr-8">
                 <Image
                   src="/logo.png"
-                  alt="Logo"
+                  alt="Bharath Electronics & Appliances"
                   width={150}
                   height={70}
                 />
@@ -758,7 +758,7 @@ const Footer = () => {
 
               {/* Right Side */}
               <div className="flex items-center gap-4">
-                <img src="/uploads/payment.png" alt="Visa" className="h-6" />
+                <img src="/uploads/payment.png" alt="Accepted payment methods" className="h-6" width={120} height={24} />
                 
               </div>
 
@@ -775,7 +775,9 @@ const Footer = () => {
                   setFormError('');
                   setError('');
                 }}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+              aria-label="Close login dialog"
+            >
               ×
             </button>
             <div className="flex gap-4 mb-6 border-b">
@@ -802,16 +804,22 @@ const Footer = () => {
             </div>
             <form onSubmit={handleAuthSubmit} className="space-y-4">
               {activeTab === 'register' && (
-                <input
-                  type="text"
-                  placeholder="Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+                <>
+                  <label htmlFor="footer-auth-name" className="sr-only">Name</label>
+                  <input
+                    id="footer-auth-name"
+                    type="text"
+                    placeholder="Name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </>
               )}
+              <label htmlFor="footer-auth-email" className="sr-only">Email</label>
               <input
+                id="footer-auth-email"
                 type="email"
                 placeholder="Email"
                 value={formData.email}
@@ -820,16 +828,22 @@ const Footer = () => {
                 required
               />
               {activeTab === 'register' && (
-                <input
-                  type="tel"
-                  placeholder="Mobile"
-                  value={formData.mobile}
-                  onChange={(e) => setFormData({...formData, mobile: e.target.value})}
-                  className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+                <>
+                  <label htmlFor="footer-auth-mobile" className="sr-only">Mobile</label>
+                  <input
+                    id="footer-auth-mobile"
+                    type="tel"
+                    placeholder="Mobile"
+                    value={formData.mobile}
+                    onChange={(e) => setFormData({...formData, mobile: e.target.value})}
+                    className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </>
               )}
+              <label htmlFor="footer-auth-password" className="sr-only">Password</label>
               <input
+                id="footer-auth-password"
                 type="password"
                 placeholder="Password"
                 value={formData.password}
