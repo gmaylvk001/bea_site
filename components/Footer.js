@@ -669,9 +669,12 @@ const Footer = () => {
             <span className="block text-[12px] lg:text-[13px] font-medium w-fit whitespace-nowrap">
                Download
             </span>
-            <span className="block text-2xl font-extrabold mt-1 relative pb-1.5 w-fit whitespace-nowrap">
-              BEA TRUCO App
-              <span className="absolute left-0 bottom-0 h-[2px] w-full bg-[#3B82F6] rounded-full" />
+            <span className="block text-2xl font-extrabold mt-1 pb-1.5 w-fit whitespace-nowrap">
+              <span className="relative inline-block pb-1.5">
+                BEA
+                <span className="absolute left-0 bottom-0 h-[2px] w-full bg-[#3B82F6] rounded-full" />
+              </span>
+              {" "}TRUCO App
             </span>
           </h4>
           <p className="text-gray-300 text-[11px] lg:text-xs leading-relaxed mb-3">
