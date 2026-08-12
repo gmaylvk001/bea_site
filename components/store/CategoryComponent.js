@@ -46,6 +46,40 @@ const STATIC_HIGHLIGHTS_TEXT = [
   "Dedicated after-sales service & support",
 ];
 
+function isLikelyImageValue(value) {
+  if (!value || typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  return (
+    /^https?:\/\/.+\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(trimmed) ||
+    /^\/uploads\//i.test(trimmed) ||
+    /^\/images\//i.test(trimmed) ||
+    /^\/Store\//i.test(trimmed) ||
+    /\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(trimmed)
+  );
+}
+
+function getStoreHighlightTexts(highlights) {
+  if (!Array.isArray(highlights) || highlights.length === 0) {
+    return STATIC_HIGHLIGHTS_TEXT;
+  }
+
+  const texts = highlights
+    .map((item) => {
+      if (typeof item === "string") {
+        const text = item.trim();
+        return text && !isLikelyImageValue(text) ? text : "";
+      }
+      if (!item || typeof item !== "object") return "";
+      const label = String(item.label || "").trim();
+      if (label && !isLikelyImageValue(label)) return label;
+      return "";
+    })
+    .filter(Boolean);
+
+  return texts.length > 0 ? texts : STATIC_HIGHLIGHTS_TEXT;
+}
+
 const STATIC_PAYMENT_SERVICES = [
   { icon: "/Store/EasyEMI.png", title: "Easy EMI", desc: "On Select Cards" },
   { icon: "/Store/FastDelivery.png", title: "Fast Delivery", desc: "Across Coimbatore" },
@@ -317,6 +351,47 @@ export default function StoreDetail() {
     padding-top: 10px !important;
     padding-bottom: 10px !important;
   }
+  .store-about-highlights-row {
+    align-items: stretch;
+  }
+  .store-highlights-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .store-highlights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  @media (min-width: 640px) {
+    .store-highlights-list {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: repeat(6, minmax(0, 1fr));
+      gap: 0.375rem;
+      align-content: stretch;
+    }
+  }
+  @media (min-width: 1024px) {
+    .store-highlights-list { gap: 0.5rem; }
+  }
+  .store-highlight-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 0;
+    line-height: 1.35;
+  }
+  @media (min-width: 640px) {
+    .store-highlight-item {
+      height: 100%;
+      padding: 0.125rem 0;
+    }
+  }
+
   .shop-category-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -792,36 +867,36 @@ export default function StoreDetail() {
       SECTION 3 — ABOUT / HIGHLIGHTS / POPULAR PRODUCTS
   ═══════════════════════════════════════════════════════ */}
 <section className="bg-white px-4 sm:px-8 py-8 mt-3">
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:items-stretch">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:items-start">
 
-    {/* About */}
-    <div className="bea-card bg-white-900 bea-card h-full">
-      <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3">
-        About {store.organisation_name} Store
-      </h3>
-      <p className="text-[12.5px] min-[1440px]:text-[15px] min-[2560px]:text-[17px] text-blue-600 leading-relaxed">
-        {store.description || `${store.organisation_name} is one of the most trusted electronics and home appliance stores in ${store.city}. We offer 5000+ products across televisions, air conditioners, refrigerators, washing machines, mobiles, laptops and kitchen appliances from leading brands.\n\nOur showroom is designed to help you experience the latest technology up close. Get expert advice, best prices, easy EMI options, quick delivery and professional installation support – all under one roof.`}
-      </p>
-    </div>
+    {/* About + Highlights — matched height */}
+    <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 store-about-highlights-row">
+      {/* About */}
+      <div className="bea-card bg-white-900 bea-card h-full flex flex-col">
+        <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3 flex-shrink-0">
+          About {store.organisation_name} Store
+        </h3>
+        <p className="text-[12.5px] min-[1440px]:text-[15px] min-[2560px]:text-[17px] text-blue-600 leading-relaxed">
+          {store.description || `${store.organisation_name} is one of the most trusted electronics and home appliance stores in ${store.city}. We offer 5000+ products across televisions, air conditioners, refrigerators, washing machines, mobiles, laptops and kitchen appliances from leading brands.\n\nOur showroom is designed to help you experience the latest technology up close. Get expert advice, best prices, easy EMI options, quick delivery and professional installation support – all under one roof.`}
+        </p>
+      </div>
 
-    {/* Store Highlights */}
-    <div className="bea-card h-full">
-      <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3">Store Highlights</h3>
-      <ul className="space-y-2">
-        {(store.highlights?.length > 0
-          ? store.highlights.map(h => h.label)
-          : STATIC_HIGHLIGHTS_TEXT
-        ).map((text, i) => (
-          <li key={i} className="flex items-start gap-2 text-[12.5px] min-[1440px]:text-[15px] min-[2560px]:text-[17px] text-blue-600">
-            <span className="mt-0.5 flex-shrink-0"><CheckCircleIcon size={14} color="#2563eb" /></span>
-            {text}
-          </li>
-        ))}
-      </ul>
+      {/* Store Highlights */}
+      <div className="bea-card store-highlights-card">
+        <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3 flex-shrink-0">Store Highlights</h3>
+        <ul className="store-highlights-list">
+          {getStoreHighlightTexts(store.highlights).map((text, i) => (
+            <li key={i} className="store-highlight-item text-[12px] sm:text-[12.5px] min-[1440px]:text-[15px] min-[2560px]:text-[17px] text-blue-600">
+              <span className="flex-shrink-0"><CheckCircleIcon size={14} color="#2563eb" /></span>
+              <span className="line-clamp-2 sm:line-clamp-3">{text}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
 
     {/* Popular Products */}
-    <div className="bea-card flex flex-col h-full min-h-0">
+    <div className="bea-card flex flex-col min-h-0 md:col-span-1 self-start w-full">
       <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3 flex-shrink-0">Popular Products Available</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-2 sm:gap-2.5 flex-1 auto-rows-fr content-stretch">
         {[
