@@ -10,7 +10,16 @@ export default function HomeOnlyScripts() {
     let typebotCancelled = false;
     let typebotTimer;
 
-    const cleanupDOM = () => {
+    // -------------------------
+    // SPA-safe cleanup (admin only for Typebot)
+    // -------------------------
+    const hideTawk = () => {
+      if (window.Tawk_API && typeof window.Tawk_API.hideWidget === "function") {
+        window.Tawk_API.hideWidget();
+      }
+    };
+
+    const hideTypebot = () => {
       document
         .querySelectorAll(
           "typebot-bubble, typebot-standard, typebot-container, [id^='typebot'], [class*='typebot']"
@@ -18,14 +27,17 @@ export default function HomeOnlyScripts() {
         .forEach((el) => el.remove());
       document.getElementById("typebot-zindex-fix")?.remove();
       window.__Typebot = null;
-
-      if (window.Tawk_API && typeof window.Tawk_API.hideWidget === "function") {
-        window.Tawk_API.hideWidget();
-      }
     };
 
+    // -------------------------
+    // Load Typebot (keep — do not remove on normal navigation)
+    // -------------------------
     const loadTypebot = async () => {
       try {
+        if (window.__Typebot || document.querySelector("typebot-bubble")) {
+          return;
+        }
+
         const { default: Typebot } = await import(
           /* webpackIgnore: true */ "https://cdn.jsdelivr.net/npm/@typebot.io/js@0.3.12/dist/web.js"
         );
@@ -36,7 +48,8 @@ export default function HomeOnlyScripts() {
             apiHost: "https://chat.infozub.com",
             previewMessage: {
               message: "Chat Now!",
-              avatarUrl: "https://infozub.com/wp-content/uploads/2024/02/BEA_logo.png",
+              avatarUrl:
+                "https://infozub.com/wp-content/uploads/2024/02/BEA_logo.png",
             },
             theme: {
               button: { backgroundColor: "#0042DA" },
@@ -44,16 +57,22 @@ export default function HomeOnlyScripts() {
             },
           });
           window.__Typebot = Typebot;
-          const style = document.createElement("style");
-          style.id = "typebot-zindex-fix";
-          style.textContent = `typebot-bubble { z-index: 100000 !important; }`;
-          document.head.appendChild(style);
+
+          if (!document.getElementById("typebot-zindex-fix")) {
+            const style = document.createElement("style");
+            style.id = "typebot-zindex-fix";
+            style.textContent = `typebot-bubble { z-index: 100000 !important; }`;
+            document.head.appendChild(style);
+          }
         }
       } catch (e) {
         console.error("Typebot failed to load", e);
       }
     };
 
+    // -------------------------
+    // SPA-safe Tawk.to show/hide
+    // -------------------------
     const showTawk = () => {
       if (window.Tawk_API && typeof window.Tawk_API.showWidget === "function") {
         window.Tawk_API.showWidget();
@@ -61,43 +80,49 @@ export default function HomeOnlyScripts() {
     };
 
     const loadTawk = () => {
-      if (!window.Tawk_API) {
+      if (!document.getElementById("tawk-script")) {
         window.Tawk_API = window.Tawk_API || {};
         window.Tawk_LoadStart = new Date();
 
+        window.Tawk_API.onLoad = function () {
+          if (
+            !window.location.pathname?.startsWith("/admin") &&
+            typeof window.Tawk_API.showWidget === "function"
+          ) {
+            window.Tawk_API.showWidget();
+          }
+        };
+
         const tawkScript = document.createElement("script");
+        tawkScript.id = "tawk-script";
         tawkScript.async = true;
-        tawkScript.src = "https://embed.tawk.to/YOUR_TAWK_ID/default";
+        // Real property ID from GTM-KVT2Z9RR (was YOUR_TAWK_ID placeholder)
+        tawkScript.src =
+          "https://embed.tawk.to/5affad0f5f7cdf4f05345a87/default";
         tawkScript.charset = "UTF-8";
         tawkScript.setAttribute("crossorigin", "*");
         document.head.appendChild(tawkScript);
-      }
-      showTawk();
-    };
-
-    const deferThirdParty = (fn) => {
-      if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(fn, { timeout: 4000 });
       } else {
-        setTimeout(fn, 3000);
+        showTawk();
       }
     };
 
+    // -------------------------
+    // Main SPA logic
+    // -------------------------
     if (pathname?.startsWith("/admin")) {
-      cleanupDOM();
+      hideTypebot();
+      hideTawk();
     } else {
-      typebotTimer = setTimeout(() => {
-        deferThirdParty(() => {
-          if (!typebotCancelled) loadTypebot();
-        });
-      }, 2000);
-      deferThirdParty(loadTawk);
+      loadTypebot();
+      loadTawk();
     }
 
     return () => {
       typebotCancelled = true;
       clearTimeout(typebotTimer);
-      cleanupDOM();
+      // Do not remove Typebot / WhatsApp — only hide Tawk when leaving non-admin cleanup is not needed
+      // Typebot stays; WhatsApp is separate in layout (WhatsAppFloat)
     };
   }, [pathname]);
 
