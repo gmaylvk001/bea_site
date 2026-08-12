@@ -131,6 +131,14 @@ export async function PUT(request, { params }) {
       nearbyStores: JSON.parse(fields.nearbyStores || "[]"),
       businessHours: JSON.parse(fields.businessHours || "[]"),
       keyHighlights: JSON.parse(fields.keyHighlights || "[]"),
+      faqs: fields.faqs?.[0]
+        ? JSON.parse(fields.faqs[0])
+            .map((item) => ({
+              question: String(item?.question || "").trim(),
+              answer: String(item?.answer || "").trim(),
+            }))
+            .filter((item) => item.question && item.answer)
+        : [],
     };
 
     const currentStore = await Store.findOne(buildStoreQuery(storeId));

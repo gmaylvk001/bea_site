@@ -88,6 +88,13 @@ featuredProducts: [
       },
     ],
 
+    faqs: [
+      {
+        question: String,
+        answer: String,
+      },
+    ],
+
     /* NEW: SOCIAL TIMELINE WITH THUMBNAIL */
     socialTimeline: [
       {

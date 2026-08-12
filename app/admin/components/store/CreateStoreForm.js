@@ -86,6 +86,7 @@ export default function CreateStoreForm({ storeId = null }) {
     highlights: [], // { image, label }
     nearbyStores: [], // { name, address, rating }
     businessHours: [], // { day, timing }
+    faqs: [{ question: "", answer: "" }], // { question, answer }
     socialTimeline: [], // { media, text, postedOn, thumbnail, thumbnailPreview, thumbnailFile }
     customer_images: [],
     keyHighlights: [], // same as highlights
@@ -150,6 +151,12 @@ export default function CreateStoreForm({ storeId = null }) {
           highlights: result.highlights || [],
           nearbyStores: result.nearbyStores || [],
           businessHours: result.businessHours || [],
+          faqs: result.faqs?.length
+            ? result.faqs.map((f) => ({
+                question: f.question || "",
+                answer: f.answer || "",
+              }))
+            : [{ question: "", answer: "" }],
           socialTimeline: result.socialTimeline || [],
           customer_images: result.customer_images || [],
           keyHighlights: result.keyHighlights || [],
@@ -373,6 +380,13 @@ export default function CreateStoreForm({ storeId = null }) {
 }
   };
 
+  const removeListItem = (key, index) => {
+    setNewStore((prev) => ({
+      ...prev,
+      [key]: (prev[key] || []).filter((_, i) => i !== index),
+    }));
+  };
+
   const addListItem = (key, template = {}) => {
     setNewStore((prev) => ({ ...prev, [key]: [...(prev[key] || []), template] }));
     // add placeholder preview slots for image arrays
@@ -563,6 +577,17 @@ formData.append("existing_customer_images", JSON.stringify(customerExisting));
     formData.append("nearbyStores", JSON.stringify(newStore.nearbyStores || []));
     formData.append("businessHours", JSON.stringify(newStore.businessHours || []));
     formData.append("keyHighlights", JSON.stringify(newStore.keyHighlights || []));
+    formData.append(
+      "faqs",
+      JSON.stringify(
+        (newStore.faqs || [])
+          .map((f) => ({
+            question: (f.question || "").trim(),
+            answer: (f.answer || "").trim(),
+          }))
+          .filter((f) => f.question && f.answer)
+      )
+    );
 
     // decide endpoint and method
     let url = storeId ? `/api/store/${storeId}` : "/api/store/add";
@@ -988,6 +1013,54 @@ formData.append("existing_customer_images", JSON.stringify(customerExisting));
                 <div key={idx} className="grid grid-cols-2 gap-3 mb-3">
                   <input className="p-2 border rounded" placeholder="Day" value={b.day} onChange={(e) => updateListField("businessHours", idx, "day", e.target.value)} />
                   <input className="p-2 border rounded" placeholder="Timing" value={b.timing} onChange={(e) => updateListField("businessHours", idx, "timing", e.target.value)} />
+                </div>
+              ))}
+            </section>
+
+            {/* FREQUENTLY ASKED QUESTIONS */}
+            <section className="border rounded p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-semibold">Frequently Asked Questions</h3>
+                <button
+                  type="button"
+                  onClick={() => addListItem("faqs", { question: "", answer: "" })}
+                  className="px-3 py-1 bg-blue-600 text-white rounded"
+                >
+                  + Add Question
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mb-3">
+                Leave empty to show default FAQs on the store detail page.
+              </p>
+
+              {(newStore.faqs || []).map((faq, idx) => (
+                <div key={idx} className="border border-gray-200 rounded-lg p-3 mb-3 bg-gray-50">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700">Question {idx + 1}</span>
+                    {(newStore.faqs || []).length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeListItem("faqs", idx)}
+                        className="bg-red-600 text-white rounded p-2"
+                        aria-label={`Remove question ${idx + 1}`}
+                      >
+                        <FaTimes size={12} />
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Question"
+                    value={faq.question}
+                    onChange={(e) => updateListField("faqs", idx, "question", e.target.value)}
+                    className="p-2 border rounded w-full mb-2"
+                  />
+                  <textarea
+                    placeholder="Answer"
+                    value={faq.answer}
+                    onChange={(e) => updateListField("faqs", idx, "answer", e.target.value)}
+                    className="p-2 border rounded w-full min-h-[80px]"
+                  />
                 </div>
               ))}
             </section>

@@ -134,6 +134,24 @@ const STATIC_FAQS = [
   },
 ];
 
+function getStoreFaqs(faqs) {
+  if (!Array.isArray(faqs) || faqs.length === 0) {
+    return STATIC_FAQS;
+  }
+
+  const items = faqs
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const q = String(item.question || item.q || "").trim();
+      const a = String(item.answer || item.a || "").trim();
+      if (!q || !a) return null;
+      return { q, a };
+    })
+    .filter(Boolean);
+
+  return items.length > 0 ? items : STATIC_FAQS;
+}
+
 const STATIC_AREAS = [
   "Singanallur", "Peelamedu", "Ondipudur", "Ramanathapuram",
   "Uppilipalayam", "Saravanampatti", "Gandhipuram", "Hope College", "And More...",
@@ -1403,7 +1421,7 @@ export default function StoreDetail() {
   <SectionTitle>Frequently Asked Questions</SectionTitle>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
 
-    {STATIC_FAQS.map((faq, i) => (
+    {getStoreFaqs(store.faqs).map((faq, i) => (
       <FAQItem
         key={i}
         q={faq.q}

@@ -60,6 +60,7 @@ export async function POST(req) {
           "keyHighlights",
           "nearbyStores",
           "businessHours",
+          "faqs",
           "socialTimeline",
           "featuredPayload",
           "offersPayload",
@@ -294,6 +295,13 @@ export async function POST(req) {
     // -----------------------
     newStoreData.nearbyStores = Array.isArray(newStoreData.nearbyStores) ? newStoreData.nearbyStores : safeParseJSON(newStoreData.nearbyStores, []);
     newStoreData.businessHours = Array.isArray(newStoreData.businessHours) ? newStoreData.businessHours : safeParseJSON(newStoreData.businessHours, []);
+    newStoreData.faqs = Array.isArray(newStoreData.faqs) ? newStoreData.faqs : safeParseJSON(newStoreData.faqs || "[]", []);
+    newStoreData.faqs = newStoreData.faqs
+      .map((item) => ({
+        question: String(item?.question || "").trim(),
+        answer: String(item?.answer || "").trim(),
+      }))
+      .filter((item) => item.question && item.answer);
      
     // -----------------------
     // SOCIAL TIMELINE
@@ -362,6 +370,7 @@ export async function POST(req) {
     newStoreData.highlights = Array.isArray(newStoreData.highlights) ? newStoreData.highlights : [];
     newStoreData.nearbyStores = Array.isArray(newStoreData.nearbyStores) ? newStoreData.nearbyStores : [];
     newStoreData.businessHours = Array.isArray(newStoreData.businessHours) ? newStoreData.businessHours : [];
+    newStoreData.faqs = Array.isArray(newStoreData.faqs) ? newStoreData.faqs : [];
     newStoreData.socialTimeline = Array.isArray(newStoreData.socialTimeline) ? newStoreData.socialTimeline : [];
     newStoreData.customer_images = Array.isArray(newStoreData.customer_images) ? newStoreData.customer_images : [];
     // FINAL SAVE

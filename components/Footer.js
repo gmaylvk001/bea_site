@@ -590,7 +590,10 @@ const Footer = () => {
 
             <ul className="space-y-2 text-gray-300 text-sm">
               {(groupedCategories.subs[main._id] || [])
-                .slice(0, 5)
+                .slice(
+                  0,
+                  main.category_name?.toLowerCase().includes("small appliance") ? 3 : 5
+                )
                 .map((sub) => (
                   <li
                     key={sub._id}
