@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import OurLocations from "@/components/OurLocations";
+import { useRouter } from "next/navigation";
 
 const DEFAULT_STORE_MATCH = ["tatabad", "alagappa", "641012", "koval scan"];
 
@@ -104,9 +104,11 @@ function StoreTypeIcon({ color = "#2563EB", size = 13 }) {
 
 // ─── Store Card ───────────────────────────────────────────────────────────────
 function StoreCard({ store }) {
+  const router = useRouter();
   const whatsappMsg = encodeURIComponent(
     `Bharath Electronics And Appliances ${store.organisation_name}, ${store.city}. ${store.website || ""}`
   );
+  const storeHref = `/store/${store.location_id || store.slug}`;
 
   const capitalize = (str) =>
     str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
@@ -115,7 +117,18 @@ function StoreCard({ store }) {
     str ? str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : "";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden flex flex-col h-full">
+    <div
+      className="bg-white border border-gray-200 rounded-[10px] overflow-hidden flex flex-col h-full cursor-pointer"
+      onClick={() => router.push(storeHref)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push(storeHref);
+        }
+      }}
+      role="link"
+      tabIndex={0}
+    >
       {/* Top: image + info */}
       <div className="flex gap-3 px-3.5 pt-3.5 pb-0">
         {/* Store image */}
@@ -163,14 +176,19 @@ function StoreCard({ store }) {
       {/* Action buttons */}
       <div className="flex items-center   px-3.5 pt-2.5 pb-3.5 mt-auto gap-2">
         {/* View Details — takes remaining space */}
-        <Link href={`/store/${store.location_id || store.slug}`} className="flex-1">
+        <Link href={storeHref} className="flex-1" onClick={(e) => e.stopPropagation()}>
           <button className="w-[100px] lg:ml-[10px] bg-blue-600 hover:bg-blue-700 text-white border-none rounded-md py-[7px] px-3 text-[12px] font-semibold cursor-pointer transition-colors whitespace-nowrap">
             View Details
           </button>
         </Link>
 
         {/* WhatsApp — icon only */}
-        <a href={`https://wa.me/919842344323?text=${whatsappMsg}`} target="_blank" rel="noopener noreferrer">
+        <a
+          href={`https://wa.me/919842344323?text=${whatsappMsg}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+        >
           <button className="bg-[#25D366] hover:bg-[#1ebe5a] text-white border-none rounded-md py-[7px] px-2.5 cursor-pointer flex items-center justify-center transition-colors">
             <WhatsAppIcon />
           </button>
@@ -183,6 +201,7 @@ function StoreCard({ store }) {
           )}`}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
         >
           <button className="bg-transparent text-blue-600 border border-blue-600 hover:bg-blue-50 rounded-md py-[7px] px-2 sm:px-3 cursor-pointer flex items-center justify-center gap-1 transition-colors">
             <DirectionsIcon />
@@ -250,6 +269,12 @@ export default function BEABranchesPage() {
 
   const totalStores = stores.length;
   const totalCities = new Set(stores.map((s) => s.city).filter(Boolean)).size;
+
+  if (loading) return (
+    <div className="preloader fixed inset-0 z-[9999] flex justify-center items-center bg-white">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+    </div>
+  );
 
   return (
     <>
@@ -400,11 +425,6 @@ export default function BEABranchesPage() {
           Find Your Nearest BEA Store
         </h2>
 
-        {/* Default selected store map (Tatabad corporate office) */}
-        <div className="mb-8">
-          <OurLocations />
-        </div>
-
         {/* ── Filters Row ── */}
         <div className="flex flex-col sm:flex-row gap-3 mb-7">
 
@@ -450,13 +470,7 @@ className="h-[44px]  flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none
   </button>
 </div>
 
-        {/* Loading */}
-        {loading ? (
-          <div className="text-center py-16 text-gray-500">
-            <div className="w-10 h-10 border-[3px] border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-sm">Loading stores...</p>
-          </div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <p className="text-[15px]">No stores found for the selected filters.</p>
           </div>

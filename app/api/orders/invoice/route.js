@@ -7,9 +7,9 @@ import EcomOrderInfo from "@/models/ecom_order_info";
 
 function loadBeaLogo() {
   const candidates = [
+    path.join(process.cwd(), "public", "uploads", "beaHqlogo.png"),
     path.join(process.cwd(), "public", "logo.png"),
     path.join(process.cwd(), "public", "images", "logo", "logo.png"),
-    path.join(process.cwd(), "public", "images", "logo", "logo-two.png"),
   ];
 
   for (const logoPath of candidates) {
@@ -62,8 +62,8 @@ export async function GET(request) {
 
     const addLogo = () => {
       if (!logoData) return;
-      // A4 width 210mm — place logo at top-right of every page
-      doc.addImage(logoData, "PNG", 160, 8, 38, 16);
+      // A4 width 210mm — place BEA HQ logo at top-right of every page
+      doc.addImage(logoData, "PNG", 152, 6, 48, 20);
     };
 
     const startNewPage = () => {

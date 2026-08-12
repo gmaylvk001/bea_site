@@ -54,6 +54,17 @@ const STATIC_PAYMENT_SERVICES = [
   { icon: "/Store/AfterSales.png", title: "After Sales Support", desc: "Always Here" },
 ];
 
+const STORE_HOURS = "10:00 AM - 09:00 PM";
+const STORE_HOURS_BY_DAY = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+].map((day) => ({ day, timing: STORE_HOURS }));
+
 const STATIC_FAQS = [
   {
     q: "What is Bharath Electronics & Appliances (BEA)?",
@@ -77,7 +88,7 @@ const STATIC_FAQS = [
   },
   {
     q: "What are BEA showroom timings?",
-    a: "Most BEA showrooms are open from 10:00 AM to 9:00 PM. Store timings may vary slightly by location — please check the store details above or contact the showroom directly.",
+    a: "All BEA showrooms are open from 10:00 AM to 9:00 PM, Monday through Sunday.",
   },
   {
     q: "Does BEA provide after-sales support?",
@@ -161,7 +172,7 @@ function DirectionsIcon({ size = 14 }) {
 // ─── Section Title ────────────────────────────────────────────────────────────
 function SectionTitle({ children, center = true }) {
   return (
-    <h2 className={`text-[18px] text-blue-700 font-bold mb-5 ${center ? "text-center" : ""}`}>
+    <h2 className={`text-[18px] min-[1440px]:text-[22px] min-[2560px]:text-[28px] min-[3840px]:text-[34px] text-blue-700 font-bold mb-5 min-[1440px]:mb-6 min-[2560px]:mb-8 ${center ? "text-center" : ""}`}>
       {children}
     </h2>
   );
@@ -172,7 +183,7 @@ function FAQItem({ q, a, isOpen, onToggle }) {
     <div className="border border-gray-200 rounded-lg overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 text-left text-[13px] font-medium text-gray-800 bg-white hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 min-[1440px]:px-5 min-[1440px]:py-4 min-[2560px]:px-6 min-[2560px]:py-5 text-left text-[13px] min-[1440px]:text-[15px] min-[2560px]:text-[18px] min-[3840px]:text-[20px] font-medium text-gray-800 bg-white hover:bg-gray-50 transition-colors"
       >
         <span>{q}</span>
         <span className={`flex-shrink-0 ml-2 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
@@ -180,7 +191,7 @@ function FAQItem({ q, a, isOpen, onToggle }) {
         </span>
       </button>
       {isOpen && (
-        <div className="px-4 py-3 text-[12.5px] text-gray-600 bg-gray-50 border-t border-gray-200">
+        <div className="px-4 py-3 min-[1440px]:px-5 min-[1440px]:py-4 min-[2560px]:px-6 min-[2560px]:py-5 text-[12.5px] min-[1440px]:text-[15px] min-[2560px]:text-[17px] min-[3840px]:text-[19px] text-gray-600 bg-gray-50 border-t border-gray-200">
           {a}
         </div>
       )}
@@ -273,8 +284,8 @@ export default function StoreDetail() {
 }, []);
 
   if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-10 h-10 border-[3px] border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+    <div className="preloader fixed inset-0 z-[9999] flex justify-center items-center bg-white">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
     </div>
   );
   if (!store) return <p className="p-10 text-center text-gray-500">Store not found.</p>;
@@ -285,17 +296,11 @@ export default function StoreDetail() {
   const whatsappUrl = `https://wa.me/919842344323?text=${encodeURIComponent(`Hi, I'm interested in visiting ${store.organisation_name}, ${store.city}`)}`;
   const callUrl = `tel:+91${store.phone}`;
 
-  // Determine today's hours
-  const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
-  const todayHours = store.businessHours?.find(b =>
-    b.day?.toLowerCase().includes(todayName.toLowerCase().slice(0, 3))
-  );
-
   return (
 
      
 
-    <div className="font-sans bg-[#f8fafc] text-gray-900">
+    <div className="store-detail-page font-sans bg-[#f8fafc] text-gray-900">
    
     <style>{`
   .bea-card {
@@ -308,6 +313,173 @@ export default function StoreDetail() {
   .bea-card h3 .colorblue{
     color: #2563eb;
   }
+  .payment-services-card {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+  .shop-category-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem 0.5rem;
+    justify-items: center;
+    align-items: start;
+  }
+  @media (min-width: 640px) {
+    .shop-category-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 1rem 0.625rem;
+    }
+  }
+  @media (min-width: 768px) {
+    .shop-category-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.625rem 0.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .shop-category-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem 0.625rem;
+    }
+  }
+  @media (min-width: 1280px) {
+    .shop-category-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.875rem 0.625rem;
+    }
+  }
+  .shop-category-item {
+    width: 100%;
+    max-width: 88px;
+    min-width: 0;
+  }
+  .shop-category-icon {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 72px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @media (min-width: 640px) {
+    .shop-category-item { max-width: 96px; }
+    .shop-category-icon { max-width: 80px; }
+  }
+  @media (min-width: 768px) {
+    .shop-category-item { max-width: 80px; }
+    .shop-category-icon { max-width: 64px; }
+  }
+  @media (min-width: 1024px) {
+    .shop-category-item { max-width: 88px; }
+    .shop-category-icon { max-width: 72px; }
+  }
+  @media (min-width: 1280px) {
+    .shop-category-item { max-width: 96px; }
+    .shop-category-icon { max-width: 80px; }
+  }
+  .store-offers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  @media (min-width: 640px) {
+    .store-offers-list { gap: 0.625rem; }
+  }
+  .store-offer-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
+    min-height: 52px;
+  }
+  @media (min-width: 640px) {
+    .store-offer-item {
+      gap: 0.75rem;
+      padding: 0.75rem;
+      min-height: 56px;
+    }
+  }
+  .store-offer-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+  }
+  @media (min-width: 640px) {
+    .store-offer-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+  }
+  .store-brands-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    justify-items: stretch;
+    align-items: stretch;
+  }
+  @media (min-width: 640px) {
+    .store-brands-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.625rem;
+    }
+  }
+  @media (min-width: 768px) {
+    .store-brands-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .store-brands-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.625rem;
+    }
+  }
+  .store-brand-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0.5rem 0.375rem;
+    min-width: 0;
+  }
+  @media (min-width: 640px) {
+    .store-brand-item {
+      min-height: 52px;
+      padding: 0.625rem 0.5rem;
+    }
+  }
+  .store-brand-logo {
+    height: 1.75rem;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  @media (min-width: 640px) {
+    .store-brand-logo { height: 2rem; }
+  }
+  @media (min-width: 1024px) {
+    .store-brand-logo { height: 2.125rem; }
+  }
+
+  /* Scale store page typography on large screens (fixed px classes don't inherit) */
+  @media (min-width: 1440px) {
+    .store-detail-page { zoom: 1.12; }
+    .bea-card { padding: 20px; border-radius: 14px; }
+    .bea-card h3 { font-size: 18px !important; }
+    .bea-card p,
+    .bea-card li,
+    .bea-card span { font-size: 1.08em; }
+  }
+  @media (min-width: 2560px) {
+    .store-detail-page { zoom: 1.28; }
+    .bea-card { padding: 24px; border-radius: 16px; }
+    .bea-card h3 { font-size: 20px !important; }
+  }
+  @media (min-width: 3840px) {
+    .store-detail-page { zoom: 1.45; }
+    .bea-card { padding: 28px; border-radius: 18px; }
+    .bea-card h3 { font-size: 24px !important; }
+  }
 `}</style>
 
 {/* ═══════════════════════════════════════════════════════
@@ -317,12 +489,12 @@ export default function StoreDetail() {
 {/* DESKTOP — Banner with overlay */}
 <section className="hidden sm:block relative w-full">
   {store.banners?.length > 0 ? (
-    <div style={{ minHeight: '340px', maxHeight: '420px', overflow: 'hidden' }}>
+    <div style={{ minHeight: '400px', maxHeight: '520px', overflow: 'hidden' }}>
       <img
         src={store.banners[0]}
         alt={store.organisation_name}
         className="w-full block object-cover"
-        style={{ minHeight: '340px', maxHeight: '420px' }}
+        style={{ minHeight: '400px', maxHeight: '520px' }}
       />
     </div>
   ) : store.logo ? (
@@ -330,12 +502,12 @@ export default function StoreDetail() {
       src={store.logo}
       alt={store.organisation_name}
       className="w-full block object-cover"
-      style={{ minHeight: '340px', maxHeight: '420px' }}
+      style={{ minHeight: '400px', maxHeight: '520px' }}
     />
   ) : (
     <div
       className="w-full bg-gradient-to-br from-blue-900 to-blue-700"
-      style={{ minHeight: '340px', maxHeight: '420px' }}
+      style={{ minHeight: '400px', maxHeight: '520px' }}
     />
   )}
 
@@ -348,7 +520,7 @@ export default function StoreDetail() {
   />
 
   {/* Left overlay content */}
-  <div className="absolute inset-0 flex items-center">
+  <div className="absolute inset-0 flex items-center pb-16 lg:pb-20 xl:pb-22">
     <div className="ml-14 max-w-[420px]">
 
       {/* Breadcrumb */}
@@ -364,7 +536,7 @@ export default function StoreDetail() {
 
       {/* Name + Badge */}
       <div className="flex items-center gap-2 flex-wrap mb-1">
-        <h1 className="text-[22px] font-bold text-gray-900 leading-tight">
+        <h1 className="text-[22px] min-[1440px]:text-[26px] min-[2560px]:text-[32px] min-[3840px]:text-[38px] font-bold text-gray-900 leading-tight">
           {store.organisation_name}
         </h1>
         {(store.category || store.service_area) && (
@@ -401,13 +573,7 @@ export default function StoreDetail() {
       {/* Hours */}
       <div className="flex items-center gap-2 mb-4 text-[12.5px] text-gray-600">
         <span className="text-blue-600"><ClockIcon size={13}/></span>
-        {todayHours ? (
-          <span>Open Today: <strong>{todayHours.timing}</strong></span>
-        ) : store.businessHours?.length > 0 ? (
-          <span>Open Today: <strong>{store.businessHours[0].timing}</strong></span>
-        ) : (
-          <span>Open Today: <strong>9:30 AM – 9:30 PM</strong></span>
-        )}
+        <span>Open Today: <strong>{STORE_HOURS}</strong></span>
       </div>
 
       {/* Action Buttons */}
@@ -433,40 +599,45 @@ export default function StoreDetail() {
     </div>
   </div>
 
-  {/* Stats bar — overlapping bottom, full width with side space */}
-  <div className="absolute left-0 right-0 bottom-[-6] pt-14  translate-y-1/2 z-10">
-    <div className="mx-10 mt-6">
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 grid grid-cols-8 divide-x divide-gray-100">
-        {[
-          { icon: "/Store/25+year.png", value: "25+",         label: "Years of Trust" },
-          { icon: "/Store/storesCount.png", value: "47+",         label: "Stores Across Tamil Nadu" },
-          { icon: "/Store/HappyCustomer.png", value: "50 Lakh+",    label: "Happy Customers" },
-          { icon: "/Store/Products.png", value: "5000+",       label: "Products Across Categories" },
-          { icon: "/Store/Authentic.png", value: "100%",        label: "Authorised Brands" },
-          { icon: "/Store/EasyEMI.png", value: "Easy",        label: "EMI Options & No Cost EMI" },
-          { icon: "/Store/FastDelivery.png", value: "Fast",        label: "Delivery & Installation" },
-          { icon: "/Store/AfterSales.png", value: "After Sales", label: "Service & Support" },
-        ].map((s, i) => (
-<div key={i} className="flex flex-row items-center justify-center gap-2 py-3 px-2">
-  <img
-    src={s.icon}
-    alt={s.label}
-    className="w-9 h-9 object-contain flex-shrink-0"
-    onError={(e) => { e.target.style.display = "none"; }}
-  />
-  <div className="flex flex-col">
-    <span className="text-[13px] font-bold text-blue-900 leading-tight">{s.value}</span>
-    <span className="text-[9.5px] text-blue-900 leading-tight">{s.label}</span>
-  </div>
-</div>
-        ))}
-      </div>
+  {/* Stats bar — sits near bottom of top banner */}
+  <div className="absolute left-0 right-0 bottom-0 z-10 px-4 sm:px-6 lg:px-8 pb-1 lg:pb-2 translate-y-3 lg:translate-y-4">
+    <div className="bg-white/95 backdrop-blur-sm rounded-xl lg:rounded-2xl shadow-xl border border-gray-100 grid grid-cols-4 lg:grid-cols-8 divide-x divide-gray-100">
+      {[
+        { icon: "/Store/25+year.png", value: "25+", label: "Years of Trust" },
+        { icon: "/Store/storesCount.png", value: "47+", label: "Stores Across Tamil Nadu" },
+        { icon: "/Store/HappyCustomer.png", value: "50 Lakh+", label: "Happy Customers" },
+        { icon: "/Store/Products.png", value: "5000+", label: "Products Across Categories" },
+        { icon: "/Store/Authentic.png", value: "100%", label: "Authorised Brands" },
+        { icon: "/Store/EasyEMI.png", value: "Easy", label: "EMI Options & No Cost EMI" },
+        { icon: "/Store/FastDelivery.png", value: "Fast", label: "Delivery & Installation" },
+        { icon: "/Store/AfterSales.png", value: "After Sales", label: "Service & Support" },
+      ].map((s, i) => (
+        <div
+          key={i}
+          className="flex flex-row items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 lg:py-3 px-1.5 sm:px-2 lg:px-2.5"
+        >
+          <img
+            src={s.icon}
+            alt={s.label}
+            className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 xl:w-10 xl:h-10 object-contain flex-shrink-0"
+            onError={(e) => { e.target.style.display = "none"; }}
+          />
+          <div className="flex flex-col min-w-0">
+            <span className="text-[11px] sm:text-[12px] lg:text-[13px] xl:text-[14px] font-bold text-blue-900 leading-tight">
+              {s.value}
+            </span>
+            <span className="text-[8px] sm:text-[9px] lg:text-[10px] xl:text-[11px] text-blue-900 leading-tight">
+              {s.label}
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   </div>
 </section>
 
-{/* Desktop spacer */}
-<div className="hidden sm:block h-[60px] bg-[#f8fafc]" />
+{/* Desktop spacer — room for bar shifted slightly below banner */}
+<div className="hidden sm:block h-10 lg:h-12 bg-[#f8fafc]" />
 
 {/* MOBILE — No banner, white stacked layout */}
 <section className="block sm:hidden bg-white px-5 pt-5 pb-4">
@@ -519,9 +690,7 @@ export default function StoreDetail() {
   {/* Hours */}
   <div className="flex items-center gap-2 mb-4 text-[12px] text-gray-600">
     <span className="text-blue-600"><ClockIcon size={12}/></span>
-    <span>Open Today: <strong>
-      {todayHours?.timing || store.businessHours?.[0]?.timing || "9:30 AM – 9:30 PM"}
-    </strong></span>
+    <span>Open Today: <strong>{STORE_HOURS}</strong></span>
   </div>
 
   {/* Buttons */}
@@ -545,24 +714,28 @@ export default function StoreDetail() {
     )}
   </div>
 
-  {/* Stats — 2x2 grid mobile */}
-  <div className="grid grid-cols-2 gap-2.5">
+  {/* Stats — responsive scroll on mobile */}
+  <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
     {[
-      { icon: "/Store/icon1.png", value: "25+",        label: "Years of Trust" },
-      { icon: "/Store/icon2.png", value: "47+",        label: "Stores Across Tamil Nadu" },
-      { icon: "/Store/icon3.png", value: "50 Lakh+",   label: "Happy Customers" },
-      { icon: "/Store/icon4.png", value: "5000+",      label: "Products Across Categories" },
+      { icon: "/Store/25+year.png", value: "25+", label: "Years of Trust" },
+      { icon: "/Store/storesCount.png", value: "47+", label: "Stores Across Tamil Nadu" },
+      { icon: "/Store/HappyCustomer.png", value: "50 Lakh+", label: "Happy Customers" },
+      { icon: "/Store/Products.png", value: "5000+", label: "Products Across Categories" },
+      { icon: "/Store/Authentic.png", value: "100%", label: "Authorised Brands" },
+      { icon: "/Store/EasyEMI.png", value: "Easy", label: "EMI Options & No Cost EMI" },
+      { icon: "/Store/FastDelivery.png", value: "Fast", label: "Delivery & Installation" },
+      { icon: "/Store/AfterSales.png", value: "After Sales", label: "Service & Support" },
     ].map((s, i) => (
-      <div key={i} className="bg-[#f8fafc] border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-3">
+      <div key={i} className="bg-[#f8fafc] border border-gray-100 rounded-xl px-3.5 py-3.5 flex items-center gap-3 min-w-[170px] flex-shrink-0">
         <img
           src={s.icon}
           alt={s.label}
-          className="w-8 h-8 object-contain flex-shrink-0"
+          className="w-10 h-10 object-contain flex-shrink-0"
           onError={(e) => { e.target.style.display = "none"; }}
         />
         <div>
-          <div className="text-[16px] font-bold text-blue-700 leading-none">{s.value}</div>
-          <div className="text-[10.5px] text-gray-500 mt-0.5 leading-tight">{s.label}</div>
+          <div className="text-[15px] font-bold text-blue-700 leading-none">{s.value}</div>
+          <div className="text-[11px] text-gray-500 mt-1 leading-tight">{s.label}</div>
         </div>
       </div>
     ))}
@@ -619,27 +792,27 @@ export default function StoreDetail() {
       SECTION 3 — ABOUT / HIGHLIGHTS / POPULAR PRODUCTS
   ═══════════════════════════════════════════════════════ */}
 <section className="bg-white px-4 sm:px-8 py-8 mt-3">
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:items-stretch">
 
     {/* About */}
-    <div className="bea-card bg-white-900 bea-card">
-      <h3 className="text-[15px] font-bold text-blue-700 mb-3">
+    <div className="bea-card bg-white-900 bea-card h-full">
+      <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3">
         About {store.organisation_name} Store
       </h3>
-      <p className="text-[12.5px] text-blue-600 leading-relaxed">
+      <p className="text-[12.5px] min-[1440px]:text-[15px] min-[2560px]:text-[17px] text-blue-600 leading-relaxed">
         {store.description || `${store.organisation_name} is one of the most trusted electronics and home appliance stores in ${store.city}. We offer 5000+ products across televisions, air conditioners, refrigerators, washing machines, mobiles, laptops and kitchen appliances from leading brands.\n\nOur showroom is designed to help you experience the latest technology up close. Get expert advice, best prices, easy EMI options, quick delivery and professional installation support – all under one roof.`}
       </p>
     </div>
 
     {/* Store Highlights */}
-    <div className="bea-card">
-      <h3 className="text-[15px] font-bold text-blue-700 mb-3">Store Highlights</h3>
+    <div className="bea-card h-full">
+      <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3">Store Highlights</h3>
       <ul className="space-y-2">
         {(store.highlights?.length > 0
           ? store.highlights.map(h => h.label)
           : STATIC_HIGHLIGHTS_TEXT
         ).map((text, i) => (
-          <li key={i} className="flex items-start gap-2 text-[12.5px] text-blue-600">
+          <li key={i} className="flex items-start gap-2 text-[12.5px] min-[1440px]:text-[15px] min-[2560px]:text-[17px] text-blue-600">
             <span className="mt-0.5 flex-shrink-0"><CheckCircleIcon size={14} color="#2563eb" /></span>
             {text}
           </li>
@@ -648,9 +821,9 @@ export default function StoreDetail() {
     </div>
 
     {/* Popular Products */}
-    <div className="bea-card">
-      <h3 className="text-[15px] font-bold text-blue-700 mb-3">Popular Products Available</h3>
-      <div className="grid grid-cols-2 gap-2">
+    <div className="bea-card flex flex-col h-full min-h-0">
+      <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3 flex-shrink-0">Popular Products Available</h3>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-2 sm:gap-2.5 flex-1 auto-rows-fr content-stretch">
         {[
           { img: '/store/tv.png', label: 'Smart TVs & OLED TVs' },
           { img: '/store/refrigerator.png', label: 'Refrigerator' },
@@ -659,14 +832,19 @@ export default function StoreDetail() {
           { img: '/store/laptop1.png', label: 'Laptop' },
           { img: '/store/ac.png', label: 'Invertor Air conditioner' },
         ].map((item, i) => (
-          <div key={i} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2.5 py-2">
-            <img
-              src={item.img}
-              alt={item.label}
-              className="w-8 h-8 object-contain flex-shrink-0"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-            />
-            <span className="text-[11.5px] text-gray-700 font-medium leading-tight">
+          <div
+            key={i}
+            className="flex items-center justify-start gap-2.5 sm:gap-3 bg-gray-50 rounded-lg px-2.5 sm:px-3 h-full min-h-[56px] sm:min-h-[60px]"
+          >
+            <div className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 min-[1440px]:w-12 min-[1440px]:h-12 flex-shrink-0">
+              <img
+                src={item.img}
+                alt={item.label}
+                className="w-full h-full object-contain"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            </div>
+            <span className="text-[11px] sm:text-[12px] min-[1440px]:text-[13px] text-gray-700 font-medium leading-snug line-clamp-2">
               {item.label}
             </span>
           </div>
@@ -680,45 +858,50 @@ export default function StoreDetail() {
     SECTION 4 — CATEGORY / BRANDS / OFFERS
 ═══════════════════════════════════════════════════════ */}
 <section className="bg-white px-4 sm:px-8 py-8 mt-3">
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 md:items-start">
 
     {/* Shop by Category */}
-    <div className="bea-card">
-      <h3 className="text-[15px] font-bold text-blue-700 mb-4 text-center">Shop by Category</h3>
+    <div className="bea-card flex flex-col self-start w-full">
+      <h3 className="text-[15px] sm:text-[16px] font-bold text-blue-700 mb-3 sm:mb-4 text-center flex-shrink-0">Shop by Category</h3>
       {dynamicCategories.length === 0 ? (
         <div className="flex justify-center items-center h-24 text-gray-400 text-[12px]">Loading...</div>
       ) : (
-        <div className="grid grid-cols-5 gap-x-2 gap-y-3">
-          {dynamicCategories.slice(0, 10).map((cat, i) => (
-            <Link
-              key={cat._id || i}
-              href="/"
-              className="flex flex-col items-center gap-1 cursor-pointer group"
-            >
-              <div className="w-12 h-12 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
-                {cat.navImage ? (
-                  <img
-                    src={cat.navImage}
-                    alt={cat.category_name}
-                    className="w-full h-full object-contain p-1.5"
-                  />
-                ) : (
-                  <span className="text-[12px] font-bold text-blue-600">
-                    {(cat.category_name || "?").charAt(0)}
-                  </span>
-                )}
-              </div>
-              <span className="text-[9px] text-gray-600 text-center leading-tight line-clamp-2 w-full">
-                {cat.category_name}
-              </span>
-            </Link>
-          ))}
+        <div className="shop-category-grid">
+          {dynamicCategories.slice(0, 10).map((cat, i) => {
+            const categoryHref = cat.category_slug
+              ? `/category/${cat.category_slug}`
+              : "/category";
+            return (
+              <Link
+                key={cat._id || i}
+                href={categoryHref}
+                className="shop-category-item flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer group mx-auto"
+              >
+                <div className="shop-category-icon bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
+                  {cat.navImage ? (
+                    <img
+                      src={cat.navImage}
+                      alt={cat.category_name}
+                      className="w-full h-full object-contain p-1.5 sm:p-2"
+                    />
+                  ) : (
+                    <span className="text-[16px] sm:text-[18px] font-bold text-blue-600">
+                      {(cat.category_name || "?").charAt(0)}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] sm:text-[11px] text-gray-700 leading-tight line-clamp-2 w-full font-medium group-hover:text-blue-700 px-0.5">
+                  {cat.category_name}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       )}
-      <div className="text-center mt-4">
+      <div className="text-center mt-4 sm:mt-5 flex-shrink-0">
         <Link
-          href="/"
-          className="text-blue-600 text-[12px] font-semibold hover:underline inline-flex items-center gap-1"
+          href="/category"
+          className="text-blue-600 text-[13px] sm:text-[14px] font-semibold hover:underline inline-flex items-center gap-1"
         >
           View All Categories <ArrowRightIcon />
         </Link>
@@ -726,34 +909,34 @@ export default function StoreDetail() {
     </div>
 
     {/* Authorized Brands */}
-    <div className="bea-card">
-      <h3 className="text-[15px] font-bold text-blue-700 mb-4 text-center">Authorized Brands Available</h3>
+    <div className="bea-card flex flex-col self-start w-full">
+      <h3 className="text-[15px] sm:text-[16px] font-bold text-blue-700 mb-3 sm:mb-4 text-center flex-shrink-0">Authorized Brands Available</h3>
       {dynamicBrands.length === 0 ? (
         <div className="flex justify-center items-center h-24 text-gray-400 text-[12px]">Loading...</div>
       ) : (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="store-brands-grid">
           {dynamicBrands.slice(0, 12).map((brand, i) => (
             <div
               key={brand._id || brand.brand_slug || i}
-              className="bg-white border border-gray-100 rounded-lg flex items-center justify-center py-3 px-2 min-h-[52px]"
+              className="store-brand-item bg-white border border-gray-100 rounded-lg"
             >
               {brand.image ? (
                 <>
                   <img
                     src={`/uploads/Brands/${brand.image}`}
                     alt={brand.brand_name}
-                    className="h-8 max-w-[80px] object-contain"
+                    className="store-brand-logo"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                       e.currentTarget.nextElementSibling.style.display = 'block';
                     }}
                   />
-                  <span className="text-[11px] font-bold text-gray-700 hidden">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-700 hidden text-center leading-tight line-clamp-2 px-0.5">
                     {brand.brand_name}
                   </span>
                 </>
               ) : (
-                <span className="text-[11px] font-bold text-gray-700 text-center">
+                <span className="text-[10px] sm:text-[11px] font-bold text-gray-700 text-center leading-tight line-clamp-2 px-0.5">
                   {brand.brand_name}
                 </span>
               )}
@@ -761,10 +944,10 @@ export default function StoreDetail() {
           ))}
         </div>
       )}
-      <div className="text-center mt-4">
+      <div className="text-center mt-4 sm:mt-5 flex-shrink-0">
         <Link
           href="/"
-          className="text-blue-600 text-[12px] font-semibold hover:underline inline-flex items-center gap-1"
+          className="text-blue-600 text-[12px] sm:text-[13px] font-semibold hover:underline inline-flex items-center gap-1"
         >
           View All Brands <ArrowRightIcon />
         </Link>
@@ -772,54 +955,54 @@ export default function StoreDetail() {
     </div>
 
     {/* Latest Offers */}
-    <div className="bea-card">
-      <h3 className="text-[15px] font-bold text-blue-700 mb-4 text-center">Latest Offers at This Store</h3>
+    <div className="bea-card flex flex-col self-start w-full">
+      <h3 className="text-[15px] sm:text-[16px] font-bold text-blue-700 mb-3 sm:mb-4 text-center flex-shrink-0">Latest Offers at This Store</h3>
       {store.offers?.length > 0 ? (
-        <div className="space-y-2">
+        <div className="store-offers-list">
           {store.offers.slice(0, 4).map((offer, i) => (
-            <div key={i} className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-lg p-2">
+            <div key={i} className="store-offer-item bg-gray-50 border border-gray-100 rounded-lg">
               {offer.image ? (
                 <img
                   src={offer.image}
-                  className="w-9 h-9 rounded-md object-cover flex-shrink-0"
+                  className="store-offer-icon rounded-md object-cover"
                   alt={offer.title}
                 />
               ) : (
-                <div className="w-9 h-9 bg-orange-100 rounded-md flex items-center justify-center flex-shrink-0 text-[16px]">
+                <div className="store-offer-icon bg-orange-100 rounded-md flex items-center justify-center text-[16px] sm:text-[18px]">
                   🎁
                 </div>
               )}
-              <div className="min-w-0">
-                <div className="text-[12px] font-semibold text-gray-800 truncate">{offer.title}</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] sm:text-[12px] font-semibold text-gray-800 leading-snug line-clamp-2">{offer.title}</div>
                 {offer.validTill && (
-                  <div className="text-[10px] text-gray-500">Valid till {offer.validTill}</div>
+                  <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 line-clamp-1">Valid till {offer.validTill}</div>
                 )}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="store-offers-list">
           {[
             { icon: "🎉", title: "BEA Summer Sale",   desc: "Up to 45% OFF on Select Products" },
             { icon: "💳", title: "No Cost EMI",        desc: "Easy EMI on Credit Cards" },
             { icon: "🔄", title: "Exchange Bonus",     desc: "Best Exchange Value Guaranteed" },
             { icon: "🛍️", title: "Combo Offers",      desc: "Buy More, Save More" },
           ].map((item, i) => (
-            <div key={i} className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-lg p-2">
-              <div className="w-9 h-9 bg-orange-100 rounded-md flex items-center justify-center flex-shrink-0 text-[15px]">
+            <div key={i} className="store-offer-item bg-gray-50 border border-gray-100 rounded-lg">
+              <div className="store-offer-icon bg-orange-100 rounded-md flex items-center justify-center text-[15px] sm:text-[16px]">
                 {item.icon}
               </div>
-              <div>
-                <div className="text-[12px] font-semibold text-gray-800">{item.title}</div>
-                <div className="text-[10px] text-gray-500">{item.desc}</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] sm:text-[12px] font-semibold text-gray-800 leading-snug line-clamp-2">{item.title}</div>
+                <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 line-clamp-2">{item.desc}</div>
               </div>
             </div>
           ))}
         </div>
       )}
-      <div className="text-center mt-4">
-        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-[12px] font-semibold transition-colors">
+      <div className="text-center mt-4 flex-shrink-0">
+        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 sm:py-2.5 text-[12px] sm:text-[13px] font-semibold transition-colors">
           View All Offers
         </button>
       </div>
@@ -888,12 +1071,12 @@ export default function StoreDetail() {
   </section>
 )}
       {/* ═══════════════════════════════════════════════════════
-          SECTION 6 — CUSTOMER REVIEWS (static)
+          SECTION 6 — CUSTOMER REVIEWS (static) — commented out (dummy content)
       ═══════════════════════════════════════════════════════ */}
+      {/*
       <section className="bg-white px-4 sm:px-8 py-8 mt-3">
         <SectionTitle>What Customers Say</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6 items-start">
-          {/* Rating summary */}
           <div className="bea-card flex flex-col items-center text-center">
             <span className="text-[13px] font-bold text-gray-500 mb-1">G Google</span>
             <span className="text-[42px] font-black text-gray-900 leading-none">4.8</span>
@@ -905,7 +1088,6 @@ export default function StoreDetail() {
               Read All Reviews
             </button>
           </div>
-          {/* Review cards — static */}
           <Swiper modules={[Navigation]} navigation spaceBetween={12}
             breakpoints={{ 900: { slidesPerView: 3 }, 600: { slidesPerView: 2 }, 0: { slidesPerView: 1 } }}>
             {[
@@ -935,6 +1117,7 @@ export default function StoreDetail() {
           </Swiper>
         </div>
       </section>
+      */}
 
 {/* ═══════════════════════════════════════════════════════
     SECTION 7 — HAPPY CUSTOMERS PHOTOS (customer_images — dynamic)
@@ -1088,47 +1271,36 @@ export default function StoreDetail() {
           SECTION 9 — BUSINESS HOURS + PAYMENT & SERVICES + APP
       ═══════════════════════════════════════════════════════ */}
       <section className="bg-white px-4 sm:px-8 py-8 mt-3">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-6 md:items-center">
 
-          {/* Business Hours — dynamic */}
+          {/* Business Hours */}
           <div className="bea-card">
             <h3 className="text-[14px] font-bold text-gray-900 mb-3">Business Hours</h3>
-            {store.businessHours?.length > 0 ? (
-              <div className="space-y-1.5">
-                {store.businessHours.map((b, i) => (
-                  <div key={i} className="flex justify-between text-[12px] py-1 border-b border-gray-100 last:border-0">
-                    <span className="text-gray-600 font-medium">{b.day}</span>
-                    <span className="text-gray-800 font-semibold">{b.timing}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {["Mon–Fri", "Saturday", "Sunday"].map((day, i) => (
-                  <div key={i} className="flex justify-between text-[12px] py-1 border-b border-gray-100 last:border-0">
-                    <span className="text-gray-600 font-medium">{day}</span>
-                    <span className="text-gray-800 font-semibold">9:30 AM – 9:30 PM</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="space-y-1.5">
+              {STORE_HOURS_BY_DAY.map((b, i) => (
+                <div key={i} className="flex justify-between text-[12px] py-1 border-b border-gray-100 last:border-0">
+                  <span className="text-gray-600 font-medium">{b.day}</span>
+                  <span className="text-gray-800 font-semibold">{b.timing}</span>
+                </div>
+              ))}
+            </div>
           </div>
 {/* Payment & Services — static */}
-<div className="bea-card">
-  <h3 className="text-[14px] font-bold text-gray-900 mb-3">Payment & Services</h3>
-  <div className="grid grid-cols-5 gap-3">
+<div className="bea-card payment-services-card self-center w-full">
+  <h3 className="text-[14px] font-bold text-gray-900 mb-2 text-center md:text-left">Payment & Services</h3>
+  <div className="grid grid-cols-5 gap-2 sm:gap-3 items-center justify-items-center">
     {STATIC_PAYMENT_SERVICES.map((ps, i) => (
-      <div key={i} className="flex flex-col items-center text-center gap-1.5">
-        <div className=" rounded-xl flex items-center justify-center overflow-hidden">
+      <div key={i} className="flex flex-col items-center justify-center text-center gap-1.5">
+        <div className="w-11 h-11 sm:w-12 sm:h-12 min-[1440px]:w-14 min-[1440px]:h-14 flex items-center justify-center flex-shrink-0">
           <img
             src={ps.icon}
             alt={ps.title}
-            className="w-9 h-9 object-contain"
+            className="w-full h-full object-contain"
             onError={(e) => { e.target.style.display = "none"; }}
           />
         </div>
-        <div className="text-[11px] font-semibold text-gray-800">{ps.title}</div>
-        <div className="text-[10px] text-gray-500 leading-tight">{ps.desc}</div>
+        <div className="text-[11px] sm:text-[12px] font-semibold text-gray-800 leading-tight">{ps.title}</div>
+        <div className="text-[10px] sm:text-[11px] text-gray-500 leading-tight">{ps.desc}</div>
       </div>
     ))}
   </div>
