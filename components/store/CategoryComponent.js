@@ -81,11 +81,11 @@ function getStoreHighlightTexts(highlights) {
 }
 
 const STATIC_PAYMENT_SERVICES = [
-  { icon: "/Store/EasyEMI.png", title: "Easy EMI", desc: "On Select Cards" },
-  { icon: "/Store/FastDelivery.png", title: "Fast Delivery", desc: "Across Coimbatore" },
-  { icon: "/Store/tool.png", title: "Free Installation", desc: "On Select Products" },
-  { icon: "/Store/lock.png", title: "Secure Payments", desc: "100% Safe" },
-  { icon: "/Store/AfterSales.png", title: "After Sales Support", desc: "Always Here" },
+  { icon: "/store/EasyEMI.png", title: "Easy EMI", desc: "On Select Cards" },
+  { icon: "/store/FastDelivery.png", title: "Fast Delivery", desc: "Across Coimbatore" },
+  { icon: "/store/tool.png", title: "Free Installation", desc: "On Select Products" },
+  { icon: "/store/lock.png", title: "Secure Payments", desc: "100% Safe" },
+  { icon: "/store/AfterSales.png", title: "After Sales Support", desc: "Always Here" },
 ];
 
 const STORE_HOURS = "10:00 AM - 09:00 PM";
@@ -696,14 +696,14 @@ export default function StoreDetail() {
   <div className="absolute left-0 right-0 bottom-0 z-10 px-4 sm:px-6 lg:px-8 pb-1 lg:pb-2 translate-y-3 lg:translate-y-4">
     <div className="bg-white/95 backdrop-blur-sm rounded-xl lg:rounded-2xl shadow-xl border border-gray-100 grid grid-cols-4 lg:grid-cols-8 divide-x divide-gray-100">
       {[
-        { icon: "/Store/25+year.png", value: "25+", label: "Years of Trust" },
-        { icon: "/Store/storesCount.png", value: "47+", label: "Stores Across Tamil Nadu" },
-        { icon: "/Store/HappyCustomer.png", value: "50 Lakh+", label: "Happy Customers" },
-        { icon: "/Store/Products.png", value: "5000+", label: "Products Across Categories" },
-        { icon: "/Store/Authentic.png", value: "100%", label: "Authorised Brands" },
-        { icon: "/Store/EasyEMI.png", value: "Easy", label: "EMI Options & No Cost EMI" },
-        { icon: "/Store/FastDelivery.png", value: "Fast", label: "Delivery & Installation" },
-        { icon: "/Store/AfterSales.png", value: "After Sales", label: "Service & Support" },
+        { icon: "/store/25+year.png", value: "25+", label: "Years of Trust" },
+        { icon: "/store/storesCount.png", value: "47+", label: "Stores Across Tamil Nadu" },
+        { icon: "/store/HappyCustomer.png", value: "50 Lakh+", label: "Happy Customers" },
+        { icon: "/store/Products.png", value: "5000+", label: "Products Across Categories" },
+        { icon: "/store/Authentic.png", value: "100%", label: "Authorised Brands" },
+        { icon: "/store/EasyEMI.png", value: "Easy", label: "EMI Options & No Cost EMI" },
+        { icon: "/store/FastDelivery.png", value: "Fast", label: "Delivery & Installation" },
+        { icon: "/store/AfterSales.png", value: "After Sales", label: "Service & Support" },
       ].map((s, i) => (
         <div
           key={i}
@@ -810,14 +810,14 @@ export default function StoreDetail() {
   {/* Stats — responsive scroll on mobile */}
   <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
     {[
-      { icon: "/Store/25+year.png", value: "25+", label: "Years of Trust" },
-      { icon: "/Store/storesCount.png", value: "47+", label: "Stores Across Tamil Nadu" },
-      { icon: "/Store/HappyCustomer.png", value: "50 Lakh+", label: "Happy Customers" },
-      { icon: "/Store/Products.png", value: "5000+", label: "Products Across Categories" },
-      { icon: "/Store/Authentic.png", value: "100%", label: "Authorised Brands" },
-      { icon: "/Store/EasyEMI.png", value: "Easy", label: "EMI Options & No Cost EMI" },
-      { icon: "/Store/FastDelivery.png", value: "Fast", label: "Delivery & Installation" },
-      { icon: "/Store/AfterSales.png", value: "After Sales", label: "Service & Support" },
+      { icon: "/store/25+year.png", value: "25+", label: "Years of Trust" },
+      { icon: "/store/storesCount.png", value: "47+", label: "Stores Across Tamil Nadu" },
+      { icon: "/store/HappyCustomer.png", value: "50 Lakh+", label: "Happy Customers" },
+      { icon: "/store/Products.png", value: "5000+", label: "Products Across Categories" },
+      { icon: "/store/Authentic.png", value: "100%", label: "Authorised Brands" },
+      { icon: "/store/EasyEMI.png", value: "Easy", label: "EMI Options & No Cost EMI" },
+      { icon: "/store/FastDelivery.png", value: "Fast", label: "Delivery & Installation" },
+      { icon: "/store/AfterSales.png", value: "After Sales", label: "Service & Support" },
     ].map((s, i) => (
       <div key={i} className="bg-[#f8fafc] border border-gray-100 rounded-xl px-3.5 py-3.5 flex items-center gap-3 min-w-[170px] flex-shrink-0">
         <img
@@ -1404,7 +1404,7 @@ export default function StoreDetail() {
   <h3 className="text-[14px] font-bold text-gray-900 mb-3">Download BEA TRUCO App</h3>
   <a href={"https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"} target="_blank" rel="noopener noreferrer">
     <img
-      src="/Store/storeTruco.png"
+      src="/store/storeTruco.png"
       alt="Download BEA TRUCO App"
       className="w-full rounded-lg object-cover cursor-pointer"
     />
