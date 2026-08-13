@@ -97,7 +97,7 @@ export async function GET(request) {
     if (gstBusinessName || gstNumber) {
       lines.push("---- GST Invoice Details ----");
       lines.push(`Business Name: ${gstBusinessName || "-"}`);
-      lines.push(`GSTN Number: ${gstNumber || "-"}`);
+      lines.push(`GSTIN Number: ${gstNumber || "-"}`);
     }
 
     lines.forEach((line) => {

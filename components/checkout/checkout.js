@@ -1166,7 +1166,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       }
                     />
                     <FloatInput
-                      label="GSTN number"
+                      label="GSTIN number"
                       name="gst_number"
                       required
                       value={formData.gst_number}
@@ -1174,7 +1174,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                       onBlur={handleBlur}
                       error={
                         touched.gst_number && !formData.gst_number?.trim()
-                          ? 'GSTN number is required'
+                          ? 'GSTIN number is required'
                           : null
                       }
                       maxLength={15}
