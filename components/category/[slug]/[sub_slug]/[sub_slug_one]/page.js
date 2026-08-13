@@ -26,7 +26,7 @@ export default function CategoryPage() {
     const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
     brands: [],
-    price: { min: 0, max: 100000 },
+    price: { min: 0, max: 1000000 },
     filters: []
   });
 
@@ -59,7 +59,7 @@ export default function CategoryPage() {
 ];
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSortPanelOpen, setIsSortPanelOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 100000]);
+  const [priceRange, setPriceRange] = useState([0, 1000000]);
   const [filterGroups, setFilterGroups] = useState({});
   const [loading, setLoading] = useState(true);
   const [isBrandsExpanded, setIsBrandsExpanded] = useState(true);
@@ -71,8 +71,7 @@ export default function CategoryPage() {
     // Toggle functions
   const toggleFilters = () => setIsFiltersExpanded(!isFiltersExpanded);
     const [showEndMessage, setShowEndMessage] = useState(false);
-  const { sub_slug } = useParams();
-  const { slug,sub_slug_one } = useParams();
+  const { slug, sub_slug, sub_slug_one } = useParams();
   const toggleBrands = () => setIsBrandsExpanded(!isBrandsExpanded);
   /* const toggleFilterGroup = (id) => {
     setExpandedFilters(prev => ({ ...prev, [id]: !prev[id] }));
@@ -114,17 +113,17 @@ export default function CategoryPage() {
 
   useEffect(() => {
     setShowAllFilterGroups(false);
-  }, [sub_slug]);
+  }, [sub_slug_one]);
 
   useEffect(() => {
     if (!filterGroups || Object.values(filterGroups).length === 0) return;
     setExpandedFilters(
       buildInitialExpandedFilters(filterGroups, {
-        subSlug: sub_slug,
+        subSlug: sub_slug_one || sub_slug,
         customOrder: CUSTOM_FILTER_ORDER,
       })
     );
-  }, [filterGroups, sub_slug]);
+  }, [filterGroups, sub_slug, sub_slug_one]);
 
 
 const handleShare = async (product) => {
@@ -148,10 +147,10 @@ const handleShare = async (product) => {
 
 
   useEffect(() => {
-    if (sub_slug) {
+    if (sub_slug_one) {
       fetchInitialData();
     }
-  }, [sub_slug]);
+  }, [sub_slug_one]);
 
   const handleProductClick = (product) => {
     const stored = JSON.parse(localStorage.getItem('recentlyViewed')) || [];
@@ -172,62 +171,82 @@ const handleShare = async (product) => {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      // Fetch category data (brands, filters, etc.)
-      const categoryRes = await fetch(`/api/categories/${sub_slug}/${sub_slug}/${sub_slug_one}`);
+      // Fetch category data for the leaf slug (qned)
+      const categoryRes = await fetch(
+        `/api/categories/${slug}/${sub_slug}/${sub_slug_one}`
+      );
       const categoryData = await categoryRes.json();
-      
-      //console.log('categoryData.category: ',categoryData.category);
+
+      if (categoryData?.error || !categoryData?.category) {
+        router.push('/noproduct');
+        return;
+      }
+
       setCategoryData(categoryData);
-      
+
+      let minPrice = 0;
+      let maxPrice = 1000000;
+
       // Set initial price range based on products in category
       if (categoryData.products?.length > 0) {
-        
-        const prices = categoryData.products.map(p => p.special_price);
-        let minPrice = Math.min(...prices);
-        let maxPrice = Math.max(...prices);
+        const prices = categoryData.products
+          .map((p) =>
+            Number(p.special_price) > 0 ? Number(p.special_price) : Number(p.price)
+          )
+          .filter((p) => !isNaN(p) && p > 0);
 
-        // ✅ Fix: If only one product, add a small buffer
+        minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+        maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
+
         if (minPrice === maxPrice) {
-          minPrice = minPrice - 1; // or e.g., minPrice * 0.95
-          maxPrice = maxPrice + 1; // or e.g., maxPrice * 1.05
+          minPrice = Math.max(0, minPrice - 100);
+          maxPrice = maxPrice + 100;
+        }
+
+        if (isNaN(minPrice) || isNaN(maxPrice)) {
+          minPrice = 0;
+          maxPrice = 1000000;
         }
 
         setPriceRange([minPrice, maxPrice]);
-        setSelectedFilters(prev => ({
+        setSelectedFilters((prev) => ({
           ...prev,
-          price: { min: minPrice, max: maxPrice }
+          price: { min: minPrice, max: maxPrice },
         }));
       }
-      
+
       // Organize filters by their groups
       const groups = {};
-      categoryData.filters.forEach(filter => {
+      (categoryData.filters || []).forEach((filter) => {
         const groupId = filter.filter_group_name;
-        
+
         if (groupId) {
           if (!groups[groupId]) {
             groups[groupId] = {
               _id: groupId,
               name: filter.filter_group_name,
               slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
-              filters: []
+              filters: [],
             };
           }
           groups[groupId].filters.push(filter);
         }
       });
       setFilterGroups(groups);
-      
+
       if (categoryData.products?.length > 0) {
-        
-        await fetchFilteredProducts(categoryData, 1, true);
-      }else{
-        // Redirect to 404 if no products found
-        router.push('/noproduct');
+        // Pass computed price so first fetch is not stuck at default max 100000
+        await fetchFilteredProducts(categoryData, 1, true, {
+          min: minPrice,
+          max: maxPrice,
+        });
+      } else {
+        setProducts([]);
+        setNofound(true);
+        setLoading(false);
       }
     } catch (error) {
       toast.error('Error fetching initial dataa:', error);
-      // Redirect to 404 on error as well
       router.push('/noproduct');
     } finally {
       // setLoading(false);
@@ -247,7 +266,7 @@ const handleShare = async (product) => {
   // }, [hasMore, products.length]);
 
   // const fetchFilteredProducts = async (categoryId) => {
-    const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
+    const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false, priceOverride = null) => {
     try {
       if (!initialLoad){ 
          window.scrollTo({ top: 0, behavior: 'instant' });
@@ -264,8 +283,10 @@ const handleShare = async (product) => {
       if (selectedFilters.brands.length > 0) {
         query.set('brands', selectedFilters.brands.join(','));
       }
-      query.set('minPrice', selectedFilters.price.min);
-      query.set('maxPrice', selectedFilters.price.max);
+      const minPrice = priceOverride?.min ?? selectedFilters.price.min;
+      const maxPrice = priceOverride?.max ?? selectedFilters.price.max;
+      query.set('minPrice', minPrice);
+      query.set('maxPrice', maxPrice);
       
 if (selectedFilters.filters.length > 0) {
         query.set('filters', selectedFilters.filters.join(','));
@@ -281,18 +302,18 @@ if (selectedFilters.filters.length > 0) {
 
       //console.log('Raw filter Response:', products);
 
-      setProducts(products);
+      setProducts(products || []);
       
       // Update pagination state
       setPagination({
-  currentPage: paginationData.currentPage,
-  totalPages: paginationData.totalPages,
-  totalProducts: paginationData.totalProducts,
-  hasNext: paginationData.currentPage < paginationData.totalPages,
-  hasPrev: paginationData.currentPage > 1
+  currentPage: paginationData?.currentPage || 1,
+  totalPages: paginationData?.totalPages || 1,
+  totalProducts: paginationData?.totalProducts || 0,
+  hasNext: (paginationData?.currentPage || 1) < (paginationData?.totalPages || 1),
+  hasPrev: (paginationData?.currentPage || 1) > 1
 });
       
-      if (products.length === 0 && pageNum === 1) {
+      if ((!products || products.length === 0) && pageNum === 1) {
         setNofound(true);
       } else {
         setNofound(false);
