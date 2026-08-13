@@ -24,7 +24,10 @@ async function getProductReviews(productId) {
   };
 }
 
-async function getBrandName(brandId) {
+async function getBrandName(brand) {
+  if (!brand) return null;
+  if (typeof brand === "object" && brand.brand_name) return brand.brand_name;
+  const brandId = typeof brand === "object" ? brand._id || brand.id : brand;
   if (!brandId) return null;
   const data = await fetchJson("/api/brand");
   const brands = data?.data || data || [];
