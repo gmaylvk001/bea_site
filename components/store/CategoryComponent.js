@@ -89,15 +89,6 @@ const STATIC_PAYMENT_SERVICES = [
 ];
 
 const STORE_HOURS = "10:00 AM - 09:00 PM";
-const STORE_HOURS_BY_DAY = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-].map((day) => ({ day, timing: STORE_HOURS }));
 
 const STATIC_FAQS = [
   {
@@ -307,19 +298,45 @@ export default function StoreDetail() {
     try {
       const res = await fetch("/api/categories/get");
       const data = await res.json();
-       console.log("API raw data:", data); 
       const arr = Array.isArray(data) ? data : (data?.data || data?.categories || []);
-      const active = arr.filter(c => c.status === "Active");
-      
-      // Top-level categories only (parentid === "none")
-      const topLevel = active.filter(c => c.parentid === "none");
-      setDynamicCategories(topLevel);
-      
+      const active = arr.filter((c) => c.status === "Active");
+
+      // Root categories (parentid === "none")
+      const rootCategories = active
+        .filter((c) => c.parentid === "none")
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      const rootIds = rootCategories.map((c) => String(c._id));
+      const rootSlugById = Object.fromEntries(
+        rootCategories.map((c) => [String(c._id), c.category_slug])
+      );
+
+      // First-level subcategories with vector icon images (icon_url)
+      const subcategories = active
+        .filter((c) => rootIds.includes(String(c.parentid)))
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .map((c) => ({
+          ...c,
+          href: `/category/${rootSlugById[String(c.parentid)]}/${c.category_slug}`,
+        }));
+
+      const withIcons = subcategories.filter((c) => c.icon_url);
+      const shopCategories =
+        (withIcons.length > 0 ? withIcons : subcategories).slice(0, 10);
+
+      setDynamicCategories(
+        shopCategories.length > 0
+          ? shopCategories
+          : rootCategories.slice(0, 10).map((c) => ({
+              ...c,
+              href: `/category/${c.category_slug}`,
+            }))
+      );
+
       // Collect all unique brands from all categories
       const allBrands = [];
       const seenBrands = new Set();
-      active.forEach(cat => {
-        (cat.brands || []).forEach(brand => {
+      active.forEach((cat) => {
+        (cat.brands || []).forEach((brand) => {
           const key = brand.brand_slug || brand._id;
           if (key && !seenBrands.has(key)) {
             seenBrands.add(key);
@@ -366,79 +383,199 @@ export default function StoreDetail() {
     color: #2563eb;
   }
   .payment-services-card {
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
   }
-  .store-about-highlights-row {
+  .payment-services-card h3 {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-bottom: 1rem;
+  }
+  .payment-services-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem 1rem;
+    align-items: center;
+  }
+  @media (min-width: 640px) {
+    .payment-services-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .payment-services-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.75rem 0.5rem;
+    }
+  }
+  .payment-service-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    text-align: left;
+    min-width: 0;
+  }
+  .payment-service-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 9999px;
+    background: #eff6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .payment-service-icon img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+  .payment-service-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e3a8a;
+    line-height: 1.25;
+  }
+  .payment-service-desc {
+    font-size: 10.5px;
+    color: #6b7280;
+    line-height: 1.3;
+    margin-top: 1px;
+  }
+  .store-truco-banner {
+    position: relative;
+    display: block;
+    height: 100%;
+    min-height: 148px;
+    border-radius: 14px;
+    border: 1px solid #dbe7f8;
+    background: #eaf3ff;
+    overflow: hidden;
+  }
+  .store-truco-banner-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 148px;
+    object-fit: cover;
+    object-position: left center;
+  }
+  .store-truco-hotspot {
+    position: absolute;
+    bottom: 14%;
+    height: 22%;
+    z-index: 2;
+  }
+  .store-truco-hotspot-play {
+    left: 4.5%;
+    width: 18%;
+  }
+  .store-truco-hotspot-apple {
+    left: 23.5%;
+    width: 20%;
+  }
+  @media (min-width: 1440px) {
+    .payment-services-card h3 { font-size: 17px; }
+    .payment-service-title { font-size: 13px; }
+    .payment-service-desc { font-size: 11.5px; }
+    .store-truco-banner,
+    .store-truco-banner-img { min-height: 168px; }
+  }
+  .store-info-row {
     align-items: stretch;
   }
-  .store-highlights-card {
+  .store-info-card {
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 0;
+    text-align: left;
+  }
+  .store-info-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1d4ed8;
+    margin-bottom: 12px;
+    line-height: 1.3;
+    text-align: left;
+  }
+  .store-info-card .store-about-text,
+  .store-info-card .store-highlight-item,
+  .store-info-card .store-popular-label {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #2563eb;
+    text-align: left;
+  }
+  .store-about-text p + p {
+    margin-top: 0.75rem;
   }
   .store-highlights-list {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-  }
-  @media (min-width: 640px) {
-    .store-highlights-list {
-      flex: 1;
-      min-height: 0;
-      display: grid;
-      grid-template-rows: repeat(6, minmax(0, 1fr));
-      gap: 0.375rem;
-      align-content: stretch;
-    }
-  }
-  @media (min-width: 1024px) {
-    .store-highlights-list { gap: 0.5rem; }
+    gap: 0.55rem;
   }
   .store-highlight-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
-    min-height: 0;
-    line-height: 1.35;
+    line-height: 1.45;
   }
-  @media (min-width: 640px) {
-    .store-highlight-item {
-      height: 100%;
-      padding: 0.125rem 0;
-    }
+  .store-highlight-item span:last-child {
+    flex: 1;
+    min-width: 0;
+  }
+  @media (min-width: 1440px) {
+    .store-info-card h3 { font-size: 18px; }
+    .store-info-card .store-about-text,
+    .store-info-card .store-highlight-item,
+    .store-info-card .store-popular-label { font-size: 15px; }
+  }
+  @media (min-width: 2560px) {
+    .store-info-card h3 { font-size: 22px; }
+    .store-info-card .store-about-text,
+    .store-info-card .store-highlight-item,
+    .store-info-card .store-popular-label { font-size: 17px; }
   }
 
   .shop-category-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem 0.5rem;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem 0.4rem;
     justify-items: center;
     align-items: start;
+  }
+  @media (max-width: 639px) {
+    .shop-category-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem 0.5rem;
+    }
   }
   @media (min-width: 640px) {
     .shop-category-grid {
       grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 1rem 0.625rem;
+      gap: 1rem 0.5rem;
     }
   }
   @media (min-width: 768px) {
     .shop-category-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.625rem 0.5rem;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.75rem 0.35rem;
     }
   }
   @media (min-width: 1024px) {
     .shop-category-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.75rem 0.625rem;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.85rem 0.4rem;
     }
   }
   @media (min-width: 1280px) {
     .shop-category-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0.875rem 0.625rem;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.9rem 0.45rem;
     }
   }
   .shop-category-item {
@@ -883,53 +1020,59 @@ export default function StoreDetail() {
 )}
 {/* ═══════════════════════════════════════════════════════
       SECTION 3 — ABOUT / HIGHLIGHTS / POPULAR PRODUCTS
+      Equal card height driven by About content
   ═══════════════════════════════════════════════════════ */}
 <section className="bg-white px-4 sm:px-8 py-8 mt-3">
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:items-start">
+  <div className="store-info-row grid grid-cols-1 md:grid-cols-3 gap-6">
 
-    {/* About + Highlights — matched height */}
-    <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 store-about-highlights-row">
-      {/* About */}
-      <div className="bea-card bg-white-900 bea-card h-full flex flex-col">
-        <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3 flex-shrink-0">
-          About {store.organisation_name} Store
-        </h3>
-        <p className="text-[12.5px] min-[1440px]:text-[15px] min-[2560px]:text-[17px] text-blue-600 leading-relaxed">
-          {store.description || `${store.organisation_name} is one of the most trusted electronics and home appliance stores in ${store.city}. We offer 5000+ products across televisions, air conditioners, refrigerators, washing machines, mobiles, laptops and kitchen appliances from leading brands.\n\nOur showroom is designed to help you experience the latest technology up close. Get expert advice, best prices, easy EMI options, quick delivery and professional installation support – all under one roof.`}
-        </p>
-      </div>
-
-      {/* Store Highlights */}
-      <div className="bea-card store-highlights-card">
-        <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3 flex-shrink-0">Store Highlights</h3>
-        <ul className="store-highlights-list">
-          {getStoreHighlightTexts(store.highlights).map((text, i) => (
-            <li key={i} className="store-highlight-item text-[12px] sm:text-[12.5px] min-[1440px]:text-[15px] min-[2560px]:text-[17px] text-blue-600">
-              <span className="flex-shrink-0"><CheckCircleIcon size={14} color="#2563eb" /></span>
-              <span className="line-clamp-2 sm:line-clamp-3">{text}</span>
-            </li>
+    {/* About — height source for the row */}
+    <div className="bea-card store-info-card">
+      <h3>About {store.organisation_name} Store</h3>
+      <div className="store-about-text">
+        {(store.description ||
+          `${store.organisation_name} is one of the most trusted electronics and home appliance stores in ${store.city}. We offer 5000+ products across televisions, air conditioners, refrigerators, washing machines, mobiles, laptops and kitchen appliances from leading brands.\n\nOur showroom is designed to help you experience the latest technology up close. Get expert advice, best prices, easy EMI options, quick delivery and professional installation support – all under one roof.`
+        )
+          .split(/\n\s*\n/)
+          .map((para) => para.trim())
+          .filter(Boolean)
+          .map((para, i) => (
+            <p key={i}>{para}</p>
           ))}
-        </ul>
       </div>
     </div>
 
-    {/* Popular Products */}
-    <div className="bea-card flex flex-col min-h-0 md:col-span-1 self-start w-full">
-      <h3 className="text-[15px] min-[1440px]:text-[18px] min-[2560px]:text-[22px] font-bold text-blue-700 mb-3 flex-shrink-0">Popular Products Available</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-2 sm:gap-2.5 flex-1 auto-rows-fr content-stretch">
+    {/* Store Highlights — stretches to About height */}
+    <div className="bea-card store-info-card">
+      <h3>Store Highlights</h3>
+      <ul className="store-highlights-list">
+        {getStoreHighlightTexts(store.highlights).map((text, i) => (
+          <li key={i} className="store-highlight-item">
+            <span className="flex-shrink-0 mt-0.5">
+              <CheckCircleIcon size={14} color="#2563eb" />
+            </span>
+            <span>{text}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    {/* Popular Products — stretches to About height */}
+    <div className="bea-card store-info-card">
+      <h3>Popular Products Available</h3>
+      <div className="grid grid-cols-2 gap-2.5 content-start">
         {[
           { img: '/store/tv.png', label: 'Smart TVs & OLED TVs' },
-          { img: '/store/refrigerator.png', label: 'Refrigerator' },
-          { img: '/store/washing.png', label: 'Double Door Refrigerators' },
-          { img: '/store/kitchen.png', label: 'Kitchen Appliances' },
-          { img: '/store/laptop1.png', label: 'Laptop' },
           { img: '/store/ac.png', label: 'Invertor Air conditioner' },
+          { img: '/store/refrigerator.png', label: 'Double Door Refrigerators' },
+          { img: '/store/kitchen.png', label: 'Kitchen Appliances' },
+          { img: '/store/ac.png', label: 'AC Ducts' },
+          { img: '/store/laptop1.png', label: 'Laptops & Mobiles' },
         ].map((item, i) => (
           <div
             key={i}
-            className="flex items-center justify-start gap-2.5 sm:gap-3 bg-gray-50 rounded-lg px-2.5 sm:px-3 h-full min-h-[56px] sm:min-h-[60px]"
+            className="flex items-center justify-start gap-2.5 bg-gray-50 rounded-lg px-2.5 py-2 min-h-[56px]"
           >
-            <div className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 min-[1440px]:w-12 min-[1440px]:h-12 flex-shrink-0">
+            <div className="flex items-center justify-center w-10 h-10 flex-shrink-0">
               <img
                 src={item.img}
                 alt={item.label}
@@ -937,7 +1080,7 @@ export default function StoreDetail() {
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </div>
-            <span className="text-[11px] sm:text-[12px] min-[1440px]:text-[13px] text-gray-700 font-medium leading-snug line-clamp-2">
+            <span className="store-popular-label font-medium line-clamp-2">
               {item.label}
             </span>
           </div>
@@ -961,9 +1104,10 @@ export default function StoreDetail() {
       ) : (
         <div className="shop-category-grid">
           {dynamicCategories.slice(0, 10).map((cat, i) => {
-            const categoryHref = cat.category_slug
-              ? `/category/${cat.category_slug}`
-              : "/category";
+            const categoryHref =
+              cat.href ||
+              (cat.category_slug ? `/category/${cat.category_slug}` : "/category");
+            const iconSrc = cat.icon_url || cat.navImage || cat.image || "";
             return (
               <Link
                 key={cat._id || i}
@@ -971,17 +1115,25 @@ export default function StoreDetail() {
                 className="shop-category-item flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer group mx-auto"
               >
                 <div className="shop-category-icon bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
-                  {cat.navImage ? (
+                  {iconSrc ? (
                     <img
-                      src={cat.navImage}
+                      src={iconSrc}
                       alt={cat.category_name}
                       className="w-full h-full object-contain p-1.5 sm:p-2"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fallback = e.currentTarget.nextElementSibling;
+                        if (fallback) fallback.style.display = "flex";
+                      }}
                     />
-                  ) : (
-                    <span className="text-[16px] sm:text-[18px] font-bold text-blue-600">
-                      {(cat.category_name || "?").charAt(0)}
-                    </span>
-                  )}
+                  ) : null}
+                  <span
+                    className={`text-[16px] sm:text-[18px] font-bold text-blue-600 items-center justify-center w-full h-full ${
+                      iconSrc ? "hidden" : "flex"
+                    }`}
+                  >
+                    {(cat.category_name || "?").charAt(0)}
+                  </span>
                 </div>
                 <span className="text-[10px] sm:text-[11px] text-gray-700 leading-tight line-clamp-2 w-full font-medium group-hover:text-blue-700 px-0.5">
                   {cat.category_name}
@@ -1361,56 +1513,56 @@ export default function StoreDetail() {
       </section> 
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 9 — BUSINESS HOURS + PAYMENT & SERVICES + APP
+          SECTION 9 — PAYMENT & SERVICES + APP
       ═══════════════════════════════════════════════════════ */}
       <section className="bg-white px-4 sm:px-8 py-8 mt-3">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-6 md:items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.95fr_1fr] gap-5 lg:gap-6 items-stretch">
 
-          {/* Business Hours */}
-          <div className="bea-card">
-            <h3 className="text-[14px] font-bold text-gray-900 mb-3">Business Hours</h3>
-            <div className="space-y-1.5">
-              {STORE_HOURS_BY_DAY.map((b, i) => (
-                <div key={i} className="flex justify-between text-[12px] py-1 border-b border-gray-100 last:border-0">
-                  <span className="text-gray-600 font-medium">{b.day}</span>
-                  <span className="text-gray-800 font-semibold">{b.timing}</span>
+          {/* Payment & Services */}
+          <div className="bea-card payment-services-card">
+            <h3>Payment & Services</h3>
+            <div className="payment-services-grid">
+              {STATIC_PAYMENT_SERVICES.map((ps, i) => (
+                <div key={i} className="payment-service-item">
+                  <div className="payment-service-icon">
+                    <img
+                      src={ps.icon}
+                      alt={ps.title}
+                      onError={(e) => { e.target.style.display = "none"; }}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="payment-service-title">{ps.title}</div>
+                    <div className="payment-service-desc">{ps.desc}</div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-{/* Payment & Services — static */}
-<div className="bea-card payment-services-card self-center w-full">
-  <h3 className="text-[14px] font-bold text-gray-900 mb-2 text-center md:text-left">Payment & Services</h3>
-  <div className="grid grid-cols-5 gap-2 sm:gap-3 items-center justify-items-center">
-    {STATIC_PAYMENT_SERVICES.map((ps, i) => (
-      <div key={i} className="flex flex-col items-center justify-center text-center gap-1.5">
-        <div className="w-11 h-11 sm:w-12 sm:h-12 min-[1440px]:w-14 min-[1440px]:h-14 flex items-center justify-center flex-shrink-0">
-          <img
-            src={ps.icon}
-            alt={ps.title}
-            className="w-full h-full object-contain"
-            onError={(e) => { e.target.style.display = "none"; }}
-          />
-        </div>
-        <div className="text-[11px] sm:text-[12px] font-semibold text-gray-800 leading-tight">{ps.title}</div>
-        <div className="text-[10px] sm:text-[11px] text-gray-500 leading-tight">{ps.desc}</div>
-      </div>
-    ))}
-  </div>
-</div>
 
-          {/* App Download — static */}
-        <div className="bea-card">
-  <h3 className="text-[14px] font-bold text-gray-900 mb-3">Download BEA TRUCO App</h3>
-  <a href={"https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"} target="_blank" rel="noopener noreferrer">
-    <img
-      src="/store/storeTruco.png"
-      alt="Download BEA TRUCO App"
-      className="w-full rounded-lg object-cover cursor-pointer"
-    />
-    <h2 className="cursor-pointer text-bold text-blue-800 text-center pt-3">Click here</h2>
-  </a>
-</div>
+          {/* Download BEA TRUCO App — exact banner design */}
+          <div className="store-truco-banner">
+            <img
+              src="/store/storeTruco.png"
+              alt="Download BEA TRUCO App — Your rewards, always in your pocket."
+              className="store-truco-banner-img"
+            />
+            <a
+              href="https://play.google.com/store/apps/details?id=com.avaniko.truco&pcampaignid=web_share"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="store-truco-hotspot store-truco-hotspot-play"
+              aria-label="Get it on Google Play"
+            />
+            <a
+              href="https://apps.apple.com/in/app/bea-truco/id6751942292"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="store-truco-hotspot store-truco-hotspot-apple"
+              aria-label="Download on the App Store"
+            />
+          </div>
+
         </div>
       </section>
 
