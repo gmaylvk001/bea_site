@@ -393,14 +393,14 @@ const Footer = () => {
               {/* LEFT LOGO SECTION */}
               <div className="lg:col-span-3 lg:border-r border-gray-200 lg:pr-8">
                 <Image
-                  src="/logo.png"
+                  src="/user/bea-new.png"
                   alt="Bharath Electronics & Appliances"
                   width={150}
                   height={70}
                 />
 
                 <p className="text-gray-600 mt-4 text-sm leading-6">
-                  Bharath Electronics & Appliances – Trusted by thousands of customers for the best brands, unbeatable prices and reliable services.
+                  Bharath Electronics & Appliances – Trusted by lakhs of customers for the best brands, unbeatable prices and reliable services.
                 </p>
 
                 <div className="mt-5 space-y-3 text-sm text-gray-600">

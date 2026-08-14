@@ -6,7 +6,7 @@ import { useState } from "react";
 export default function WhatsAppFloat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const whatsappUrl = "https://wa.me/919842344323?text=hello";
+  const whatsappUrl = "https://wa.me/919585685500?text=hello";
 
   if (pathname?.startsWith("/admin")) return null;
 
@@ -20,7 +20,7 @@ export default function WhatsAppFloat() {
             <div className="flex items-center gap-3">
               {/* BEA Logo placeholder — replace src with your logo */}
           <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center overflow-hidden flex-shrink-0">
-      <img src="/images/logo/bea-favi.png" alt="Bharath Electronics logo" className="w-12 h-12 object-contain" width={48} height={48} />
+      <img src="/user/bea-new.png" alt="Bharath Electronics logo" className="w-12 h-12 object-contain" width={48} height={48} />
              </div>
               <div>
                 <p className="text-white font-bold text-sm leading-tight">Bharath Electronics</p>
