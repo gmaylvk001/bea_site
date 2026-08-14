@@ -1414,15 +1414,11 @@ export default function HomeComponent() {
                       }
                     }}
                   >
-                    <Image
+                    <img
                       src={banner.bgImageUrl}
                       alt={banner?.alt || banner?.title || "Homepage banner"}
-                      fill
-                      quality={85}
-                      sizes="100vw"
-                      className="object-fill w-full h-full"
+                      className="absolute inset-0 w-full h-full object-fill"
                       style={{ objectPosition: "center 30%" }}
-                      priority={bannerIndex === 0}
                     />
                   </div>
                 </motion.div>
@@ -1434,14 +1430,10 @@ export default function HomeComponent() {
               variants={itemVariants}
             >
               <div className="absolute inset-0 flex justify-center items-center bg-white">
-                <Image
+                <img
                   src={bannerData.banner.items[0].bgImageUrl}
                   alt={bannerData.banner.items[0]?.alt || bannerData.banner.items[0]?.title || "Homepage banner"}
-                  fill
-                  sizes="100vw"
-                  quality={85}
-                  className="object-fill w-full h-full"
-                  priority
+                  className="absolute inset-0 w-full h-full object-fill"
                 />
               </div>
             </motion.div>
