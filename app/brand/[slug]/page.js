@@ -1,4 +1,5 @@
 import BrandComponent from "@/components/brand/BrandComponent";
+import { buildCanonicalUrl } from "@/components/CanonicalLink";
 import {
   getBaseUrl,
   fetchJson,
@@ -37,6 +38,9 @@ export async function generateMetadata({ params }) {
     return {
       title,
       description,
+      alternates: {
+        canonical: buildCanonicalUrl(`/brand/${slug}`),
+      },
       openGraph: {
         title,
         description,

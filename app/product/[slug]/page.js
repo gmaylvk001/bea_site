@@ -1,9 +1,11 @@
 import ProductClient from "./ProductClient";
+import { buildCanonicalUrl } from "@/components/CanonicalLink";
 import {
   getBaseUrl,
   fetchJson,
   productImageUrl,
   stripHtml,
+  sanitizeMetaKeywords,
   buildProductSchema,
   buildFAQPageSchema,
   buildBreadcrumbSchema,
@@ -64,12 +66,14 @@ export async function generateMetadata({ params }) {
         ? productImageUrl(baseUrl, product.images[0])
         : `${baseUrl}/no-image.jpg`;
 
+    const keywords = sanitizeMetaKeywords(product.search_keywords);
+
     return {
       title,
       description,
-      keywords: product.search_keywords || "",
+      ...(keywords ? { keywords } : {}),
       alternates: {
-        canonical: `/product/${slug}`,
+        canonical: buildCanonicalUrl(`/product/${slug}`),
       },
       openGraph: {
         title,

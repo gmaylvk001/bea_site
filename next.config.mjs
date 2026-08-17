@@ -25,6 +25,30 @@ const nextConfig = {
       },
     ];
   },
+  async headers() {
+    return [
+      {
+        source: "/uploads/:path*.jpg",
+        headers: [{ key: "Content-Type", value: "image/jpeg" }],
+      },
+      {
+        source: "/uploads/:path*.jpeg",
+        headers: [{ key: "Content-Type", value: "image/jpeg" }],
+      },
+      {
+        source: "/uploads/:path*.png",
+        headers: [{ key: "Content-Type", value: "image/png" }],
+      },
+      {
+        source: "/uploads/:path*.webp",
+        headers: [{ key: "Content-Type", value: "image/webp" }],
+      },
+      {
+        source: "/uploads/:path*.avif",
+        headers: [{ key: "Content-Type", value: "image/avif" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

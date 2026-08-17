@@ -1,8 +1,10 @@
 import CategoryPrimaryPage from "@/components/category/sample_cat";
+import { buildCanonicalUrl } from "@/components/CanonicalLink";
 import {
   getBaseUrl,
   fetchJson,
   categoryDescription,
+  sanitizeMetaKeywords,
   buildCollectionPageSchema,
   buildBreadcrumbSchema,
 } from "@/lib/schema";
@@ -36,10 +38,15 @@ export async function generateMetadata({ params }) {
         ? category.meta_description
         : `Browse products in ${category.category_name}`;
 
+    const keywords = sanitizeMetaKeywords(category.meta_keyword);
+
     return {
       title,
       description,
-      keywords: category.meta_keyword || "",
+      ...(keywords ? { keywords } : {}),
+      alternates: {
+        canonical: buildCanonicalUrl(`/category/${slug}`),
+      },
       openGraph: {
         title,
         description,

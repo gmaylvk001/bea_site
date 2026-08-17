@@ -163,11 +163,9 @@ const exportToExcel = () => {
   // Prepare export data
   const dataForExport = filteredStores.map((item) => ({
     Title: item.organisation_name || "",
-
+    "Location ID": item.location_id || "",
     Phone: item.phone || "",
-
     Email: item.email || "",
-
     Zipcode: item.zipcode || "",
     Status: item.status || "",
   }));
@@ -176,6 +174,7 @@ const exportToExcel = () => {
   const worksheet = XLSX.utils.json_to_sheet(dataForExport, {
     header: [
       "Title",
+      "Location ID",
       "Phone",
       "Email",
       "Zipcode",
