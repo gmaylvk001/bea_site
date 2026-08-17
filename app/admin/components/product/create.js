@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { components } from "react-select";
 import { Check } from "react-feather";
 import WarrantySearchInput from "@/app/admin/components/WarrantySearchInput";
+import { slugFromProductName } from "@/lib/productSlug";
 
 
 const steps = [
@@ -1166,8 +1167,7 @@ const uploadImages = async (files) => {
     setProduct((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-      slug: name === "name" 
-        ? value.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-") : prev.slug,
+      slug: name === "name" ? slugFromProductName(value) : prev.slug,
     }));
   };
 
@@ -1336,6 +1336,7 @@ const handleSubmit = async (e) => {
     const finalProductData = {
       ...cleanedProduct,
       extend_warranty: validWarranties,
+      slug: slugFromProductName(cleanedProduct.name),
     };
 
     formData.append("product", JSON.stringify(finalProductData));

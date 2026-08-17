@@ -1320,7 +1320,7 @@ export default function HomeComponent() {
                               <motion.div variants={itemVariants} className="flex justify-between items-center mb-2">
                                   <h2 className="text-base font-semibold uppercase tracking-tight text-gray-900">Top Brands</h2>
                                   <Link
-                                    href="/"
+                                    href="/category/large-appliances"
                                     className="text-[12px] font-semibold text-[#2453D3] hover:text-orange-500 inline-flex items-center gap-1"
                                   >
                                     View All Brands

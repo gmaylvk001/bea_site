@@ -343,11 +343,20 @@ const handleCategoryFilterChange = (type, value, parentId = null) => {
   }
 };
 
+const looksLikeObjectId = (value) => /^[a-f0-9]{24}$/i.test(String(value || "").trim());
+
+const getCategoryLabel = (cat) => {
+  const name = String(cat?.category_name || cat?.name || "").trim();
+  if (!name || looksLikeObjectId(name)) return "";
+  return name;
+};
+
 const CategoryTree = ({ categories, selectedCategories, selectedSubcategories, onFilterChange }) => {
-  const selectedParent = categories.find(
+  const namedCategories = (categories || []).filter((cat) => getCategoryLabel(cat));
+  const selectedParent = namedCategories.find(
     (c) => c._id?.toString() === selectedCategories[0]?.toString()
   ) || null;
-  const subCategories = selectedParent?.subCategories || [];
+  const subCategories = (selectedParent?.subCategories || []).filter((cat) => getCategoryLabel(cat));
 
   return (
     <div>
@@ -365,8 +374,9 @@ const CategoryTree = ({ categories, selectedCategories, selectedSubcategories, o
             <span className="text-sm font-medium text-gray-700">All Categories</span>
           </label>
         </li>
-        {categories.map((cat) => {
+        {namedCategories.map((cat) => {
           const catId = cat._id?.toString();
+          const label = getCategoryLabel(cat);
           const isSelected = selectedCategories[0]?.toString() === catId;
           return (
             <li key={catId}>
@@ -379,7 +389,7 @@ const CategoryTree = ({ categories, selectedCategories, selectedSubcategories, o
                   className="h-4 w-4 text-blue-600"
                 />
                 <span className={`text-sm ${isSelected ? "text-blue-600 font-medium" : "text-gray-600"}`}>
-                  {cat.category_name}
+                  {label}
                 </span>
               </label>
             </li>
@@ -391,7 +401,7 @@ const CategoryTree = ({ categories, selectedCategories, selectedSubcategories, o
       {selectedParent && subCategories.length > 0 && (
         <div className="mt-3 border-t pt-3">
           <div className="bg-gray-100 px-3 py-1 mb-2 rounded">
-            <span className="text-xs font-semibold text-gray-600">{selectedParent.category_name}</span>
+            <span className="text-xs font-semibold text-gray-600">{getCategoryLabel(selectedParent)}</span>
           </div>
           <ul className="max-h-48 overflow-y-auto pr-2">
             <li>
@@ -404,7 +414,7 @@ const CategoryTree = ({ categories, selectedCategories, selectedSubcategories, o
                   className="h-4 w-4 text-blue-600"
                 />
                 <span className="text-sm font-medium text-gray-700">
-                  All {selectedParent.category_name}
+                  All {getCategoryLabel(selectedParent)}
                 </span>
               </label>
             </li>
@@ -422,7 +432,7 @@ const CategoryTree = ({ categories, selectedCategories, selectedSubcategories, o
                       className="h-4 w-4 text-blue-600"
                     />
                     <span className={`text-sm ${isChildSelected ? "text-blue-600 font-medium" : "text-gray-600"}`}>
-                      {child.category_name}
+                      {getCategoryLabel(child)}
                     </span>
                   </label>
                 </li>
@@ -437,25 +447,22 @@ const CategoryTree = ({ categories, selectedCategories, selectedSubcategories, o
 
 useEffect(() => {
   if (products.length > 0 && categoryData.categories.length === 0) {
-    // Extract unique categories from products
     const productCategories = {};
-    products.forEach(p => {
-      if (p.category) {
-        const catId = p.category._id || p.category;
-        const catName = p.category.category_name || p.category;
-        if (!productCategories[catId]) {
-          productCategories[catId] = { _id: catId, category_name: catName };
-        }
-      }
+    products.forEach((p) => {
+      const cat = p.category;
+      if (!cat || typeof cat !== "object") return;
+      const catId = cat._id;
+      const catName = getCategoryLabel(cat);
+      if (!catId || !catName || productCategories[catId]) return;
+      productCategories[catId] = { _id: catId, category_name: catName };
     });
-    
+
     const flatCategories = Object.values(productCategories);
     if (flatCategories.length > 0) {
-      setCategoryData(prev => ({ 
-        ...prev, 
-        categories: flatCategories 
+      setCategoryData((prev) => ({
+        ...prev,
+        categories: flatCategories,
       }));
-      console.log("Created flat categories from products:", flatCategories);
     }
   }
 }, [products]);
@@ -524,12 +531,7 @@ useEffect(() => {
           {/* Sidebar */}
           <div className="w-full md:w-[260px] shrink-0 space-y-4">
             {/* Categories */}
-            {console.log("Category check:", { 
-  categoriesLength: categoryData.categories?.length, 
-  categories: categoryData.categories 
-})}
 {/* Categories Section with Hierarchy */}
-{categoryData.categories && categoryData.categories.length > 0 && (
   <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
     <div className="flex items-center justify-between pb-2">
       <h3 className="text-base font-semibold text-gray-700">Categories</h3>
@@ -550,7 +552,6 @@ useEffect(() => {
       />
     )}
   </div>
-)}
             {/* Price */}
             <div className="bg-white p-4 rounded shadow-sm border">
               <div className="flex items-center justify-between mb-2">

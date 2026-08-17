@@ -7,6 +7,7 @@ import Category from "@/models/ecom_category_info";
 import Product_filter from "@/models/ecom_productfilter_info";
 import fs from "fs";
 import md5 from "md5";
+import { slugFromProductName } from "@/lib/productSlug";
 
 async function buildCategoryChain(categoryId) {
   let md5_chain = [];
@@ -105,7 +106,8 @@ export async function POST(req) {
     let variants = JSON.parse(formData.get("variant"));
     const Filters    = productData.filters;
     const item_code  = productData.item_code;
-    const slug       = productData.slug;
+    const slug = slugFromProductName(productData.name);
+    productData.slug = slug;
     const overviewimageFiles = formData.getAll("overviewImages");
     let md5_cat_name = md5(slug);
     let existingProduct = await Product.findOne({ item_code });

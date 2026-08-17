@@ -13,6 +13,7 @@ import md5 from "md5";
 import mongoose from 'mongoose';
 import Filter from "@/models/ecom_filter_infos";
 import ProductFilter from "@/models/ecom_productfilter_info";
+import { slugFromProductName } from "@/lib/productSlug";
 
 export const config = {
     api: {
@@ -234,11 +235,7 @@ export async function POST(req) {
       
       if (!existingProduct) {
         // Create new product
-        const productSlug = productData.name.toLowerCase()
-          .replace(/[^\w\s-]/g, '')        // Remove all non-word characters except spaces and hyphens
-          .replace(/\s+/g, '-')            // Replace spaces with hyphens
-          .replace(/--+/g, '-')            // Replace multiple hyphens with a single one
-          .trim(); 
+        const productSlug = slugFromProductName(productData.name);
         productData.slug = productSlug;
         productData.md5_name = md5(productSlug);
         console.log(productData);

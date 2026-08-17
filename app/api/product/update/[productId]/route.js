@@ -8,6 +8,7 @@ import Product from "@/models/product";
 import Product_filter from "@/models/ecom_productfilter_info";
 import md5 from "md5";
 import Category from "@/models/ecom_category_info";
+import { slugFromProductName } from "@/lib/productSlug";
 
 
 async function buildCategoryChain(categoryId) {
@@ -80,7 +81,8 @@ export async function PUT(req, { params }) {
 console.log(productData);
 console.log("..............................................................");
 
-    const slug = productData.slug;
+    const slug = slugFromProductName(productData.name);
+    productData.slug = slug;
     const md5_cat_name = md5(slug);
 
     await connectDB();

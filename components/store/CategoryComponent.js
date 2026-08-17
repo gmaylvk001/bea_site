@@ -177,13 +177,92 @@ function ChevronDownIcon({ size = 16 }) {
     </svg>
   );
 }
-function CheckCircleIcon({ size = 16, color = "#2563eb" }) {
+function CheckCircleIcon({ size = 16, color = "#2957a4" }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="11" fill={color} />
+      <path
+        d="M7.5 12.2l2.8 2.8 6.2-6.4"
+        stroke="#fff"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
+const STORE_SHOP_CATEGORIES = [
+  { label: "Televisions", aliases: ["televisions", "television", "tvs", "tv"] },
+  { label: "Air Conditioners", aliases: ["air conditioners", "air conditioner", "acs", "ac"] },
+  { label: "Refrigerators", aliases: ["refrigerators", "refrigerator", "fridges", "fridge"] },
+  { label: "Washing Machines", aliases: ["washing machines", "washing machine"] },
+  { label: "Dishwashers", aliases: ["dishwashers", "dishwasher"] },
+  { label: "Home Theatre Systems", aliases: ["home theatre systems", "home theater systems", "home theatre", "home theater", "audio systems", "audio"] },
+  { label: "Mobile Phones", aliases: ["mobile phones", "mobiles", "mobile", "smartphones", "smartphone"] },
+  { label: "Laptops", aliases: ["laptops", "laptop"] },
+  { label: "Kitchen Appliances", aliases: ["kitchen appliances", "kitchen"] },
+  { label: "Home Care & Comfort", aliases: ["home care and comfort", "home care & comfort", "home care", "home comfort"] },
+];
+
+function normalizeCategoryKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function pickStoreShopCategory(slot, categories) {
+  const aliasKeys = slot.aliases.map(normalizeCategoryKey);
+  const labelKey = normalizeCategoryKey(slot.label);
+
+  const scored = categories
+    .map((cat) => {
+      const nameKey = normalizeCategoryKey(cat.category_name);
+      const slugKey = normalizeCategoryKey(cat.category_slug);
+      if (nameKey === labelKey) return { cat, score: 100 };
+      const aliasIndex = aliasKeys.findIndex((alias) => alias === nameKey || alias === slugKey);
+      if (aliasIndex === -1) return null;
+      return { cat, score: 90 - aliasIndex };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (!!b.cat.icon_url !== !!a.cat.icon_url) return b.cat.icon_url ? 1 : -1;
+      return 0;
+    });
+
+  const matched = scored[0]?.cat || null;
+  return {
+    label: slot.label,
+    href: matched?.href || "/category",
+    icon_url: matched?.icon_url || "",
+  };
+}
+
+function StoreFrontIcon({ size = 18, color = "#2957a4" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3 9.5L4.5 4h15L21 9.5M4 9.5h16v10.5H4V9.5z"
+        stroke={color}
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path d="M9 20V13h6v7" stroke={color} strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M4 9.5c0 1.4 1.1 2.5 2.5 2.5S9 10.9 9 9.5 10.1 7 11.5 7 14 8.1 14 9.5 15.1 12 16.5 12 19 10.9 19 9.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+
+const STATIC_OFFER_ITEMS = [
+  { title: "BEA Summer Sale", desc: "Up to 45% OFF on Select Products", bg: "bg-orange-100", iconColor: "#ea580c", path: "M12 2l2.4 7.2H22l-6 4.4 2.3 7.1L12 16.8 5.7 20.7 8 13.6 2 9.2h7.6L12 2z" },
+  { title: "No Cost EMI", desc: "Easy EMI on Credit Cards", bg: "bg-blue-100", iconColor: "#2563eb", path: "M3 8h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8zm0 0V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2M7 14h4" },
+  { title: "Exchange Bonus", desc: "Best Exchange Value Guaranteed", bg: "bg-red-100", iconColor: "#dc2626", path: "M4 8h10l-2-2m2 2l-2 2M20 16H10l2 2m-2-2l2-2" },
+  { title: "Combo Offers", desc: "Buy More, Save More", bg: "bg-green-100", iconColor: "#16a34a", path: "M6 8h12l1 12H5L6 8zm3-3a3 3 0 0 1 6 0" },
+];
+
 function WhatsAppIcon({ size = 16 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="white">
@@ -215,7 +294,7 @@ function DirectionsIcon({ size = 14 }) {
 // ─── Section Title ────────────────────────────────────────────────────────────
 function SectionTitle({ children, center = true }) {
   return (
-    <h2 className={`text-[18px] min-[1440px]:text-[22px] min-[2560px]:text-[28px] min-[3840px]:text-[34px] text-blue-700 font-bold mb-5 min-[1440px]:mb-6 min-[2560px]:mb-8 ${center ? "text-center" : ""}`}>
+    <h2 className={`text-[18px] min-[1440px]:text-[22px] min-[2560px]:text-[28px] min-[3840px]:text-[34px] font-bold mb-5 min-[1440px]:mb-6 min-[2560px]:mb-8 ${center ? "text-center" : ""}`} style={{ color: "#2957a4" }}>
       {children}
     </h2>
   );
@@ -305,31 +384,20 @@ export default function StoreDetail() {
       const rootCategories = active
         .filter((c) => c.parentid === "none")
         .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-      const rootIds = rootCategories.map((c) => String(c._id));
       const rootSlugById = Object.fromEntries(
         rootCategories.map((c) => [String(c._id), c.category_slug])
       );
 
-      // First-level subcategories with vector icon images (icon_url)
-      const subcategories = active
-        .filter((c) => rootIds.includes(String(c.parentid)))
-        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-        .map((c) => ({
-          ...c,
-          href: `/category/${rootSlugById[String(c.parentid)]}/${c.category_slug}`,
-        }));
-
-      const withIcons = subcategories.filter((c) => c.icon_url);
-      const shopCategories =
-        (withIcons.length > 0 ? withIcons : subcategories).slice(0, 10);
+      const categoriesWithHref = active.map((c) => {
+        const parentSlug = rootSlugById[String(c.parentid)];
+        const href = parentSlug
+          ? `/category/${parentSlug}/${c.category_slug}`
+          : `/category/${c.category_slug}`;
+        return { ...c, href };
+      });
 
       setDynamicCategories(
-        shopCategories.length > 0
-          ? shopCategories
-          : rootCategories.slice(0, 10).map((c) => ({
-              ...c,
-              href: `/category/${c.category_slug}`,
-            }))
+        STORE_SHOP_CATEGORIES.map((slot) => pickStoreShopCategory(slot, categoriesWithHref))
       );
 
       // Collect all unique brands from all categories
@@ -497,17 +565,22 @@ export default function StoreDetail() {
   .store-info-card h3 {
     font-size: 15px;
     font-weight: 700;
-    color: #1d4ed8;
+    color: #2957a4;
     margin-bottom: 12px;
     line-height: 1.3;
     text-align: left;
   }
-  .store-info-card .store-about-text,
+  .store-info-card .store-about-text {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #000000;
+    text-align: left;
+  }
   .store-info-card .store-highlight-item,
   .store-info-card .store-popular-label {
     font-size: 12.5px;
     line-height: 1.55;
-    color: #2563eb;
+    color: #1f2937;
     text-align: left;
   }
   .store-about-text p + p {
@@ -548,33 +621,23 @@ export default function StoreDetail() {
     justify-items: center;
     align-items: start;
   }
-  @media (max-width: 639px) {
-    .shop-category-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0.75rem 0.5rem;
-    }
-  }
   @media (min-width: 640px) {
     .shop-category-grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 1rem 0.5rem;
     }
   }
   @media (min-width: 768px) {
     .shop-category-grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 0.75rem 0.35rem;
     }
   }
   @media (min-width: 1024px) {
     .shop-category-grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 0.85rem 0.4rem;
     }
   }
   @media (min-width: 1280px) {
     .shop-category-grid {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 0.9rem 0.45rem;
     }
   }
@@ -589,6 +652,11 @@ export default function StoreDetail() {
     max-width: 72px;
     margin-left: auto;
     margin-right: auto;
+  }
+  .shop-category-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
   @media (min-width: 640px) {
     .shop-category-item { max-width: 96px; }
@@ -654,28 +722,28 @@ export default function StoreDetail() {
   }
   @media (min-width: 768px) {
     .store-brands-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.5rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.625rem;
     }
   }
   @media (min-width: 1024px) {
     .store-brands-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.625rem;
+      gap: 0.75rem;
     }
   }
   .store-brand-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 48px;
-    padding: 0.5rem 0.375rem;
+    min-height: 56px;
+    padding: 0.625rem 0.5rem;
     min-width: 0;
   }
   @media (min-width: 640px) {
     .store-brand-item {
-      min-height: 52px;
-      padding: 0.625rem 0.5rem;
+      min-height: 64px;
+      padding: 0.75rem 0.5rem;
     }
   }
   .store-brand-logo {
@@ -1048,7 +1116,7 @@ export default function StoreDetail() {
         {getStoreHighlightTexts(store.highlights).map((text, i) => (
           <li key={i} className="store-highlight-item">
             <span className="flex-shrink-0 mt-0.5">
-              <CheckCircleIcon size={14} color="#2563eb" />
+              <CheckCircleIcon size={14} color="#2957a4" />
             </span>
             <span>{text}</span>
           </li>
@@ -1062,10 +1130,10 @@ export default function StoreDetail() {
       <div className="grid grid-cols-2 gap-2.5 content-start">
         {[
           { img: '/store/tv.png', label: 'Smart TVs & OLED TVs' },
-          { img: '/store/ac.png', label: 'Invertor Air conditioner' },
+          { img: '/store/ac.png', label: 'Inverter Air Conditioners' },
           { img: '/store/refrigerator.png', label: 'Double Door Refrigerators' },
           { img: '/store/kitchen.png', label: 'Kitchen Appliances' },
-          { img: '/store/ac.png', label: 'AC Ducts' },
+          { img: '/store/WashingMachineStore.webp', label: 'Washing Machines' },
           { img: '/store/laptop1.png', label: 'Laptops & Mobiles' },
         ].map((item, i) => (
           <div
@@ -1094,54 +1162,36 @@ export default function StoreDetail() {
     SECTION 4 — CATEGORY / BRANDS / OFFERS
 ═══════════════════════════════════════════════════════ */}
 <section className="bg-white px-4 sm:px-8 py-8 mt-3">
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 md:items-start">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 md:items-stretch">
 
     {/* Shop by Category */}
-    <div className="bea-card flex flex-col self-start w-full">
-      <h3 className="text-[15px] sm:text-[16px] font-bold text-blue-700 mb-3 sm:mb-4 text-center flex-shrink-0">Shop by Category</h3>
+    <div className="bea-card flex flex-col h-full w-full">
+      <h3 className="text-[15px] sm:text-[16px] font-bold mb-3 sm:mb-4 text-center flex-shrink-0" style={{ color: "#2957a4" }}>Shop by Category</h3>
       {dynamicCategories.length === 0 ? (
-        <div className="flex justify-center items-center h-24 text-gray-400 text-[12px]">Loading...</div>
+        <div className="flex justify-center items-center flex-1 min-h-[180px] text-gray-400 text-[12px]">Loading...</div>
       ) : (
-        <div className="shop-category-grid">
-          {dynamicCategories.slice(0, 10).map((cat, i) => {
-            const categoryHref =
-              cat.href ||
-              (cat.category_slug ? `/category/${cat.category_slug}` : "/category");
-            const iconSrc = cat.icon_url || cat.navImage || cat.image || "";
-            return (
-              <Link
-                key={cat._id || i}
-                href={categoryHref}
-                className="shop-category-item flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer group mx-auto"
-              >
-                <div className="shop-category-icon bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
-                  {iconSrc ? (
-                    <img
-                      src={iconSrc}
-                      alt={cat.category_name}
-                      className="w-full h-full object-contain p-1.5 sm:p-2"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        const fallback = e.currentTarget.nextElementSibling;
-                        if (fallback) fallback.style.display = "flex";
-                      }}
-                    />
-                  ) : null}
-                  <span
-                    className={`text-[16px] sm:text-[18px] font-bold text-blue-600 items-center justify-center w-full h-full ${
-                      iconSrc ? "hidden" : "flex"
-                    }`}
-                  >
-                    {(cat.category_name || "?").charAt(0)}
-                  </span>
-                </div>
-                <span className="text-[10px] sm:text-[11px] text-gray-700 leading-tight line-clamp-2 w-full font-medium group-hover:text-blue-700 px-0.5">
-                  {cat.category_name}
+      <div className="shop-category-grid flex-1">
+        {dynamicCategories.map((cat, i) => (
+          <Link
+            key={cat.label || i}
+            href={cat.href || `/category/${cat.category_slug}`}
+            className="shop-category-item flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer group mx-auto"
+          >
+            <div className="shop-category-icon bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden p-2 group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
+              {cat.icon_url ? (
+                <img src={cat.icon_url} alt="" aria-hidden="true" />
+              ) : (
+                <span className="text-[13px] font-bold text-[#2957a4]">
+                  {(cat.label || "").charAt(0)}
                 </span>
-              </Link>
-            );
-          })}
-        </div>
+              )}
+            </div>
+            <span className="text-[10px] sm:text-[11px] text-gray-700 leading-tight line-clamp-2 w-full font-medium group-hover:text-blue-700 px-0.5">
+              {cat.label}
+            </span>
+          </Link>
+        ))}
+      </div>
       )}
       <div className="text-center mt-4 sm:mt-5 flex-shrink-0">
         <Link
@@ -1154,12 +1204,12 @@ export default function StoreDetail() {
     </div>
 
     {/* Authorized Brands */}
-    <div className="bea-card flex flex-col self-start w-full">
-      <h3 className="text-[15px] sm:text-[16px] font-bold text-blue-700 mb-3 sm:mb-4 text-center flex-shrink-0">Authorized Brands Available</h3>
+    <div className="bea-card flex flex-col h-full w-full">
+      <h3 className="text-[15px] sm:text-[16px] font-bold mb-3 sm:mb-4 text-center flex-shrink-0" style={{ color: "#2957a4" }}>Authorized Brands Available</h3>
       {dynamicBrands.length === 0 ? (
-        <div className="flex justify-center items-center h-24 text-gray-400 text-[12px]">Loading...</div>
+        <div className="flex justify-center items-center flex-1 min-h-[180px] text-gray-400 text-[12px]">Loading...</div>
       ) : (
-        <div className="store-brands-grid">
+        <div className="store-brands-grid flex-1 content-start">
           {dynamicBrands.slice(0, 12).map((brand, i) => (
             <div
               key={brand._id || brand.brand_slug || i}
@@ -1189,7 +1239,7 @@ export default function StoreDetail() {
           ))}
         </div>
       )}
-      <div className="text-center mt-4 sm:mt-5 flex-shrink-0">
+      <div className="text-center mt-4 sm:mt-5 flex-shrink-0 mt-auto">
         <Link
           href="/"
           className="text-blue-600 text-[12px] sm:text-[13px] font-semibold hover:underline inline-flex items-center gap-1"
@@ -1200,54 +1250,56 @@ export default function StoreDetail() {
     </div>
 
     {/* Latest Offers */}
-    <div className="bea-card flex flex-col self-start w-full">
-      <h3 className="text-[15px] sm:text-[16px] font-bold text-blue-700 mb-3 sm:mb-4 text-center flex-shrink-0">Latest Offers at This Store</h3>
+    <div className="bea-card flex flex-col h-full w-full">
+      <h3 className="text-[15px] sm:text-[16px] font-bold mb-3 sm:mb-4 text-center flex-shrink-0" style={{ color: "#2957a4" }}>Latest Offers at This Store</h3>
       {store.offers?.length > 0 ? (
-        <div className="store-offers-list">
-          {store.offers.slice(0, 4).map((offer, i) => (
-            <div key={i} className="store-offer-item bg-gray-50 border border-gray-100 rounded-lg">
-              {offer.image ? (
-                <img
-                  src={offer.image}
-                  className="store-offer-icon rounded-md object-cover"
-                  alt={offer.title}
-                />
-              ) : (
-                <div className="store-offer-icon bg-orange-100 rounded-md flex items-center justify-center text-[16px] sm:text-[18px]">
-                  🎁
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] sm:text-[12px] font-semibold text-gray-800 leading-snug line-clamp-2">{offer.title}</div>
-                {offer.validTill && (
-                  <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 line-clamp-1">Valid till {offer.validTill}</div>
+        <div className="store-offers-list flex-1">
+          {store.offers.slice(0, 4).map((offer, i) => {
+            const fallback = STATIC_OFFER_ITEMS[i % STATIC_OFFER_ITEMS.length];
+            return (
+              <div key={i} className="store-offer-item bg-white border border-gray-100 rounded-xl">
+                {offer.image ? (
+                  <img
+                    src={offer.image}
+                    className="store-offer-icon rounded-lg object-cover"
+                    alt={offer.title}
+                  />
+                ) : (
+                  <div className={`store-offer-icon ${fallback.bg} rounded-lg flex items-center justify-center`}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={fallback.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={fallback.path} />
+                    </svg>
+                  </div>
                 )}
+                <div className="min-w-0 flex-1">
+                  <div className="text-[12px] sm:text-[13px] font-bold text-gray-900 leading-snug line-clamp-2">{offer.title}</div>
+                  {offer.validTill && (
+                    <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 line-clamp-1">Valid till {offer.validTill}</div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <div className="store-offers-list">
-          {[
-            { icon: "🎉", title: "BEA Summer Sale",   desc: "Up to 45% OFF on Select Products" },
-            { icon: "💳", title: "No Cost EMI",        desc: "Easy EMI on Credit Cards" },
-            { icon: "🔄", title: "Exchange Bonus",     desc: "Best Exchange Value Guaranteed" },
-            { icon: "🛍️", title: "Combo Offers",      desc: "Buy More, Save More" },
-          ].map((item, i) => (
-            <div key={i} className="store-offer-item bg-gray-50 border border-gray-100 rounded-lg">
-              <div className="store-offer-icon bg-orange-100 rounded-md flex items-center justify-center text-[15px] sm:text-[16px]">
-                {item.icon}
+        <div className="store-offers-list flex-1">
+          {STATIC_OFFER_ITEMS.map((item, i) => (
+            <div key={i} className="store-offer-item bg-white border border-gray-100 rounded-xl">
+              <div className={`store-offer-icon ${item.bg} rounded-lg flex items-center justify-center`}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={item.iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={item.path} />
+                </svg>
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] sm:text-[12px] font-semibold text-gray-800 leading-snug line-clamp-2">{item.title}</div>
+                <div className="text-[12px] sm:text-[13px] font-bold text-gray-900 leading-snug line-clamp-2">{item.title}</div>
                 <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 line-clamp-2">{item.desc}</div>
               </div>
             </div>
           ))}
         </div>
       )}
-      <div className="text-center mt-4 flex-shrink-0">
-        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 sm:py-2.5 text-[12px] sm:text-[13px] font-semibold transition-colors">
+      <div className="text-center mt-4 flex-shrink-0 mt-auto">
+        <button className="w-full bg-[#2957a4] hover:bg-[#1f4585] text-white rounded-lg py-2.5 sm:py-3 text-[13px] sm:text-[14px] font-bold transition-colors">
           View All Offers
         </button>
       </div>
@@ -1258,14 +1310,14 @@ export default function StoreDetail() {
       {/* ═══════════════════════════════════════════════════════
           SECTION 5 — FEATURED PRODUCTS (dynamic)
       ═══════════════════════════════════════════════════════ */}
- {store.featuredProducts?.length > 0 && (
   <section className="bg-white px-4 sm:px-8 py-8 mt-3">
     <div className="flex items-center justify-between mb-4">
       <SectionTitle center={false}>Featured Products at This Store</SectionTitle>
-      <button className="text-blue-600 text-[12px] font-semibold hover:underline inline-flex items-center gap-1">
+      <Link href="/category" className="text-blue-600 text-[12px] font-semibold hover:underline inline-flex items-center gap-1">
         View All Products <ArrowRightIcon />
-      </button>
+      </Link>
     </div>
+    {store.featuredProducts?.length > 0 ? (
     <Swiper
       modules={[Navigation]}
       navigation
@@ -1299,12 +1351,17 @@ export default function StoreDetail() {
               <div className="flex items-center gap-2 w-full justify-center">
                 {prod.special_price && (
                   <span className="text-[13px] font-bold text-blue-700">
-                    ₹{prod.special_price.toLocaleString()}
+                    ₹{Number(prod.special_price).toLocaleString()}
                   </span>
                 )}
                 {prod.price && prod.special_price && (
                   <span className="text-[11px] text-gray-400 line-through">
-                    ₹{prod.price.toLocaleString()}
+                    ₹{Number(prod.price).toLocaleString()}
+                  </span>
+                )}
+                {prod.price && !prod.special_price && (
+                  <span className="text-[13px] font-bold text-blue-700">
+                    ₹{Number(prod.price).toLocaleString()}
                   </span>
                 )}
               </div>
@@ -1313,12 +1370,14 @@ export default function StoreDetail() {
         </SwiperSlide>
       ))}
     </Swiper>
+    ) : (
+      <p className="text-center text-gray-500 text-[13px] py-8">Featured products will appear here soon.</p>
+    )}
   </section>
-)}
+
       {/* ═══════════════════════════════════════════════════════
-          SECTION 6 — CUSTOMER REVIEWS (static) — commented out (dummy content)
-      ═══════════════════════════════════════════════════════ */}
-      {/*
+          SECTION 6 — CUSTOMER REVIEWS (commented out)
+      ═══════════════════════════════════════════════════════
       <section className="bg-white px-4 sm:px-8 py-8 mt-3">
         <SectionTitle>What Customers Say</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6 items-start">
@@ -1367,9 +1426,8 @@ export default function StoreDetail() {
 {/* ═══════════════════════════════════════════════════════
     SECTION 7 — HAPPY CUSTOMERS PHOTOS (customer_images — dynamic)
 ═══════════════════════════════════════════════════════ */}
-{store.customer_images?.length > 0 && (
   <section className="bg-white px-4 sm:px-8 py-8 mt-3">
-    <h2 className="text-center text-[18px] font-bold text-blue-900 mb-5">
+    <h2 className="text-center text-[18px] font-bold mb-5" style={{ color: "#2957a4" }}>
       Happy Customers, Happy Moments
     </h2>
 
@@ -1379,6 +1437,7 @@ export default function StoreDetail() {
     `}</style>
 
     <div className="relative">
+      {store.customer_images?.length > 0 ? (
       <div
         className="customer-img-track flex gap-3 overflow-x-auto pb-2"
         style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
@@ -1397,18 +1456,19 @@ export default function StoreDetail() {
           </div>
         ))}
 
-        {/* View More — last item */}
         <div
-          className="flex-shrink-0 rounded-xl overflow-hidden  border border-blue-100 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors"
+          className="flex-shrink-0 rounded-xl overflow-hidden border border-blue-100 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors"
           style={{ width: '160px', height: '120px', scrollSnapAlign: 'start' }}
         >
           <ArrowRightIcon size={20} />
           <span className="text-blue-900 text-[12px] font-semibold mt-1">View More</span>
         </div>
       </div>
+      ) : (
+        <p className="text-center text-gray-500 text-[13px] py-6">Customer moments from this store will appear here.</p>
+      )}
     </div>
   </section>
-)}
       {/* ═══════════════════════════════════════════════════════
           SECTION 8 — FIND US / AREAS / NEARBY STORES / TEAM
       ═══════════════════════════════════════════════════════ */}
@@ -1417,7 +1477,7 @@ export default function StoreDetail() {
 
   {/* Find Us — dynamic address */}
 <div className="bea-card">
-  <h3  className="text-[14px] font-bold text-blue-700 mb-3">Find Us Here</h3>
+  <h3  className="text-[14px] font-bold mb-3" style={{ color: "#2957a4" }}>Find Us Here</h3>
   <div className="bg-gray-100 rounded-xl h-[160px] flex items-center justify-center mb-3 overflow-hidden">
     <iframe
       title="Store Location"
@@ -1441,11 +1501,11 @@ export default function StoreDetail() {
 
           {/* Areas We Serve — static */}
           <div className="bea-card">
-            <h3 className="text-[14px] font-bold text-blue-700 mb-3">Areas We Serve</h3>
+            <h3 className="text-[14px] font-bold mb-3" style={{ color: "#2957a4" }}>Areas We Serve</h3>
             <ul className="space-y-1.5">
               {STATIC_AREAS.map((area, i) => (
                 <li key={i} className="flex items-center gap-2 text-[12.5px] text-gray-700">
-                  <CheckCircleIcon size={13} color="#2563eb" />
+                  <CheckCircleIcon size={14} color="#2957a4" />
                   {area}
                 </li>
               ))}
@@ -1454,17 +1514,22 @@ export default function StoreDetail() {
 
           {/* Nearby Stores — dynamic */}
           <div className="bea-card">
-            <h3 className="text-[14px] font-bold text-blue-700 mb-3">More BEA Stores Near You</h3>
+            <h3 className="text-[14px] font-bold mb-3" style={{ color: "#2957a4" }}>More BEA Stores Near You</h3>
             {store.nearbyStores?.length > 0 ? (
               <div className="space-y-2.5">
                 {store.nearbyStores.slice(0, 3).map((ns, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2 border border-gray-200 rounded-lg p-2.5">
-                    <div className="min-w-0">
-                      <div className="text-[12px] font-semibold text-gray-800 truncate">{ns.name}</div>
-                      <div className="text-[11px] text-gray-500">{ns.address}</div>
-                      {ns.distance && <div className="text-[11px] text-blue-600 font-medium">{ns.distance}</div>}
+                  <div key={i} className="flex items-center gap-2.5 border border-gray-200 rounded-lg p-2.5">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                      <StoreFrontIcon size={18} color="#2957a4" />
                     </div>
-                    <button className="flex-shrink-0 bg-blue-600 text-white text-[10.5px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-blue-700 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] sm:text-[14px] font-semibold text-gray-900 truncate">{ns.name}</div>
+                      <div className="text-[11px] text-gray-500">{ns.address || ns.city}</div>
+                    </div>
+                    {ns.distance && (
+                      <span className="text-[12px] text-blue-700 font-semibold flex-shrink-0 whitespace-nowrap">{ns.distance}</span>
+                    )}
+                    <button className="flex-shrink-0 border border-blue-600 text-blue-600 bg-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
                       View Store
                     </button>
                   </div>
@@ -1477,13 +1542,16 @@ export default function StoreDetail() {
                   { name: "BEA 100 Feet Road", city: "Coimbatore", dist: "5.8 km" },
                   { name: "BEA Gandhipuram", city: "Coimbatore", dist: "6.1 km" },
                 ].map((ns, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2 border border-gray-200 rounded-lg p-2.5">
-                    <div>
-                      <div className="text-[12px] font-semibold text-gray-800">{ns.name}</div>
-                      <div className="text-[11px] text-gray-500">{ns.city}</div>
-                      <div className="text-[11px] text-blue-600 font-medium">{ns.dist}</div>
+                  <div key={i} className="flex items-center gap-2.5 border border-gray-200 rounded-lg p-2.5">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                      <StoreFrontIcon size={18} color="#2957a4" />
                     </div>
-                    <button className="flex-shrink-0 bg-blue-600 text-white text-[10.5px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-blue-700 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] sm:text-[14px] font-semibold text-gray-900">{ns.name}</div>
+                      <div className="text-[11px] text-gray-500">{ns.city}</div>
+                    </div>
+                    <span className="text-[12px] text-blue-700 font-semibold flex-shrink-0 whitespace-nowrap">{ns.dist}</span>
+                    <button className="flex-shrink-0 border border-blue-600 text-blue-600 bg-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
                       View Store
                     </button>
                   </div>
@@ -1501,7 +1569,7 @@ export default function StoreDetail() {
 
           {/* Store Team — static */}
           <div className="bea-card">
-            <h3 className="text-[14px] font-bold text-blue-700 mb-3">Meet Your Store Team</h3>
+            <h3 className="text-[14px] font-bold mb-3" style={{ color: "#2957a4" }}>Meet Your Store Team</h3>
             <div className="bg-gray-100 rounded-xl h-[130px] flex items-center justify-center mb-3 overflow-hidden">
                <img src="/store/storeTeam.png" className="w-full h-full object-cover rounded-xl" alt="Store team" />
             </div>
