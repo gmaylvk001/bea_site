@@ -5,6 +5,7 @@ import {
   fetchJson,
   buildCollectionPageSchema,
   buildBreadcrumbSchema,
+  sanitizeMetaKeywords,
 } from "@/lib/schema";
 
 async function getBrandData(slug) {
@@ -27,8 +28,11 @@ export async function generateMetadata({ params }) {
       };
     }
 
-    const title = brand.brand_name;
-    const description = `Shop ${brand.brand_name} products online at best prices`;
+    const title = brand.meta_title?.trim() || brand.brand_name;
+    const description =
+      brand.meta_description?.trim() ||
+      `Shop ${brand.brand_name} products online at best prices`;
+    const keywords = sanitizeMetaKeywords(brand.meta_keyword);
     const image = brand.image
       ? brand.image.startsWith("http")
         ? brand.image
@@ -38,6 +42,7 @@ export async function generateMetadata({ params }) {
     return {
       title,
       description,
+      ...(keywords ? { keywords } : {}),
       alternates: {
         canonical: buildCanonicalUrl(`/brand/${slug}`),
       },

@@ -24,6 +24,9 @@ const BrandSchema = new mongoose.Schema({
   },
     manufacturer_name: { type: String, default: "" },
   manufacturer_address: { type: String, default: "" },
+  meta_title: { type: String, default: "" },
+  meta_description: { type: String, default: "" },
+  meta_keyword: { type: String, default: "" },
   banners: [BannerSchema], // ✅ Array of banners per brand
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
