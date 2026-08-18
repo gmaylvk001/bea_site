@@ -709,6 +709,20 @@ export default function HomeComponent() {
       prevArrow: <CustomPrevArrow />,
       nextArrow: <CustomNextArrow />,
     };
+    const topBannerSettings = {
+      ...settings,
+      dots: true,
+      dotsClass: "slick-dots",
+      responsive: [
+        {
+          breakpoint: 1025,
+          settings: {
+            dots: false,
+            arrows: false,
+          },
+        },
+      ],
+    };
     const flashSalesSettings = {
       dots: false,
       infinite: true,
@@ -1380,7 +1394,7 @@ export default function HomeComponent() {
           </div>
         ) : bannerData.banner.items.length > 0 ? (
           bannerData.banner.items.length > 1 ? (
-            <Slider {...settings} className="relative topbanner-slider">
+            <Slider {...topBannerSettings} className="relative topbanner-slider">
               {bannerData.banner.items.map((banner, bannerIndex) => (
                 <motion.div
                   key={banner.id}
