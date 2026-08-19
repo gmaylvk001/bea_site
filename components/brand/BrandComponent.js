@@ -106,9 +106,18 @@ export default function BrandPage() {
       });
 
       if (brandData.products?.length > 0) {
-        const prices = brandData.products.map(p => p.special_price);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
+        const prices = brandData.products
+          .map((p) => Number(p.special_price > 0 ? p.special_price : p.price))
+          .filter((n) => Number.isFinite(n) && n >= 0);
+        let minPrice = prices.length ? Math.min(...prices) : 0;
+        let maxPrice = prices.length ? Math.max(...prices) : 100000;
+        if (minPrice === maxPrice) {
+          minPrice = 0;
+        }
+        if (minPrice >= maxPrice) {
+          minPrice = 0;
+          maxPrice = 100000;
+        }
         setPriceRange([minPrice, maxPrice]);
         setSelectedFilters(prev => ({
           ...prev,
@@ -117,7 +126,7 @@ export default function BrandPage() {
       }
 
       const groups = {};
-      brandData.filters.forEach(filter => {
+      (brandData.filters || []).forEach(filter => {
         const groupId = filter.filter_group_name;
         if (groupId) {
           if (!groups[groupId]) {
@@ -372,14 +381,13 @@ export default function BrandPage() {
   };
 
   const handlePriceChange = (values) => {
-   let min = Math.max(1, values[0]);     // clamp to >= 1
-   let max = Math.max(1, values[1]);   // clamp to <= 100
- 
-   // Ensure min never exceeds max
-   if (min > max) {
-     min = max;
-   }
- 
+   let min = Number(values[0]);
+   let max = Number(values[1]);
+   if (!Number.isFinite(min)) min = MIN;
+   if (!Number.isFinite(max)) max = MAX;
+   min = Math.max(MIN, min);
+   max = Math.max(min, max);
+
    setSelectedFilters((prev) => ({
      ...prev,
      price: { min, max }
@@ -387,14 +395,31 @@ export default function BrandPage() {
  };
  
     const STEP = 100;
-   const MIN = priceRange[0];
-   const MAX = priceRange[1];
+   const MIN = Number.isFinite(priceRange[0]) ? priceRange[0] : 0;
+   const MAX = Number.isFinite(priceRange[1]) && priceRange[1] > MIN ? priceRange[1] : (MIN + 100000);
+   const isValidRange = Number.isFinite(MIN) && Number.isFinite(MAX) && MIN < MAX;
  
    // slider local state
    const [values, setValues] = useState([
      selectedFilters.price.min,
      selectedFilters.price.max,
    ]);
+
+   const safeValues = (() => {
+     const low = Number(values?.[0]);
+     const high = Number(values?.[1]);
+     let nextLow = Number.isFinite(low) ? Math.max(MIN, Math.min(low, MAX)) : MIN;
+     let nextHigh = Number.isFinite(high) ? Math.max(MIN, Math.min(high, MAX)) : MAX;
+     if (nextLow > nextHigh) {
+       const swap = nextLow;
+       nextLow = nextHigh;
+       nextHigh = swap;
+     }
+     if (nextLow === nextHigh) {
+       nextHigh = Math.min(MAX, nextLow + STEP);
+     }
+     return [nextLow, nextHigh];
+   })();
  
    // sync with external filters (e.g. reset button)
    useEffect(() => {
@@ -601,17 +626,19 @@ export default function BrandPage() {
               <div className="relative w-full aspect-[16/6] sm:aspect-[16/7] lg:aspect-[16/5] cursor-pointer"
                 onClick={handleBannerClick}
               >
+                {brandData.brand.banners[currentBannerIndex]?.banner_image && (
                 <Image
                   src={
                     brandData.brand.banners[currentBannerIndex].banner_image.startsWith("http")
                       ? brandData.brand.banners[currentBannerIndex].banner_image
                       : `${brandData.brand.banners[currentBannerIndex].banner_image}`
                   }
-                  alt={brandData.brand.banners[currentBannerIndex].banner_name}
+                  alt={brandData.brand.banners[currentBannerIndex]?.banner_name || brandData.brand.brand_name}
                   fill
                   className="object-cover w-full h-full"
                   unoptimized
                 />
+                )}
                 
                 {/* {brandData.brand.banners.length > 1 && (
                   <>
@@ -835,8 +862,9 @@ export default function BrandPage() {
               <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
                 <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
           
+                {isValidRange && (
                 <ReactRange
-                  values={values}
+                  values={safeValues}
                   step={STEP}
                   min={MIN}
                   max={MAX}
@@ -851,8 +879,8 @@ export default function BrandPage() {
                       <div
                         className="absolute h-2 bg-gray-500 rounded-lg"
                         style={{
-                          left: `${((values[0] - MIN) / (MAX - MIN)) * 100}%`,
-                          width: `${((values[1] - values[0]) / (MAX - MIN)) * 100}%`,
+                          left: `${((safeValues[0] - MIN) / (MAX - MIN)) * 100}%`,
+                          width: `${((safeValues[1] - safeValues[0]) / (MAX - MIN)) * 100}%`,
                         }}
                       />
                       {children}
@@ -877,10 +905,11 @@ export default function BrandPage() {
                     );
                   }}
                 />
+                )}
           
                 <div className="flex justify-between text-sm text-gray-600 mt-6">
-                  <span>₹{values[0].toLocaleString()}</span>
-                  <span>₹{values[1].toLocaleString()}</span>
+                  <span>₹{(Number.isFinite(safeValues[0]) ? safeValues[0] : 0).toLocaleString()}</span>
+                  <span>₹{(Number.isFinite(safeValues[1]) ? safeValues[1] : 0).toLocaleString()}</span>
                 </div>
               </div>
   

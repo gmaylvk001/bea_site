@@ -79,23 +79,28 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
       });
 
       if (data.products?.length > 0) {
-        const prices = data.products.map(p => p.special_price || p.price);
-        let minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        if(minPrice === maxPrice) {
-          minPrice = 0; // Ensure a range
+        const prices = data.products
+          .map((p) => Number(p.special_price > 0 ? p.special_price : p.price))
+          .filter((n) => Number.isFinite(n) && n >= 0);
+        let minPrice = prices.length ? Math.min(...prices) : 0;
+        let maxPrice = prices.length ? Math.max(...prices) : 100000;
+        if (minPrice === maxPrice) {
+          minPrice = 0;
         }
-        // alert(`Price range: ${minPrice} - ${maxPrice}`);
+        if (minPrice >= maxPrice) {
+          minPrice = 0;
+          maxPrice = 100000;
+        }
         setPriceRange([minPrice, maxPrice]);
         setSelectedFilters(prev => ({
           ...prev,
           price: { min: minPrice, max: maxPrice },
-          brands: [data.brand?._id] // Set the current brand as selected
+          brands: [data.brand?._id]
         }));
       }
 
       const groups = {};
-      data.filters.forEach(filter => {
+      (data.filters || []).forEach(filter => {
         const groupId = filter.filter_group_id || filter.filter_group_name;
         if (groupId) {
           if (!groups[groupId]) {
@@ -383,18 +388,12 @@ console.log("Fetched products:", products);
   };
 
   const handlePriceChange = (values) => {
-    let min = Math.max(1, values[0]);
-    let max = Math.max(1, values[1]);
-
-    // Ensure min never exceeds max
-    if (min > max) {
-      min = max;
-    }
-
-    // ###### B2125 ###### //
-    // if (min >= max) {
-    //   max = min + 1;
-    // }
+    let min = Number(values[0]);
+    let max = Number(values[1]);
+    if (!Number.isFinite(min)) min = MIN;
+    if (!Number.isFinite(max)) max = MAX;
+    min = Math.max(MIN, min);
+    max = Math.max(min, max);
 
     setSelectedFilters((prev) => ({
       ...prev,
@@ -422,14 +421,31 @@ console.log("Fetched products:", products);
   };
 
   const STEP = 100;
-  const MIN = priceRange[0] || 0;
-  const MAX = priceRange[1] || 100000;
+  const MIN = Number.isFinite(priceRange[0]) ? priceRange[0] : 0;
+  const MAX = Number.isFinite(priceRange[1]) && priceRange[1] > MIN ? priceRange[1] : MIN + 100000;
+  const isValidRange = Number.isFinite(MIN) && Number.isFinite(MAX) && MIN < MAX;
 
   // slider local state
   const [values, setValues] = useState([
     selectedFilters.price.min,
     selectedFilters.price.max,
   ]);
+
+  const safeValues = (() => {
+    const low = Number(values?.[0]);
+    const high = Number(values?.[1]);
+    let nextLow = Number.isFinite(low) ? Math.max(MIN, Math.min(low, MAX)) : MIN;
+    let nextHigh = Number.isFinite(high) ? Math.max(MIN, Math.min(high, MAX)) : MAX;
+    if (nextLow > nextHigh) {
+      const swap = nextLow;
+      nextLow = nextHigh;
+      nextHigh = swap;
+    }
+    if (nextLow === nextHigh) {
+      nextHigh = Math.min(MAX, nextLow + STEP);
+    }
+    return [nextLow, nextHigh];
+  })();
 
   // sync with external filters (e.g. reset button)
   useEffect(() => {
@@ -895,8 +911,9 @@ console.log("Fetched products:", products);
               <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
                 <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
           
+                {isValidRange && (
                 <ReactRange
-                  values={values}
+                  values={safeValues}
                   step={STEP}
                   min={MIN}
                   max={MAX}
@@ -910,8 +927,8 @@ console.log("Fetched products:", products);
                       <div
                         className="absolute h-2 bg-gray-500 rounded-lg"
                         style={{
-                          left: `${((values[0] - MIN) / (MAX - MIN)) * 100}%`,
-                          width: `${((values[1] - values[0]) / (MAX - MIN)) * 100}%`,
+                          left: `${((safeValues[0] - MIN) / (MAX - MIN)) * 100}%`,
+                          width: `${((safeValues[1] - safeValues[0]) / (MAX - MIN)) * 100}%`,
                         }}
                       />
                       {children}
@@ -929,10 +946,11 @@ console.log("Fetched products:", products);
                     );
                   }}
                 />
+                )}
           
                 <div className="flex justify-between text-sm text-gray-600 mt-6">
-                  <span>₹{values[0].toLocaleString()}</span>
-                  <span>₹{values[1].toLocaleString()}</span>
+                  <span>₹{(Number.isFinite(safeValues[0]) ? safeValues[0] : 0).toLocaleString()}</span>
+                  <span>₹{(Number.isFinite(safeValues[1]) ? safeValues[1] : 0).toLocaleString()}</span>
                 </div>
               </div>
 
@@ -1164,8 +1182,9 @@ console.log("Fetched products:", products);
               <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
                 <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
           
+                {isValidRange && (
                 <ReactRange
-                  values={values}
+                  values={safeValues}
                   step={STEP}
                   min={MIN}
                   max={MAX}
@@ -1179,8 +1198,8 @@ console.log("Fetched products:", products);
                       <div
                         className="absolute h-2 bg-gray-500 rounded-lg"
                         style={{
-                          left: `${((values[0] - MIN) / (MAX - MIN)) * 100}%`,
-                          width: `${((values[1] - values[0]) / (MAX - MIN)) * 100}%`,
+                          left: `${((safeValues[0] - MIN) / (MAX - MIN)) * 100}%`,
+                          width: `${((safeValues[1] - safeValues[0]) / (MAX - MIN)) * 100}%`,
                         }}
                       />
                       {children}
@@ -1198,10 +1217,11 @@ console.log("Fetched products:", products);
                     );
                   }}
                 />
+                )}
           
                 <div className="flex justify-between text-sm text-gray-600 mt-6">
-                  <span>₹{values[0].toLocaleString()}</span>
-                  <span>₹{values[1].toLocaleString()}</span>
+                  <span>₹{(Number.isFinite(safeValues[0]) ? safeValues[0] : 0).toLocaleString()}</span>
+                  <span>₹{(Number.isFinite(safeValues[1]) ? safeValues[1] : 0).toLocaleString()}</span>
                 </div>
               </div>
 
