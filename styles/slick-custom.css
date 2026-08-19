@@ -1,23 +1,76 @@
-.slick-dots {
-    bottom: 40px !important;
-    text-align: left !important;
-    /* left: 175px !important; */
-    left: 40% !important;
-    width: fit-content !important;
-    line-height: 14px !important;
-    background: rgba(0,0,0,0.35) !important; 
-    -webkit-backdrop-filter: blur(8px) !important;
-    backdrop-filter: blur(8px) !important;
-    border-radius: 13px !important;
+/* Homepage top banner carousel dots — desktop only, bottom-center, small */
+.topbanner-slider.slick-slider {
+  padding-bottom: 18px;
 }
 
-.slick-dots li button:before {
-    font-size: 12px !important;
-    color: #ffff !important;
-    opacity: .50;
+.topbanner-slider .slick-dots {
+  bottom: 0 !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  z-index: 5 !important;
+  line-height: 0 !important;
 }
 
-.slick-dots li.slick-active button:before {
-    opacity: .90 !important;
-    color: #ffff !important;
+.topbanner-slider .slick-dots li {
+  position: relative !important;
+  display: inline-block !important;
+  width: 6px !important;
+  height: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+.topbanner-slider .slick-dots li button {
+  width: 6px !important;
+  height: 6px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: #c4c4c4 !important;
+  text-indent: -9999px;
+  overflow: hidden;
+}
+
+.topbanner-slider .slick-dots li button:before {
+  display: none !important;
+  content: none !important;
+}
+
+.topbanner-slider .slick-dots li.slick-active {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.topbanner-slider .slick-dots li.slick-active button {
+  width: 6px !important;
+  height: 6px !important;
+  background: #1a1a1a !important;
+}
+
+/* Hide dots on tablet and mobile */
+@media (max-width: 1024px) {
+  .topbanner-slider.slick-slider {
+    padding-bottom: 0;
+  }
+
+  .topbanner-slider .slick-dots {
+    display: none !important;
+  }
 }
