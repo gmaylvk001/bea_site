@@ -2,7 +2,7 @@
 
 
 import ProductDetailsSection from "@/components/ProductDetailsSection";
-import ProductVariantSelector from "@/components/ProductVariantSelector";
+// import ProductVariantSelector from "@/components/ProductVariantSelector";
 // import RelatedProducts from "@/components/RelatedProducts";
 import {  useEffect, useState, useRef,useMemo, useCallback } from "react";
 
@@ -1113,11 +1113,11 @@ const fetchBrand = async () => {
       {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
       {product.item_code && <span>SKU: {product.item_code}</span>}
     </div>
-    <ProductVariantSelector
+    {/* <ProductVariantSelector
       variantGroup={product.variantGroup}
       currentProductId={product._id}
       onSelect={handleVariantSelect}
-    />
+    /> */}
     {avgRating > 0 && (
       <div className="flex items-center gap-1 mt-2">
         <span className="text-yellow-400 text-sm">★</span>
@@ -1650,11 +1650,11 @@ const fetchBrand = async () => {
                   {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
                   {product.item_code && <span>SKU: {product.item_code}</span>}
                 </div>
-                <ProductVariantSelector
+                {/* <ProductVariantSelector
                   variantGroup={product.variantGroup}
                   currentProductId={product._id}
                   onSelect={handleVariantSelect}
-                />
+                /> */}
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3 flex-wrap">
                     {avgRating > 0 && (
