@@ -1192,8 +1192,11 @@ const fetchBrand = async () => {
       </p>
     </div>
 
-    {/* FlixMedia minisite target */}
+    {/* FlixMedia minisite target — official: insertAfter(".key-fea") */}
     <div className="key-fea"></div>
+    {!isDesktop ? (
+      <div id="flix-minisite" className="flix-minisite-container w-full mt-2 min-h-[40px]" />
+    ) : null}
 
    {/* Share / Wishlist */}
     <div className="flex items-center gap-2 mt-3">
@@ -1756,8 +1759,11 @@ const fetchBrand = async () => {
                   </p>
                 </div>
 
-                {/* FlixMedia minisite target */}
+                {/* FlixMedia minisite target — official: insertAfter(".key-fea") */}
                 <div className="key-fea"></div>
+                {isDesktop ? (
+                  <div id="flix-minisite" className="flix-minisite-container w-full mt-2 min-h-[40px]" />
+                ) : null}
 
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-sm font-medium text-gray-700">Quantity:</span>
