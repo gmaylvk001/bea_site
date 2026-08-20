@@ -2,12 +2,13 @@
 
 
 import ProductDetailsSection from "@/components/ProductDetailsSection";
+import ProductVariantSelector from "@/components/ProductVariantSelector";
 // import RelatedProducts from "@/components/RelatedProducts";
 import {  useEffect, useState, useRef,useMemo, useCallback } from "react";
 
 import { ShieldHalf } from 'lucide-react';
 import { Icon } from '@iconify/react';
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { FaStore } from "react-icons/fa";
 import { FaShield } from "react-icons/fa6";
@@ -56,7 +57,9 @@ function FaqItem({ question, answer }) {
 
 export default function ProductClient() {
   const router = useRouter(); 
-  const { slug } = useParams();
+  const params = useParams();
+  const pathname = usePathname();
+  const slug = (pathname || "").split("/").filter(Boolean).pop() || params?.slug;
   const [relatedProductsLoading, setRelatedProductsLoading] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [brand, setBrand] = useState([]);
@@ -66,6 +69,8 @@ export default function ProductClient() {
   const [showHighlights, setShowHighlights] = useState(false);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const variantCacheRef = useRef({});
+  const applyingVariantRef = useRef(false);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [showEMIModal, setShowEMIModal] = useState(false);
@@ -75,7 +80,9 @@ export default function ProductClient() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [faqs, setFaqs] = useState([]);
   const [recentlyViewedProducts, setRecentlyViewedProducts] = useState([]);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : false
+  );
 const [addOnProducts, setAddOnProducts] = useState([]);
  const [warranties, setWarranties] = useState([]);
 const [selectedWarrantyData, setSelectedWarrantyData] = useState(null);
@@ -690,62 +697,63 @@ const resolveImagePath = (image) => {
 
   useEffect(() => {
     const fetchProduct = async () => {
+      if (!slug) return;
+
+      const applyProductData = (data) => {
+        setProduct(data);
+        setSelectedImageIndex(0);
+        setQuantity(1);
+        if (data?.images?.[0]) setSelectedImage(data.images[0]);
+        if (data?.variantGroup?.products?.length) {
+          const group = data.variantGroup;
+          group.products.forEach((sibling) => {
+            const cachedSibling = {
+              ...sibling,
+              variantGroup: group,
+            };
+            if (sibling?.slug) variantCacheRef.current[sibling.slug] = cachedSibling;
+            if (sibling?._id) variantCacheRef.current[String(sibling._id)] = cachedSibling;
+          });
+          if (data.slug) {
+            variantCacheRef.current[data.slug] = { ...data, variantGroup: group };
+          }
+        }
+      };
+
+      const cached = variantCacheRef.current[slug];
+      if (cached) {
+        applyingVariantRef.current = false;
+        applyProductData(cached);
+        setLoading(false);
+        return;
+      }
+
       try {
-        setLoading(true);
+        setLoading((currentLoading) => (product ? currentLoading : true));
         const response = await fetch(`/api/product/${slug}`);
-        
-        // if (!response.ok) {
-        //   throw new Error(`HTTP error! status: ${response.status}`);
-        // }
 
         if (!response.ok) {
-    // Instead of throwing an error, handle it gracefully
-    setErrorMessage("Content not loading. Please try again later.");
-    setShowGoHome(true);
-    return;
-  }
-        
+          setErrorMessage("Content not loading. Please try again later.");
+          setShowGoHome(true);
+          return;
+        }
+
         const data = await response.json();
-         // ✅ Final client-side check
         if (data.status !== "Active") {
           router.push("/404");
           return;
         }
-        // console.log(data);
-        
-        // If API returns an array, find the product with matching slug
+
         if (Array.isArray(data)) {
-          const foundProduct = data.find(p => p.slug === slug);
+          const foundProduct = data.find((p) => p.slug === slug);
           if (!foundProduct) {
             throw new Error("Product not found");
           }
-          setProduct(foundProduct);
-        } 
-        // If API returns a single product object
-        else if (data && data.slug) {
-          setProduct(data);
-          // ###### Fetch Customer Reviews ###### //
-          try {
-            // fetch reviews
-            const reviewsRes = await fetch(`/api/reviews/${data._id}`);
-            const reviewsData = await reviewsRes.json();
- 
-            if (reviewsData.success) {
-              setReviews(reviewsData.reviews);
-              setAvgRating(reviewsData.avgRating);
-              setReviewCount(reviewsData.count);
-            }
-          } catch (error) {
-            console.error("Error fetching product or reviews:", error);
-          }
- 
-        }
-        else {
+          applyProductData(foundProduct);
+        } else if (data && data.slug) {
+          applyProductData(data);
+        } else {
           throw new Error("Invalid product data");
-        }
-  
-        if (product?.images?.length > 0) {
-          setSelectedImage(`/uploads/products/${product.images[0]}`);
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -755,11 +763,68 @@ const resolveImagePath = (image) => {
         setLoading(false);
       }
     };
-  
-    if (slug) {
-      fetchProduct();
-    }
+
+    fetchProduct();
   }, [slug]);
+
+  useEffect(() => {
+    if (!product?._id) return;
+    let cancelled = false;
+    fetch(`/api/reviews/${product._id}`)
+      .then((res) => res.json())
+      .then((reviewsData) => {
+        if (cancelled || !reviewsData.success) return;
+        setReviews(reviewsData.reviews);
+        setAvgRating(reviewsData.avgRating);
+        setReviewCount(reviewsData.count);
+      })
+      .catch((error) => {
+        console.error("Error fetching reviews:", error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [product?._id]);
+
+  const handleVariantSelect = (match) => {
+    if (!match) return;
+    const targetSlug = match.slug || String(match._id || "");
+    if (!targetSlug) return;
+    if (String(match._id) === String(product?._id) && targetSlug === String(slug)) return;
+
+    const group = product?.variantGroup;
+    const cached = {
+      ...(variantCacheRef.current[targetSlug] || match),
+      variantGroup: group,
+    };
+    variantCacheRef.current[targetSlug] = cached;
+    applyingVariantRef.current = true;
+    setProduct(cached);
+    setSelectedImageIndex(0);
+    setQuantity(1);
+    setSelectedWarrantyAmount(0);
+    setSelectedWarrantyData(null);
+    if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
+
+    const nextUrl = `/product/${targetSlug}`;
+    if (typeof window !== "undefined" && window.location.pathname !== nextUrl) {
+      window.history.pushState(null, "", nextUrl);
+    }
+  };
+
+  useEffect(() => {
+    const onPopState = () => {
+      const currentSlug = window.location.pathname.split("/").filter(Boolean).pop();
+      const cached = currentSlug ? variantCacheRef.current[currentSlug] : null;
+      if (cached) {
+        setProduct(cached);
+        setSelectedImageIndex(0);
+        if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   useEffect(() => {
   if (selectedFrequentProducts.length > 0) {
@@ -797,7 +862,7 @@ const fetchBrand = async () => {
   
         // Format for react-select
         const brandOptions = data.map((b) => ({
-          value: b._id,
+          value: String(b._id),
           label: b.brand_name,
           manufacturer_name: b.manufacturer_name || "",
           manufacturer_address: b.manufacturer_address || "",
@@ -818,7 +883,7 @@ const fetchBrand = async () => {
 
   useEffect(() => {
       fetchBrand();
-    }, []);
+    }, [product?._id]);
 
 
 
@@ -1048,6 +1113,11 @@ const fetchBrand = async () => {
       {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
       {product.item_code && <span>SKU: {product.item_code}</span>}
     </div>
+    <ProductVariantSelector
+      variantGroup={product.variantGroup}
+      currentProductId={product._id}
+      onSelect={handleVariantSelect}
+    />
     {avgRating > 0 && (
       <div className="flex items-center gap-1 mt-2">
         <span className="text-yellow-400 text-sm">★</span>
@@ -1171,6 +1241,7 @@ const fetchBrand = async () => {
 </button>
           <div className="flex-1">
             <ProductAddtoCart
+              key={product._id}
               productId={product._id}
               stockQuantity={product.quantity}
               quantity={quantity}
@@ -1285,12 +1356,14 @@ const fetchBrand = async () => {
   {/* 4. ProductDetailsSection (Highlights, Overview, Specs, Reviews, FAQ) */}
   <div className="mt-4">
  <ProductDetailsSection
+      key={product._id}
       product={product}
       reviews={reviews}
       avgRating={avgRating}
       reviewCount={reviewCount}
       manufacturerName={matchedBrandForManufacturer?.manufacturer_name}
       manufacturerAddress={matchedBrandForManufacturer?.manufacturer_address}
+      flixInstanceActive={!isDesktop}
     />
   </div> 
    
@@ -1368,6 +1441,7 @@ const fetchBrand = async () => {
         </div>
       )}
       <ProductAddtoCart
+        key={`bundle-${product._id}`}
         productId={product._id}
         stockQuantity={product.quantity}
         quantity={quantity}
@@ -1576,6 +1650,11 @@ const fetchBrand = async () => {
                   {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
                   {product.item_code && <span>SKU: {product.item_code}</span>}
                 </div>
+                <ProductVariantSelector
+                  variantGroup={product.variantGroup}
+                  currentProductId={product._id}
+                  onSelect={handleVariantSelect}
+                />
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3 flex-wrap">
                     {avgRating > 0 && (
@@ -1705,6 +1784,7 @@ const fetchBrand = async () => {
 </button>
                     <div className="flex-1">
                       <ProductAddtoCart
+                        key={product._id}
                         productId={product._id}
                         stockQuantity={product.quantity}
                         quantity={quantity}
@@ -1748,12 +1828,14 @@ const fetchBrand = async () => {
             {/* ProductDetailsSection - full width inside left 70% */}
             <div className="w-full">
              <ProductDetailsSection
+      key={product._id}
       product={product}
       reviews={reviews}
       avgRating={avgRating}
       reviewCount={reviewCount}
       manufacturerName={matchedBrandForManufacturer?.manufacturer_name}
       manufacturerAddress={matchedBrandForManufacturer?.manufacturer_address}
+      flixInstanceActive={isDesktop}
     />
             </div>
 
@@ -1965,6 +2047,7 @@ const fetchBrand = async () => {
               )}
               <div className="w-full">
                 <ProductAddtoCart
+                  key={`bundle-${product._id}`}
                   productId={product._id}
                   stockQuantity={product.quantity}
                   quantity={quantity}
