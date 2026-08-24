@@ -331,6 +331,9 @@ export default function StoreDetail() {
   const [dynamicCategories, setDynamicCategories] = useState([]);
   const [dynamicBrands, setDynamicBrands] = useState([]);
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
+  const [storeRating, setStoreRating] = useState(null);
+  const [featuredReviews, setFeaturedReviews] = useState([]);
+  const [reviewLinks, setReviewLinks] = useState({});
 
   useEffect(() => {
     if (slug) fetchStore();
@@ -365,6 +368,21 @@ export default function StoreDetail() {
     }
     
     setStore(data);
+
+    // Dynamic Google rating + featured reviews (Adtarbo via server proxy)
+    if (data?._id || data?.slug || slug) {
+      try {
+        const reviewRes = await fetch(`/api/store/${data.slug || slug}/reviews`);
+        const reviewData = await reviewRes.json();
+        if (reviewData?.success) {
+          setStoreRating(reviewData.rating || null);
+          setFeaturedReviews(Array.isArray(reviewData.featured_reviews) ? reviewData.featured_reviews : []);
+          setReviewLinks(reviewData.links || {});
+        }
+      } catch (reviewErr) {
+        console.error("Error fetching store reviews", reviewErr);
+      }
+    }
   } catch (e) {
     console.error("Error fetching store", e);
   } finally {
@@ -432,6 +450,25 @@ export default function StoreDetail() {
 )}`;
   const whatsappUrl = `https://wa.me/919842344323?text=${encodeURIComponent(`Hi, I'm interested in visiting ${store.organisation_name}, ${store.city}`)}`;
   const callUrl = `tel:+91${store.phone}`;
+  const ratingAverage = Number(storeRating?.average);
+  const ratingTotal = Number(storeRating?.total);
+  const hasDynamicRating = Number.isFinite(ratingAverage) && ratingAverage > 0;
+  const filledStars = hasDynamicRating ? Math.round(ratingAverage) : 5;
+  const ratingLabel = hasDynamicRating ? ratingAverage.toFixed(1) : "—";
+  const reviewCountLabel = Number.isFinite(ratingTotal) && ratingTotal > 0
+    ? `(${ratingTotal.toLocaleString()} Reviews)`
+    : "(Reviews)";
+
+  const formatReviewTime = (value) => {
+    if (!value) return "";
+    try {
+      const d = new Date(String(value).replace(" ", "T"));
+      if (Number.isNaN(d.getTime())) return String(value);
+      return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    } catch {
+      return String(value);
+    }
+  };
 
   return (
 
@@ -847,11 +884,11 @@ export default function StoreDetail() {
       {/* Google Rating */}
       <div className="flex items-center gap-2 mb-3">
         <span className="text-[13px] font-bold text-gray-700">G</span>
-        <span className="text-[14px] font-bold text-gray-900">4.8</span>
+        <span className="text-[14px] font-bold text-gray-900">{ratingLabel}</span>
         <div className="flex items-center gap-0.5">
-          {[1,2,3,4,5].map(i => <StarIcon key={i} filled={true} size={13}/>)}
+          {[1,2,3,4,5].map(i => <StarIcon key={i} filled={i <= filledStars} size={13}/>)}
         </div>
-        <span className="text-[12px] text-gray-500">(300+ Reviews)</span>
+        <span className="text-[12px] text-gray-500">{reviewCountLabel}</span>
       </div>
 
       {/* Address */}
@@ -964,11 +1001,11 @@ export default function StoreDetail() {
   {/* Rating */}
   <div className="flex items-center gap-1.5 mb-3">
     <span className="text-[12px] font-bold text-gray-700">G</span>
-    <span className="text-[13px] font-bold text-gray-900">4.8</span>
+    <span className="text-[13px] font-bold text-gray-900">{ratingLabel}</span>
     <div className="flex items-center gap-0.5">
-      {[1,2,3,4,5].map(i => <StarIcon key={i} filled={true} size={11}/>)}
+      {[1,2,3,4,5].map(i => <StarIcon key={i} filled={i <= filledStars} size={11}/>)}
     </div>
-    <span className="text-[11px] text-gray-500">(300+ Reviews)</span>
+    <span className="text-[11px] text-gray-500">{reviewCountLabel}</span>
   </div>
 
   {/* Address */}
@@ -1376,52 +1413,77 @@ export default function StoreDetail() {
   </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 6 — CUSTOMER REVIEWS (commented out)
-      ═══════════════════════════════════════════════════════
+          SECTION 6 — CUSTOMER REVIEWS (dynamic from Adtarbo)
+      ═══════════════════════════════════════════════════════ */}
+      {(hasDynamicRating || featuredReviews.length > 0) && (
       <section className="bg-white px-4 sm:px-8 py-8 mt-3">
         <SectionTitle>What Customers Say</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6 items-start">
           <div className="bea-card flex flex-col items-center text-center">
             <span className="text-[13px] font-bold text-gray-500 mb-1">G Google</span>
-            <span className="text-[42px] font-black text-gray-900 leading-none">4.8</span>
+            <span className="text-[42px] font-black text-gray-900 leading-none">{ratingLabel}</span>
             <div className="flex items-center gap-0.5 my-2">
-              {[1,2,3,4,5].map(i => <StarIcon key={i} filled={true} size={16}/>)}
+              {[1,2,3,4,5].map(i => <StarIcon key={i} filled={i <= filledStars} size={16}/>)}
             </div>
-            <span className="text-[12px] text-gray-500 mb-3">Based on 300+ Reviews</span>
-            <button className="text-blue-600 text-[12px] font-semibold border border-blue-200 rounded-lg px-4 py-1.5 hover:bg-blue-50 transition-colors">
-              Read All Reviews
-            </button>
+            <span className="text-[12px] text-gray-500 mb-3">
+              {Number.isFinite(ratingTotal) && ratingTotal > 0
+                ? `Based on ${ratingTotal.toLocaleString()} Reviews`
+                : "Customer Reviews"}
+            </span>
+            {reviewLinks.all_reviews ? (
+              <a
+                href={reviewLinks.all_reviews}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 text-[12px] font-semibold border border-blue-200 rounded-lg px-4 py-1.5 hover:bg-blue-50 transition-colors"
+              >
+                Read All Reviews
+              </a>
+            ) : null}
           </div>
-          <Swiper modules={[Navigation]} navigation spaceBetween={12}
-            breakpoints={{ 900: { slidesPerView: 3 }, 600: { slidesPerView: 2 }, 0: { slidesPerView: 1 } }}>
-            {[
-              { name: "Arun Kumar", time: "2 weeks ago", text: "Best electronics showroom in Coimbatore. Wide range of products and excellent customer service.", stars: 5 },
-              { name: "Priya Natarajan", time: "1 month ago", text: "Very good collection of ACs and TVs. Staff explained everything clearly. Happy with my purchase!", stars: 5 },
-              { name: "Ramesh Babu", time: "3 weeks ago", text: "Good offers, easy EMI and fast delivery. Highly recommended!", stars: 5 },
-              { name: "Meena S", time: "2 months ago", text: "Excellent after sales support. Installation was done very professionally.", stars: 5 },
-            ].map((review, i) => (
-              <SwiperSlide key={i}>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 h-full">
+          {featuredReviews.length > 0 ? (
+          <div
+            className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 min-w-0"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            {featuredReviews.map((review, i) => {
+              const name = review.reviewer_name || "Customer";
+              const stars = Math.max(0, Math.min(5, Number(review.rating) || 0));
+              return (
+              <div
+                key={review.review_id || i}
+                className="snap-start shrink-0 grow-0 basis-[calc(50%-6px)] lg:basis-[calc(25%-9px)] bg-gray-50 border border-gray-200 rounded-xl p-4"
+              >
                   <div className="flex items-center gap-2.5 mb-2">
-                    <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0">
-                      {review.name[0]}
-                    </div>
-                    <div>
-                      <div className="text-[12.5px] font-semibold text-gray-800">{review.name}</div>
-                      <div className="text-[10.5px] text-gray-400">{review.time}</div>
+                    {review.reviewer_photo ? (
+                      <img
+                        src={review.reviewer_photo}
+                        alt=""
+                        className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0">
+                        {name[0]}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-[12.5px] font-semibold text-gray-800 truncate">{name}</div>
+                      <div className="text-[10.5px] text-gray-400">{formatReviewTime(review.created_at)}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5 mb-2">
-                    {[...Array(review.stars)].map((_, j) => <StarIcon key={j} filled={true} size={11}/>)}
+                    {[...Array(stars)].map((_, j) => <StarIcon key={j} filled={true} size={11}/>)}
                   </div>
-                  <p className="text-[12px] text-gray-600 leading-relaxed">{review.text}</p>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                  <p className="text-[12px] text-gray-600 leading-relaxed line-clamp-4">{review.comment || ""}</p>
+              </div>
+            );})}
+          </div>
+          ) : (
+            <p className="text-sm text-gray-500 py-6">No featured reviews available for this store yet.</p>
+          )}
         </div>
       </section>
-      */}
+      )}
 
 {/* ═══════════════════════════════════════════════════════
     SECTION 7 — HAPPY CUSTOMERS PHOTOS (customer_images — dynamic)
