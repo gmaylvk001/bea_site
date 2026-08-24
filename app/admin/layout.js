@@ -18,9 +18,9 @@ export default function AdminLayout({ children }) {
     <AuthProvider>
       <div className="flex min-h-screen bg-gray-100">
         <AdminSider collapsed={sidebarCollapsed} />
-        <div className={`flex-1 ${sidebarCollapsed ? "ms-[4rem]" : "ms-[13.25rem]"}`}>
+        <div className={`flex-1 min-w-0 ${sidebarCollapsed ? "ms-[4rem]" : "ms-[13.25rem]"}`}>
           <AdminHeader toggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
-          <main className="flex-1 mt-0  px-6 h-[calc(100vh-3.5rem)] overflow-y-auto">
+          <main className="flex-1 mt-0 px-6 h-[calc(100vh-3.5rem)] overflow-y-auto overflow-x-auto min-w-0">
             {children}
           </main>
         </div>

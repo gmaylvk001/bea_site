@@ -13,6 +13,7 @@ const AttributeSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     type: { type: String, enum: ["text", "color"], default: "text" },
+    options: { type: [String], default: [] },
     valuesMeta: { type: [ValueMetaSchema], default: [] },
   },
   { _id: false }
