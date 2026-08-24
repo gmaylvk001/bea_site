@@ -2,7 +2,7 @@
 
 
 import ProductDetailsSection from "@/components/ProductDetailsSection";
-// import FlixMediaLoader from "@/components/FlixMediaLoader";
+import FlixMediaLoader from "@/components/FlixMediaLoader";
 import ProductVariantSelector from "@/components/ProductVariantSelector";
 // import RelatedProducts from "@/components/RelatedProducts";
 import {  useEffect, useState, useRef,useMemo, useCallback } from "react";
@@ -1018,12 +1018,12 @@ const fetchBrand = async () => {
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
-      {/* <FlixMediaLoader
+      <FlixMediaLoader
         product={product}
         brandName={matchedBrandForManufacturer?.label || brand.find((b) => String(b.value) === String(product?.brand))?.label || ""}
         enabled={Boolean(product?._id) && brand.length > 0}
         layoutKey={isDesktop ? "desktop" : "mobile"}
-      /> */}
+      />
       {errorMessage && (
   <div className="text-center mt-10">
     <p className="text-red-600 text-lg mb-3">{errorMessage}</p>
@@ -1120,11 +1120,6 @@ const fetchBrand = async () => {
       {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
       {product.item_code && <span>SKU: {product.item_code}</span>}
     </div>
-    <ProductVariantSelector
-      variantGroup={product.variantGroup}
-      currentProductId={product._id}
-      onSelect={handleVariantSelect}
-    />
     {avgRating > 0 && (
       <div className="flex items-center gap-1 mt-2">
         <span className="text-yellow-400 text-sm">★</span>
@@ -1223,8 +1218,13 @@ const fetchBrand = async () => {
       />
     </div>
 
-    {/* Quantity + Buy Now + Add to Cart */}
+    {/* Variants + Quantity + Buy Now + Add to Cart */}
     <div className="mt-3">
+      <ProductVariantSelector
+        variantGroup={product.variantGroup}
+        currentProductId={product._id}
+        onSelect={handleVariantSelect}
+      />
       <div className="flex items-center gap-3 mb-3">
         <span className="text-sm font-medium text-gray-700">Quantity:</span>
         <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">
@@ -1660,11 +1660,6 @@ const fetchBrand = async () => {
                   {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
                   {product.item_code && <span>SKU: {product.item_code}</span>}
                 </div>
-                <ProductVariantSelector
-                  variantGroup={product.variantGroup}
-                  currentProductId={product._id}
-                  onSelect={handleVariantSelect}
-                />
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3 flex-wrap">
                     {avgRating > 0 && (
@@ -1772,6 +1767,11 @@ const fetchBrand = async () => {
                   <div id="flix-minisite" className="flix-minisite-container w-full mt-2 min-h-[40px]" />
                 ) : null}
 
+                <ProductVariantSelector
+                  variantGroup={product.variantGroup}
+                  currentProductId={product._id}
+                  onSelect={handleVariantSelect}
+                />
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-sm font-medium text-gray-700">Quantity:</span>
                   <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">
