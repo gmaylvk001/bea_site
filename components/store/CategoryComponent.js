@@ -821,121 +821,136 @@ export default function StoreDetail() {
     SECTION 1 — STORE HEADER
 ═══════════════════════════════════════════════════════ */}
 
-{/* DESKTOP — Banner with overlay */}
-<section className="hidden sm:block relative w-full">
-  {store.banners?.length > 0 ? (
-    <div style={{ minHeight: '400px', maxHeight: '520px', overflow: 'hidden' }}>
-      <img
-        src={store.banners[0]}
-        alt={store.organisation_name}
-        className="w-full block object-cover"
-        style={{ minHeight: '400px', maxHeight: '520px' }}
-      />
-    </div>
-  ) : store.logo ? (
-    <img
-      src={store.logo}
-      alt={store.organisation_name}
-      className="w-full block object-cover"
-      style={{ minHeight: '400px', maxHeight: '520px' }}
-    />
-  ) : (
-    <div
-      className="w-full bg-gradient-to-br from-blue-900 to-blue-700"
-      style={{ minHeight: '400px', maxHeight: '520px' }}
-    />
-  )}
+{/* DESKTOP — White content left + store image right with soft white fade */}
+<section className="hidden sm:block relative w-full bg-white">
+  <div className="relative flex w-full min-h-[400px] lg:min-h-[460px] max-h-[520px] overflow-hidden">
 
-  {/* White gradient overlay — left side */}
-  <div
-    className="absolute inset-0"
-    style={{
-      background: 'linear-gradient(to right, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.90) 28%, rgba(255,255,255,0.35) 48%, rgba(255,255,255,0) 65%)',
-    }}
-  />
+    {/* Left — solid white content */}
+    <div className="relative z-20 flex w-[46%] lg:w-[42%] xl:w-[40%] flex-shrink-0 items-center bg-white pl-10 pr-4 lg:pl-14 lg:pr-6 xl:pl-16 pb-16 lg:pb-20">
+      <div className="w-full max-w-[440px]">
 
-  {/* Left overlay content */}
-  <div className="absolute inset-0 flex items-center pb-16 lg:pb-20 xl:pb-22">
-    <div className="ml-14 max-w-[420px]">
+        {/* Breadcrumb */}
+        <div className="text-[11px] text-gray-400 mb-3 flex items-center gap-1 flex-nowrap whitespace-nowrap overflow-hidden">
+          <Link href="/" className="hover:text-blue-600 flex-shrink-0">Home</Link>
+          <span className="flex-shrink-0">›</span>
+          <Link href="/our-branches" className="hover:text-blue-600 flex-shrink-0">Our Stores</Link>
+          <span className="flex-shrink-0">›</span>
+          <span className="text-gray-600 flex-shrink-0">{store.city}</span>
+          <span className="flex-shrink-0">›</span>
+          <span className="text-blue-600 font-medium truncate">{store.organisation_name}</span>
+        </div>
 
-      {/* Breadcrumb */}
-      <div className="text-[11px] text-gray-400 mt-4 mb-2 flex items-center gap-1 flex-nowrap whitespace-nowrap overflow-hidden">
-        <Link href="/" className="hover:text-blue-600 flex-shrink-0">Home</Link>
-        <span className="flex-shrink-0">›</span>
-        <Link href="/our-branches" className="hover:text-blue-600 flex-shrink-0">Our Stores</Link>
-        <span className="flex-shrink-0">›</span>
-        <span className="text-gray-600 flex-shrink-0">{store.city}</span>
-        <span className="flex-shrink-0">›</span>
-        <span className="text-blue-600 font-medium truncate">{store.organisation_name}</span>
-      </div>
-
-      {/* Name + Badge */}
-      <div className="flex items-center gap-2 flex-wrap mb-1">
-        <h1 className="text-[22px] min-[1440px]:text-[26px] min-[2560px]:text-[32px] min-[3840px]:text-[38px] font-bold text-gray-900 leading-tight">
-          {store.organisation_name}
-        </h1>
-        {(store.category || store.service_area) && (
-          <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-            {store.category || store.service_area}
+        {/* Name + Badge */}
+        <div className="flex items-center gap-2.5 flex-wrap mb-1.5">
+          <h1 className="text-[22px] lg:text-[26px] min-[1440px]:text-[28px] min-[2560px]:text-[34px] font-bold text-[#0B3A82] leading-tight">
+            {store.organisation_name}
+          </h1>
+          <span className="bg-[#22A45A] text-white text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+            {store.category || store.service_area || "Multi Brand Store"}
           </span>
-        )}
-      </div>
-
-      {/* Google Rating */}
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-[13px] font-bold text-gray-700">G</span>
-        <span className="text-[14px] font-bold text-gray-900">{ratingLabel}</span>
-        <div className="flex items-center gap-0.5">
-          {[1,2,3,4,5].map(i => <StarIcon key={i} filled={i <= filledStars} size={13}/>)}
         </div>
-        <span className="text-[12px] text-gray-500">{reviewCountLabel}</span>
-      </div>
 
-      {/* Address */}
-      <div className="flex items-start gap-2 mb-2 text-[12.5px] text-gray-600">
-        <span className="mt-0.5 flex-shrink-0 text-blue-600"><MapPinIcon size={13}/></span>
-        <span>{store.address}{store.zipcode ? `, ${store.zipcode}` : ""}</span>
-      </div>
+        <p className="text-[13px] text-gray-600 mb-3 leading-snug">
+          Electronics &amp; Home Appliances Store
+          {store.city ? ` in ${store.city}` : ""}
+        </p>
 
-      {/* Phone */}
-      {store.phone && (
-        <div className="flex items-center gap-2 mb-2 text-[12.5px] text-gray-600">
-          <span className="text-blue-600"><PhoneIcon size={13}/></span>
-          <a href={callUrl} className="hover:text-blue-600">{store.phone}</a>
+        {/* Google Rating */}
+        <div className="flex items-center gap-2 mb-4">
+          <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden className="flex-shrink-0">
+            <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.1 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.9z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.1 19 14 24 14c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.1 36 26.7 37 24 37c-5.1 0-9.7-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l.1.1 6.2 5.2C39.2 37.3 44 31.5 44 24c0-1.3-.1-2.7-.4-3.9z"/>
+          </svg>
+          <span className="text-[15px] font-bold text-gray-900">{ratingLabel}</span>
+          <div className="flex items-center gap-0.5">
+            {[1,2,3,4,5].map(i => <StarIcon key={i} filled={i <= filledStars} size={13}/>)}
+          </div>
+          <span className="text-[12px] text-gray-500">
+            {Number.isFinite(ratingTotal) && ratingTotal > 0
+              ? `(${ratingTotal.toLocaleString()}+ Google Reviews)`
+              : "(Google Reviews)"}
+          </span>
         </div>
-      )}
 
-      {/* Hours */}
-      <div className="flex items-center gap-2 mb-4 text-[12.5px] text-gray-600">
-        <span className="text-blue-600"><ClockIcon size={13}/></span>
-        <span>Open Today: <strong>{STORE_HOURS}</strong></span>
-      </div>
+        {/* Address */}
+        <div className="flex items-start gap-2.5 mb-2.5 text-[12.5px] text-gray-600 leading-relaxed">
+          <span className="mt-0.5 flex-shrink-0 text-[#1A56DB]"><MapPinIcon size={14}/></span>
+          <span>{store.address}{store.zipcode ? `, ${store.zipcode}` : ""}</span>
+        </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-2.5 flex-wrap">
-        <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
-          <button className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2.5 text-[12.5px] font-semibold transition-colors">
-            <DirectionsIcon size={13}/> Get Directions
-          </button>
-        </a>
-        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-          <button className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#1ebe5a] text-white rounded-lg px-4 py-2.5 text-[12.5px] font-semibold transition-colors">
-            <WhatsAppIcon size={13}/> WhatsApp
-          </button>
-        </a>
+        {/* Phone */}
         {store.phone && (
-          <a href={callUrl}>
-            <button className="flex items-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg px-4 py-2.5 text-[12.5px] font-semibold transition-colors">
-              <PhoneIcon size={13}/> Call Store
+          <div className="flex items-center gap-2.5 mb-2.5 text-[12.5px] text-gray-600">
+            <span className="text-[#1A56DB]"><PhoneIcon size={14}/></span>
+            <a href={callUrl} className="hover:text-blue-600">{store.phone}</a>
+          </div>
+        )}
+
+        {/* Hours */}
+        <div className="flex items-center gap-2.5 mb-5 text-[12.5px] text-gray-600">
+          <span className="text-[#1A56DB]"><ClockIcon size={14}/></span>
+          <span>
+            Open Today: <strong>{STORE_HOURS}</strong>
+            <span className="text-gray-400"> (All Days Open)</span>
+          </span>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+            <button className="flex items-center gap-1.5 bg-[#1A56DB] hover:bg-[#1648b8] text-white rounded-lg px-4 py-2.5 text-[12.5px] font-semibold transition-colors">
+              <DirectionsIcon size={13}/> Get Directions
             </button>
           </a>
-        )}
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+            <button className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#1ebe5a] text-white rounded-lg px-4 py-2.5 text-[12.5px] font-semibold transition-colors">
+              <WhatsAppIcon size={13}/> WhatsApp
+            </button>
+          </a>
+          {store.phone && (
+            <a href={callUrl}>
+              <button className="flex items-center gap-1.5 bg-white border-2 border-[#1A56DB] hover:bg-blue-50 text-[#1A56DB] rounded-lg px-4 py-2.5 text-[12.5px] font-semibold transition-colors">
+                <PhoneIcon size={13}/> Call Store
+              </button>
+            </a>
+          )}
+        </div>
       </div>
+    </div>
+
+    {/* Right — store image with soft white fade on left edge (no hard corner) */}
+    <div className="relative flex-1 min-w-0">
+      {store.banners?.length > 0 ? (
+        <img
+          src={store.banners[0]}
+          alt={store.organisation_name}
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+      ) : store.logo ? (
+        <img
+          src={store.logo}
+          alt={store.organisation_name}
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-blue-700" />
+      )}
+
+      {/* Soft white shade — blends image into left white panel */}
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[42%] lg:w-[38%]"
+        style={{
+          background:
+            "linear-gradient(to right, #ffffff 0%, rgba(255,255,255,0.92) 18%, rgba(255,255,255,0.55) 48%, rgba(255,255,255,0.18) 72%, rgba(255,255,255,0) 100%)",
+        }}
+      />
     </div>
   </div>
 
   {/* Stats bar — sits near bottom of top banner */}
-  <div className="absolute left-0 right-0 bottom-0 z-10 px-4 sm:px-6 lg:px-8 pb-1 lg:pb-2 translate-y-3 lg:translate-y-4">
+  <div className="absolute left-0 right-0 bottom-0 z-30 px-4 sm:px-6 lg:px-8 pb-1 lg:pb-2 translate-y-3 lg:translate-y-4">
     <div className="bg-white/95 backdrop-blur-sm rounded-xl lg:rounded-2xl shadow-xl border border-gray-100 grid grid-cols-4 lg:grid-cols-8 divide-x divide-gray-100">
       {[
         { icon: "/store/25+year.png", value: "25+", label: "Years of Trust" },
