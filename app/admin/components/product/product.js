@@ -970,7 +970,6 @@ const exportFilterDataToExcel = () => {
   );
 };
 
-
   const [isBulkUploadModel, setIsBulkUploadModel] = useState({
     isOpen: false, 
     type: null,

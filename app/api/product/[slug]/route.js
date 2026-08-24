@@ -1,6 +1,7 @@
 // app/api/product/[slug]/route.js
 import dbConnect from "@/lib/db";
 import Product from "@/models/product";
+import { attachVariantGroupToProduct } from "@/lib/variantGroup";
 
 export async function GET(request, context) {
   const { params } = await context;
@@ -14,17 +15,18 @@ export async function GET(request, context) {
   }
 
   try {
-    // const product = await Product.findOne({ slug });
-    const product = await Product.findOne({ 
-      slug, 
-      status: "Active" // ✅ Only return active products
-    })
+    const product = await Product.findOne({
+      slug,
+      status: "Active",
+    }).lean();
 
     if (!product) {
       return new Response(JSON.stringify({ message: "Product not found" }), {
         status: 404,
       });
     }
+
+    await attachVariantGroupToProduct(product);
 
     return new Response(JSON.stringify(product), {
       status: 200,

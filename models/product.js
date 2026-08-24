@@ -23,6 +23,12 @@ const ProductSchema = new mongoose.Schema({
   stock_status: { type: String, enum: ["In Stock", "Out of Stock"], default: "In Stock" },
   hasVariants: { type: Boolean, default: false },
   variants: { type: Object, default: {} },
+  variantGroupId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "VariantGroup",
+    default: null,
+    index: true,
+  },
   images: { type: [String], default: [] }, 
   filter : { type: Object, default: {} },
   overview_image: { type: [String], default: [] }, 

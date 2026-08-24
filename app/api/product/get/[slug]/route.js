@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Product from '@/models/product';
 import Filter from '@/models/ecom_filter_infos';
 import dbConnect from '@/lib/db';
+import { attachVariantGroupToProduct } from '@/lib/variantGroup';
 
 export const dynamic = 'force-dynamic'; // Important for dynamic fetching
 
@@ -11,14 +12,15 @@ export async function GET(request, { params }) {
     await dbConnect();
     
     // 2. Get slug from URL parameters
-    const { slug } = params;
+    const { slug } = await params;
     console.log('Fetching product for slug:', slug);
 
-    // 3. Find product by slug or ID
-    const product = await Product.findOne({
-      $or: [{ slug }, { _id: slug }],
-      status: "Active"
-    }).lean();
+    const isObjectId = /^[a-f\d]{24}$/i.test(String(slug || ""));
+    const productQuery = isObjectId
+      ? { $or: [{ slug }, { _id: slug }], status: "Active" }
+      : { slug, status: "Active" };
+
+    const product = await Product.findOne(productQuery).lean();
 
     if (!product) {
       console.log('Product not found for slug:', slug);
@@ -32,9 +34,12 @@ export async function GET(request, { params }) {
     // 4. Convert MongoDB ObjectId to string
     if (product._id) {
       product._id = product._id.toString();
-      filters = await Filter.findOne({
-      proudct_id: product._id
-    });
+      if (!isObjectId) {
+        filters = await Filter.findOne({
+          proudct_id: product._id
+        });
+        await attachVariantGroupToProduct(product);
+      }
     }
 
     // 5. Return product data
