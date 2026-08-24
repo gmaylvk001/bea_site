@@ -2,7 +2,6 @@ import ProductClient from "./ProductClient";
 import { buildCanonicalUrl } from "@/components/CanonicalLink";
 import {
   getBaseUrl,
-  fetchJson,
   productImageUrl,
   stripHtml,
   sanitizeMetaKeywords,
@@ -10,20 +9,27 @@ import {
   buildFAQPageSchema,
   buildBreadcrumbSchema,
 } from "@/lib/schema";
+import { getProductBySlug } from "@/lib/getProductBySlug";
+import dbConnect from "@/lib/db";
+import Review from "@/models/Review";
+import ecom_brand_info from "@/models/ecom_brand_info";
 
 async function getProductData(slug) {
-  return fetchJson(`/api/product/${slug}`);
+  return getProductBySlug(slug, { includeVariantGroup: false });
 }
 
 async function getProductReviews(productId) {
   if (!productId) return { reviews: [], avgRating: 0, count: 0 };
-  const data = await fetchJson(`/api/reviews/${productId}`);
-  if (!data?.success) return { reviews: [], avgRating: 0, count: 0 };
-  return {
-    reviews: data.reviews || [],
-    avgRating: data.avgRating || 0,
-    count: data.count || 0,
-  };
+  await dbConnect();
+  const reviews = await Review.find({
+    product_id: productId,
+    review_status: "active",
+  }).lean();
+  const count = reviews.length;
+  const avgRating = count
+    ? reviews.reduce((sum, review) => sum + Number(review.reviews_rating || 0), 0) / count
+    : 0;
+  return { reviews, avgRating, count };
 }
 
 async function getBrandName(brand) {
@@ -31,12 +37,8 @@ async function getBrandName(brand) {
   if (typeof brand === "object" && brand.brand_name) return brand.brand_name;
   const brandId = typeof brand === "object" ? brand._id || brand.id : brand;
   if (!brandId) return null;
-  const data = await fetchJson("/api/brand");
-  const brands = data?.data || data || [];
-  if (!Array.isArray(brands)) return null;
-  const matched = brands.find(
-    (b) => String(b._id) === String(brandId) || String(b.id) === String(brandId)
-  );
+  await dbConnect();
+  const matched = await ecom_brand_info.findById(brandId).select("brand_name").lean();
   return matched?.brand_name || null;
 }
 
