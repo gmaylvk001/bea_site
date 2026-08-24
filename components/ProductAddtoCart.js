@@ -110,7 +110,9 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
           localStorage.setItem("guestCartId", guestCartId);
         }
 
-        const proresponse = await fetch(`/api/product/get/${productId}`);
+        const proresponse = await fetch(`/api/product/get/${productId}`, {
+          signal: AbortSignal.timeout(15000),
+        });
        
         if (!proresponse.ok) {
           throw new Error(`HTTP error! status: ${proresponse.status}`);
@@ -148,6 +150,7 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
             warrantyData: warrantyData || null,
             ...(guestCartId && { guestCartId }), 
           }),
+          signal: AbortSignal.timeout(20000),
         });
 
         if(cartResponse.ok) {
