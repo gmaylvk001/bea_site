@@ -3,7 +3,7 @@
 
 import ProductDetailsSection from "@/components/ProductDetailsSection";
 import FlixMediaLoader from "@/components/FlixMediaLoader";
-import ProductVariantSelector from "@/components/ProductVariantSelector";
+// import ProductVariantSelector from "@/components/ProductVariantSelector";
 // import RelatedProducts from "@/components/RelatedProducts";
 import {  useEffect, useState, useRef,useMemo, useCallback } from "react";
 
@@ -28,6 +28,7 @@ import ProductBreadcrumb from "@/components/ProductBreadcrumb";
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import RelatedProducts from "@/components/RelatedProducts";
 import RazorpayOffers from "@/components/RazorpayOffers";
+import { useVisitorIntent } from "@/context/VisitorIntentContext";
 import { v4 as uuidv4 } from "uuid";
 
 
@@ -60,6 +61,7 @@ export default function ProductClient() {
   const router = useRouter(); 
   const params = useParams();
   const pathname = usePathname();
+  const { trackProductView } = useVisitorIntent();
   const slug = (pathname || "").split("/").filter(Boolean).pop() || params?.slug;
   const [relatedProductsLoading, setRelatedProductsLoading] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -655,6 +657,16 @@ const matchedBrandForManufacturer = (() => {
   return brand.find((b) => String(b.value) === brandId) || null;
 })();
 
+  // Smart Lead Part 1 — product view → visitor intent score foundation
+  useEffect(() => {
+    if (!product?._id) return;
+    const brandName =
+      matchedBrandForManufacturer?.label ||
+      brand.find((b) => String(b.value) === String(product.brand))?.label ||
+      "";
+    trackProductView(product, { brandName });
+  }, [product?._id, trackProductView, matchedBrandForManufacturer?.label, brand]);
+
 // helper to resolve full path
 const resolveImagePath = (image) => {
   if (!image) return "/no-image.jpg";
@@ -1220,11 +1232,11 @@ const fetchBrand = async () => {
 
     {/* Variants + Quantity + Buy Now + Add to Cart */}
     <div className="mt-3">
-      <ProductVariantSelector
+      {/* <ProductVariantSelector
         variantGroup={product.variantGroup}
         currentProductId={product._id}
         onSelect={handleVariantSelect}
-      />
+      /> */}
       <div className="flex items-center gap-3 mb-3">
         <span className="text-sm font-medium text-gray-700">Quantity:</span>
         <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">
@@ -1767,11 +1779,11 @@ const fetchBrand = async () => {
                   <div id="flix-minisite" className="flix-minisite-container w-full mt-2 min-h-[40px]" />
                 ) : null}
 
-                <ProductVariantSelector
+                {/* <ProductVariantSelector
                   variantGroup={product.variantGroup}
                   currentProductId={product._id}
                   onSelect={handleVariantSelect}
-                />
+                /> */}
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-sm font-medium text-gray-700">Quantity:</span>
                   <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">
