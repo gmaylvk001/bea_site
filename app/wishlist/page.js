@@ -1,20 +1,8 @@
-"use client";
-import { useState, useEffect } from "react";
-
+import { noIndexMetadata } from "@/components/NoIndexRobots";
 import Wishlistpage from "@/components/wishlistpage";
 
+export const metadata = noIndexMetadata;
 
-export default function Dashboard() {
-  const [time, setTime] = useState(null);
-
-  useEffect(() => {
-    setTime(Date.now());
-  }, []);
-
-  return (
-    <div>
-      
-      <Wishlistpage /> 
-    </div>
-  );
+export default function WishlistPage() {
+  return <Wishlistpage />;
 }

@@ -1,20 +1,8 @@
-"use client";
-import { useState, useEffect } from "react";
-
+import { noIndexMetadata } from "@/components/NoIndexRobots";
 import OrderComponent from "@/components/order/order";
 
+export const metadata = noIndexMetadata;
 
-export default function Dashboard() {
-  const [time, setTime] = useState(null);
-
-  useEffect(() => {
-    setTime(Date.now());
-  }, []);
-
-  return (
-    <div>
-      
-      <OrderComponent /> {/* Use the OrderComponent here */}
-    </div>
-  );
+export default function OrderPage() {
+  return <OrderComponent />;
 }

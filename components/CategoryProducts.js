@@ -16,6 +16,7 @@ import "../styles/slick-custom.css";
 import 'swiper/css';
 import 'swiper/css/navigation';
 import "swiper/css/pagination";
+import { buildCategoryHref } from "@/lib/categoryPath";
 const CategoryProducts = () => {
   const [categoryProducts, setCategoryProducts] = useState([]);
   const [brandMap, setBrandMap] = useState({});
@@ -254,8 +255,8 @@ const getBannerRedirectUrls = (urls) => {
                 const catId = category._id?.toString();
                 const parentCat = idToCategory[category.parentid];
                 const showallLink = parentCat
-                  ? `/category/${parentCat.category_slug}/${category.category_slug}`
-                  : `/category/${category.category_slug}`;
+                  ? buildCategoryHref(parentCat, category)
+                  : buildCategoryHref(category);
                 const dynamicChildren = (childrenByParentId[catId] || [])?.slice(0, 7);
                 const sanitizedCategoryImage = getSanitizedImage(categoryProduct.categoryImage);
                 const sanitizedBackgroundImage = getSanitizedImage(categoryStyle.backgroundImage);

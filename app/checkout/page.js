@@ -1,20 +1,8 @@
-"use client";
-import { useState, useEffect } from "react";
-
+import { noIndexMetadata } from "@/components/NoIndexRobots";
 import CheckoutComponent from "@/components/checkout/checkout";
 
+export const metadata = noIndexMetadata;
 
-export default function Dashboard() {
-  const [time, setTime] = useState(null);
-
-  useEffect(() => {
-    setTime(Date.now());
-  }, []);
-
-  return (
-    <div>
-      
-      <CheckoutComponent /> {/* Use the Home component here */}
-    </div>
-  );
+export default function CheckoutPage() {
+  return <CheckoutComponent />;
 }

@@ -8,6 +8,8 @@ import {
   buildCollectionPageSchema,
   buildBreadcrumbSchema,
 } from "@/lib/schema";
+import { isInvalidCategorySlug } from "@/lib/categoryPath";
+import { notFound } from "next/navigation";
 
 async function getCategoryData(categorySlug) {
   return fetchJson(`/api/categories/${categorySlug}`);
@@ -71,6 +73,9 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const awaitedParams = await params;
   const { slug, sub_slug } = awaitedParams;
+  if ([slug, sub_slug].some(isInvalidCategorySlug)) {
+    notFound();
+  }
   const baseUrl = getBaseUrl();
   const path = `/category/${slug}/${sub_slug}`;
 
