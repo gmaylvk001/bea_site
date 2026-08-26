@@ -1,8 +1,20 @@
-import { noIndexMetadata } from "@/components/NoIndexRobots";
+"use client";
+import { useState, useEffect } from "react";
+
 import ProfileComponent from "@/components/profile/profile";
 
-export const metadata = noIndexMetadata;
 
-export default function ProfilePage() {
-  return <ProfileComponent />;
+export default function Dashboard() {
+  const [time, setTime] = useState(null);
+
+  useEffect(() => {
+    setTime(Date.now());
+  }, []);
+
+  return (
+    <div>
+      
+      <ProfileComponent /> {/* Use the ProfileComponent here */}
+    </div>
+  );
 }

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import SearchPage from "./SearchPage";
 import { buildCanonicalUrl } from "@/components/CanonicalLink";
-import { noIndexMetadata } from "@/components/NoIndexRobots";
 
 function searchCanonicalPath(searchParams) {
   const query = String(searchParams?.query || "").trim();
@@ -18,7 +17,6 @@ export async function generateMetadata({ searchParams }) {
     description: query
       ? `Search results for ${query} at Bharath Electronics & Appliances`
       : "Search electronics and home appliances at Bharath Electronics & Appliances",
-    ...noIndexMetadata,
     alternates: {
       canonical: buildCanonicalUrl(path),
     },

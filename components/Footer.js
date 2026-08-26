@@ -12,7 +12,6 @@ import { MdAccountCircle } from "react-icons/md";
 import { FaShoppingBag } from "react-icons/fa";
 import { IoLogOut } from "react-icons/io5";
 import OurLocations from '@/components/OurLocations';
-import { buildCategoryHref } from "@/lib/categoryPath";
 import {
   Tv,
   Laptop,
@@ -459,7 +458,7 @@ const Footer = () => {
                     <ul className="space-y-2 text-gray-600 text-sm">
                       {groupedCategories.main.slice(0,8).map((cat) => (
                         <li key={cat._id}>
-                          <Link href={buildCategoryHref(cat)}>
+                          <Link href={`/category/${cat.category_slug}`}>
                             {cat.category_name}
                           </Link>
                         </li>
@@ -601,7 +600,7 @@ const Footer = () => {
   className="hover:text-white transition-colors"
 >
                     <Link
-                      href={buildCategoryHref(main, sub)}
+                      href={`/category/${main.category_slug}/${sub.category_slug}`}
                     >
                       {sub.category_name}
                     </Link>
@@ -610,7 +609,7 @@ const Footer = () => {
 
               <li className="whitespace-nowrap">
                 <Link
-                  href={buildCategoryHref(main)}
+                  href={`/category/${main.category_slug}`}
                   className="text-blue-300 hover:text-white transition-colors"
                 >
                   View All →

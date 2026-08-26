@@ -17,11 +17,6 @@ import { Navigation, Scrollbar } from 'swiper/modules';
 import { useHeaderdetails } from "@/context/HeaderContext"; 
 import { getProducts } from '@/lib/productApi';
 import { filterAndRankProducts } from '@/lib/searchMatch';
-import {
-  getCategorySlug,
-  buildCategoryHref,
-  buildCategoryBrandHref,
-} from '@/lib/categoryPath';
 
 // ADD: alphaSortString - case-insensitive, null-safe string comparator
 const alphaSortString = (a, b) => {
@@ -1303,9 +1298,21 @@ const Header = () => {
       setOpenCategories((prev) => ({ ...prev, [id]: !prev[id] }));
     }, [ensureSubcategories]);
 
+    // Add missing slug helpers used by renderCategoryLevel
+    const safeSlugify = (s, fallback = "") => {
+      const base = (s || "").toString().trim();
+      if (!base) return fallback;
+      return base.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    };
+    const getCategorySlug = (cat) =>cat?.category_slug || cat?.slug || safeSlugify(cat?.category_name, cat?._id || "category");
     // NEW: compute href for node based on level (parent/child)
     const getNodeHref = (ancestorSlugs = [], nodeSlug) => {
-      return buildCategoryHref(...ancestorSlugs, nodeSlug);
+      // Join all ancestors + current node
+      const fullPath = [...ancestorSlugs, nodeSlug]
+        .map((slug) => encodeURIComponent(slug))
+        .join("/");
+
+      return `/category/${fullPath}`;
     };
     // NEW: recursive renderer for unlimited category levels
     function renderCategoryLevel(nodes, ancestorSlugs = [], level = 0) {
@@ -2163,7 +2170,7 @@ const Header = () => {
                                     <SwiperSlide key={category._id} className="!w-auto">
                                         <div ref={(el) => (slideRefs.current[category._id] = el)} onMouseEnter={() => handleMouseEnter(category._id)} onMouseLeave={() => startHide(120)} className="px-5 py-2 flex flex-col items-center text-center" >
                                             <Link
-                                              href={buildCategoryHref(category)}
+                                              href={`/category/${category.category_slug}`}
                                               className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap"
                                               aria-label={`View ${category.category_name}`}
                                             >
@@ -2310,7 +2317,7 @@ const Header = () => {
                       </div>
                     )}
                  <Link
-          href={buildCategoryHref(hoveredCategory, sub)}
+          href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
             style={{
                    fontSize: '13px',
                    fontWeight: isActive ? 700 : 600,
@@ -2327,7 +2334,7 @@ const Header = () => {
             })}
             <div style={{ padding: '10px 16px' }}>
   <Link
-    href={buildCategoryHref(hoveredCategory)}
+    href={`/category/${hoveredCategory.category_slug}`}
     onClick={() => setHoveredCategory(null)}
     style={{
       display: 'flex', alignItems: 'center', gap: '4px',
@@ -2361,7 +2368,7 @@ const Header = () => {
             return children.map((child) => ({
               key: child._id,
               label: child.category_name,
-              href: buildCategoryHref(hoveredCategory, sub, child),
+              href: `/category/${hoveredCategory.category_slug}/${sub.category_slug}/${child.category_slug}`,
               kind: 'child',
             }));
           }
@@ -2373,7 +2380,7 @@ const Header = () => {
             .map((brand) => ({
               key: brand._id || brand.brand_slug,
               label: brand.brand_name,
-              href: buildCategoryBrandHref(hoveredCategory, brand),
+              href: `/category/brand/${hoveredCategory.category_slug}/${brand.brand_slug}`,
               kind: 'brand',
             }));
         };
@@ -2438,7 +2445,7 @@ const Header = () => {
                 .map((brand) => (
                   <Link
                     key={brand._id || brand.brand_slug}
-                    href={buildCategoryBrandHref(hoveredCategory, brand)}
+                    href={`/category/brand/${hoveredCategory.category_slug}/${brand.brand_slug}`}
                     onClick={() => setHoveredCategory(null)}
                     className="dd-brand-item"
                   >
@@ -2467,7 +2474,7 @@ const Header = () => {
                 ))}
               {brands.length > 10 && (
                 <Link
-                  href={buildCategoryHref(hoveredCategory)}
+                  href={`/category/${hoveredCategory.category_slug}`}
                   onClick={() => setHoveredCategory(null)}
                   style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '5px 6px', fontSize: '11px', fontWeight: 600, color: '#2453D3', textDecoration: 'none' }}
                 >
@@ -2485,7 +2492,7 @@ const Header = () => {
                   <>
                     <div style={{ marginBottom: '10px', paddingBottom: '8px', borderBottom: 'none' }}>
                       <Link
-                        href={buildCategoryHref(hoveredCategory, activeSub)}
+                        href={`/category/${hoveredCategory.category_slug}/${activeSub.category_slug}`}
                         onClick={() => setHoveredCategory(null)}
                         style={{
                           fontSize: '13px', fontWeight: 700, color: '#2453D3',
@@ -2514,7 +2521,7 @@ const Header = () => {
                               padLeft: true,
                               header: (
                                 <Link
-                                  href={buildCategoryHref(hoveredCategory, sub)}
+                                  href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
                                   onClick={() => setHoveredCategory(null)}
                                   style={{
                                     fontSize: '13px', fontWeight: 700, color: '#2453D3',
@@ -2548,7 +2555,7 @@ const Header = () => {
                             padLeft: si > 0,
                             header: (
                               <Link
-                                href={buildCategoryHref(hoveredCategory, sub)}
+                                href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
                                 onClick={() => setHoveredCategory(null)}
                                 style={{
                                   display: 'block', fontSize: '13px', fontWeight: 700,
@@ -2576,7 +2583,7 @@ const Header = () => {
                 borderLeft: '1px solid #e5e7eb', overflow: 'hidden',
               }}>
                 <Link
-                  href={buildCategoryHref(hoveredCategory)}
+                  href={`/category/${hoveredCategory.category_slug}`}
                   onClick={() => setHoveredCategory(null)}
                   style={{ display: 'block', width: '100%', height: '100%' }}
                 >

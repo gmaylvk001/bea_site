@@ -12,7 +12,6 @@ import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
 import { buildInitialExpandedFilters, getSortedFilterGroups, getVisibleFilterGroups, VISIBLE_FILTER_GROUP_LIMIT } from "@/lib/filterGroupDefaults";
-import { buildCategoryHref } from "@/lib/categoryPath";
 //import FlashCategorySlider from "../FlashCategorySlider";
 //import BannerSlider from "../main-cat-banner";
 
@@ -597,7 +596,7 @@ const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, init
           <div key={category._id}>
             <div className={`flex items-center gap-2 ${level > 0 ? `ml-${level * 4}` : ''}`}>
               <Link
-                href={buildCategoryHref(slug, category)}
+                href={`/category/${slug}/${category.category_slug}`}
                 className="p-2 hover:bg-gray-100 rounded inline-flex items-center"
               >      {/*
                 {category.image && (
@@ -910,7 +909,7 @@ const handlePageChange = (page) => {
          categoryData.categoryTree.map((subcategory) => (
            <Link
              key={subcategory._id}
-             href={buildCategoryHref(slug, sub_slug, subcategory)}
+             href={`/category/${slug}/${sub_slug}/${subcategory.category_slug}`}
              className="flex flex-row items-center flex-shrink-0 w-[320px] h-[264px] border border-gray-200 rounded-xl bg-white hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:bg-gray-50"
              style={{ scrollSnapAlign: "start" }}
            >
