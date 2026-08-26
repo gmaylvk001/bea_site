@@ -18,6 +18,7 @@ const ProductSchema = new mongoose.Schema({
   category: String,
   movement: String,
   model_number: String,
+  ean: { type: String, default: "" },
   key_specifications : { type: [String], default: [] },
   status: { type: String, enum: ["Active", "Inactive"], default: "Active" },
   stock_status: { type: String, enum: ["In Stock", "Out of Stock"], default: "In Stock" },

@@ -2,13 +2,31 @@
 
 import { useEffect } from "react";
 
+/**
+ * FlixMedia Standard JS INpage/MiniSite (React CreateElement style).
+ * Per Flix email for Bharath Electronics:
+ * - Dist ID: 17089
+ * - Language: in
+ * - MPN: primary match (dynamic)
+ * - EAN: secondary match (optional)
+ * - Brand: dynamic
+ * Containers in <body>: #flix-inpage , #flix-minisite
+ * Old Flix scripts removed before each load.
+ */
+
 const FLIX_DISTRIBUTOR_ID = "17089";
 const FLIX_LANGUAGE = "in";
 const FLIX_LOADER_SRC = "//media.flixfacts.com/js/loader.js";
 
 function extractFlixMpn(p = {}) {
-  const explicit = (p.model_number || p.mpn || p.MPN || p.modelNumber || "").toString().trim();
-  if (explicit && explicit.toLowerCase() !== "null" && explicit.toLowerCase() !== "undefined") {
+  const explicit = (p.model_number || p.mpn || p.MPN || p.modelNumber || "")
+    .toString()
+    .trim();
+  if (
+    explicit &&
+    explicit.toLowerCase() !== "null" &&
+    explicit.toLowerCase() !== "undefined"
+  ) {
     return explicit;
   }
 
@@ -20,8 +38,7 @@ function extractFlixMpn(p = {}) {
   const slugTail = slug.match(/([0-9]{2}[a-z]{2}[0-9]{4}[a-z]{0,4})$/i);
   if (slugTail?.[1]) return slugTail[1].toUpperCase();
 
-  const item = (p.item_code || p.sku || "").toString().trim();
-  return item;
+  return (p.item_code || p.sku || "").toString().trim();
 }
 
 function extractFlixEan(p = {}) {
@@ -30,40 +47,54 @@ function extractFlixEan(p = {}) {
 }
 
 function removeOldFlixScripts() {
-  document.querySelectorAll(
-    'script[src*="media.flixfacts.com/js/loader.js"], script[data-flix-distributor], script[data-flix="true"]'
-  ).forEach((s) => s.remove());
+  document
+    .querySelectorAll(
+      'script[src*="media.flixfacts.com/js/loader.js"], script[src*="media.flixcar.com"], script[data-flix-distributor], script[data-flix="true"]'
+    )
+    .forEach((s) => s.remove());
 }
 
 function resetFlix() {
   try {
-    if (typeof window.flixJsCallbacks === "object" && typeof window.flixJsCallbacks.reset === "function") {
+    if (
+      typeof window.flixJsCallbacks === "object" &&
+      typeof window.flixJsCallbacks.reset === "function"
+    ) {
       window.flixJsCallbacks.reset();
     }
-  } catch {}
+  } catch {
+    // ignore
+  }
 }
 
 function containersReady() {
-  const inpage = document.querySelectorAll("#flix-inpage");
-  const minisite = document.querySelectorAll("#flix-minisite");
-  if (inpage.length !== 1 || minisite.length !== 1) return false;
-  return true;
+  return (
+    document.querySelectorAll("#flix-inpage").length === 1 &&
+    document.querySelectorAll("#flix-minisite").length === 1
+  );
 }
 
-/**
- * Standard JS INpage/MiniSite (React) — flexmedia.txt
- * Divs must already exist in <body> as unique #flix-inpage and #flix-minisite.
- */
-export default function FlixMediaLoader({ product, brandName, enabled = true, layoutKey = "" }) {
+export default function FlixMediaLoader({
+  product,
+  brandName,
+  enabled = true,
+  layoutKey = "",
+}) {
   useEffect(() => {
     if (!enabled || !product || typeof window === "undefined") return;
 
-    const product_brand = (brandName || "").trim();
-    const product_mpn = extractFlixMpn(product);
-    const product_ean = extractFlixEan(product);
+    // Flix troubleshooting: no spaces in parameters
+    const product_brand = (brandName || "").trim().replace(/\s+/g, " ");
+    const product_mpn = extractFlixMpn(product).replace(/\s+/g, "");
+    const product_ean = extractFlixEan(product).replace(/\s+/g, "");
 
-    if (!product_brand || (!product_mpn && !product_ean)) {
-      console.warn("[Flix] skip — need brand and MPN or EAN", { product_brand, product_mpn, product_ean });
+    // Flix: populate MPN and/or EAN; Brand should be dynamic
+    if (!product_mpn && !product_ean) {
+      console.warn("[Flix] skip — need MPN or EAN", {
+        brand: product_brand,
+        mpn: product_mpn,
+        ean: product_ean,
+      });
       return;
     }
 
@@ -75,15 +106,19 @@ export default function FlixMediaLoader({ product, brandName, enabled = true, la
       if (cancelled) return;
       tries += 1;
 
+      // Guide: no duplicate #flix-inpage / #flix-minisite
       if (!containersReady()) {
         if (tries < 40) {
           timer = setTimeout(run, 150);
         } else {
-          console.warn("[Flix] skip — need exactly one #flix-inpage and one #flix-minisite in the body");
+          console.warn(
+            "[Flix] skip — need exactly one #flix-inpage and one #flix-minisite (React guide: no duplicates)"
+          );
         }
         return;
       }
 
+      // React guide: reset BEFORE refresh, then remove old loader scripts
       resetFlix();
       removeOldFlixScripts();
 
@@ -95,6 +130,7 @@ export default function FlixMediaLoader({ product, brandName, enabled = true, la
       const headID = document.getElementsByTagName("head")[0];
       if (!headID) return;
 
+      // === Standard JS INpage/MiniSite — React CreateElement (Flix guide) ===
       const flixScript = document.createElement("script");
       flixScript.type = "text/javascript";
       flixScript.async = true;
@@ -113,14 +149,18 @@ export default function FlixMediaLoader({ product, brandName, enabled = true, la
 
       flixScript.onload = function () {
         if (cancelled) return;
-        console.log("[Flix] loader.js loaded", {
+        console.log("[Flix] Standard JS loader ready", {
           distributor: FLIX_DISTRIBUTOR_ID,
           language: FLIX_LANGUAGE,
-          brand: product_brand,
-          mpn: product_mpn,
-          ean: product_ean,
+          brand: product_brand || "(empty)",
+          mpn: product_mpn || "(empty)",
+          ean: product_ean || "(empty)",
         });
-        if (typeof window.flixJsCallbacks === "object" && typeof window.flixJsCallbacks.setLoadCallback === "function") {
+        // Guide: set callbacks in onload (not immediately after append)
+        if (
+          typeof window.flixJsCallbacks === "object" &&
+          typeof window.flixJsCallbacks.setLoadCallback === "function"
+        ) {
           window.flixJsCallbacks.setLoadCallback(function () {
             console.log("[Flix] INpage content available");
           }, "inpage");
@@ -128,7 +168,9 @@ export default function FlixMediaLoader({ product, brandName, enabled = true, la
             console.log("[Flix] MiniSite content available");
           }, "minisite");
           window.flixJsCallbacks.setLoadCallback(function () {
-            console.log("[Flix] no INpage/MiniSite match (noshow)");
+            console.warn(
+              "[Flix] noshow — no INpage/MiniSite for Dist 17089 + these MPN/EAN. Ask Flix to confirm syndication for this SKU."
+            );
           }, "noshow");
         }
       };
@@ -137,7 +179,7 @@ export default function FlixMediaLoader({ product, brandName, enabled = true, la
         console.error("[Flix] failed to load loader.js", error);
       };
 
-      // Guide: set src last, after appendChild
+      // Guide: set src last, after appendChild + attributes
       flixScript.src = FLIX_LOADER_SRC;
     };
 
@@ -147,7 +189,16 @@ export default function FlixMediaLoader({ product, brandName, enabled = true, la
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [enabled, layoutKey, product?._id, brandName, product?.model_number, product?.item_code, product?.slug]);
+  }, [
+    enabled,
+    layoutKey,
+    product?._id,
+    brandName,
+    product?.model_number,
+    product?.item_code,
+    product?.slug,
+    product?.ean,
+  ]);
 
   return null;
 }
