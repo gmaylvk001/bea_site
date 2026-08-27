@@ -22,7 +22,7 @@ export default function WhatsAppFloat() {
   const [open, setOpen] = useState(false);
   // const { snapshot } = useVisitorIntent();
   // const { config } = useSmartLeadConfig();
-  const whatsappUrl = "https://wa.me/919842344323?text=hello";
+  const whatsappUrl = "https://wa.me/919585685500?text=hello";
   // const whatsappUrl = useMemo(
   //   () =>
   //     buildSmartLeadWhatsAppUrl({

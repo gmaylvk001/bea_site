@@ -78,7 +78,9 @@ export default function FlixMediaLoader({
   product,
   brandName,
   enabled = true,
-  layoutKey = "",
+  onInpage,
+  onNoshow,
+  onMinisite,
 }) {
   useEffect(() => {
     if (!enabled || !product || typeof window === "undefined") return;
@@ -95,6 +97,7 @@ export default function FlixMediaLoader({
         mpn: product_mpn,
         ean: product_ean,
       });
+      onNoshow?.();
       return;
     }
 
@@ -114,6 +117,7 @@ export default function FlixMediaLoader({
           console.warn(
             "[Flix] skip — need exactly one #flix-inpage and one #flix-minisite (React guide: no duplicates)"
           );
+          onNoshow?.();
         }
         return;
       }
@@ -124,8 +128,12 @@ export default function FlixMediaLoader({
 
       const inpage = document.getElementById("flix-inpage");
       const minisite = document.getElementById("flix-minisite");
-      if (inpage) inpage.innerHTML = "";
-      if (minisite) minisite.innerHTML = "";
+      try {
+        if (inpage) inpage.replaceChildren();
+        if (minisite) minisite.replaceChildren();
+      } catch {
+        // Flix may have already moved/removed nodes; skip to avoid removeChild crash
+      }
 
       const headID = document.getElementsByTagName("head")[0];
       if (!headID) return;
@@ -163,20 +171,24 @@ export default function FlixMediaLoader({
         ) {
           window.flixJsCallbacks.setLoadCallback(function () {
             console.log("[Flix] INpage content available");
+            onInpage?.();
           }, "inpage");
           window.flixJsCallbacks.setLoadCallback(function () {
             console.log("[Flix] MiniSite content available");
+            onMinisite?.();
           }, "minisite");
           window.flixJsCallbacks.setLoadCallback(function () {
             console.warn(
               "[Flix] noshow — no INpage/MiniSite for Dist 17089 + these MPN/EAN. Ask Flix to confirm syndication for this SKU."
             );
+            onNoshow?.();
           }, "noshow");
         }
       };
 
       flixScript.onerror = function (error) {
         console.error("[Flix] failed to load loader.js", error);
+        onNoshow?.();
       };
 
       // Guide: set src last, after appendChild + attributes
@@ -191,13 +203,15 @@ export default function FlixMediaLoader({
     };
   }, [
     enabled,
-    layoutKey,
     product?._id,
     brandName,
     product?.model_number,
     product?.item_code,
     product?.slug,
     product?.ean,
+    onInpage,
+    onNoshow,
+    onMinisite,
   ]);
 
   return null;
