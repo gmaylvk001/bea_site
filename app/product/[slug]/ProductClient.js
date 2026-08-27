@@ -30,7 +30,7 @@ import RelatedProducts from "@/components/RelatedProducts";
 import RazorpayOffers from "@/components/RazorpayOffers";
 // import { useVisitorIntent } from "@/context/VisitorIntentContext";
 import { v4 as uuidv4 } from "uuid";
-import { ga4ViewItem } from "@/utils/nextjs-event-tracking";
+// import { ga4ViewItem } from "@/utils/nextjs-event-tracking";
 
 
 function FaqItem({ question, answer }) {
