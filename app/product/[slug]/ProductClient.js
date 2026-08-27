@@ -30,6 +30,7 @@ import RelatedProducts from "@/components/RelatedProducts";
 import RazorpayOffers from "@/components/RazorpayOffers";
 // import { useVisitorIntent } from "@/context/VisitorIntentContext";
 import { v4 as uuidv4 } from "uuid";
+import { ga4ViewItem } from "@/utils/nextjs-event-tracking";
 
 
 function FaqItem({ question, answer }) {
@@ -57,12 +58,13 @@ function FaqItem({ question, answer }) {
 
 
 
-export default function ProductClient() {
+export default function ProductClient({ initialProduct = null }) {
   const router = useRouter(); 
   const params = useParams();
   const pathname = usePathname();
   // const { trackProductView } = useVisitorIntent();
   const slug = (pathname || "").split("/").filter(Boolean).pop() || params?.slug;
+  const [hasMounted, setHasMounted] = useState(false);
   const [relatedProductsLoading, setRelatedProductsLoading] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [brand, setBrand] = useState([]);
@@ -70,10 +72,12 @@ export default function ProductClient() {
   const [showMoreInfo, setShowMoreInfo] = useState(false);
   const [showFeatures, setShowFeatures] = useState(false);
   const [showHighlights, setShowHighlights] = useState(false);
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const variantCacheRef = useRef({});
-  const applyingVariantRef = useRef(false);
+  const [product, setProduct] = useState(initialProduct);
+  const lastViewedItemIdRef = useRef(null);
+  const [loading, setLoading] = useState(!initialProduct);
+  // [VARIANT] commented
+  // const variantCacheRef = useRef({});
+  // const applyingVariantRef = useRef(false);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [showEMIModal, setShowEMIModal] = useState(false);
@@ -86,6 +90,15 @@ export default function ProductClient() {
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 1024 : false
   );
+  // null = waiting for Flix, true = INpage available, false = noshow / unavailable
+  const [flixInpageAvailable, setFlixInpageAvailable] = useState(null);
+  const handleFlixInpage = useCallback(() => setFlixInpageAvailable(true), []);
+  const handleFlixNoshow = useCallback(() => setFlixInpageAvailable(false), []);
+
+  useEffect(() => {
+    setFlixInpageAvailable(null);
+  }, [product?._id]);
+
 const [addOnProducts, setAddOnProducts] = useState([]);
  const [warranties, setWarranties] = useState([]);
 const [selectedWarrantyData, setSelectedWarrantyData] = useState(null);
@@ -103,6 +116,18 @@ const addOnIds = Array.isArray(product?.add_ons)
   useEffect(() => {
   console.log("useEffect triggered", product?._id, addOnIds);
 }, [product?._id]);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!product?._id) return;
+    const id = String(product._id);
+    if (lastViewedItemIdRef.current === id) return;
+    lastViewedItemIdRef.current = id;
+    ga4ViewItem({ product });
+  }, [product?._id]);
 
 useEffect(() => {
   if (!product?._id) return;
@@ -178,10 +203,10 @@ useEffect(() => {
   fetchRecentlyViewed();
 }, []);
  useEffect(() => {
-  const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
-  handleResize(); // run initial check
-  window.addEventListener("resize", handleResize);
-  return () => window.removeEventListener("resize", handleResize);
+  setIsDesktop(window.innerWidth >= 1024);
+  // Do not listen to resize. Browser zoom changes innerWidth and remounts
+  // FlixMedia nodes Flix already mutated, which crashes React (removeChild).
+  // CSS lg: breakpoints still switch the visible layout.
 }, []);
 
 useEffect(() => {
@@ -680,7 +705,9 @@ const resolveImagePath = (image) => {
 };
 
 
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(
+    () => initialProduct?.images?.[0] ?? null
+  );
 
       useEffect(() => {
         if (product?.images?.[0]) {
@@ -709,37 +736,47 @@ const resolveImagePath = (image) => {
   const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
+    const applyProductData = (data) => {
+      setProduct(data);
+      setSelectedImageIndex(0);
+      setQuantity(1);
+      if (data?.images?.[0]) setSelectedImage(data.images[0]);
+      // [VARIANT] commented
+      // if (data?.variantGroup?.products?.length) {
+      //   const group = data.variantGroup;
+      //   group.products.forEach((sibling) => {
+      //     const cachedSibling = {
+      //       ...sibling,
+      //       variantGroup: group,
+      //     };
+      //     if (sibling?.slug) variantCacheRef.current[sibling.slug] = cachedSibling;
+      //     if (sibling?._id) variantCacheRef.current[String(sibling._id)] = cachedSibling;
+      //   });
+      //   if (data.slug) {
+      //     variantCacheRef.current[data.slug] = { ...data, variantGroup: group };
+      //   }
+      // }
+    };
+
+    // Prefer server-provided product (already loaded in page.js) — enables SSR gallery/H1
+    if (initialProduct?.slug && initialProduct.slug === slug) {
+      applyProductData(initialProduct);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     const fetchProduct = async () => {
       if (!slug) return;
 
-      const applyProductData = (data) => {
-        setProduct(data);
-        setSelectedImageIndex(0);
-        setQuantity(1);
-        if (data?.images?.[0]) setSelectedImage(data.images[0]);
-        if (data?.variantGroup?.products?.length) {
-          const group = data.variantGroup;
-          group.products.forEach((sibling) => {
-            const cachedSibling = {
-              ...sibling,
-              variantGroup: group,
-            };
-            if (sibling?.slug) variantCacheRef.current[sibling.slug] = cachedSibling;
-            if (sibling?._id) variantCacheRef.current[String(sibling._id)] = cachedSibling;
-          });
-          if (data.slug) {
-            variantCacheRef.current[data.slug] = { ...data, variantGroup: group };
-          }
-        }
-      };
-
-      const cached = variantCacheRef.current[slug];
-      if (cached) {
-        applyingVariantRef.current = false;
-        applyProductData(cached);
-        setLoading(false);
-        return;
-      }
+      // [VARIANT] commented — no in-memory variant cache while disabled
+      // const cached = variantCacheRef.current[slug];
+      // if (cached) {
+      //   applyingVariantRef.current = false;
+      //   applyProductData(cached);
+      //   setLoading(false);
+      //   return;
+      // }
 
       try {
         setLoading((currentLoading) => (product ? currentLoading : true));
@@ -778,7 +815,7 @@ const resolveImagePath = (image) => {
     };
 
     fetchProduct();
-  }, [slug]);
+  }, [slug, initialProduct]);
 
   useEffect(() => {
     if (!product?._id) return;
@@ -799,45 +836,46 @@ const resolveImagePath = (image) => {
     };
   }, [product?._id]);
 
-  const handleVariantSelect = (match) => {
-    if (!match) return;
-    const targetSlug = match.slug || String(match._id || "");
-    if (!targetSlug) return;
-    if (String(match._id) === String(product?._id) && targetSlug === String(slug)) return;
-
-    const group = product?.variantGroup;
-    const cached = {
-      ...(variantCacheRef.current[targetSlug] || match),
-      variantGroup: group,
-    };
-    variantCacheRef.current[targetSlug] = cached;
-    applyingVariantRef.current = true;
-    setProduct(cached);
-    setSelectedImageIndex(0);
-    setQuantity(1);
-    setSelectedWarrantyAmount(0);
-    setSelectedWarrantyData(null);
-    if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
-
-    const nextUrl = `/product/${targetSlug}`;
-    if (typeof window !== "undefined" && window.location.pathname !== nextUrl) {
-      window.history.pushState(null, "", nextUrl);
-    }
-  };
-
-  useEffect(() => {
-    const onPopState = () => {
-      const currentSlug = window.location.pathname.split("/").filter(Boolean).pop();
-      const cached = currentSlug ? variantCacheRef.current[currentSlug] : null;
-      if (cached) {
-        setProduct(cached);
-        setSelectedImageIndex(0);
-        if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
-      }
-    };
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
-  }, []);
+  // [VARIANT] commented
+  // const handleVariantSelect = (match) => {
+  //   if (!match) return;
+  //   const targetSlug = match.slug || String(match._id || "");
+  //   if (!targetSlug) return;
+  //   if (String(match._id) === String(product?._id) && targetSlug === String(slug)) return;
+  //
+  //   const group = product?.variantGroup;
+  //   const cached = {
+  //     ...(variantCacheRef.current[targetSlug] || match),
+  //     variantGroup: group,
+  //   };
+  //   variantCacheRef.current[targetSlug] = cached;
+  //   applyingVariantRef.current = true;
+  //   setProduct(cached);
+  //   setSelectedImageIndex(0);
+  //   setQuantity(1);
+  //   setSelectedWarrantyAmount(0);
+  //   setSelectedWarrantyData(null);
+  //   if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
+  //
+  //   const nextUrl = `/product/${targetSlug}`;
+  //   if (typeof window !== "undefined" && window.location.pathname !== nextUrl) {
+  //     window.history.pushState(null, "", nextUrl);
+  //   }
+  // };
+  //
+  // useEffect(() => {
+  //   const onPopState = () => {
+  //     const currentSlug = window.location.pathname.split("/").filter(Boolean).pop();
+  //     const cached = currentSlug ? variantCacheRef.current[currentSlug] : null;
+  //     if (cached) {
+  //       setProduct(cached);
+  //       setSelectedImageIndex(0);
+  //       if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
+  //     }
+  //   };
+  //   window.addEventListener("popstate", onPopState);
+  //   return () => window.removeEventListener("popstate", onPopState);
+  // }, []);
 
   useEffect(() => {
   if (selectedFrequentProducts.length > 0) {
@@ -987,6 +1025,56 @@ const fetchBrand = async () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [lightboxOpen, lightboxIndex]);
 
+  // SSR / pre-hydration: expose product name + primary image in initial HTML for crawlers.
+  // Full interactive UI (incl. ProductDetailsSection) mounts after client hydration to avoid
+  // SSR crashes from browser-only APIs (e.g. document) in nested client components.
+  if (!hasMounted) {
+    const ssrProduct =
+      initialProduct?.slug && initialProduct.slug === slug
+        ? initialProduct
+        : product;
+    if (!ssrProduct?.name) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+    const primaryRaw = ssrProduct.images?.[0];
+    const primarySrc = !primaryRaw
+      ? "/no-image.jpg"
+      : primaryRaw.startsWith("http") ||
+          primaryRaw.startsWith("/") ||
+          primaryRaw.startsWith("blob:") ||
+          primaryRaw.startsWith("data:")
+        ? primaryRaw
+        : `/uploads/products/${primaryRaw}`;
+    return (
+      <div className="bg-white min-h-screen overflow-x-hidden">
+        <div className="container mx-auto px-2 md:px-4 py-8">
+          <div className="w-full max-w-xl">
+            <div className="border border-gray-400 rounded-lg">
+              <div className="relative aspect-square w-full px-4">
+                <img
+                  src={primarySrc}
+                  alt={ssrProduct.name}
+                  width={600}
+                  height={600}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="w-full h-full object-contain rounded-xl"
+                />
+              </div>
+            </div>
+            <h1 className="text-lg lg:text-xl font-bold text-gray-900 leading-snug mt-4">
+              {ssrProduct.name}
+            </h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -1034,7 +1122,8 @@ const fetchBrand = async () => {
         product={product}
         brandName={matchedBrandForManufacturer?.label || brand.find((b) => String(b.value) === String(product?.brand))?.label || ""}
         enabled={Boolean(product?._id) && brand.length > 0}
-        layoutKey={isDesktop ? "desktop" : "mobile"}
+        onInpage={handleFlixInpage}
+        onNoshow={handleFlixNoshow}
       />
       {errorMessage && (
   <div className="text-center mt-10">
@@ -1386,6 +1475,7 @@ const fetchBrand = async () => {
       manufacturerName={matchedBrandForManufacturer?.manufacturer_name}
       manufacturerAddress={matchedBrandForManufacturer?.manufacturer_address}
       flixInstanceActive={!isDesktop}
+      flixInpageAvailable={flixInpageAvailable}
     />
   </div> 
    
@@ -1666,7 +1756,7 @@ const fetchBrand = async () => {
                   </p>
                  
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 leading-snug mb-2">{product.name}</h1>
+                <p className="text-xl font-bold text-gray-900 leading-snug mb-2">{product.name}</p>
                 <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
                   {product.model_number && <span>Model: {product.model_number}</span>}
                   {product.model_number && product.item_code && <span className="text-gray-300">|</span>}
@@ -1861,6 +1951,7 @@ const fetchBrand = async () => {
       manufacturerName={matchedBrandForManufacturer?.manufacturer_name}
       manufacturerAddress={matchedBrandForManufacturer?.manufacturer_address}
       flixInstanceActive={isDesktop}
+      flixInpageAvailable={flixInpageAvailable}
     />
             </div>
 

@@ -193,24 +193,34 @@ import { FaShareAlt } from "react-icons/fa";
                 className="group relative bg-white rounded-lg border hover:border-blue-200 transition-all shadow-sm hover:shadow-md flex flex-col h-full"
               >
                 <div className="relative aspect-square bg-gray-50">
-                  {product.images?.[0] && (
-                    <Image
-                      src={
-                        product.images[0].startsWith("http")
-                          ? product.images[0]
-                          : `/uploads/products/${product.images[0]}`
-                      }
-                      alt={product.name}
-                      fill
-                                              // ensure the image fits without stretching
-                                              className="object-contain p-2 sm:p-3"
-                                              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 18vw"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "/uploads/products/placeholder.jpg";
-                      }}
-                    />
-                  )}
+                  <Link
+                    href={`/product/${product.slug || product._id}`}
+                    className="absolute inset-0 z-[1] block"
+                    aria-label={product.name}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setNavigating(true);
+                      window.location.href = `/product/${product.slug || product._id}`;
+                    }}
+                  >
+                    {product.images?.[0] && (
+                      <Image
+                        src={
+                          product.images[0].startsWith("http")
+                            ? product.images[0]
+                            : `/uploads/products/${product.images[0]}`
+                        }
+                        alt={product.name}
+                        fill
+                        className="object-contain p-2 sm:p-3"
+                        sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 18vw"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "/uploads/products/placeholder.jpg";
+                        }}
+                      />
+                    )}
+                  </Link>
 
                   {Number(product.special_price) > 0 &&
                     Number(product.special_price) < Number(product.price) && (
@@ -219,7 +229,7 @@ import { FaShareAlt } from "react-icons/fa";
                       </span>
                     )}
 
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 z-10">
                     <ProductCard productId={product._id} />
                   </div>
                 </div>
@@ -234,7 +244,8 @@ import { FaShareAlt } from "react-icons/fa";
                     className="block mb-2"
                     onClick={(e) => {
                       e.preventDefault();
-                      handleProductClick(product);
+                      setNavigating(true);
+                      window.location.href = `/product/${product.slug || product._id}`;
                     }}
                   >
                     <h3 className="text-xs sm:text-sm font-medium text-[#0069c6] hover:text-[#00badb] line-clamp-2 min-h-[40px]">

@@ -122,7 +122,7 @@ function DynamicTabs({ tabs, activeName, onTabChange }) {
           ))}
         </div>
 
-        {/* Keep all tabs mounted so Flix Overview DOM is preserved */}
+        {/* Keep all tabs mounted so Flix DOM is preserved when switching tabs */}
         {tabs.map((tab) => (
           <div
             key={tab.name}
@@ -130,7 +130,7 @@ function DynamicTabs({ tabs, activeName, onTabChange }) {
             aria-hidden={activeName !== tab.name}
             style={{ display: activeName === tab.name ? "block" : "none" }}
             className={
-  tab.name === "overview"
+  tab.name === "overview" || tab.name === "manufacturer"
     ? "w-full px-4 py-6 text-left bg-gray-50"
     : "w-full px-4 py-6 text-left"
 }
@@ -236,9 +236,10 @@ export default function ProductDetailsSection({
   manufacturerName = "",
   manufacturerAddress = "",
   flixInstanceActive = true,
+  flixInpageAvailable = null,
 }) {
   const [brand, setBrand] = useState([]);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("manufacturer");
   // NEW: ensure default tab is set only once per product id
   const defaultTabSetRef = useRef(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -283,12 +284,14 @@ export default function ProductDetailsSection({
   };
   // Replace "tabs" with UI-aligned tabs only (videos is not rendered in tabsForUI)
   // const tabs = ["overview", "description", "videos", "reviews"];
-  const uiTabs = ["overview", "specifications", "manufacturer", "reviews", "faq"];
+  const uiTabs = ["manufacturer", "overview", "specifications", "reviews", "faq"];
 
   // Check if a tab has content
   const hasTabContent = (tabId) => {
     const PLACEHOLDER = "There is no product overview available for this item.";
     switch (tabId) {
+      case "manufacturer":
+        return true;
       case "overview":
         return Boolean(
           ((product.overview && product.overview.trim() !== "" && product.overview.trim() !== PLACEHOLDER)) ||
@@ -296,7 +299,8 @@ export default function ProductDetailsSection({
             (Array.isArray(product.overview_image)
               ? product.overview_image.length > 0
               : String(product.overview_image).split(",").filter(Boolean).length > 0)) ||
-          (product.flix_data && (product.flix_data.inpage || product.flix_data.widget))
+          product.overviewdescription ||
+          (product.key_specifications && product.key_specifications.length > 0)
         );
       case "description":
         return product.description && product.description.trim() !== "";
@@ -415,7 +419,7 @@ export default function ProductDetailsSection({
 
   useEffect(() => {
     if (!product) return;
-    setActiveTab("overview");
+    setActiveTab("manufacturer");
   }, [product?._id]);
 
   const fetchRelatedProducts = async () => {
@@ -476,10 +480,25 @@ export default function ProductDetailsSection({
   const decodeAndClean = (str) => {
     if (!str) return "";
 
-    // Create a temporary element to decode HTML entities
-    const temp = document.createElement("textarea");
-    temp.innerHTML = str;
-    let decoded = temp.value;
+    let decoded = String(str);
+    // Create a temporary element to decode HTML entities (client only)
+    if (typeof document !== "undefined") {
+      const temp = document.createElement("textarea");
+      temp.innerHTML = decoded;
+      decoded = temp.value;
+    } else {
+      decoded = decoded
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+        .replace(/&#x([0-9a-fA-F]+);/g, (_, n) =>
+          String.fromCharCode(parseInt(n, 16))
+        );
+    }
 
     // Remove both actual LRM char and literal "&lrm;"
     decoded = decoded.replace(/\u200E/g, "").replace(/&lrm;/gi, "");
@@ -655,17 +674,10 @@ export default function ProductDetailsSection({
       setSubmitting(false);
     }
   };
-  // Small, controlled tab component: keep Overview mounted to preserve injected DOM
+  // Keep Flix #flix-inpage mounted in Manufacturer Details; show Flix or DB fallback
 
 const overviewContent = (
   <div className="w-full text-left" id="overview-tab">
-    {/* FlixMedia INpage — unique id, only on the visible layout */}
-    <div className="col-md-12">
-      {flixInstanceActive ? (
-        <div id="flix-inpage" className="w-full" style={{ width: "100%" }} />
-      ) : null}
-    </div>
-
     {product.overviewdescription && (
       <div className="mb-4">
         <h2 className="text-base font-bold text-gray-900 mb-2">{product.name} Overview</h2>
@@ -796,10 +808,24 @@ const descriptionContent = (() => {
   // remove unicode invisible chars
   cleaned = cleaned.replace(/\\u200e/g, "");
 
-  // decode html entities
-  const txt = document.createElement("textarea");
-  txt.innerHTML = cleaned;
-  cleaned = txt.value;
+  // decode html entities (SSR-safe: document is unavailable on the server)
+  if (typeof document !== "undefined") {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = cleaned;
+    cleaned = txt.value;
+  } else {
+    cleaned = cleaned
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, n) =>
+        String.fromCharCode(parseInt(n, 16))
+      );
+  }
 
   return cleaned;
 };
@@ -1015,7 +1041,7 @@ const matchedBrandLocal = Array.isArray(brand)
 const displayManufacturerName = manufacturerName || matchedBrandLocal?.manufacturer_name || "";
 const displayManufacturerAddress = manufacturerAddress || matchedBrandLocal?.manufacturer_address || "";
 
-const manufacturerContent = (
+const manufacturerDbContent = (
   <div className="text-left max-w-3xl">
     {(displayManufacturerName || displayManufacturerAddress || brandName) ? (
       <div className="border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-sm">
@@ -1082,11 +1108,34 @@ const manufacturerContent = (
     )}
   </div>
 );
-  // Build tabsForUI (name + content)
+
+const showFlixInManufacturer = flixInstanceActive && flixInpageAvailable === true;
+const showDbManufacturer = !showFlixInManufacturer;
+
+const manufacturerContent = (
+  <div className="w-full text-left" id="manufacturer-tab">
+    {/* Always mount Flix target on the active layout so loader can inject */}
+    {flixInstanceActive ? (
+      <div
+        className="col-md-12 w-full"
+        style={{
+          display: showFlixInManufacturer ? "block" : "none",
+          width: "100%",
+        }}
+      >
+        <div id="flix-inpage" className="w-full" style={{ width: "100%" }} />
+      </div>
+    ) : null}
+
+    {showDbManufacturer ? manufacturerDbContent : null}
+  </div>
+);
+
+  // Manufacturer Details first, then Overview…
 const tabsForUI = useMemo(() => [
+  { name: "manufacturer", content: manufacturerContent },
   { name: "overview", content: overviewContent },
   { name: "specifications", content: descriptionContent },
-  { name: "manufacturer", content: manufacturerContent },
   { name: "reviews", content: (
     <ReviewsTab
       reviewForm={reviewForm}
@@ -1099,7 +1148,7 @@ const tabsForUI = useMemo(() => [
     />
   )},
   { name: "faq", content: faqContent },
-], [reviewForm, submitting, tabData, overviewContent, descriptionContent, faqContent, manufacturerName, manufacturerAddress, manufacturerContent]);
+], [reviewForm, submitting, tabData, overviewContent, descriptionContent, faqContent, manufacturerContent, flixInstanceActive, flixInpageAvailable]);
   // Compute initialActiveName AFTER tabsForUI is initialized
   const initialActiveName = (() => {
     const PLACEHOLDER = "There is no product overview available for this item.";
@@ -1115,6 +1164,8 @@ const tabsForUI = useMemo(() => [
       if (Array.isArray(c)) return c.length > 0;
       return true; // JSX or other truthy content
     };
+    const manufacturer = tabsForUI.find(t => t.name.toLowerCase() === "manufacturer");
+    if (manufacturer && hasValidContent(manufacturer.content)) return manufacturer.name;
     const overview = tabsForUI.find(t => t.name.toLowerCase() === "overview");
     if (overview && hasValidContent(overview.content)) return overview.name;
     const firstWithContent = tabsForUI.find(t => hasValidContent(t.content));

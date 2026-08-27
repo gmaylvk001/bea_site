@@ -717,7 +717,7 @@ const Footer = () => {
         </div>
 
         <div className="shrink-0 self-start pointer-events-none lg:translate-x-2 min-[1440px]:translate-x-4 min-[2560px]:translate-x-5">
-          <Image
+          <img
             src="/uploads/mobiletruco.png"
             alt="BEA Mobile App Mockup"
             width={120}

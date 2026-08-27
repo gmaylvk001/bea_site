@@ -140,6 +140,11 @@ export default async function ProductNew({ params }) {
       ])
     : null;
 
+  // Serialize for client props (ObjectIds/Dates → plain JSON)
+  const initialProduct = product
+    ? JSON.parse(JSON.stringify(product))
+    : null;
+
   return (
     <>
       {productSchema && (
@@ -160,7 +165,7 @@ export default async function ProductNew({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       )}
-      <ProductClient />
+      <ProductClient initialProduct={initialProduct} />
     </>
   );
 }
