@@ -28,7 +28,6 @@ import ProductBreadcrumb from "@/components/ProductBreadcrumb";
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import RelatedProducts from "@/components/RelatedProducts";
 import RazorpayOffers from "@/components/RazorpayOffers";
-// import { useVisitorIntent } from "@/context/VisitorIntentContext";
 import { v4 as uuidv4 } from "uuid";
 // import { ga4ViewItem } from "@/utils/nextjs-event-tracking";
 
@@ -62,7 +61,6 @@ export default function ProductClient({ initialProduct = null }) {
   const router = useRouter(); 
   const params = useParams();
   const pathname = usePathname();
-  // const { trackProductView } = useVisitorIntent();
   const slug = (pathname || "").split("/").filter(Boolean).pop() || params?.slug;
   const [hasMounted, setHasMounted] = useState(false);
   const [relatedProductsLoading, setRelatedProductsLoading] = useState(false);
@@ -73,7 +71,8 @@ export default function ProductClient({ initialProduct = null }) {
   const [showFeatures, setShowFeatures] = useState(false);
   const [showHighlights, setShowHighlights] = useState(false);
   const [product, setProduct] = useState(initialProduct);
-  const lastViewedItemIdRef = useRef(null);
+  // [GA4] commented
+  // const lastViewedItemIdRef = useRef(null);
   const [loading, setLoading] = useState(!initialProduct);
   // [VARIANT] commented
   // const variantCacheRef = useRef({});
@@ -121,13 +120,14 @@ const addOnIds = Array.isArray(product?.add_ons)
     setHasMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!product?._id) return;
-    const id = String(product._id);
-    if (lastViewedItemIdRef.current === id) return;
-    lastViewedItemIdRef.current = id;
-    ga4ViewItem({ product });
-  }, [product?._id]);
+  // [GA4] commented — view_item tracking
+  // useEffect(() => {
+  //   if (!product?._id) return;
+  //   const id = String(product._id);
+  //   if (lastViewedItemIdRef.current === id) return;
+  //   lastViewedItemIdRef.current = id;
+  //   ga4ViewItem({ product });
+  // }, [product?._id]);
 
 useEffect(() => {
   if (!product?._id) return;
@@ -681,16 +681,6 @@ const matchedBrandForManufacturer = (() => {
       : String(product.brand);
   return brand.find((b) => String(b.value) === brandId) || null;
 })();
-
-  // Smart Lead Part 1 — product view → visitor intent score foundation
-  // useEffect(() => {
-  //   if (!product?._id) return;
-  //   const brandName =
-  //     matchedBrandForManufacturer?.label ||
-  //     brand.find((b) => String(b.value) === String(product.brand))?.label ||
-  //     "";
-  //   trackProductView(product, { brandName });
-  // }, [product?._id, trackProductView, matchedBrandForManufacturer?.label, brand]);
 
 // helper to resolve full path
 const resolveImagePath = (image) => {
