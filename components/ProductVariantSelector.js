@@ -45,7 +45,7 @@ export default function ProductVariantSelector({ variantGroup, currentProductId,
   const selected = normalizeSelected(current?.values, attributeNames);
 
   return (
-    <div className="mt-3 mb-3 space-y-3">
+    <div className="mt-1 mb-2 space-y-2">
       {variantGroup.attributes.map((attr) => {
         const values = uniqueVariantValues(products, attr.name);
         if (!values.length) return null;
@@ -89,7 +89,11 @@ export default function ProductVariantSelector({ variantGroup, currentProductId,
                           ? "border-gray-300 bg-white text-gray-800 hover:border-blue-400"
                           : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed line-through"
                     }`}
-                    title={!available ? "This combination is not available" : value}
+                    title={
+                      !available
+                        ? "Out of stock or not available with the selected options"
+                        : value
+                    }
                   >
                     {attr.type === "color" && meta.colorHex && (
                       <span

@@ -1284,7 +1284,7 @@ const fetchBrand = async () => {
     {/* FlixMedia minisite target — official: insertAfter(".key-fea") */}
     <div className="key-fea"></div>
     {!isDesktop ? (
-      <div id="flix-minisite" className="flix-minisite-container w-full mt-2 min-h-[40px]" />
+      <div id="flix-minisite" className="flix-minisite-container w-full" />
     ) : null}
 
    {/* Share / Wishlist */}
@@ -1826,7 +1826,7 @@ const fetchBrand = async () => {
   <p className="text-xs text-gray-400 mt-1">Price includes all applicable taxes</p>
 )}
                 </div>
-                <div className="mb-3 space-y-1">
+                <div className="mb-1 space-y-1">
                   <div className="flex items-center gap-2">
                     {product.stock_status === "In Stock" && product.quantity > 0 ? (
   <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
@@ -1849,17 +1849,18 @@ const fetchBrand = async () => {
                   </p>
                 </div>
 
-                {/* FlixMedia minisite target — official: insertAfter(".key-fea") */}
-                <div className="key-fea"></div>
-                {isDesktop ? (
-                  <div id="flix-minisite" className="flix-minisite-container w-full mt-2 min-h-[40px]" />
-                ) : null}
-
                 <ProductVariantSelector
                   variantGroup={product.variantGroup}
                   currentProductId={product._id}
                   onSelect={handleVariantSelect}
                 />
+
+                {/* FlixMedia minisite target — official: insertAfter(".key-fea") */}
+                <div className="key-fea"></div>
+                {isDesktop ? (
+                  <div id="flix-minisite" className="flix-minisite-container w-full" />
+                ) : null}
+
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-sm font-medium text-gray-700">Quantity:</span>
                   <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">
