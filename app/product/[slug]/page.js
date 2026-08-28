@@ -15,7 +15,7 @@ import Review from "@/models/Review";
 import ecom_brand_info from "@/models/ecom_brand_info";
 
 async function getProductData(slug) {
-  return getProductBySlug(slug, { includeVariantGroup: false });
+  return getProductBySlug(slug, { includeVariantGroup: true });
 }
 
 async function getProductReviews(productId) {

@@ -3,7 +3,7 @@
 
 import ProductDetailsSection from "@/components/ProductDetailsSection";
 import FlixMediaLoader from "@/components/FlixMediaLoader";
-// import ProductVariantSelector from "@/components/ProductVariantSelector";
+import ProductVariantSelector from "@/components/ProductVariantSelector";
 // import RelatedProducts from "@/components/RelatedProducts";
 import {  useEffect, useState, useRef,useMemo, useCallback } from "react";
 
@@ -74,9 +74,8 @@ export default function ProductClient({ initialProduct = null }) {
   // [GA4] commented
   // const lastViewedItemIdRef = useRef(null);
   const [loading, setLoading] = useState(!initialProduct);
-  // [VARIANT] commented
-  // const variantCacheRef = useRef({});
-  // const applyingVariantRef = useRef(false);
+  const variantCacheRef = useRef({});
+  const applyingVariantRef = useRef(false);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [showEMIModal, setShowEMIModal] = useState(false);
@@ -731,21 +730,20 @@ const resolveImagePath = (image) => {
       setSelectedImageIndex(0);
       setQuantity(1);
       if (data?.images?.[0]) setSelectedImage(data.images[0]);
-      // [VARIANT] commented
-      // if (data?.variantGroup?.products?.length) {
-      //   const group = data.variantGroup;
-      //   group.products.forEach((sibling) => {
-      //     const cachedSibling = {
-      //       ...sibling,
-      //       variantGroup: group,
-      //     };
-      //     if (sibling?.slug) variantCacheRef.current[sibling.slug] = cachedSibling;
-      //     if (sibling?._id) variantCacheRef.current[String(sibling._id)] = cachedSibling;
-      //   });
-      //   if (data.slug) {
-      //     variantCacheRef.current[data.slug] = { ...data, variantGroup: group };
-      //   }
-      // }
+      if (data?.variantGroup?.products?.length) {
+        const group = data.variantGroup;
+        group.products.forEach((sibling) => {
+          const cachedSibling = {
+            ...sibling,
+            variantGroup: group,
+          };
+          if (sibling?.slug) variantCacheRef.current[sibling.slug] = cachedSibling;
+          if (sibling?._id) variantCacheRef.current[String(sibling._id)] = cachedSibling;
+        });
+        if (data.slug) {
+          variantCacheRef.current[data.slug] = { ...data, variantGroup: group };
+        }
+      }
     };
 
     // Prefer server-provided product (already loaded in page.js) — enables SSR gallery/H1
@@ -759,14 +757,13 @@ const resolveImagePath = (image) => {
     const fetchProduct = async () => {
       if (!slug) return;
 
-      // [VARIANT] commented — no in-memory variant cache while disabled
-      // const cached = variantCacheRef.current[slug];
-      // if (cached) {
-      //   applyingVariantRef.current = false;
-      //   applyProductData(cached);
-      //   setLoading(false);
-      //   return;
-      // }
+      const cached = variantCacheRef.current[slug];
+      if (cached) {
+        applyingVariantRef.current = false;
+        applyProductData(cached);
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading((currentLoading) => (product ? currentLoading : true));
@@ -826,46 +823,45 @@ const resolveImagePath = (image) => {
     };
   }, [product?._id]);
 
-  // [VARIANT] commented
-  // const handleVariantSelect = (match) => {
-  //   if (!match) return;
-  //   const targetSlug = match.slug || String(match._id || "");
-  //   if (!targetSlug) return;
-  //   if (String(match._id) === String(product?._id) && targetSlug === String(slug)) return;
-  //
-  //   const group = product?.variantGroup;
-  //   const cached = {
-  //     ...(variantCacheRef.current[targetSlug] || match),
-  //     variantGroup: group,
-  //   };
-  //   variantCacheRef.current[targetSlug] = cached;
-  //   applyingVariantRef.current = true;
-  //   setProduct(cached);
-  //   setSelectedImageIndex(0);
-  //   setQuantity(1);
-  //   setSelectedWarrantyAmount(0);
-  //   setSelectedWarrantyData(null);
-  //   if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
-  //
-  //   const nextUrl = `/product/${targetSlug}`;
-  //   if (typeof window !== "undefined" && window.location.pathname !== nextUrl) {
-  //     window.history.pushState(null, "", nextUrl);
-  //   }
-  // };
-  //
-  // useEffect(() => {
-  //   const onPopState = () => {
-  //     const currentSlug = window.location.pathname.split("/").filter(Boolean).pop();
-  //     const cached = currentSlug ? variantCacheRef.current[currentSlug] : null;
-  //     if (cached) {
-  //       setProduct(cached);
-  //       setSelectedImageIndex(0);
-  //       if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
-  //     }
-  //   };
-  //   window.addEventListener("popstate", onPopState);
-  //   return () => window.removeEventListener("popstate", onPopState);
-  // }, []);
+  const handleVariantSelect = (match) => {
+    if (!match) return;
+    const targetSlug = match.slug || String(match._id || "");
+    if (!targetSlug) return;
+    if (String(match._id) === String(product?._id) && targetSlug === String(slug)) return;
+
+    const group = product?.variantGroup;
+    const cached = {
+      ...(variantCacheRef.current[targetSlug] || match),
+      variantGroup: group,
+    };
+    variantCacheRef.current[targetSlug] = cached;
+    applyingVariantRef.current = true;
+    setProduct(cached);
+    setSelectedImageIndex(0);
+    setQuantity(1);
+    setSelectedWarrantyAmount(0);
+    setSelectedWarrantyData(null);
+    if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
+
+    const nextUrl = `/product/${targetSlug}`;
+    if (typeof window !== "undefined" && window.location.pathname !== nextUrl) {
+      window.history.pushState(null, "", nextUrl);
+    }
+  };
+
+  useEffect(() => {
+    const onPopState = () => {
+      const currentSlug = window.location.pathname.split("/").filter(Boolean).pop();
+      const cached = currentSlug ? variantCacheRef.current[currentSlug] : null;
+      if (cached) {
+        setProduct(cached);
+        setSelectedImageIndex(0);
+        if (cached?.images?.[0]) setSelectedImage(cached.images[0]);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   useEffect(() => {
   if (selectedFrequentProducts.length > 0) {
@@ -1311,11 +1307,11 @@ const fetchBrand = async () => {
 
     {/* Variants + Quantity + Buy Now + Add to Cart */}
     <div className="mt-3">
-      {/* <ProductVariantSelector
+      <ProductVariantSelector
         variantGroup={product.variantGroup}
         currentProductId={product._id}
         onSelect={handleVariantSelect}
-      /> */}
+      />
       <div className="flex items-center gap-3 mb-3">
         <span className="text-sm font-medium text-gray-700">Quantity:</span>
         <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">
@@ -1859,11 +1855,11 @@ const fetchBrand = async () => {
                   <div id="flix-minisite" className="flix-minisite-container w-full mt-2 min-h-[40px]" />
                 ) : null}
 
-                {/* <ProductVariantSelector
+                <ProductVariantSelector
                   variantGroup={product.variantGroup}
                   currentProductId={product._id}
                   onSelect={handleVariantSelect}
-                /> */}
+                />
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-sm font-medium text-gray-700">Quantity:</span>
                   <div className="flex items-center border border-gray-300 rounded px-2 py-1 gap-3">
