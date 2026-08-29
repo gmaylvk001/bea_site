@@ -5,7 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { AuthModal } from '@/components/AuthModal';
-import { ga4BeginCheckout, ga4Purchase } from "@/utils/nextjs-event-tracking.js";
+import { ga4BeginCheckout, ga4AddShippingInfo, ga4AddPaymentInfo, ga4Purchase } from "@/utils/nextjs-event-tracking.js";
 import { useModal } from "@/context/ModalContext";
 
 const loadRazorpay = () => {
@@ -78,6 +78,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 const DeliveryOptions = ({
   formData, handleChange,
   isDeliverySaved, setIsDeliverySaved,
+  onSaveAndContinue,
   stores, nearestStores, setNearestStores,
   selectedPickupStore, setSelectedPickupStore,
   cartItems,
@@ -302,10 +303,7 @@ const findNearestStores = async (pincode) => {
       {!isDeliverySaved && (
         <button
           type="button"
-          onClick={() => {
-            toast.success('Delivery method saved');
-            setIsDeliverySaved(true);
-          }}
+          onClick={onSaveAndContinue}
           className="mt-4 bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
         >
           Save and continue
@@ -367,6 +365,10 @@ export default function CheckoutPage() {
   const [maxUsablePoints, setMaxUsablePoints] = useState(0);
   const [touched, setTouched] = useState({});
   const [shippingMethod, setShippingMethod] = useState('standard');
+  const hasFiredBeginCheckoutRef = useRef(false);
+  const hasFiredAddShippingInfoRef = useRef(false);
+  const hasFiredAddPaymentInfoRef = useRef(false);
+  const hasFiredPurchaseRef = useRef(false);
 
   const extraCities = ["Ariyalur","Chennai","Coimbatore","Cuddalore","Dharmapuri","Dindigul","Erode","Kanchipuram","Kanyakumari","Karur","Krishnagiri","Madurai","Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram","Salem","Sivaganga","Thanjavur","Theni","Thoothukudi","Tirunelveli","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore","Viluppuram","Virudhunagar","Singanallur","Sivananthapuram","Vadavalli","Annur","Mettupalayam","Thennur","Ariyamangalam","Komarapalayam","Kattur"];
 
@@ -411,10 +413,33 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    if (cartItems.length > 0 && orderSummary.total > 0) {
-      ga4BeginCheckout({ items: cartItems, value: orderSummary.total });
-    }
+    if (cartItems.length === 0) return;
+    if (orderSummary.total <= 0) return;
+    if (hasFiredBeginCheckoutRef.current) return;
+
+    hasFiredBeginCheckoutRef.current = true;
+
+    ga4BeginCheckout({
+      items: cartItems,
+      value: orderSummary.total
+    });
   }, [cartItems, orderSummary.total]);
+
+  const handleSaveAndContinue = () => {
+    if (cartItems.length === 0) return;
+    if (orderSummary.total <= 0) return;
+    if (!hasFiredAddShippingInfoRef.current) {
+      hasFiredAddShippingInfoRef.current = true;
+      const shippingCost = shippingMethod === 'express' ? 299 : 0;
+      ga4AddShippingInfo({
+        items: cartItems,
+        value: orderSummary.total + shippingCost,
+        shippingTier: shippingMethod,
+      });
+    }
+    toast.success('Delivery method saved');
+    setIsDeliverySaved(true);
+  };
 
   const fetchData = async (skipCartFetch = false) => {
     const token = localStorage.getItem('token');
@@ -715,6 +740,17 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
       const gstNumber = formData.needGstInvoice ? formData.gst_number.trim().toUpperCase() : '';
       const gstBusinessName = formData.needGstInvoice ? formData.gst_business_name.trim() : '';
 
+      if (cartItems.length === 0) return;
+      if (orderSummary.total <= 0) return;
+      if (!hasFiredAddPaymentInfoRef.current) {
+        hasFiredAddPaymentInfoRef.current = true;
+        ga4AddPaymentInfo({
+          items: cartItems,
+          value: orderSummary.total + (shippingMethod === 'express' ? 299 : 0),
+          paymentType: paymentMethod,
+        });
+      }
+
       setIsSubmitting(true);
       const totalAmount = orderSummary.total;
       let savedAddressId = null;
@@ -857,7 +893,10 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
       if (cartDelete.status === 200) {
         localStorage.removeItem('checkoutData'); localStorage.removeItem('appliedCoupon');
         const orderData = await orderRes.json();
-        ga4Purchase({ orderId: orderData.order.order_number, value: orderSummary.total, items: cartItems });
+        if (!hasFiredPurchaseRef.current) {
+          hasFiredPurchaseRef.current = true;
+          ga4Purchase({ orderId: orderData.order.order_number, value: orderSummary.total, items: cartItems });
+        }
 
         // Earn loyalty points (online only) — not COD / Pay at Store / EMI
         if (paymentMode === 'online') {
@@ -1014,6 +1053,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                 handleChange={handleChange}
                 isDeliverySaved={isDeliverySaved}
                 setIsDeliverySaved={setIsDeliverySaved}
+                onSaveAndContinue={handleSaveAndContinue}
                 stores={stores}
                 nearestStores={nearestStores}
                 setNearestStores={setNearestStores}

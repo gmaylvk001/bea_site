@@ -29,7 +29,7 @@ import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import RelatedProducts from "@/components/RelatedProducts";
 import RazorpayOffers from "@/components/RazorpayOffers";
 import { v4 as uuidv4 } from "uuid";
-// import { ga4ViewItem } from "@/utils/nextjs-event-tracking";
+import { ga4ViewItem } from "@/utils/nextjs-event-tracking";
 
 
 function FaqItem({ question, answer }) {
@@ -71,8 +71,7 @@ export default function ProductClient({ initialProduct = null }) {
   const [showFeatures, setShowFeatures] = useState(false);
   const [showHighlights, setShowHighlights] = useState(false);
   const [product, setProduct] = useState(initialProduct);
-  // [GA4] commented
-  // const lastViewedItemIdRef = useRef(null);
+  const lastViewedItemIdRef = useRef(null);
   const [loading, setLoading] = useState(!initialProduct);
   const variantCacheRef = useRef({});
   const applyingVariantRef = useRef(false);
@@ -119,14 +118,13 @@ const addOnIds = Array.isArray(product?.add_ons)
     setHasMounted(true);
   }, []);
 
-  // [GA4] commented — view_item tracking
-  // useEffect(() => {
-  //   if (!product?._id) return;
-  //   const id = String(product._id);
-  //   if (lastViewedItemIdRef.current === id) return;
-  //   lastViewedItemIdRef.current = id;
-  //   ga4ViewItem({ product });
-  // }, [product?._id]);
+  useEffect(() => {
+    if (!product?._id) return;
+    const id = String(product._id);
+    if (lastViewedItemIdRef.current === id) return;
+    lastViewedItemIdRef.current = id;
+    ga4ViewItem({ product });
+  }, [product?._id]);
 
 useEffect(() => {
   if (!product?._id) return;

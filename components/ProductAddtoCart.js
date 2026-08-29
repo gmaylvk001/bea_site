@@ -6,7 +6,7 @@ import { useCart } from '@/context/CartContext';
 import { useModal } from '@/context/ModalContext';
 import { useHeaderdetails } from '@/context/HeaderContext';
 import { ToastContainer, toast } from 'react-toastify';
-import { trackAddToCart } from "@/utils/nextjs-event-tracking.js";
+import { trackAddToCart, ga4AddToCart } from "@/utils/nextjs-event-tracking.js";
 
 import { FaShoppingCart} from "react-icons/fa";
 
@@ -25,6 +25,7 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
   const isOpenBox = (movement === "FOCUS" || movement === "EOL") && stockQuantity < 10; 
   const { cartCount, updateCartCount } = useCart();
   const handleAddToCart = async () => {
+     if (isLoading) return;
      if (isOutOfStock) return;
 
      if(isprice){
@@ -208,6 +209,15 @@ const AddToCartButton = ({ productId, quantity = 1, warranty, additionalProducts
   
         const responseData = await cartResponse.json();
         updateCartCount(responseData.cart.totalItems + additionalProducts.length);
+
+        ga4AddToCart({
+          product: {
+            id: productId,
+            name: productData.data.name,
+            price: productData.data.special_price > 0 ? productData.data.special_price : productData.data.price,
+            qty: quantity,
+          },
+        });
 
         // ✅ Track events (skip if guest)
         if (isLoggedIn) {

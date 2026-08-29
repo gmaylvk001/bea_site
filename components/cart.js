@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import { MdSecurity, MdLoop, MdVerified, MdCardMembership, MdLocalShipping, MdLock } from "react-icons/md";
 import { useWishlist } from '@/context/WishlistContext';
 import ProductAddtoCart from "@/components/ProductAddtoCart";
+import { ga4ViewCart } from "@/utils/nextjs-event-tracking";
 
 
 const slugify = (str) => {
@@ -261,6 +262,7 @@ export default function CartComponent() {
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const hasFiredViewCartRef = useRef(false);
   const { cartCount, updateCartCount } = useCart();
 const { updateWishlist } = useWishlist();
   
@@ -1231,6 +1233,22 @@ const calculateSubtotal = () => {
     const discount = calculateDiscount();
     return subtotal - discount;
   };
+
+  useEffect(() => {
+    if (loading) return;
+    if (hasFiredViewCartRef.current) return;
+    if (!cartData?.items?.length) return;
+
+    const items = cartData.items.map((item) => ({
+      productId: item.productId,
+      name: item.name,
+      price: item.price > 0 ? item.price : item.actual_price,
+      quantity: item.quantity || 1,
+    }));
+
+    hasFiredViewCartRef.current = true;
+    ga4ViewCart({ items, value: calculateTotal() });
+  }, [loading, cartData]);
 
   const proceedToCheckout = () => {
   

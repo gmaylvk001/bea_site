@@ -1,10 +1,11 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import ClientLayout from "@/app/ClientLayout";
 import Script from "next/script";
 import HomeOnlyScripts from "@/app/HomeOnlyScripts";
-import WhatsAppFloat from "@/app/WhatsappFloat";
 import VisitorTracker from "@/components/VisitorTracker";
+import Ga4SpaPageView from "@/components/Ga4SpaPageView";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -66,14 +67,11 @@ export default function RootLayout({ children }) {
           }}
         />
         */}
-<Script src="https://www.googletagmanager.com/gtag/js?id=G-15V9VS13Q7" strategy="afterInteractive" />
-        <Script id="gtm-new" strategy="afterInteractive">
+        {/* dataLayer + gtag stub only. GA4 config/page_view is owned by GTM-P7LW8D7X. */}
+        <Script id="gtag-stub" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
- 
-  gtag('config', 'G-15V9VS13Q7');
+            window.gtag = window.gtag || function gtag(){ window.dataLayer.push(arguments); };
           `}
         </Script>
 
@@ -129,7 +127,9 @@ export default function RootLayout({ children }) {
 
         <ClientLayout>{children}</ClientLayout>
         <HomeOnlyScripts/>
-       <WhatsAppFloat/>   
+        <Suspense fallback={null}>
+          <Ga4SpaPageView />
+        </Suspense>
        <VisitorTracker/>
       </body>
     </html>

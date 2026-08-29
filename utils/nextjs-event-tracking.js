@@ -1,5 +1,22 @@
 // utils/tracking.js
 "use client";
+
+export const ga4SpaPageView = ({ pageLocation, pageReferrer }) => {
+  if (typeof window === "undefined") return;
+  const payload = {
+    page_location: pageLocation,
+  };
+  if (pageReferrer) {
+    payload.page_referrer = pageReferrer;
+  }
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "page_view", payload);
+    return;
+  }
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(["event", "page_view", payload]);
+};
+
 // ─── GA4 Ecommerce Helpers ───────────────────────────────────────────────────
 
 export const ga4AddToCart = ({ product }) => {
@@ -38,6 +55,44 @@ export const ga4BeginCheckout = ({ items, value }) => {
   }
 };
 
+export const ga4AddShippingInfo = ({ items, value, shippingTier }) => {
+  if (typeof window === "undefined" || !window.gtag) return;
+  if (!Array.isArray(items) || items.length === 0) return;
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return;
+
+  window.gtag("event", "add_shipping_info", {
+    currency: "INR",
+    value: numericValue,
+    shipping_tier: shippingTier,
+    items: items.map((item) => ({
+      item_id: item.productId || item._id,
+      item_name: item.name,
+      price: item.price,
+      quantity: item.quantity || 1,
+    })),
+  });
+};
+
+export const ga4AddPaymentInfo = ({ items, value, paymentType }) => {
+  if (typeof window === "undefined" || !window.gtag) return;
+  if (!Array.isArray(items) || items.length === 0) return;
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return;
+
+  window.gtag("event", "add_payment_info", {
+    currency: "INR",
+    value: numericValue,
+    payment_type: paymentType,
+    items: items.map((item) => ({
+      item_id: item.productId || item._id,
+      item_name: item.name,
+      price: item.price,
+      quantity: item.quantity || 1,
+    })),
+  });
+};
+
 export const ga4Purchase = ({ orderId, value, items }) => {
   if (typeof window !== "undefined" && window.gtag) {
     window.gtag("event", "purchase", {
@@ -52,6 +107,45 @@ export const ga4Purchase = ({ orderId, value, items }) => {
       })),
     });
   }
+};
+
+export const ga4ViewItem = ({ product }) => {
+  if (typeof window === "undefined" || !window.gtag) return;
+  const price = Number(
+    product?.special_price > 0 ? product.special_price : product?.price
+  );
+  if (!product?._id || !Number.isFinite(price)) return;
+
+  window.gtag("event", "view_item", {
+    currency: "INR",
+    value: price,
+    items: [
+      {
+        item_id: String(product._id),
+        item_name: product.name,
+        price,
+        quantity: 1,
+      },
+    ],
+  });
+};
+
+export const ga4ViewCart = ({ items, value }) => {
+  if (typeof window === "undefined" || !window.gtag) return;
+  if (!Array.isArray(items) || items.length === 0) return;
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return;
+
+  window.gtag("event", "view_cart", {
+    currency: "INR",
+    value: numericValue,
+    items: items.map((item) => ({
+      item_id: String(item.productId || item._id),
+      item_name: item.name,
+      price: Number(item.price),
+      quantity: item.quantity || 1,
+    })),
+  });
 };
 
 // ─── Email Marketing (_em_event) Helpers ────────────────────────────────────
