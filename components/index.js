@@ -1209,9 +1209,6 @@ export default function HomeComponent() {
                     backgroundPosition: "center",
                   }}
                 >
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-
                   {/* Content */}
                   <div className="relative z-10 flex items-center w-full">
                     
