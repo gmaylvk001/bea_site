@@ -1,6 +1,9 @@
 // app/blog/[slug]/page.js
 import React from "react";
 import Link from "next/link";
+import dbConnect from "@/lib/db";
+import Blog from "@/models/ecom_blog_info";
+import "@/models/ecom_category_info";
 import {
   getBaseUrl,
   stripHtml,
@@ -10,13 +13,11 @@ import {
 
 async function getBlogPost(slug) {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/blogs/get?slug=${slug}`,
-      { cache: "no-store" }
-    );
-    if (!res.ok) throw new Error("Failed to fetch blog post");
-    const { data } = await res.json();
-    return data || null;
+    await dbConnect();
+    const blog = await Blog.findOne({ blog_slug: slug, status: "Active" })
+      .populate("category")
+      .lean();
+    return blog || null;
   } catch (error) {
     console.error("Error fetching blog post:", error);
     return null;
@@ -179,13 +180,17 @@ export default async function BlogPost({ params }) {
 
         {/* Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-10 mb-10">
-          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-            {blog.description.split("\n").map((paragraph, index) =>
-              paragraph.trim() ? (
-                <p key={index} className="mb-5 last:mb-0">
-                  {paragraph}
-                </p>
-              ) : null
+          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed [&_p]:mb-5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_img]:max-w-full [&_img]:h-auto [&_table]:w-full [&_a]:text-blue-600">
+            {blog.description && /<\/?[a-z][\s\S]*>/i.test(blog.description) ? (
+              <div dangerouslySetInnerHTML={{ __html: blog.description }} />
+            ) : (
+              (blog.description || "").split("\n").map((paragraph, index) =>
+                paragraph.trim() ? (
+                  <p key={index} className="mb-5 last:mb-0">
+                    {paragraph}
+                  </p>
+                ) : null
+              )
             )}
           </div>
         </div>

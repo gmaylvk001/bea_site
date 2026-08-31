@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaPlus, FaMinus, FaEdit } from "react-icons/fa";
 import { Icon } from '@iconify/react';
 import DateRangePicker from '@/components/DateRangePicker';
-import CustomQuill from './CustomQuill'; // Imported rich text editor
+import TinyEditor from "@/app/admin/components/product/TinyEditor";
 
 export default function BlogComponent() {
   // State declarations
@@ -776,7 +776,12 @@ export default function BlogComponent() {
                   <label className="block mb-1 text-sm font-semibold text-gray-700">Blog Description</label>
                   <div className="bg-white">
                     {isModalOpen && (
-                      <CustomQuill value={blogData.description} onChange={handleDescriptionChange} />
+                      <TinyEditor
+                        value={blogData.description}
+                        fullToolbar
+                        placeholder="Enter blog description..."
+                        onChange={(e) => handleDescriptionChange(e.target.value)}
+                      />
                     )}
                   </div>
                 </div>
@@ -913,7 +918,12 @@ export default function BlogComponent() {
                   <label className="block mb-1 text-sm font-semibold text-gray-700">Blog Description</label>
                   <div className="bg-white">
                     {isEditModalOpen && (
-                      <CustomQuill value={editBlogData.description} onChange={handleEditDescriptionChange} />
+                      <TinyEditor
+                        value={editBlogData.description}
+                        fullToolbar
+                        placeholder="Enter blog description..."
+                        onChange={(e) => handleEditDescriptionChange(e.target.value)}
+                      />
                     )}
                   </div>
                 </div>

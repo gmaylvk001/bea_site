@@ -155,13 +155,7 @@ export default function BlogComponent() {
 
       try {
 
-        const res = await fetch(
-
-          `${process.env.NEXT_PUBLIC_API_URL || ""}/api/blogs/get`,
-
-          { cache: "no-store" }
-
-        );
+        const res = await fetch("/api/blogs/get", { cache: "no-store" });
 
         if (!res.ok) throw new Error("Failed to fetch blogs");
 

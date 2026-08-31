@@ -1,6 +1,7 @@
 // app/api/blogs/get/route.js
 import dbConnect from "@/lib/db";
 import Blog from "@/models/ecom_blog_info";
+import "@/models/ecom_category_info";
 
 export async function GET(req) {
   try {
