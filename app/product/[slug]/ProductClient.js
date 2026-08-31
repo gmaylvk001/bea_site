@@ -30,6 +30,7 @@ import RelatedProducts from "@/components/RelatedProducts";
 import RazorpayOffers from "@/components/RazorpayOffers";
 import { v4 as uuidv4 } from "uuid";
 import { ga4ViewItem } from "@/utils/nextjs-event-tracking";
+import { useVisitorIntent } from "@/context/VisitorIntentContext";
 
 
 function FaqItem({ question, answer }) {
@@ -61,6 +62,7 @@ export default function ProductClient({ initialProduct = null }) {
   const router = useRouter(); 
   const params = useParams();
   const pathname = usePathname();
+  const { trackProductView } = useVisitorIntent();
   const slug = (pathname || "").split("/").filter(Boolean).pop() || params?.slug;
   const [hasMounted, setHasMounted] = useState(false);
   const [relatedProductsLoading, setRelatedProductsLoading] = useState(false);
@@ -721,6 +723,20 @@ const resolveImagePath = (image) => {
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+
+  useEffect(() => {
+    if (!product?._id) return;
+    const brandName =
+      matchedBrandForManufacturer?.label ||
+      brand.find((b) => String(b.value) === String(product.brand))?.label ||
+      "";
+    trackProductView(product, {
+      brandName,
+      categoryName: product.category_name || product.categoryName || "",
+      rating: avgRating,
+      reviewCount,
+    });
+  }, [product?._id, trackProductView, matchedBrandForManufacturer?.label, brand, avgRating, reviewCount]);
 
   useEffect(() => {
     const applyProductData = (data) => {

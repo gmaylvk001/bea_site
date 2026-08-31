@@ -380,3 +380,9 @@ body::-webkit-scrollbar {
     aspect-ratio: 2;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .smart-lead-panel {
+    animation: none !important;
+  }
+}

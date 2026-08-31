@@ -9,9 +9,9 @@ import { ModalProvider } from "@/context/ModalContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { CartProvider } from "@/context/CartContext";
 import { HeaderProvider } from "@/context/HeaderContext";
-// import { SmartLeadConfigProvider } from "@/context/SmartLeadConfigContext";
-// import { VisitorIntentProvider } from "@/context/VisitorIntentContext";
-// import SmartLeadPopupHost from "@/components/smartLead/SmartLeadPopupHost";
+import { SmartLeadConfigProvider } from "@/context/SmartLeadConfigContext";
+import { VisitorIntentProvider } from "@/context/VisitorIntentContext";
+import SmartLeadPopupHost from "@/components/smartLead/SmartLeadPopupHost";
 import WhatsAppFloat from "@/app/WhatsappFloat";
 
 export default function ClientLayout({ children }) {
@@ -23,16 +23,16 @@ export default function ClientLayout({ children }) {
         <WishlistProvider>
           <CartProvider>
             <AuthProvider>
-              {/* <SmartLeadConfigProvider>
-                <VisitorIntentProvider> */}
+              <SmartLeadConfigProvider>
+                <VisitorIntentProvider>
                   {!pathname?.startsWith("/admin") && <CustomHeader />}
                   <main className="relative">{children}</main>
                   {!pathname?.startsWith("/admin") && <CustomFooter />}
                   <GlobalModals />
-                  {/* <SmartLeadPopupHost /> */}
+                  <SmartLeadPopupHost />
                   <WhatsAppFloat />
-                {/* </VisitorIntentProvider>
-              </SmartLeadConfigProvider> */}
+                </VisitorIntentProvider>
+              </SmartLeadConfigProvider>
             </AuthProvider>
           </CartProvider>
         </WishlistProvider>
