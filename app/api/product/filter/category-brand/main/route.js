@@ -3,6 +3,7 @@ import Product from "@/models/product";
 import ProductFilter from "@/models/ecom_productfilter_info";
 import ecom_category_info from "@/models/ecom_category_info";
 import Brand from "@/models/ecom_brand_info";
+import { withValidPrice } from "@/lib/productPrice";
 
 export async function GET(req) {
   try {
@@ -17,6 +18,7 @@ export async function GET(req) {
     const filterIds = searchParams.get("filters")?.split(",") || [];
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 20;
+    const sort = searchParams.get("sort") || "featured";
 
     const categoryIdsParam = searchParams.get("categoryIds");
     const subcategoryIdsParam = searchParams.get("subcategoryIds");
@@ -185,6 +187,8 @@ let query = {
   ],
 };
 
+    query = withValidPrice(query);
+
     let productsQuery = Product.find(query).populate(
       "brand",
       "brand_name brand_slug",
@@ -220,11 +224,54 @@ let query = {
     }
 
     /* --------------------------------------------------
-       6️⃣ Pagination
+       6️⃣ Sort (same default as /api/product/filter: quantity high → low)
+          + Pagination
     -------------------------------------------------- */
     const skip = (page - 1) * limit;
+    let products;
 
-    const products = await productsQuery.skip(skip).limit(limit).lean();
+    if (sort === "price-low-high" || sort === "price-high-low") {
+      const sortDir = sort === "price-low-high" ? 1 : -1;
+      products = await Product.aggregate([
+        { $match: query },
+        {
+          $addFields: {
+            effective_price: {
+              $cond: {
+                if: {
+                  $and: [
+                    { $gt: ["$special_price", 0] },
+                    { $lt: ["$special_price", "$price"] },
+                  ],
+                },
+                then: "$special_price",
+                else: "$price",
+              },
+            },
+          },
+        },
+        { $sort: { effective_price: sortDir, _id: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+      ]);
+    } else {
+      const sortObj =
+        sort === "name-a-z"
+          ? { name: 1, _id: -1 }
+          : sort === "name-z-a"
+            ? { name: -1, _id: -1 }
+            : sort === "quantity-low-to-high"
+              ? { quantity: 1, _id: -1 }
+              : sort === "quantity-high-to-low"
+                ? { quantity: -1, _id: -1 }
+                : { quantity: -1, _id: -1 };
+
+      products = await productsQuery
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit)
+        .lean();
+    }
 
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);

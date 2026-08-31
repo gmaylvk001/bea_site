@@ -9,6 +9,7 @@ import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
+import { filterPricedProducts, hasValidPrice } from "@/lib/productPrice";
 
 export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
   const [categoryData, setCategoryData] = useState({
@@ -167,12 +168,15 @@ if (selectedFilters.subcategories.length > 0) {
     if (selectedFilters.filters.length > 0) {
       query.set('filters', selectedFilters.filters.join(','));
     }
+    if (sortOption) {
+      query.set('sort', sortOption);
+    }
     console.log("FINAL QUERY:", query.toString());
     const res = await fetch(`/api/product/filter/category-brand/main?${query}`);
    
     const { products, pagination: paginationData } = await res.json();
 console.log("Fetched products:", products);
-    setProducts(products || []);
+    setProducts(filterPricedProducts(products || []));
 
     if ((!products || products.length === 0) && pageNum === 1) {
       setNofound(true);
@@ -194,7 +198,7 @@ console.log("Fetched products:", products);
   } finally {
     setLoading(false);
   }
-}, [selectedFilters, categoryData]);
+}, [selectedFilters, categoryData, sortOption]);
 
   // const fetchFilteredProducts = useCallback(async (pageNum = 1) => {
   //   try {
@@ -1413,6 +1417,7 @@ console.log("Fetched products:", products);
 
        
                           {/* Price Row (same level always) */}
+                          {hasValidPrice(product) && (
                           <div className="mb-3">
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-base font-semibold text-red-600">
@@ -1435,6 +1440,7 @@ console.log("Fetched products:", products);
                               )}
                             </div>
                           </div>
+                          )}
                           <h4 className={`text-xs mb-3 ${product.stock_status === "In Stock" && product.quantity ? "text-green-600" : "text-red-600"}`}>
                             {product.stock_status === "In Stock" && product.quantity ? ` ${product.stock_status}` : "Out Of Stock"}
                             {product.stock_status === "In Stock" && product.quantity ? `, ${product.quantity} units` : ""}
