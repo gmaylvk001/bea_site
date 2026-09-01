@@ -24,6 +24,27 @@ function resolveCategorySlug(pathname = "") {
   return parts[parts.length - 1] || parts[1];
 }
 
+function resolveBrandSlug(pathname = "") {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts[0] !== "brand" || !parts[1]) return null;
+  return parts[1];
+}
+
+function brandImageSrc(image = "") {
+  const src = String(image || "").trim();
+  if (!src) return "";
+  if (src.startsWith("http") || src.startsWith("/") || src.startsWith("data:")) {
+    return src;
+  }
+  return `/uploads/Brands/${src}`;
+}
+
+function productForLead(snapshot) {
+  if (snapshot?.currentProduct?.productId) return snapshot.currentProduct;
+  if (snapshot?.lastViewedProduct?.productId) return snapshot.lastViewedProduct;
+  return {};
+}
+
 export default function SmartLeadPopupHost() {
   const pathname = usePathname();
   const { config, ready: configReady } = useSmartLeadConfig();
@@ -85,7 +106,8 @@ export default function SmartLeadPopupHost() {
   }, [ready, pathname]);
 
   // Keep category browse context on product pages (needed for Category popup
-  // while hopping SKUs). Clear it only when leaving category + product.
+  // while hopping SKUs). Brand listing uses the same Category trigger.
+  // Clear it only when leaving category + brand + product.
   useEffect(() => {
     if (!ready) return undefined;
     if (pageType === "product") return undefined;
@@ -95,14 +117,36 @@ export default function SmartLeadPopupHost() {
       return undefined;
     }
 
-    const slug = resolveCategorySlug(pathname || "");
-    if (!slug || browseSlugRef.current === slug) return undefined;
-    browseSlugRef.current = slug;
+    const brandSlug = resolveBrandSlug(pathname || "");
+    const categorySlug = brandSlug ? null : resolveCategorySlug(pathname || "");
+    const browseKey = brandSlug
+      ? `brand:${brandSlug}`
+      : categorySlug
+        ? `category:${categorySlug}`
+        : "";
+    if (!browseKey || browseSlugRef.current === browseKey) return undefined;
+    browseSlugRef.current = browseKey;
 
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/categories/${encodeURIComponent(slug)}`);
+        if (brandSlug) {
+          const res = await fetch(`/api/brand/${encodeURIComponent(brandSlug)}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          const brand = data?.brand || null;
+          if (cancelled || !brand) return;
+          setBrowseContext?.({
+            type: "brand",
+            categoryId: "",
+            categoryName: brand.brand_name || brandSlug,
+            categorySlug: brand.brand_slug || brandSlug,
+            categoryImage: brandImageSrc(brand.image),
+          });
+          return;
+        }
+
+        const res = await fetch(`/api/categories/${encodeURIComponent(categorySlug)}`);
         if (!res.ok) return;
         const data = await res.json();
         const cat = data?.main_category || data?.category || null;
@@ -110,16 +154,24 @@ export default function SmartLeadPopupHost() {
         setBrowseContext?.({
           type: "category",
           categoryId: String(cat._id || ""),
-          categoryName: cat.category_name || slug,
-          categorySlug: cat.category_slug || slug,
+          categoryName: cat.category_name || categorySlug,
+          categorySlug: cat.category_slug || categorySlug,
           categoryImage: cat.image || cat.category_image || "",
         });
       } catch {
-        setBrowseContext?.({
-          type: "category",
-          categorySlug: slug,
-          categoryName: slug.replace(/-/g, " "),
-        });
+        if (brandSlug) {
+          setBrowseContext?.({
+            type: "brand",
+            categorySlug: brandSlug,
+            categoryName: brandSlug.replace(/-/g, " "),
+          });
+        } else if (categorySlug) {
+          setBrowseContext?.({
+            type: "category",
+            categorySlug,
+            categoryName: categorySlug.replace(/-/g, " "),
+          });
+        }
       }
     })();
 
@@ -195,7 +247,7 @@ export default function SmartLeadPopupHost() {
 
   const buildLeadPayload = useCallback(
     ({ mobile, name }) => {
-      const p = snapshot?.currentProduct || {};
+      const p = productForLead(snapshot);
       const browse = snapshot?.browseContext || {};
       const ctaClicked = content?.primaryCta || "";
       return {
@@ -250,7 +302,7 @@ export default function SmartLeadPopupHost() {
           totalActiveMs: snapshot?.totalActiveMs,
           currentProductActiveMs: snapshot?.currentProductActiveMs,
           productPageViewCount: snapshot?.productPageViewCount,
-          isPremium: snapshot?.isPremium,
+          isPremium: Boolean(p.isPremium),
           talkToId: snapshot?.talkToId || "",
           firstSeenAt: snapshot?.firstSeenAt || null,
         },
@@ -382,7 +434,7 @@ export default function SmartLeadPopupHost() {
           visitorId: snapshot?.visitorId,
           sessionId: snapshot?.sessionId,
           leadId: id || "",
-          productName: snapshot?.currentProduct?.name,
+          productName: snapshot?.currentProduct?.name || snapshot?.lastViewedProduct?.name,
           intentScore: snapshot?.intentScore,
         });
       })
