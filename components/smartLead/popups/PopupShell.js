@@ -40,6 +40,7 @@ export default function PopupShell({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const [scale, setScale] = useState(1);
+  const [hugHeight, setHugHeight] = useState(DESIGN_HEIGHT);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -108,6 +109,22 @@ export default function PopupShell({
     return () => window.removeEventListener("resize", apply);
   }, [open, variant]);
 
+  const isCategory = variant === "category";
+
+  useEffect(() => {
+    if (!open || !isCategory) return undefined;
+    const el = panelRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    const update = () => {
+      const h = el.offsetHeight;
+      if (h > 0) setHugHeight(h);
+    };
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    update();
+    return () => ro.disconnect();
+  }, [open, isCategory]);
+
   if (!open) return null;
 
   const isWide =
@@ -132,7 +149,9 @@ export default function PopupShell({
 
   const panelHeight = isSupport
     ? "max-h-[min(90dvh,420px)]"
-    : "h-[480px]";
+    : isCategory
+      ? "h-auto"
+      : "h-[480px]";
 
   return (
     <div
@@ -155,7 +174,7 @@ export default function PopupShell({
             ? undefined
             : {
                 width: DESIGN_WIDTH * scale,
-                height: DESIGN_HEIGHT * scale,
+                height: (isCategory ? hugHeight : DESIGN_HEIGHT) * scale,
               }
         }
       >
@@ -204,7 +223,13 @@ export default function PopupShell({
             >
               <span aria-hidden="true">×</span>
             </button>
-            <div className="overflow-y-auto overscroll-contain flex-1 min-h-0">
+            <div
+              className={
+                isCategory
+                  ? "h-auto"
+                  : "overflow-y-auto overscroll-contain flex-1 min-h-0 h-full"
+              }
+            >
               {children}
             </div>
           </>

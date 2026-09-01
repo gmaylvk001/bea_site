@@ -8,7 +8,7 @@ import {
 } from "@/components/smartLead/LeadCaptureForm";
 import { isValidIndianMobile, normalizeIndianMobile } from "@/lib/smartLead";
 
-const BEA_LOGO = "/user/bea-new.png";
+const BEA_LOGO = "/uploads/beaHqlogo.png";
 const ACCENT = "#0B3A6E";
 
 const FEATURE_ICONS = [
@@ -282,9 +282,9 @@ export default function ComparisonIntentPopup({
           <img
             src={BEA_LOGO}
             alt="BEA — Bharath Electronics & Appliances"
-            className="h-10 w-auto object-contain"
-            width={120}
-            height={40}
+            className="h-14 w-auto object-contain self-start"
+            width={200}
+            height={56}
           />
 
           <div className="mt-3 grid grid-cols-[minmax(0,1.05fr)_minmax(0,1.15fr)] gap-4 items-start">

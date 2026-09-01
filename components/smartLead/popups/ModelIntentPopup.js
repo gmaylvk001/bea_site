@@ -8,7 +8,7 @@ import {
 } from "@/components/smartLead/LeadCaptureForm";
 import { isValidIndianMobile, normalizeIndianMobile } from "@/lib/smartLead";
 
-const BEA_LOGO = "/user/bea-new.png";
+const BEA_LOGO = "/uploads/beaHqlogo.png";
 const ICON_BLUE = "#7EB6FF";
 const BTN_BLUE = "#2563EB";
 
@@ -125,25 +125,6 @@ function FeatureRow({ benefits }) {
   );
 }
 
-function LeafPattern() {
-  return (
-    <svg
-      className="absolute inset-0 w-full h-full opacity-[0.14] pointer-events-none"
-      viewBox="0 0 400 500"
-      preserveAspectRatio="xMaxYMid slice"
-      aria-hidden="true"
-    >
-      <g fill="none" stroke="#9CC7FF" strokeWidth="1.2">
-        <path d="M320 40c40 30 55 80 30 120-28 8-70-10-90-50 18-40 40-70 60-70Z" />
-        <path d="M280 180c50 20 70 70 40 115-32 6-78-18-95-58 12-38 32-62 55-57Z" />
-        <path d="M340 300c38 28 48 78 18 112-30 10-72-8-88-48 16-38 40-68 70-64Z" />
-        <path d="M250 90c-8 40 6 70 40 78" />
-        <path d="M220 230c-6 36 10 68 42 74" />
-      </g>
-    </svg>
-  );
-}
-
 export default function ModelIntentPopup({
   open,
   content,
@@ -176,17 +157,12 @@ export default function ModelIntentPopup({
   const p = content.product || {};
   const productName =
     content.productName ||
-    [p.brandName, p.name].filter(Boolean).join(" ") ||
     p.name ||
     "this product";
   const subcopy =
     content.subcopy || "Unlock today's best price & exclusive offers for this model.";
   const primaryCta = content.primaryCta || "GET MY BEST PRICE";
   const whatsappEnabled = content.whatsappEnabled !== false;
-  const badge =
-    [p.modelNumber, p.categoryName].filter(Boolean).join(" · ") ||
-    p.name ||
-    "";
   const rating = Number(p.rating) || 0;
   const reviewCount = Number(p.reviewCount) || 0;
 
@@ -214,24 +190,18 @@ export default function ModelIntentPopup({
   };
 
   const productCol = (
-    <div className="relative min-h-full flex flex-col items-center justify-end pt-2 pb-4 px-4">
-      <LeafPattern />
-      {badge ? (
-        <div className="absolute top-3 right-3 z-10 max-w-[160px] rounded-md border border-white/70 bg-black/35 backdrop-blur-[2px] px-2 py-1.5 text-[11px] leading-snug text-white text-center">
-          {badge}
-        </div>
-      ) : null}
-      <div className="relative z-[1] w-full h-[240px] flex items-end justify-center">
+    <div className="flex flex-col items-center justify-center px-4 py-4 pr-6">
+      <div className="w-full h-[240px] flex items-center justify-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={p.image || "/no-image.jpg"}
           alt={productName}
-          className="max-h-full max-w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]"
+          className="max-h-full max-w-full object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.45)]"
           loading="lazy"
           decoding="async"
         />
       </div>
-      <div className="relative z-[1] mt-2 text-center">
+      <div className="mt-3 text-center">
         {rating > 0 ? (
           <div className="flex items-center justify-center gap-1.5 text-[12px] text-white">
             <Stars value={rating} />
@@ -285,14 +255,14 @@ export default function ModelIntentPopup({
         </div>
       </div>
     ) : (
-      <div className="grid grid-cols-[1.15fr_0.85fr] min-h-full h-full">
+      <div className="relative grid grid-cols-[1.15fr_0.85fr] min-h-full">
         <div className="px-7 pt-4 pb-4 flex flex-col">
           <img
             src={BEA_LOGO}
             alt="BEA — Bharath Electronics & Appliances"
-            className="h-9 w-auto object-contain self-start bg-white rounded-md px-1.5 py-0.5"
-            width={120}
-            height={36}
+            className="h-14 w-auto object-contain self-start"
+            width={200}
+            height={56}
           />
 
           <h3 className="mt-3 text-[24px] font-bold text-white leading-tight tracking-tight">

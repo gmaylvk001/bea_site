@@ -8,7 +8,7 @@ import {
 } from "@/components/smartLead/LeadCaptureForm";
 import { isValidIndianMobile, normalizeIndianMobile } from "@/lib/smartLead";
 
-const BEA_LOGO = "/user/bea-new.png";
+const BEA_LOGO = "/uploads/beaHqlogo.png";
 const GOLD = "#D4A04C";
 const GOLD_HOVER = "#C4923F";
 
@@ -167,7 +167,6 @@ export default function PremiumIntentPopup({
   const p = content.product || {};
   const productName =
     content.productName ||
-    [p.brandName, p.name].filter(Boolean).join(" ") ||
     p.name ||
     "this premium product";
   const subcopy =
@@ -254,9 +253,9 @@ export default function PremiumIntentPopup({
           <img
             src={BEA_LOGO}
             alt="BEA — Bharath Electronics & Appliances"
-            className="h-9 w-auto object-contain self-start bg-white rounded-md px-1.5 py-0.5"
-            width={120}
-            height={36}
+            className="h-14 w-auto object-contain self-start"
+            width={200}
+            height={56}
           />
 
           <h3 className="mt-3 text-[22px] font-semibold text-white leading-tight tracking-tight">
