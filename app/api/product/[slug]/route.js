@@ -2,6 +2,7 @@
 import dbConnect from "@/lib/db";
 import Product from "@/models/product";
 import { attachVariantGroupToProduct } from "@/lib/variantGroup";
+import { withValidPrice } from "@/lib/productPrice";
 
 export async function GET(request, context) {
   const { params } = await context;
@@ -15,10 +16,10 @@ export async function GET(request, context) {
   }
 
   try {
-    const product = await Product.findOne({
+    const product = await Product.findOne(withValidPrice({
       slug,
       status: "Active",
-    }).lean();
+    })).lean();
 
     if (!product) {
       return new Response(JSON.stringify({ message: "Product not found" }), {

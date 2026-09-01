@@ -136,9 +136,15 @@ export default function ContactComponent() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
+  const sortedContacts = [...filteredContacts].sort((a, b) => {
+    const dateA = new Date(a.createdAt || 0).getTime();
+    const dateB = new Date(b.createdAt || 0).getTime();
+    return dateB - dateA;
+  });
+
   const indexOfLastContact = currentPage * contactsPerPage;
   const indexOfFirstContact = indexOfLastContact - contactsPerPage;
-  const currentContacts = filteredContacts.slice(indexOfFirstContact, indexOfLastContact);
+  const currentContacts = sortedContacts.slice(indexOfFirstContact, indexOfLastContact);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const totalPages = Math.ceil(filteredContacts.length / contactsPerPage);
@@ -162,7 +168,7 @@ export default function ContactComponent() {
   const exportToExcel = () => {
 
   // Prepare export data
-  const dataForExport = filteredContacts.map((item) => ({
+  const dataForExport = sortedContacts.map((item) => ({
     Date: item.createdAt
       ? item.createdAt.split("T")[0]
       : "",

@@ -31,6 +31,7 @@ import RazorpayOffers from "@/components/RazorpayOffers";
 import { v4 as uuidv4 } from "uuid";
 import { ga4ViewItem } from "@/utils/nextjs-event-tracking";
 import { useVisitorIntent } from "@/context/VisitorIntentContext";
+import { hasValidPrice } from "@/lib/productPrice";
 
 
 function FaqItem({ question, answer }) {
@@ -170,7 +171,7 @@ useEffect(() => {
 
     // Step 2: array check + quantity filter
     if (!Array.isArray(stored)) stored = [];
-    stored = stored.filter((p) => p.quantity > 0);
+    stored = stored.filter((p) => p.quantity > 0 && hasValidPrice(p));
 
     if (stored.length === 0) return;
 
@@ -274,7 +275,7 @@ const RecentlyViewedCard = ({ product }) => {
           {product.name}
         </h4>
         
-        {/* Price Structure matched to blue-theme image palette */}
+        {hasValidPrice(product) && (
         <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
           <span className="text-sm font-bold text-blue-900">
             ₹{Number(price).toLocaleString('en-IN')}
@@ -287,6 +288,7 @@ const RecentlyViewedCard = ({ product }) => {
               </span>
             )}
         </div>
+        )}
       </div>
     </Link>
   );
@@ -740,6 +742,11 @@ const resolveImagePath = (image) => {
 
   useEffect(() => {
     const applyProductData = (data) => {
+      if (!hasValidPrice(data)) {
+        setProduct(null);
+        setError("Product not found");
+        return;
+      }
       setProduct(data);
       setSelectedImageIndex(0);
       setQuantity(1);
@@ -1230,6 +1237,7 @@ const fetchBrand = async () => {
     )}
 
     {/* Price */}
+    {hasValidPrice(product) && (
     <div className="mt-3 border-t border-gray-200 pt-3">
 <div className="flex flex-col leading-tight">
   <span className="text-2xl font-bold text-blue-800">
@@ -1275,6 +1283,7 @@ const fetchBrand = async () => {
   <p className="text-xs text-gray-400 mt-0.5">Price includes all applicable taxes</p>
 )}
     </div>
+    )}
 
     {/* Stock */}
     <div className="mt-2">
@@ -1795,6 +1804,7 @@ const fetchBrand = async () => {
                     />
                   </div>
                 </div>
+                {hasValidPrice(product) && (
                 <div className="border-t border-gray-200 pt-3 mb-3">
                   <div className="flex flex-col leading-tight">
                     <span className="text-3xl font-bold text-blue-800">
@@ -1840,6 +1850,7 @@ const fetchBrand = async () => {
   <p className="text-xs text-gray-400 mt-1">Price includes all applicable taxes</p>
 )}
                 </div>
+                )}
                 <div className="mb-1 space-y-1">
                   <div className="flex items-center gap-2">
                     {product.stock_status === "In Stock" && product.quantity > 0 ? (

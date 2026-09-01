@@ -3,6 +3,7 @@ import Product from '@/models/product';
 import Filter from '@/models/ecom_filter_infos';
 import dbConnect from '@/lib/db';
 import { attachVariantGroupToProduct } from '@/lib/variantGroup';
+import { withValidPrice } from '@/lib/productPrice';
 
 export const dynamic = 'force-dynamic'; // Important for dynamic fetching
 
@@ -16,9 +17,11 @@ export async function GET(request, { params }) {
     console.log('Fetching product for slug:', slug);
 
     const isObjectId = /^[a-f\d]{24}$/i.test(String(slug || ""));
-    const productQuery = isObjectId
-      ? { $or: [{ slug }, { _id: slug }], status: "Active" }
-      : { slug, status: "Active" };
+    const productQuery = withValidPrice(
+      isObjectId
+        ? { $or: [{ slug }, { _id: slug }], status: "Active" }
+        : { slug, status: "Active" }
+    );
 
     const product = await Product.findOne(productQuery).lean();
 

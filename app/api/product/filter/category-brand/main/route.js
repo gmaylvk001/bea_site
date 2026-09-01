@@ -3,7 +3,6 @@ import Product from "@/models/product";
 import ProductFilter from "@/models/ecom_productfilter_info";
 import ecom_category_info from "@/models/ecom_category_info";
 import Brand from "@/models/ecom_brand_info";
-import { withValidPrice } from "@/lib/productPrice";
 
 export async function GET(req) {
   try {
@@ -186,8 +185,6 @@ let query = {
     },
   ],
 };
-
-    query = withValidPrice(query);
 
     let productsQuery = Product.find(query).populate(
       "brand",
