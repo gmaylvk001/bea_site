@@ -9,17 +9,36 @@ import {
 import { isValidIndianMobile, normalizeIndianMobile } from "@/lib/smartLead";
 
 const BEA_LOGO = "/uploads/beaHqlogo.png";
-const ACCENT = "#0B3A6E";
 
 const FEATURE_ICONS = [
   {
-    label: "Best Price Guaranteed",
+    label: "Expert Recommendation",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="none" aria-hidden="true">
+        <circle cx="9" cy="8" r="3" stroke="currentColor" strokeWidth="1.8" />
+        <path
+          d="M3.5 19c.7-3.1 2.8-4.8 5.5-4.8S14.3 15.9 15 19"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M16.5 8.5h4M18.5 6.5v4"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    label: "Best Price Guarantee",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="none" aria-hidden="true">
         <path
           d="M20.59 13.41 13.42 6.24A2 2 0 0 0 12 5.66H5a1 1 0 0 0-1 1v7c0 .53.21 1.04.59 1.41l7.17 7.17a2 2 0 0 0 2.83 0l6-6a2 2 0 0 0 0-2.83Z"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="1.8"
           strokeLinejoin="round"
         />
         <circle cx="8.5" cy="9.5" r="1.25" fill="currentColor" />
@@ -27,46 +46,12 @@ const FEATURE_ICONS = [
     ),
   },
   {
-    label: "Expert Recommendation",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden="true">
-        <circle cx="9" cy="8" r="3" stroke="currentColor" strokeWidth="1.7" />
-        <path
-          d="M3.5 19c.7-3.1 2.8-4.8 5.5-4.8S14.3 15.9 15 19"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-        />
-        <path
-          d="M16.5 8.5h4M18.5 6.5v4"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
-  },
-  {
     label: "Bank Offers & EMI",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden="true">
-        <rect x="2.5" y="5" width="19" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
-        <path d="M2.5 10h19" stroke="currentColor" strokeWidth="1.7" />
-        <path d="M7 15h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    label: "Warranty Support",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden="true">
-        <path
-          d="M12 3 4.5 6v5.5c0 4.6 3.1 8.7 7.5 9.5 4.4-.8 7.5-4.9 7.5-9.5V6L12 3Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <svg viewBox="0 0 24 24" className="w-[15px] h-[15px]" fill="none" aria-hidden="true">
+        <rect x="2.5" y="5" width="19" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M2.5 10h19" stroke="currentColor" strokeWidth="1.8" />
+        <path d="M7 15h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -82,24 +67,19 @@ function productCardLabel(p = {}) {
   return { line1: model || p.itemCode || "Product", line2: "" };
 }
 
-function ProductCards({ products = [], moreLabel }) {
-  const cols = Math.min(Math.max(products.length + (moreLabel ? 1 : 0), 1), 4);
+function ProductCards({ products = [], moreCount = 0 }) {
+  const showMore = Number(moreCount) > 0;
   return (
-    <div
-      className="grid gap-2 sm:gap-2.5 w-full"
-      style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-      role="list"
-      aria-label="Products you compared"
-    >
+    <div className="flex gap-2 w-full" role="list" aria-label="Products you compared">
       {products.map((p) => {
         const label = productCardLabel(p);
         return (
           <div
             key={p.productId || p.itemCode || p.name}
-            className="min-w-0 rounded-xl border border-gray-200 bg-white px-1.5 pt-2 pb-2 text-center"
+            className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-1.5 pt-2 pb-2 text-center shadow-sm"
             role="listitem"
           >
-            <div className="h-[68px] flex items-center justify-center">
+            <div className="h-[72px] flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={p.image || "/no-image.jpg"}
@@ -109,55 +89,44 @@ function ProductCards({ products = [], moreLabel }) {
                 decoding="async"
               />
             </div>
-            <p className="mt-1.5 text-[11px] sm:text-xs font-semibold text-gray-900 leading-tight line-clamp-1 px-0.5">
+            <p className="mt-1.5 text-[11px] font-semibold text-gray-900 leading-tight line-clamp-1 px-0.5">
               {label.line1}
             </p>
             {label.line2 ? (
-              <p className="text-[10px] sm:text-[11px] text-gray-500 leading-tight line-clamp-1 px-0.5">
+              <p className="text-[10px] text-gray-500 leading-tight line-clamp-1 px-0.5">
                 {label.line2}
               </p>
             ) : null}
           </div>
         );
       })}
-      {moreLabel ? (
+      {showMore ? (
         <div
-          className="min-w-0 flex items-center justify-center rounded-xl border border-dashed border-gray-300 bg-[#F7F9FC] px-1 text-[12px] sm:text-sm font-bold text-[#0B3A6E]"
+          className="w-[72px] flex-shrink-0 flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white px-1 text-center shadow-sm"
           role="listitem"
-          aria-label={moreLabel}
+          aria-label={`+${moreCount} More Models`}
         >
-          {moreLabel}
+          <span className="text-[22px] font-extrabold text-[#E11D2E] leading-none">
+            +{moreCount}
+          </span>
+          <span className="mt-1 text-[10px] font-semibold text-gray-800 leading-tight">
+            More Models
+          </span>
         </div>
       ) : null}
     </div>
   );
 }
 
-function BenefitBar({ benefits }) {
-  const items =
-    Array.isArray(benefits) && benefits.length >= 4
-      ? FEATURE_ICONS.map((f, i) => ({ ...f, label: benefits[i] || f.label }))
-      : FEATURE_ICONS;
-
+function FeatureList() {
   return (
-    <ul
-      className="mt-3 grid grid-cols-4 gap-0 rounded-xl border border-gray-200 bg-white overflow-hidden"
-      aria-label="Benefits"
-    >
-      {items.slice(0, 4).map((item, i) => (
-        <li
-          key={item.label}
-          className={`flex items-center gap-2 px-3 py-3 ${
-            i > 0 ? "border-l border-gray-100" : ""
-          }`}
-        >
-          <span
-            className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E8F1FB] text-[#0B3A6E] flex items-center justify-center"
-            style={{ color: ACCENT }}
-          >
+    <ul className="mt-4 space-y-2.5" aria-label="Benefits">
+      {FEATURE_ICONS.map((item) => (
+        <li key={item.label} className="flex items-center gap-2.5">
+          <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0B3A6E] text-white flex items-center justify-center">
             {item.icon}
           </span>
-          <span className="text-[11px] sm:text-xs font-semibold text-gray-800 leading-tight">
+          <span className="text-[12px] font-semibold text-gray-800 leading-tight">
             {item.label}
           </span>
         </li>
@@ -210,6 +179,10 @@ export default function ComparisonIntentPopup({
   const primaryCta = content.primaryCta || "HELP ME CHOOSE";
   const whatsappEnabled = content.whatsappEnabled !== false;
   const products = Array.isArray(content.products) ? content.products.slice(0, 3) : [];
+  const moreCount =
+    Number(content.moreCount) > 0
+      ? Number(content.moreCount)
+      : Number(String(content.moreLabel || "").match(/\+(\d+)/)?.[1] || 0);
 
   const handlePrimary = async () => {
     const normalized = normalizeIndianMobile(mobile);
@@ -265,122 +238,100 @@ export default function ComparisonIntentPopup({
         />
       </div>
     ) : (
-      <div className="relative">
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 opacity-70"
-          aria-hidden="true"
-        >
-          <svg viewBox="0 0 900 90" className="w-full h-full" preserveAspectRatio="none">
-            <path
-              d="M0 48 Q 180 8 360 42 T 720 40 T 900 52 V90 H0 Z"
-              fill="#F3F6FA"
-            />
-          </svg>
-        </div>
+      <div className="px-6 pt-3.5 pb-4">
+        <img
+          src={BEA_LOGO}
+          alt="BEA — Bharath Electronics & Appliances"
+          className="h-11 w-auto object-contain self-start"
+          width={176}
+          height={44}
+        />
 
-        <div className="relative px-7 pt-4 pb-2">
-          <img
-            src={BEA_LOGO}
-            alt="BEA — Bharath Electronics & Appliances"
-            className="h-14 w-auto object-contain self-start"
-            width={200}
-            height={56}
-          />
-
-          <div className="mt-3 grid grid-cols-[minmax(0,1.05fr)_minmax(0,1.15fr)] gap-4 items-start">
-            <div className="min-w-0">
-              <h3 className="text-[28px] font-bold text-[#081028] leading-tight tracking-tight">
-                Comparing{" "}
-                <span className="text-[#0B3A6E]">{categoryName}?</span>
-              </h3>
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed max-w-md">
-                {subcopy}
-              </p>
-            </div>
-            <ProductCards products={products} moreLabel={content.moreLabel} />
-          </div>
-
-          <BenefitBar benefits={content.benefits} />
-        </div>
-
-        <form
-          className="relative px-7 pt-2 pb-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handlePrimary();
-          }}
-        >
-          <div className="flex flex-row gap-3 items-stretch max-w-2xl mx-auto">
-            <div className="flex flex-1 min-w-0 rounded-lg border border-gray-300 bg-white overflow-hidden focus-within:border-[#0B3A6E] focus-within:shadow-[0_0_0_2px_rgba(11,58,110,0.15)]">
-              <span className="px-3 py-2.5 bg-gray-50 text-sm text-gray-700 border-r border-gray-200 select-none flex items-center gap-1 flex-shrink-0">
-                +91
-                <span className="text-[10px] text-gray-400" aria-hidden="true">
-                  ▾
-                </span>
-              </span>
-              <input
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel-national"
-                maxLength={10}
-                placeholder="Enter your mobile number"
-                value={mobile}
-                onChange={(e) => {
-                  setMobile(e.target.value.replace(/\D/g, "").slice(0, 10));
-                  if (error) setError("");
-                }}
-                className="flex-1 min-w-0 px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400"
-                aria-label="Mobile number"
-                aria-invalid={error ? "true" : "false"}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              aria-busy={submitting ? "true" : "false"}
-              className="w-[240px] flex-shrink-0 rounded-lg bg-[#0B3A6E] hover:bg-[#092f59] active:bg-[#071f3d] disabled:opacity-60 text-white font-bold text-[13px] tracking-wide uppercase min-h-[44px] px-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B3A6E] focus-visible:ring-offset-2"
-            >
-              {submitting ? "Saving…" : /→$/.test(primaryCta) ? primaryCta : `${primaryCta} →`}
-            </button>
-          </div>
-
-          {error ? (
-            <p role="alert" className="mt-2 text-center text-xs text-red-600 font-medium">
-              {error}
+        <div className="mt-2.5 grid grid-cols-[0.92fr_1.08fr] gap-4 items-start">
+          <div className="min-w-0">
+            <h3 className="font-bold leading-[1.15] tracking-tight">
+              <span className="block text-[26px] text-[#0B3A6E]">Comparing</span>
+              <span className="block text-[26px] text-[#0B3A6E]">{categoryName}?</span>
+            </h3>
+            <span className="mt-2 block w-12 h-[3px] rounded-full bg-[#E11D2E]" aria-hidden="true" />
+            <p className="mt-2.5 text-[13px] text-gray-700 leading-snug">
+              {subcopy}
             </p>
-          ) : null}
+            <FeatureList />
+          </div>
 
-          {whatsappEnabled ? (
-            <div className="mt-3 text-center">
-              <a
-                href={
-                  whatsappHref ||
-                  `https://wa.me/919842344323?text=${encodeURIComponent(
-                    content.whatsappText || "Hi, I need help from BEA."
-                  )}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => onWhatsAppClick?.()}
-                className="inline-flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[#128C7E] hover:underline"
+          <div className="min-w-0">
+            <ProductCards products={products} moreCount={moreCount} />
+
+            <form
+              className="mt-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handlePrimary();
+              }}
+            >
+              <p className="text-center text-[12px] text-gray-600 mb-2">
+                Enter your mobile number &amp; our expert will help you instantly.
+              </p>
+              <div className="flex rounded-lg border border-gray-300 bg-white overflow-hidden focus-within:border-[#0B3A6E] focus-within:shadow-[0_0_0_2px_rgba(11,58,110,0.15)]">
+                <span className="px-2.5 py-2.5 bg-white text-[13px] text-gray-700 border-r border-gray-200 select-none flex items-center gap-1 flex-shrink-0">
+                  +91
+                  <span className="text-[9px] text-gray-400" aria-hidden="true">
+                    ▾
+                  </span>
+                </span>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  maxLength={10}
+                  placeholder="Enter Mobile Number"
+                  value={mobile}
+                  onChange={(e) => {
+                    setMobile(e.target.value.replace(/\D/g, "").slice(0, 10));
+                    if (error) setError("");
+                  }}
+                  className="flex-1 min-w-0 px-3 py-2.5 text-[13px] text-gray-900 outline-none placeholder:text-gray-400"
+                  aria-label="Mobile number"
+                  aria-invalid={error ? "true" : "false"}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                aria-busy={submitting ? "true" : "false"}
+                className="mt-2 w-full rounded-lg bg-[#0B3A6E] hover:bg-[#092f59] active:bg-[#071f3d] disabled:opacity-60 text-white font-bold text-[13px] tracking-[0.04em] uppercase min-h-[42px] px-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B3A6E] focus-visible:ring-offset-2"
               >
-                Or <WhatsAppIcon /> {content.secondaryCta || "Chat with us on WhatsApp"}
-              </a>
-            </div>
-          ) : null}
+                {submitting ? "Saving…" : String(primaryCta).replace(/\s*→\s*$/, "")}
+              </button>
 
-          <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] sm:text-xs text-gray-500">
-            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" aria-hidden="true">
-              <path
-                d="M12 3 4.5 6v5.5c0 4.6 3.1 8.7 7.5 9.5 4.4-.8 7.5-4.9 7.5-9.5V6L12 3Z"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-              />
-            </svg>
-            No spam. Our expert will contact you only regarding your enquiry.
-          </p>
-        </form>
+              {error ? (
+                <p role="alert" className="mt-2 text-center text-xs text-red-600 font-medium">
+                  {error}
+                </p>
+              ) : null}
+
+              {whatsappEnabled ? (
+                <div className="mt-2.5 text-center">
+                  <a
+                    href={
+                      whatsappHref ||
+                      `https://wa.me/919842344323?text=${encodeURIComponent(
+                        content.whatsappText || "Hi, I need help from BEA."
+                      )}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => onWhatsAppClick?.()}
+                    className="inline-flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[#128C7E] hover:underline"
+                  >
+                    Or <WhatsAppIcon /> {content.secondaryCta || "Chat with us on WhatsApp"}
+                  </a>
+                </div>
+              ) : null}
+            </form>
+          </div>
+        </div>
       </div>
     );
 

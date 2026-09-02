@@ -42,8 +42,8 @@ export default function PopupShell({
   onCloseRef.current = onClose;
   const [scale, setScale] = useState(1);
   const [hugHeight, setHugHeight] = useState(DESIGN_HEIGHT);
-  const isCategory = variant === "category";
-  const designWidth = isCategory ? CATEGORY_WIDTH : DESIGN_WIDTH;
+  const isHug = variant === "category" || variant === "comparison";
+  const designWidth = isHug ? CATEGORY_WIDTH : DESIGN_WIDTH;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -113,7 +113,7 @@ export default function PopupShell({
   }, [open, variant, designWidth]);
 
   useEffect(() => {
-    if (!open || !isCategory) return undefined;
+    if (!open || !isHug) return undefined;
     const el = panelRef.current;
     if (!el || typeof ResizeObserver === "undefined") return undefined;
     const update = () => {
@@ -124,7 +124,7 @@ export default function PopupShell({
     ro.observe(el);
     update();
     return () => ro.disconnect();
-  }, [open, isCategory]);
+  }, [open, isHug]);
 
   if (!open) return null;
 
@@ -146,13 +146,13 @@ export default function PopupShell({
 
   const widthCls = isSupport
     ? "w-[min(100%,340px)] sm:w-[min(100%,360px)]"
-    : isCategory
+    : isHug
       ? "w-[680px]"
       : "w-[860px]";
 
   const panelHeight = isSupport
     ? "max-h-[min(90dvh,420px)]"
-    : isCategory
+    : isHug
       ? "h-auto"
       : "h-[480px]";
 
@@ -177,7 +177,7 @@ export default function PopupShell({
             ? undefined
             : {
                 width: designWidth * scale,
-                height: (isCategory ? hugHeight : DESIGN_HEIGHT) * scale,
+                height: (isHug ? hugHeight : DESIGN_HEIGHT) * scale,
               }
         }
       >
@@ -228,7 +228,7 @@ export default function PopupShell({
             </button>
             <div
               className={
-                isCategory
+                isHug
                   ? "h-auto"
                   : "overflow-y-auto overscroll-contain flex-1 min-h-0 h-full"
               }

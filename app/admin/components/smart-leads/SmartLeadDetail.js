@@ -29,6 +29,26 @@ function formatWhen(iso) {
   }
 }
 
+const PRODUCT_SITE = "https://bharathelectronics.in";
+
+function productPublicUrl(current = {}, lead = {}) {
+  const slug = String(current.slug || lead.productSlug || "").trim();
+  const raw = String(current.url || "").trim();
+  let path = "";
+  if (slug) {
+    path = `/product/${slug.replace(/^\/+/, "")}`;
+  } else if (raw) {
+    try {
+      const u = new URL(raw, PRODUCT_SITE);
+      if (u.pathname.startsWith("/product/")) path = u.pathname;
+    } catch {
+      if (raw.startsWith("/product/")) path = raw;
+    }
+  }
+  if (!path || path === "/product/") return "";
+  return `${PRODUCT_SITE}${path}`;
+}
+
 function Section({ title, children }) {
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-4">
@@ -160,6 +180,8 @@ export default function SmartLeadDetail({ leadId }) {
   const hot = Number(card.leadScore) >= 70;
   const current = lead.currentProduct || {};
   const journey = Array.isArray(lead.visitorJourney) ? lead.visitorJourney : [];
+  const productUrl = productPublicUrl(current, lead);
+  const productUrlLabel = productUrl.replace(/^https?:\/\//, "");
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-4">
@@ -242,7 +264,23 @@ export default function SmartLeadDetail({ leadId }) {
             label="Subcategory"
             value={lead.subcategoryName || current.subcategoryId || "—"}
           />
-          <Row label="Product URL" value={current.url || lead.sourceUrl || "—"} />
+          <Row
+            label="Product URL"
+            value={
+              productUrl ? (
+                <a
+                  href={productUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline break-all"
+                >
+                  {productUrlLabel}
+                </a>
+              ) : (
+                "—"
+              )
+            }
+          />
         </Section>
 
         <Section title="Behaviour">
