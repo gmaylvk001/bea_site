@@ -16,6 +16,7 @@ export async function GET(request) {
     const filter = {
       status: "Active",
       slug: { $exists: true, $ne: "" },
+      price: { $gt: 0 },
     };
 
     const total = await Product.countDocuments(filter);
