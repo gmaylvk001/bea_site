@@ -9,6 +9,7 @@ import ProductCard from "@/components/ProductCard";
 import Addtocart from "@/components/AddToCart";
 import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
+import CategoryBrandBannerSlider from "@/components/category/brand/CategoryBrandBannerSlider";
 
 export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
   const [categoryData, setCategoryData] = useState({
@@ -648,6 +649,10 @@ console.log("Fetched products:", products);
 
   return (
     <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
+      <CategoryBrandBannerSlider
+        categorySlug={categorySlug}
+        brandSlug={brandSlug}
+      />
       {/* Breadcrumb */}
     
 
