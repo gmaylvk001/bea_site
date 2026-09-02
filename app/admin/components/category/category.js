@@ -1321,11 +1321,13 @@ export default function CategoryComponent() {
                     </div>
                   </div>
                 </div>
-                {newCategory.parentid != "none" && (
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">
-                    Upload Image (260px X 240px) - Optional
+                    Table Category Image (260px X 240px) - Optional
                   </label>
+                  <p className="text-xs text-gray-500 mb-1">
+                    Shown in the category table and category popup
+                  </p>
                   <input
                     type="file"
                     onChange={handleImageChange}
@@ -1347,7 +1349,6 @@ export default function CategoryComponent() {
                     />
                   )}
                 </div>
-                )}
                 {newCategory.parentid == "none" && (
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">
@@ -1667,12 +1668,14 @@ export default function CategoryComponent() {
                   </div>
                 </div>
 
-                {/* Image Upload */}
-                {categoryToUpdate.parentid != "none" && (
+                {/* Table Category Image — used in admin table + category popup */}
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">
-                    Upload Image (260px X 240px)
+                    Table Category Image (260px X 240px)
                   </label>
+                  <p className="text-xs text-gray-500 mb-1">
+                    Shown in the category table and category popup
+                  </p>
                   <input
                     type="file"
                     accept="image/*"
@@ -1702,12 +1705,11 @@ export default function CategoryComponent() {
                         className="h-16 rounded-md object-contain"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Current Image Preview
+                        Current Table Image Preview
                       </p>
                     </div>
                   )}
                 </div>
-                )}
 
                 {/* Navigation Image Upload */}
                 {categoryToUpdate.parentid == "none" && (
@@ -1726,11 +1728,6 @@ export default function CategoryComponent() {
                 file:bg-red-50 file:text-red-700
                 hover:file:bg-red-100"
                   />
-                  {updateImageError && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {updateImageError}
-                    </p>
-                  )}
                   {(categoryToUpdate.existingNavImage ||
                     categoryToUpdate.navImage) && (
                     <div className="mt-3 flex flex-col items-center">
