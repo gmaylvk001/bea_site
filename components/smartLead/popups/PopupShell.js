@@ -4,16 +4,17 @@ import { useEffect, useId, useRef, useState } from "react";
 
 const DESIGN_WIDTH = 860;
 const DESIGN_HEIGHT = 480;
+const CATEGORY_WIDTH = 680;
 
-function fitScale() {
+function fitScale(width = DESIGN_WIDTH, height = DESIGN_HEIGHT) {
   if (typeof window === "undefined") return 1;
   const pad = 16;
   return Math.max(
     0.32,
     Math.min(
       1,
-      (window.innerWidth - pad) / DESIGN_WIDTH,
-      (window.innerHeight - pad) / DESIGN_HEIGHT
+      (window.innerWidth - pad) / width,
+      (window.innerHeight - pad) / height
     )
   );
 }
@@ -41,6 +42,8 @@ export default function PopupShell({
   onCloseRef.current = onClose;
   const [scale, setScale] = useState(1);
   const [hugHeight, setHugHeight] = useState(DESIGN_HEIGHT);
+  const isCategory = variant === "category";
+  const designWidth = isCategory ? CATEGORY_WIDTH : DESIGN_WIDTH;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -103,13 +106,11 @@ export default function PopupShell({
 
   useEffect(() => {
     if (!open || variant === "support") return undefined;
-    const apply = () => setScale(fitScale());
+    const apply = () => setScale(fitScale(designWidth, DESIGN_HEIGHT));
     apply();
     window.addEventListener("resize", apply);
     return () => window.removeEventListener("resize", apply);
-  }, [open, variant]);
-
-  const isCategory = variant === "category";
+  }, [open, variant, designWidth]);
 
   useEffect(() => {
     if (!open || !isCategory) return undefined;
@@ -145,7 +146,9 @@ export default function PopupShell({
 
   const widthCls = isSupport
     ? "w-[min(100%,340px)] sm:w-[min(100%,360px)]"
-    : "w-[860px]";
+    : isCategory
+      ? "w-[680px]"
+      : "w-[860px]";
 
   const panelHeight = isSupport
     ? "max-h-[min(90dvh,420px)]"
@@ -173,7 +176,7 @@ export default function PopupShell({
           isSupport
             ? undefined
             : {
-                width: DESIGN_WIDTH * scale,
+                width: designWidth * scale,
                 height: (isCategory ? hugHeight : DESIGN_HEIGHT) * scale,
               }
         }
