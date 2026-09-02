@@ -68,6 +68,53 @@ const TinyEditor = ({
       inline: false,
       base_url: "/tinymce",
       suffix: ".min",
+      zindex: 100000,
+      ...(fullToolbar
+        ? {
+            automatic_uploads: true,
+            image_title: true,
+            image_description: true,
+            image_uploadtab: true,
+            file_picker_types: "image",
+            images_reuse_filename: true,
+            images_upload_handler: async (blobInfo) => {
+              const formData = new FormData();
+              formData.append("file", blobInfo.blob(), blobInfo.filename());
+              const res = await fetch("/api/blogs/upload-image", {
+                method: "POST",
+                body: formData,
+              });
+              const data = await res.json();
+              if (!res.ok || !data.location) {
+                throw new Error(data.error || "Image upload failed");
+              }
+              return data.location;
+            },
+            file_picker_callback: (callback, _value, meta) => {
+              if (meta.filetype !== "image") return;
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = "image/*";
+              input.onchange = async () => {
+                const file = input.files?.[0];
+                if (!file) return;
+                const formData = new FormData();
+                formData.append("file", file);
+                const res = await fetch("/api/blogs/upload-image", {
+                  method: "POST",
+                  body: formData,
+                });
+                const data = await res.json();
+                if (!res.ok || !data.location) {
+                  window.alert(data.error || "Image upload failed");
+                  return;
+                }
+                callback(data.location, { title: file.name, alt: file.name });
+              };
+              input.click();
+            },
+          }
+        : {}),
       content_css: fullToolbar
         ? ["https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap"]
         : undefined,
@@ -89,6 +136,9 @@ const TinyEditor = ({
 
   return (
     <div className="my-4">
+      <style>{`
+        .tox-tinymce-aux, .tox.tox-tinymce-aux, .tox-dialog-wrap { z-index: 100000 !important; }
+      `}</style>
       <Editor
         apiKey="" // self-hosted
         onInit={(evt, editor) => (editorRef.current = editor)}

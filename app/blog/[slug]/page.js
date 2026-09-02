@@ -7,9 +7,11 @@ import "@/models/ecom_category_info";
 import {
   getBaseUrl,
   stripHtml,
+  sanitizeMetaKeywords,
   buildBlogPostingSchema,
   buildBreadcrumbSchema,
 } from "@/lib/schema";
+import { buildCanonicalUrl } from "@/components/CanonicalLink";
 
 async function getBlogPost(slug) {
   try {
@@ -21,6 +23,23 @@ async function getBlogPost(slug) {
   } catch (error) {
     console.error("Error fetching blog post:", error);
     return null;
+  }
+}
+
+async function getOtherBlogs(currentId) {
+  try {
+    await dbConnect();
+    return await Blog.find({
+      status: "Active",
+      ...(currentId ? { _id: { $ne: currentId } } : {}),
+    })
+      .select("blog_name blog_slug image createdAt")
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+  } catch (error) {
+    console.error("Error fetching other blogs:", error);
+    return [];
   }
 }
 
@@ -86,6 +105,7 @@ export default async function BlogPost({ params }) {
     );
   }
 
+  const otherBlogs = await getOtherBlogs(blog._id);
   const hasVideo = blog.video && blog.video.trim() !== "";
   const blogSchema = buildBlogPostingSchema(baseUrl, blog);
   const breadcrumbSchema = buildBreadcrumbSchema(baseUrl, [
@@ -95,6 +115,23 @@ export default async function BlogPost({ params }) {
 
   return (
     <article className="min-h-screen bg-gray-50 py-12">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+        .blog-article-body { font-family: Roboto, Calibri, Helvetica, Arial, sans-serif; font-size: 16.5px; line-height: 1.8; color: #1f2937; }
+        .blog-article-body p { margin-bottom: 1.15rem; }
+        .blog-article-body h1 { font-size: 2rem; font-weight: 700; margin: 1.75rem 0 1rem; color: #111827; }
+        .blog-article-body h2 { font-size: 1.6rem; font-weight: 700; margin: 1.5rem 0 0.85rem; color: #111827; }
+        .blog-article-body h3 { font-size: 1.3rem; font-weight: 600; margin: 1.25rem 0 0.7rem; color: #111827; }
+        .blog-article-body h4 { font-size: 1.1rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+        .blog-article-body ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1.15rem; }
+        .blog-article-body ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1.15rem; }
+        .blog-article-body li { margin-bottom: 0.4rem; }
+        .blog-article-body a { color: #2563eb; text-decoration: underline; }
+        .blog-article-body img { max-width: 100%; height: auto; border-radius: 0.75rem; margin: 1.5rem 0; }
+        .blog-article-body table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        .blog-article-body th, .blog-article-body td { border: 1px solid #e5e7eb; padding: 0.6rem 0.75rem; text-align: left; }
+        .blog-article-body iframe, .blog-article-body video { max-width: 100%; margin: 1.5rem 0; }
+      `}</style>
       {blogSchema && (
         <script
           type="application/ld+json"
@@ -107,7 +144,7 @@ export default async function BlogPost({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       )}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Breadcrumb */}
         <nav className="mb-6 text-sm text-gray-500 flex items-center gap-2">
@@ -117,6 +154,9 @@ export default async function BlogPost({ params }) {
           <span>/</span>
           <span className="text-gray-800 font-medium line-clamp-1">{blog.blog_name}</span>
         </nav>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-10 xl:gap-14 items-start">
+        <div>
 
         {/* Category badge */}
         {blog.category?.category_name && (
@@ -180,7 +220,10 @@ export default async function BlogPost({ params }) {
 
         {/* Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-10 mb-10">
-          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed [&_p]:mb-5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_img]:max-w-full [&_img]:h-auto [&_table]:w-full [&_a]:text-blue-600">
+          <div
+            className="blog-article-body max-w-none text-gray-800 leading-relaxed"
+            style={{ fontFamily: "Roboto, Calibri, Helvetica, Arial, sans-serif" }}
+          >
             {blog.description && /<\/?[a-z][\s\S]*>/i.test(blog.description) ? (
               <div dangerouslySetInnerHTML={{ __html: blog.description }} />
             ) : (
@@ -219,6 +262,38 @@ export default async function BlogPost({ params }) {
             ← Back to all posts
           </Link>
         </footer>
+        </div>
+
+        {otherBlogs.length > 0 && (
+          <aside className="lg:sticky lg:top-28">
+            <h2 className="text-base font-bold text-gray-900 mb-5">Other Blogs</h2>
+            <div className="flex flex-col gap-5">
+              {otherBlogs.map((item) => (
+                <Link
+                  key={item._id.toString()}
+                  href={`/blog/${item.blog_slug}`}
+                  className="flex gap-3 items-start group"
+                >
+                  <div className="w-[88px] h-[58px] flex-shrink-0 rounded overflow-hidden bg-gray-100">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.blog_name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-blue-50 flex items-center justify-center text-lg">📰</div>
+                    )}
+                  </div>
+                  <h3 className="text-[13px] font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors line-clamp-3">
+                    {item.blog_name}
+                  </h3>
+                </Link>
+              ))}
+            </div>
+          </aside>
+        )}
+        </div>
       </div>
     </article>
   );
@@ -227,18 +302,50 @@ export default async function BlogPost({ params }) {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const blog = await getBlogPost(slug);
+  const baseUrl = getBaseUrl();
+
+  if (!blog) {
+    return {
+      title: "Blog Post | BEA",
+      description: "Read expert appliance guides from BEA",
+    };
+  }
+
+  const title =
+    (blog.meta_title && blog.meta_title !== "none" && blog.meta_title.trim()) ||
+    blog.blog_name ||
+    "Blog Post | BEA";
+  const description =
+    (blog.meta_description &&
+      blog.meta_description !== "none" &&
+      blog.meta_description.trim()) ||
+    stripHtml(blog.description || "").slice(0, 160) ||
+    "Read expert appliance guides from BEA";
+  const keywords = sanitizeMetaKeywords(blog.meta_keyword);
+  const imageUrl = blog.image
+    ? blog.image.startsWith("http")
+      ? blog.image
+      : `${baseUrl}${blog.image.startsWith("/") ? "" : "/"}${blog.image}`
+    : undefined;
 
   return {
-    title: blog?.blog_name || "Blog Post | BEA",
-    description:
-      stripHtml(blog?.description || "").slice(0, 160) ||
-      "Read expert appliance guides from BEA",
+    title,
+    description,
+    ...(keywords ? { keywords } : {}),
+    alternates: {
+      canonical: buildCanonicalUrl(`/blog/${blog.blog_slug}`),
+    },
     openGraph: {
-      title: blog?.blog_name || "Blog Post | BEA",
-      description:
-        stripHtml(blog?.description || "").slice(0, 160) ||
-        "Read expert appliance guides from BEA",
-      images: blog?.image ? [{ url: blog.image }] : [],
+      title,
+      description,
+      url: `${baseUrl}/blog/${blog.blog_slug}`,
+      images: imageUrl ? [{ url: imageUrl }] : [],
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
   };
 }

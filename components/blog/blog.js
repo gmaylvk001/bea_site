@@ -144,6 +144,8 @@ export default function BlogComponent() {
   const [heroSearchQuery, setHeroSearchQuery] = useState("");
 
   const [activeVideo, setActiveVideo] = useState(null); // for lightbox
+  const [guidesVisible, setGuidesVisible] = useState(4);
+  const [articlesVisible, setArticlesVisible] = useState(4);
 
 
 
@@ -202,12 +204,15 @@ export default function BlogComponent() {
     }
 
     // Each section gets an independently shuffled copy for variety
-    const videoBlogs = blogs.filter((b) => b.video && b.video.trim() !== "").slice(0, 4);
+    const sortedBlogs = [...blogs].sort(
+      (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    );
+    const videoBlogs = sortedBlogs.filter((b) => b.video && b.video.trim() !== "").slice(0, 4);
 
     return {
-      featuredGuides: shuffleArray(blogs).slice(0, 4),
-      latestArticles: shuffleArray(blogs).slice(0, 4),
-      popularPosts: shuffleArray(blogs).slice(0, 4),
+      featuredGuides: sortedBlogs,
+      latestArticles: sortedBlogs,
+      popularPosts: sortedBlogs.slice(0, 4),
       videoBlogs: videoBlogs,
     };
   }, [blogs]);
@@ -640,7 +645,7 @@ export default function BlogComponent() {
 
         {/* ===== 3. FEATURED BUYING GUIDES ===== */}
 
-        <div className="mb-14">
+        <div className="mb-14" id="featured-guides">
 
           <div className="flex justify-between items-end mb-6">
 
@@ -650,11 +655,17 @@ export default function BlogComponent() {
 
             </h3>
 
-            <Link href="/blog" className="text-blue-700 font-bold text-sm flex items-center gap-1 hover:underline">
-
-              View all guides <span className="text-lg leading-none">→</span>
-
-            </Link>
+            {featuredGuides.length > 4 && guidesVisible < featuredGuides.length ? (
+              <button
+                type="button"
+                onClick={() => setGuidesVisible((n) => Math.min(n + 8, featuredGuides.length))}
+                className="text-blue-700 font-bold text-sm flex items-center gap-1 hover:underline"
+              >
+                View more <span className="text-lg leading-none">→</span>
+              </button>
+            ) : featuredGuides.length > 4 ? (
+              <span className="text-gray-400 text-sm">All guides shown</span>
+            ) : null}
 
           </div>
 
@@ -684,9 +695,11 @@ export default function BlogComponent() {
 
               : featuredGuides.length > 0
 
-              ? featuredGuides.map((guide, idx) => (
+              ? featuredGuides.slice(0, guidesVisible).map((guide, idx) => (
 
-                  <div
+                  <Link
+
+                    href={`/blog/${guide.blog_slug}`}
 
                     key={guide._id}
 
@@ -740,23 +753,15 @@ export default function BlogComponent() {
 
                       </p>
 
-                      
-
-                      <Link
-
-                        href={`/blog/${guide.blog_slug}`}
-
-                        className="text-blue-700 font-bold text-[13px] hover:underline mt-auto flex items-center gap-1"
-
-                      >
+                      <span className="text-blue-700 font-bold text-[13px] mt-auto flex items-center gap-1">
 
                         Read More <span className="text-lg leading-none">→</span>
 
-                      </Link>
+                      </span>
 
                     </div>
 
-                  </div>
+                  </Link>
 
                 ))
 
@@ -852,9 +857,14 @@ export default function BlogComponent() {
 
     </div>
 
-    <Link
+    <button
 
-      href="/blog"
+      type="button"
+
+      onClick={() => {
+        setGuidesVisible(featuredGuides.length);
+        document.getElementById("featured-guides")?.scrollIntoView({ behavior: "smooth" });
+      }}
 
       className="bg-blue-700 text-white text-[13px] font-bold py-2.5 px-6 rounded hover:bg-blue-800 whitespace-nowrap transition-colors shadow-sm"
 
@@ -862,7 +872,7 @@ export default function BlogComponent() {
 
       View All Buying Guides →
 
-    </Link>
+    </button>
 
   </div>
 
@@ -1164,9 +1174,11 @@ export default function BlogComponent() {
 
                 : (searchQuery ? filteredBlogs : latestArticles).length > 0
 
-                ? (searchQuery ? filteredBlogs : latestArticles).slice(0, 4).map((blog) => (
+                ? (searchQuery ? filteredBlogs : latestArticles).slice(0, searchQuery ? filteredBlogs.length : articlesVisible).map((blog) => (
 
-                    <div
+                    <Link
+
+                      href={`/blog/${blog.blog_slug}`}
 
                       key={blog._id}
 
@@ -1218,21 +1230,15 @@ export default function BlogComponent() {
 
                         </div>
 
-                        <Link
-
-                          href={`/blog/${blog.blog_slug}`}
-
-                          className="text-blue-700 font-bold text-[10px] hover:underline flex items-center gap-0.5"
-
-                        >
+                        <span className="text-blue-700 font-bold text-[10px] flex items-center gap-0.5">
 
                           Read More <span className="text-xs leading-none">→</span>
 
-                        </Link>
+                        </span>
 
                       </div>
 
-                    </div>
+                    </Link>
 
                   ))
 
@@ -1262,13 +1268,21 @@ export default function BlogComponent() {
 
               )}
 
-              {!searchQuery && (
+              {!searchQuery && latestArticles.length > 4 && articlesVisible < latestArticles.length && (
 
-                <Link href="/blog" className="text-blue-700 font-bold text-[12px] hover:underline flex items-center gap-1">
+                <button
 
-                  View all articles <span>&rarr;</span>
+                  type="button"
 
-                </Link>
+                  onClick={() => setArticlesVisible((n) => Math.min(n + 8, latestArticles.length))}
+
+                  className="text-blue-700 font-bold text-[12px] hover:underline flex items-center gap-1"
+
+                >
+
+                  View more articles <span>&rarr;</span>
+
+                </button>
 
               )}
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaPlus, FaMinus, FaEdit } from "react-icons/fa";
+import { FaPlus, FaMinus, FaEdit, FaEye } from "react-icons/fa";
 import { Icon } from '@iconify/react';
 import DateRangePicker from '@/components/DateRangePicker';
 import TinyEditor from "@/app/admin/components/product/TinyEditor";
@@ -14,7 +14,10 @@ export default function BlogComponent() {
     status: "Active",
     videoType: "url", // 'url' or 'file'
     videoUrl: "",
-    videoFile: null
+    videoFile: null,
+    meta_title: "",
+    meta_description: "",
+    meta_keyword: "",
   });
   const [selectedCategories, setSelectedCategories] = useState(new Set());
   const [imagePreview, setImagePreview] = useState(null);
@@ -47,7 +50,10 @@ export default function BlogComponent() {
     videoType: "url", // 'url' or 'file'
     videoUrl: "",
     videoFile: null,
-    existingVideo: ""
+    existingVideo: "",
+    meta_title: "",
+    meta_description: "",
+    meta_keyword: "",
   });
   const [editSelectedCategories, setEditSelectedCategories] = useState(new Set());
 
@@ -271,7 +277,10 @@ export default function BlogComponent() {
       videoType: isFileVideo ? "file" : "url",
       videoUrl: isFileVideo ? "" : (blog.video || ""),
       videoFile: null,
-      existingVideo: blog.video || ""
+      existingVideo: blog.video || "",
+      meta_title: blog.meta_title || "",
+      meta_description: blog.meta_description || "",
+      meta_keyword: blog.meta_keyword || "",
     });
     
     const newSelected = new Set();
@@ -349,12 +358,22 @@ export default function BlogComponent() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
+    if (editSelectedCategories.size === 0) {
+      setAlertMessage("Please select at least one category");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
     const formData = new FormData();
     formData.append("id", editBlogData.id);
     formData.append("name", editBlogData.name);
     formData.append("description", editBlogData.description);
     formData.append("category", Array.from(editSelectedCategories)[0] || "");
     formData.append("status", editBlogData.status);
+    formData.append("meta_title", editBlogData.meta_title || "");
+    formData.append("meta_description", editBlogData.meta_description || "");
+    formData.append("meta_keyword", editBlogData.meta_keyword || "");
     
     if (editBlogData.image) {
       formData.append("image", editBlogData.image);
@@ -412,6 +431,9 @@ export default function BlogComponent() {
     formData.append("description", blogData.description);
     formData.append("category", Array.from(selectedCategories)[0]);
     formData.append("status", blogData.status);
+    formData.append("meta_title", blogData.meta_title || "");
+    formData.append("meta_description", blogData.meta_description || "");
+    formData.append("meta_keyword", blogData.meta_keyword || "");
     
     if (blogData.image) {
       formData.append("image", blogData.image);
@@ -441,7 +463,10 @@ export default function BlogComponent() {
           status: "Active",
           videoType: "url",
           videoUrl: "",
-          videoFile: null
+          videoFile: null,
+          meta_title: "",
+          meta_description: "",
+          meta_keyword: "",
         });
         setSelectedCategories(new Set());
         setImagePreview(null);
@@ -696,6 +721,17 @@ export default function BlogComponent() {
                           </td>
                           <td className="p-2">
                             <div className="flex items-center gap-2">
+                              {blog.blog_slug && (
+                                <a
+                                  href={`/blog/${blog.blog_slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-7 h-7 bg-blue-100 text-blue-600 rounded-full inline-flex items-center justify-center hover:bg-blue-200 transition"
+                                  title="Preview"
+                                >
+                                  <FaEye />
+                                </a>
+                              )}
                               <button
                                 onClick={() => handleEdit(blog)}
                                 className="w-7 h-7 bg-red-100 text-red-600 rounded-full inline-flex items-center justify-center hover:bg-red-200 transition"
@@ -760,7 +796,7 @@ export default function BlogComponent() {
                 </div>
 
                 <div>
-                  <label className="block mb-1 text-sm font-semibold text-gray-700">Upload Image</label>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">Upload Banner Image</label>
                   <input
                     type="file"
                     onChange={handleImageChange}
@@ -768,8 +804,50 @@ export default function BlogComponent() {
                     className="block w-full text-sm text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                   />
                   {imagePreview && (
-                    <img src={imagePreview} alt="Preview" className="mt-3 h-16 rounded-md object-contain mx-auto" />
+                    <img src={imagePreview} alt="Banner preview" className="mt-3 h-24 rounded-md object-contain mx-auto" />
                   )}
+                </div>
+
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">Select Category</label>
+                  <div className="border border-gray-300 rounded-md max-h-40 overflow-y-auto p-2">
+                    {categories.length > 0 ? renderCategoryTree(categories) : <p className="text-gray-500">No categories available</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="meta_title" className="block mb-1 text-sm font-semibold text-gray-700">Meta Title</label>
+                  <input
+                    name="meta_title"
+                    value={blogData.meta_title}
+                    onChange={handleInputChange}
+                    id="meta_title"
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400"
+                    placeholder="Meta title (shown in view source)"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="meta_description" className="block mb-1 text-sm font-semibold text-gray-700">Meta Description</label>
+                  <textarea
+                    name="meta_description"
+                    value={blogData.meta_description}
+                    onChange={handleInputChange}
+                    id="meta_description"
+                    rows={3}
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400"
+                    placeholder="Meta description (shown in view source)"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="meta_keyword" className="block mb-1 text-sm font-semibold text-gray-700">Meta Keyword</label>
+                  <input
+                    name="meta_keyword"
+                    value={blogData.meta_keyword}
+                    onChange={handleInputChange}
+                    id="meta_keyword"
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400"
+                    placeholder="Meta keywords, comma separated"
+                  />
                 </div>
 
                 <div>
@@ -833,13 +911,6 @@ export default function BlogComponent() {
                 </div>
 
                 <div>
-                  <label className="block mb-1 text-sm font-semibold text-gray-700">Select Categories</label>
-                  <div className="border border-gray-300 rounded-md max-h-40 overflow-y-auto p-2">
-                    {categories.length > 0 ? renderCategoryTree(categories) : <p className="text-gray-500">No categories available</p>}
-                  </div>
-                </div>
-
-                <div>
                   <label htmlFor="status" className="block mb-1 text-sm font-semibold text-gray-700">Status</label>
                   <select
                     name="status"
@@ -899,7 +970,7 @@ export default function BlogComponent() {
                 </div>
 
                 <div>
-                  <label className="block mb-1 text-sm font-semibold text-gray-700">Upload Image</label>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">Upload Banner Image</label>
                   <input
                     type="file"
                     onChange={handleEditImageChange}
@@ -907,11 +978,53 @@ export default function BlogComponent() {
                     className="block w-full text-sm text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                   />
                   {editBlogData.existingImage && !editBlogData.image && (
-                    <img src={editBlogData.existingImage} alt="Current" className="mt-3 h-16 rounded-md object-contain mx-auto" />
+                    <img src={editBlogData.existingImage} alt="Current banner" className="mt-3 h-24 rounded-md object-contain mx-auto" />
                   )}
                   {editBlogData.image && (
-                    <img src={URL.createObjectURL(editBlogData.image)} alt="New" className="mt-3 h-16 rounded-md object-contain mx-auto" />
+                    <img src={URL.createObjectURL(editBlogData.image)} alt="New banner" className="mt-3 h-24 rounded-md object-contain mx-auto" />
                   )}
+                </div>
+
+                <div>
+                  <label className="block mb-1 text-sm font-semibold text-gray-700">Select Category</label>
+                  <div className="border border-gray-300 rounded-md max-h-40 overflow-y-auto p-2">
+                    {categories.length > 0 ? renderCategoryTree(categories, 0, true) : <p className="text-gray-500">No categories available</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="edit_meta_title" className="block mb-1 text-sm font-semibold text-gray-700">Meta Title</label>
+                  <input
+                    name="meta_title"
+                    value={editBlogData.meta_title}
+                    onChange={handleEditInputChange}
+                    id="edit_meta_title"
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400"
+                    placeholder="Meta title (shown in view source)"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit_meta_description" className="block mb-1 text-sm font-semibold text-gray-700">Meta Description</label>
+                  <textarea
+                    name="meta_description"
+                    value={editBlogData.meta_description}
+                    onChange={handleEditInputChange}
+                    id="edit_meta_description"
+                    rows={3}
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400"
+                    placeholder="Meta description (shown in view source)"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit_meta_keyword" className="block mb-1 text-sm font-semibold text-gray-700">Meta Keyword</label>
+                  <input
+                    name="meta_keyword"
+                    value={editBlogData.meta_keyword}
+                    onChange={handleEditInputChange}
+                    id="edit_meta_keyword"
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400"
+                    placeholder="Meta keywords, comma separated"
+                  />
                 </div>
 
                 <div>
@@ -977,13 +1090,6 @@ export default function BlogComponent() {
                       )}
                     </div>
                   )}
-                </div>
-
-                <div>
-                  <label className="block mb-1 text-sm font-semibold text-gray-700">Select Categories</label>
-                  <div className="border border-gray-300 rounded-md max-h-40 overflow-y-auto p-2">
-                    {categories.length > 0 ? renderCategoryTree(categories, 0, true) : <p className="text-gray-500">No categories available</p>}
-                  </div>
                 </div>
 
                 <div>

@@ -8,6 +8,9 @@ const BlogSchema = new mongoose.Schema({
   status:      { type: String, enum: ["Active", "Inactive"], default: "Active" },
   image:       { type: String },
   video:       { type: String },   // YouTube/Vimeo URL  OR  /uploads/blogs/filename.mp4
+  meta_title:       { type: String, default: "" },
+  meta_description: { type: String, default: "" },
+  meta_keyword:     { type: String, default: "" },
   createdAt:   { type: Date, default: Date.now },
   updatedAt:   { type: Date, default: Date.now },
 });

@@ -52,6 +52,9 @@ export async function PUT(req) {
     const existingImage = formData.get("existingImage"); // current image path in DB
     const video         = formData.get("video");         // new video file OR URL string (optional)
     const existingVideo = formData.get("existingVideo"); // current video value in DB
+    const meta_title       = formData.get("meta_title") || "";
+    const meta_description = formData.get("meta_description") || "";
+    const meta_keyword     = formData.get("meta_keyword") || "";
 
     // Validate
     if (!id) {
@@ -113,6 +116,9 @@ export async function PUT(req) {
         status,
         image:  imageUrl,
         video:  videoUrl,
+        meta_title,
+        meta_description,
+        meta_keyword,
         updatedAt: new Date(),
       },
       { new: true }

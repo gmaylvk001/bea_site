@@ -27,7 +27,7 @@ export async function POST(req) {
     const contentType = req.headers.get("content-type");
 
     if (contentType.includes("application/json")) {
-      const { name, description, category, status, video } = await req.json();
+      const { name, description, category, status, video, meta_title, meta_description, meta_keyword } = await req.json();
 
       const newBlog = new Blog({
         blog_name: name,
@@ -36,6 +36,9 @@ export async function POST(req) {
         category,
         status,
         video: video || "",
+        meta_title: meta_title || "",
+        meta_description: meta_description || "",
+        meta_keyword: meta_keyword || "",
       });
 
       await newBlog.save();
@@ -54,6 +57,9 @@ export async function POST(req) {
       const status      = formData.get("status");
       const image       = formData.get("image");   // file upload
       const video       = formData.get("video");   // can be a file OR a URL string
+      const meta_title       = formData.get("meta_title") || "";
+      const meta_description = formData.get("meta_description") || "";
+      const meta_keyword     = formData.get("meta_keyword") || "";
 
       let imageUrl = "";
       let videoUrl = "";
@@ -80,6 +86,9 @@ export async function POST(req) {
         status,
         image: imageUrl,
         video: videoUrl,
+        meta_title,
+        meta_description,
+        meta_keyword,
       });
 
       await newBlog.save();
