@@ -15,6 +15,12 @@ import { buildInitialExpandedFilters, getSortedFilterGroups, getVisibleFilterGro
 //import FlashCategorySlider from "../FlashCategorySlider";
 //import BannerSlider from "../main-cat-banner";
 
+function activeCategoryCards(tree) {
+  return (Array.isArray(tree) ? tree : []).filter(
+    (c) => String(c?.status || "Active").toLowerCase() !== "inactive"
+  );
+}
+
 export default function CategoryPage(params) {
   const [categoryData, setCategoryData] = useState({
     category: null,
@@ -868,8 +874,8 @@ const handlePageChange = (page) => {
           )} */}
         </div>
       )}
-{/* Categories Circle Section - Dynamic based on subcategories */}
-
+{/* Categories Circle Section - hide Inactive categories */}
+{activeCategoryCards(categoryData?.categoryTree).length > 0 && (
 <div className="relative my-12 px-6">
   {/* Left arrow */}
   <button
@@ -891,7 +897,7 @@ const handlePageChange = (page) => {
   <div
     ref={scrollRef}
     className={`flex ${
-      categoryData?.categoryTree?.length > 3
+      activeCategoryCards(categoryData.categoryTree).length > 3
         ? "overflow-x-auto scroll-smooth hide-scrollbar"
         : "justify-center flex-wrap gap-6"
     } py-4`}
@@ -903,10 +909,7 @@ const handlePageChange = (page) => {
       margin: "0 auto", // center container
     }}
   >
-
-    
-    {categoryData?.categoryTree?.length > 0 ? (
-         categoryData.categoryTree.map((subcategory) => (
+    {activeCategoryCards(categoryData.categoryTree).map((subcategory) => (
            <Link
              key={subcategory._id}
              href={`/category/${slug}/${sub_slug}/${subcategory.category_slug}`}
@@ -977,14 +980,10 @@ const handlePageChange = (page) => {
            </div>
    
            </Link>
-         ))
-       )  : (
-      <div className="text-center w-full py-8">
-        <p className="text-gray-500">No subcategories available</p>
-      </div>
-    )}
+         ))}
   </div>
 </div>
+)}
 
       
 

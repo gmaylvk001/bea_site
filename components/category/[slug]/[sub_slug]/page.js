@@ -11,6 +11,11 @@ import { ToastContainer, toast } from 'react-toastify';
 import { Range as ReactRange } from "react-range";
 import { buildInitialExpandedFilters, getSortedFilterGroups, getVisibleFilterGroups, VISIBLE_FILTER_GROUP_LIMIT } from "@/lib/filterGroupDefaults";
 
+function activeCategoryCards(tree) {
+  return (Array.isArray(tree) ? tree : []).filter(
+    (c) => String(c?.status || "Active").toLowerCase() !== "inactive"
+  );
+}
 
 export default function CategoryPage() {
   const [categoryData, setCategoryData] = useState({
@@ -784,7 +789,7 @@ const handlePageChange = (page) => {
       )}
 {/* Categories Circle Section - Dynamic based on subcategories */}
 
-{categoryData?.categoryTree?.length > 0 && (
+{activeCategoryCards(categoryData?.categoryTree).length > 0 && (
   <div className="relative my-12 px-6">
     {/* Left arrow */}
     <button
@@ -806,7 +811,7 @@ const handlePageChange = (page) => {
     <div
       ref={scrollRef}
       className={`flex ${
-        categoryData.categoryTree.length > 3
+        activeCategoryCards(categoryData.categoryTree).length > 3
           ? "overflow-x-auto scroll-smooth hide-scrollbar"
           : "justify-center flex-wrap gap-6"
       } py-4`}
@@ -818,7 +823,7 @@ const handlePageChange = (page) => {
         margin: "0 auto",
       }}
     >
-      {categoryData.categoryTree.map((subcategory) => (
+      {activeCategoryCards(categoryData.categoryTree).map((subcategory) => (
         <Link
           key={subcategory._id}
           href={`/category/${slug}/${sub_slug}/${subcategory.category_slug}`}

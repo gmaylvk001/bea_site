@@ -12,6 +12,12 @@ import { Range as ReactRange } from "react-range";
 //import FlashCategorySlider from "../FlashCategorySlider";
 import { getSortedFilterGroups, getVisibleFilterGroups, VISIBLE_FILTER_GROUP_LIMIT } from "@/lib/filterGroupDefaults";
 
+function activeCategoryCards(tree) {
+  return (Array.isArray(tree) ? tree : []).filter(
+    (c) => String(c?.status || "Active").toLowerCase() !== "inactive"
+  );
+}
+
 export default function CategoryPage(params) {
   // For filter group show more
   const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
@@ -749,7 +755,7 @@ const fetchInitialData = async () => {
       )}
 {/* Categories Circle Section - Dynamic based on subcategories */}
 
-{categoryData?.categoryTree?.length > 0 && (
+{activeCategoryCards(categoryData?.categoryTree).length > 0 && (
   <div className="relative my-12 px-6">
     {/* Left arrow */}
     <button
@@ -771,7 +777,7 @@ const fetchInitialData = async () => {
     <div
       ref={scrollRef}
       className={`flex ${
-        categoryData.categoryTree.length > 3
+        activeCategoryCards(categoryData.categoryTree).length > 3
           ? "overflow-x-auto scroll-smooth hide-scrollbar"
           : "justify-center flex-wrap gap-6"
       } py-4`}
@@ -783,7 +789,7 @@ const fetchInitialData = async () => {
         margin: "0 auto",
       }}
     >
-      {categoryData.categoryTree.map((subcategory) => (
+      {activeCategoryCards(categoryData.categoryTree).map((subcategory) => (
         <Link
           key={subcategory._id}
           href={`/category/${slug}/${sub_slug}/${subcategory.category_slug}`}

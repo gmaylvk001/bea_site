@@ -75,15 +75,7 @@ export default function FlashCategorySlider({ slug }) {
   }
 
   if (categories.length === 0) {
-    return (
-      <div className="mt-6 pb-4 bg-white">
-        <h2 className="text-2xl font-bold text-center py-4">Categories</h2>
-        <div className="text-center py-8 text-gray-500">
-          <p>No categories available</p>
-          <p className="text-sm">Add category banners from the admin panel</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
