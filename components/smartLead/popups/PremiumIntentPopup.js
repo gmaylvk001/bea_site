@@ -9,18 +9,19 @@ import {
 import { isValidIndianMobile, normalizeIndianMobile } from "@/lib/smartLead";
 
 const BEA_LOGO = "/uploads/beaHqlogo.png";
-const GOLD = "#D4A04C";
-const GOLD_HOVER = "#C4923F";
+const GOLD = "#D4AF37";
+const GOLD_SOFT = "#E8C56A";
+const GOLD_HOVER = "#C49A2E";
 
 const FEATURE_ICONS = [
   {
     label: "Best Price Guaranteed",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden="true">
         <path
           d="M20.59 13.41 13.42 6.24A2 2 0 0 0 12 5.66H5a1 1 0 0 0-1 1v7c0 .53.21 1.04.59 1.41l7.17 7.17a2 2 0 0 0 2.83 0l6-6a2 2 0 0 0 0-2.83Z"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="1.6"
           strokeLinejoin="round"
         />
         <circle cx="8.5" cy="9.5" r="1.25" fill="currentColor" />
@@ -30,26 +31,21 @@ const FEATURE_ICONS = [
   {
     label: "Bank Offers & EMI",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="none" aria-hidden="true">
-        <path
-          d="M6 8V7a4 4 0 0 1 8 0v1"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-        />
-        <rect x="4" y="8" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.7" />
-        <path d="M12 13.2v.2M9.5 15.2h.2M14.3 15.2h.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden="true">
+        <rect x="2.5" y="5" width="19" height="14" rx="2.2" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M2.5 10h19" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M7 15h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       </svg>
     ),
   },
   {
     label: "Exchange Bonus",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden="true">
         <path
           d="M16 3h5v5M8 21H3v-5M21 8A9 9 0 0 0 7.5 4.5L3 8M3 16a9 9 0 0 0 13.5 3.5L21 16"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="1.6"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -59,74 +55,34 @@ const FEATURE_ICONS = [
   {
     label: "Expert Installation",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="none" aria-hidden="true">
-        <circle cx="9" cy="8" r="3" stroke="currentColor" strokeWidth="1.7" />
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" aria-hidden="true">
         <path
-          d="M3.6 19c.7-3 2.8-4.7 5.4-4.7 1.4 0 2.6.5 3.6 1.3"
+          d="M4.5 15.2v-2.2a7.5 7.5 0 0 1 15 0v2.2"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="1.6"
           strokeLinecap="round"
         />
-        <circle cx="17.2" cy="15.2" r="3.2" stroke="currentColor" strokeWidth="1.7" />
-        <path d="M17.2 13.8v2.8M15.8 15.2h2.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    label: "Priority Support",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="none" aria-hidden="true">
-        <path
-          d="M4.5 15.5v-2a7.5 7.5 0 0 1 15 0v2"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-        />
-        <path
-          d="M4.5 15.5A2.2 2.2 0 0 0 6.7 17.7h.6V14H4.5v1.5ZM19.5 15.5V14h-2.8v3.7h.6a2.2 2.2 0 0 0 2.2-2.2Z"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinejoin="round"
-        />
-        <path d="M12 21v-2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <rect x="3.2" y="13.2" width="3.8" height="6.2" rx="1.4" stroke="currentColor" strokeWidth="1.6" />
+        <rect x="17" y="13.2" width="3.8" height="6.2" rx="1.4" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M12 21.2v-2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       </svg>
     ),
   },
 ];
 
-function specTags(product = {}, name = "") {
-  const hay = `${name} ${product.modelNumber || ""} ${product.categoryName || ""}`.toUpperCase();
-  const tags = [];
-  const push = (t) => {
-    if (t && !tags.includes(t) && tags.length < 3) tags.push(t);
-  };
-  if (/\bOLED\b/.test(hay)) push("OLED");
-  if (/\bQLED\b/.test(hay)) push("QLED");
-  if (/\b4K\b|\bUHD\b/.test(hay)) push("4K");
-  if (/\bXR\b/.test(hay)) push("XR");
-  if (/\bFHD\b|FULL HD/.test(hay)) push("FHD");
-  if (/\bINVERTER\b/.test(hay)) push("INVERTER");
-  const litres = hay.match(/\b(\d{2,4})\s?L\b/);
-  if (litres) push(`${litres[1]}L`);
-  const inches = hay.match(/\b(\d{2,3})\s?(?:INCH|")\b/);
-  if (inches) push(`${inches[1]}"`);
-  return tags;
-}
-
-function FeatureRow({ benefits }) {
-  const items =
-    Array.isArray(benefits) && benefits.length >= 5
-      ? FEATURE_ICONS.map((f, i) => ({ ...f, label: benefits[i] || f.label }))
-      : FEATURE_ICONS;
-
+function FeatureRow() {
   return (
-    <ul className="mt-3 grid grid-cols-5 gap-2" aria-label="Benefits">
-      {items.slice(0, 5).map((item) => (
-        <li key={item.label} className="flex flex-col items-center text-center gap-1.5">
+    <ul className="mt-3.5 grid grid-cols-4 gap-2" aria-label="Benefits">
+      {FEATURE_ICONS.map((item) => (
+        <li
+          key={item.label}
+          className="flex flex-col items-center text-center gap-1.5 rounded-lg px-1 py-2.5"
+          style={{ border: `1px solid ${GOLD}` }}
+        >
           <span className="flex items-center justify-center" style={{ color: GOLD }}>
             {item.icon}
           </span>
-          <span className="text-[10px] font-medium text-white/90 leading-tight px-0.5">
+          <span className="text-[9px] font-semibold leading-tight px-0.5" style={{ color: GOLD }}>
             {item.label}
           </span>
         </li>
@@ -178,7 +134,6 @@ export default function PremiumIntentPopup({
     content.primaryCta || `TALK TO A ${expertShort.toUpperCase()} EXPERT`;
   const talkLabel = `Talk to our ${expertShort.toLowerCase()} expert now.`;
   const whatsappEnabled = content.whatsappEnabled !== false;
-  const tags = specTags(p, productName);
 
   const handlePrimary = async () => {
     const normalized = normalizeIndianMobile(mobile);
@@ -238,89 +193,90 @@ export default function PremiumIntentPopup({
         </div>
       </div>
     ) : (
-      <div className="relative grid grid-cols-[1.15fr_0.85fr] min-h-full">
+      <div className="relative grid grid-cols-[1.2fr_0.8fr] items-stretch">
         <div
-          className="absolute top-3 right-12 z-10 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] font-bold uppercase tracking-wide"
-          style={{ borderColor: GOLD, color: GOLD }}
+          className="absolute top-3 right-11 z-10 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide"
+          style={{ border: `1px solid ${GOLD}`, color: GOLD }}
         >
           <svg viewBox="0 0 20 20" className="w-3 h-3" fill="currentColor" aria-hidden="true">
-            <path d="M10 1.8 12.5 7l5.9.5-4.5 3.9 1.4 5.7L10 14.6 4.7 17.1l1.4-5.7L1.6 7.5 7.5 7 10 1.8Z" />
+            <path d="M2.2 7.2 6.1 9.4 10 3.2l3.9 6.2 3.9-2.2-.9 8.4H3.1L2.2 7.2Z" />
           </svg>
           Premium Expert Help
         </div>
 
-        <div className="px-7 pt-4 pb-4 flex flex-col">
+        <div className="px-5 pt-3.5 pb-3.5 flex flex-col min-w-0">
           <img
             src={BEA_LOGO}
             alt="BEA — Bharath Electronics & Appliances"
-            className="h-14 w-auto object-contain self-start"
-            width={200}
-            height={56}
+            className="h-11 w-auto object-contain self-start"
+            width={176}
+            height={44}
           />
 
-          <h3 className="mt-3 text-[22px] font-semibold text-white leading-tight tracking-tight">
-            Experience Every Detail with
-          </h3>
-          <p
-            className="mt-1 text-[24px] font-bold leading-tight tracking-tight"
-            style={{ color: GOLD }}
+          <h3
+            className="mt-3 text-[22px] font-bold leading-[1.2] tracking-tight"
+            style={{
+              backgroundImage: `linear-gradient(90deg, ${GOLD} 0%, ${GOLD_SOFT} 100%)`,
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+            }}
           >
-            {productName}
+            Experience Perfection.
+            <br />
+            Bring Home the Best.
+          </h3>
+          <p className="mt-2 text-[14px] text-white leading-snug">
+            Considering the <span className="font-bold">{productName}</span>?
           </p>
-          <p className="mt-2 text-[13px] text-white/80 leading-relaxed">{subcopy}</p>
+          <p className="mt-1.5 text-[12px] text-white/80 leading-snug">{subcopy}</p>
 
-          <FeatureRow benefits={content.benefits} />
+          <FeatureRow />
 
           <form
-            className="mt-4"
+            className="mt-3.5"
             onSubmit={(e) => {
               e.preventDefault();
               handlePrimary();
             }}
           >
-            <p className="text-sm font-semibold text-white mb-2">{talkLabel}</p>
-            <div className="flex rounded-lg bg-white overflow-hidden focus-within:ring-2 focus-within:ring-[#D4A04C]">
-              <span className="px-3 py-2.5 bg-gray-50 text-sm text-gray-700 border-r border-gray-200 select-none flex items-center gap-1 flex-shrink-0">
-                +91
-                <span className="text-[10px] text-gray-400" aria-hidden="true">
-                  ▾
+            <p className="text-[13px] font-medium text-white mb-2">{talkLabel}</p>
+            <div className="flex gap-2 items-stretch">
+              <div className="flex flex-1 min-w-0 rounded-lg bg-white overflow-hidden">
+                <span className="px-2.5 py-2.5 bg-white text-[13px] text-gray-700 border-r border-gray-200 select-none flex items-center gap-1 flex-shrink-0">
+                  +91
+                  <span className="text-[9px] text-gray-400" aria-hidden="true">
+                    ▾
+                  </span>
                 </span>
-              </span>
-              <input
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel-national"
-                maxLength={10}
-                placeholder="Enter your mobile number"
-                value={mobile}
-                onChange={(e) => {
-                  setMobile(e.target.value.replace(/\D/g, "").slice(0, 10));
-                  if (error) setError("");
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  maxLength={10}
+                  placeholder="Enter Mobile Number"
+                  value={mobile}
+                  onChange={(e) => {
+                    setMobile(e.target.value.replace(/\D/g, "").slice(0, 10));
+                    if (error) setError("");
+                  }}
+                  className="flex-1 min-w-0 px-2.5 py-2.5 text-[13px] text-gray-900 outline-none placeholder:text-gray-400"
+                  aria-label="Mobile number"
+                  aria-invalid={error ? "true" : "false"}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                aria-busy={submitting ? "true" : "false"}
+                className="w-[168px] flex-shrink-0 rounded-lg text-white font-bold text-[11px] tracking-[0.04em] uppercase min-h-[42px] px-2 transition-opacity disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                style={{
+                  backgroundImage: `linear-gradient(90deg, ${GOLD} 0%, ${GOLD_SOFT} 55%, ${GOLD_HOVER} 100%)`,
                 }}
-                className="flex-1 min-w-0 px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400"
-                aria-label="Mobile number"
-                aria-invalid={error ? "true" : "false"}
-              />
+              >
+                {submitting ? "Saving…" : String(primaryCta).replace(/\s*→\s*$/, "")}
+              </button>
             </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              aria-busy={submitting ? "true" : "false"}
-              className="mt-2.5 w-full rounded-lg text-white font-bold text-[13px] tracking-wide uppercase min-h-[44px] px-4 transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A04C] focus-visible:ring-offset-2 focus-visible:ring-offset-[#07090C]"
-              style={{ backgroundColor: GOLD }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = GOLD_HOVER;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = GOLD;
-              }}
-            >
-              {submitting
-                ? "Saving…"
-                : /→$/.test(primaryCta)
-                  ? primaryCta
-                  : `${primaryCta} →`}
-            </button>
             {error ? (
               <p role="alert" className="mt-2 text-xs text-red-300 font-medium">
                 {error}
@@ -328,7 +284,7 @@ export default function PremiumIntentPopup({
             ) : null}
           </form>
 
-          <p className="mt-auto pt-3 flex items-center gap-1.5 text-[11px] text-white/75">
+          <p className="mt-3 flex items-center gap-1.5 text-[11px] text-white/80">
             <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 flex-shrink-0" fill={GOLD} aria-hidden="true">
               <path d="M12 2 4.5 5.2v6.3c0 4.9 3.3 9.4 7.5 10.5 4.2-1.1 7.5-5.6 7.5-10.5V5.2L12 2Z" />
               <path
@@ -343,30 +299,15 @@ export default function PremiumIntentPopup({
           </p>
         </div>
 
-        <div className="flex flex-col items-center justify-center px-4 py-4 pr-6">
-          <div className="w-full h-[240px] flex items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={p.image || "/no-image.jpg"}
-              alt={productName}
-              className="max-h-full max-w-full object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.45)]"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          {tags.length ? (
-            <div className="mt-3 flex items-center justify-center gap-2">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wide"
-                  style={{ borderColor: GOLD, color: GOLD }}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
+        <div className="flex items-center justify-center pr-4 py-3 min-w-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={p.image || "/no-image.jpg"}
+            alt={productName}
+            className="max-h-[280px] w-full object-contain object-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.45)]"
+            loading="lazy"
+            decoding="async"
+          />
         </div>
       </div>
     );

@@ -42,7 +42,8 @@ export default function PopupShell({
   onCloseRef.current = onClose;
   const [scale, setScale] = useState(1);
   const [hugHeight, setHugHeight] = useState(DESIGN_HEIGHT);
-  const isHug = variant === "category" || variant === "comparison";
+  const isHug =
+    variant === "category" || variant === "comparison" || variant === "premium";
   const designWidth = isHug ? CATEGORY_WIDTH : DESIGN_WIDTH;
 
   useEffect(() => {
@@ -185,7 +186,7 @@ export default function PopupShell({
         ref={panelRef}
         className={`smart-lead-panel relative ${widthCls} ${panelHeight} ${
           isPremium
-            ? "bg-[#07090C] text-white rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.55)] border border-[#D4A04C]/25"
+            ? "bg-black text-white rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.55)] border border-[#D4AF37]/35"
             : isDark
             ? "bg-[#071422] text-white rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.5)] border border-white/10"
             : isWide || isSupport
