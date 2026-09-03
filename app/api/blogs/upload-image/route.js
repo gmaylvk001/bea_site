@@ -28,6 +28,6 @@ export async function POST(req) {
     return NextResponse.json({ location, url: location });
   } catch (error) {
     console.error("Blog image upload error:", error);
-    return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to upload image. Ensure server filesystem allows write access to public/uploads/blogs." }, { status: 500 });
   }
 }

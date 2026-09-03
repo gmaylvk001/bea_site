@@ -138,7 +138,7 @@ export async function PUT(req) {
   } catch (error) {
     console.error("Blog PUT error:", error);
     return NextResponse.json(
-      { success: false, error: "Internal Server Error" },
+      { success: false, error: error.message || "Internal Server Error" },
       { status: 500 }
     );
   }
