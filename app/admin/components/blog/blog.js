@@ -82,7 +82,7 @@ export default function BlogComponent() {
 
   const fetchBlogs = async () => {
     try {
-      const response = await fetch("/api/blogs/get");
+      const response = await fetch("/api/blogs/get?admin=true");
       const text = await response.text();
       if (!text) {
         console.error("Empty response from API");
@@ -490,18 +490,8 @@ export default function BlogComponent() {
     if (!blogToDelete) return;
     
     try {
-      const targetBlog = blogs.find(b => b._id === blogToDelete);
-      if(!targetBlog) return;
-
-      const formData = new FormData();
-      formData.append("id", targetBlog._id);
-      formData.append("name", targetBlog.blog_name);
-      formData.append("description", targetBlog.description);
-      formData.append("status", "Inactive");
-
-      const response = await fetch(`/api/blogs/update`, {
-        method: 'PUT',
-        body: formData
+      const response = await fetch(`/api/blogs/delete?id=${blogToDelete}`, {
+        method: 'DELETE',
       });
   
       if (!response.ok) {
@@ -510,10 +500,10 @@ export default function BlogComponent() {
   
       const result = await response.json();
       if (result.success) {
-        setAlertMessage('Blog status updated to Inactive successfully!');
+        setAlertMessage('Blog deleted successfully!');
         fetchBlogs();
       } else {
-        setAlertMessage('Error: ' + result.error);
+        setAlertMessage('Error: ' + (result.error || result.message));
       }
       
       setShowAlert(true);
@@ -521,8 +511,8 @@ export default function BlogComponent() {
       setShowConfirmationModal(false);
       setBlogToDelete(null);
     } catch (error) {
-      console.error('Error updating blog status:', error);
-      setAlertMessage('Failed to update blog status.');
+      console.error('Error deleting blog:', error);
+      setAlertMessage('Failed to delete blog: ' + error.message);
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
     }
