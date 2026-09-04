@@ -24,48 +24,36 @@ export async function POST(request) {
       );
     }
 
-    // Validate name and city — only letters, spaces, dots, hyphens (blocks random bot strings)
-    const namePattern = /^[a-zA-Z\s.'\-]{2,60}$/;
-    if (!namePattern.test(name.trim())) {
-      return NextResponse.json({ success: false, message: "Invalid name format" }, { status: 400 });
-    }
-    if (!namePattern.test(city.trim())) {
-      return NextResponse.json({ success: false, message: "Invalid city format" }, { status: 400 });
+    // Validate phone number (extract digits)
+    const digitsPhone = mobile_number.replace(/\D/g, "");
+    if (digitsPhone.length < 10) {
+      return NextResponse.json({ success: false, message: "Please enter a valid 10-digit phone number" }, { status: 400 });
     }
 
-    // Validate phone — Indian mobile number format
-    if (!/^[6-9]\d{9}$/.test(mobile_number)) {
-      return NextResponse.json({ success: false, message: "Invalid phone number" }, { status: 400 });
-    }
-
-    /* // Check for existing contact (optional — usually check email instead of name)
-    const existingContact = await ContactModel.findOne({ email_address });
-    if (existingContact) {
-      return NextResponse.json(
-        { success: false, message: "Contact already exists" },
-        { status: 400 }
-      );
-    } */
-
-     // Create new contact
+    // Create new contact
+    const finalStatus = (status || "active").toLowerCase();
     const newContact = await ContactModel.create({
-      name,
-      email_address,
-      mobile_number,
-      message,
-      city,
-      status,
+      name: name.trim(),
+      email_address: email_address.trim(),
+      mobile_number: digitsPhone,
+      message: message.trim(),
+      city: city.trim(),
+      status: finalStatus === "inactive" ? "inactive" : "active",
     });
 
-   // 🔔 CREATE NOTIFICATION
-    await Notification.create({
-      type: "contact",
-      contactId: newContact._id,
-      message: `New contact received from ${name}`,
-      read: false,
-    });
+    // 🔔 CREATE NOTIFICATION (safely wrapped so it doesn't fail contact creation)
+    try {
+      await Notification.create({
+        type: "contact",
+        contactId: newContact._id,
+        message: `New contact received from ${name}`,
+        read: false,
+      });
+    } catch (notifErr) {
+      console.error("Notification creation failed:", notifErr.message);
+    }
 
-    // 📊 APPEND TO GOOGLE SHEET (non-blocking — don't fail the request if Sheets fails)
+    // 📊 APPEND TO GOOGLE SHEET (non-blocking)
     appendToContactSheet(newContact).catch((err) =>
       console.error("Google Sheets append failed:", err.message)
     );
@@ -77,7 +65,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("Error adding contact:", error);
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
+      { success: false, message: error.message || "Failed to submit contact request" },
       { status: 500 }
     );
   }

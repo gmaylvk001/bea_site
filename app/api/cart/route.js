@@ -200,7 +200,7 @@ export async function GET(req) {
         };
       })
     );
-    console.log(items);
+    // console.log(items);
 
 
 
@@ -266,33 +266,23 @@ export async function PUT(req) {
       return NextResponse.json({ error: "Cart not found" }, { status: 404 });
     }
 
-    console.log(cart.items);
-
     const itemIndex = cart.items.findIndex(
       (item) => item.productId.toString() === productId
     );
 
-    console.log(itemIndex);
     if (itemIndex === -1) {
       return NextResponse.json({ error: "Product not in cart" }, { status: 404 });
     }
 
     cart.items[itemIndex].quantity = quantity;
     const item_code = cart.items[itemIndex].item_code;
-    console.log(item_code);
-     const original_quantity = await getQuantity(item_code);
+    const original_quantity = await getQuantity(item_code);
     const totals = calculateCartTotals(cart.items);
     cart.totalItems = totals.totalItems;
     cart.totalPrice = totals.totalPrice;
     cart.items[itemIndex].original_quantity = original_quantity;
-console.log(cart.items);
-    
-    
-    await cart.save();
 
-cart.items.forEach((item) => {
-  console.log(item);
-});
+    await cart.save();
     const items = cart.items.map((item) => ({
       productId: item.productId._id,
       name: item.name,
