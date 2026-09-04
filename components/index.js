@@ -175,7 +175,7 @@ export default function HomeComponent() {
             if (data.success) {
               if (data.banners?.length > 0) {
                 const bannerItems = data.banners
-                  .filter((banner) => banner.status === "Active")
+                  .filter((banner) => !banner.status || banner.status.toLowerCase() === "active")
                   .map((banner) => ({
                     id: banner._id,
                     buttonLink: banner.redirect_url || "/shop",
@@ -184,19 +184,55 @@ export default function HomeComponent() {
                     redirectUrl: banner.redirect_url,
                   }));
                 setBannerData({ banner: { items: bannerItems } });
+              } else {
+                fetch("/api/topbanner")
+                  .then((res) => res.json())
+                  .then((topData) => {
+                    if (topData.success && topData.banners?.length > 0) {
+                      const fallbackItems = topData.banners
+                        .filter((b) => !b.status || b.status.toLowerCase() === "active")
+                        .map((b) => ({
+                          id: b._id,
+                          buttonLink: b.redirect_url || "/shop",
+                          bgImageUrl: b.banner_image,
+                          bannerImageUrl: b.banner_image,
+                          redirectUrl: b.redirect_url,
+                        }));
+                      setBannerData({ banner: { items: fallbackItems } });
+                    }
+                  })
+                  .catch((err) => console.error("Error fallback fetching topbanner:", err));
               }
 
               if (data.flashSales?.length > 0) {
                 const salesItems = data.flashSales
-                  .filter((item) => item.status === "Active")
+                  .filter((item) => !item.status || item.status.toLowerCase() === "active")
                   .map((item) => ({
                     id: item._id,
                     title: item.title,
-                    productImage: item.banner_image,
-                    bgImage: item.background_image,
+                    productImage: item.banner_image || item.product_image || item.image || "",
+                    bgImage: item.background_image || item.bg_image || "",
                     redirectUrl: item.redirect_url || "/shop",
                   }));
                 setFlashSalesData(salesItems);
+              } else {
+                fetch("/api/flashsale")
+                  .then((res) => res.json())
+                  .then((fsData) => {
+                    if (fsData.success && fsData.flashSales?.length > 0) {
+                      const fallbackSales = fsData.flashSales
+                        .filter((item) => !item.status || item.status.toLowerCase() === "active")
+                        .map((item) => ({
+                          id: item._id,
+                          title: item.title,
+                          productImage: item.banner_image || item.product_image || item.image || "",
+                          bgImage: item.background_image || item.bg_image || "",
+                          redirectUrl: item.redirect_url || "/shop",
+                        }));
+                      setFlashSalesData(fallbackSales);
+                    }
+                  })
+                  .catch((err) => console.error("Error fallback fetching flashsale:", err));
               }
 
               if (data.homeSections?.length > 0) {
@@ -1058,6 +1094,9 @@ export default function HomeComponent() {
               <CategoryProducts/>
             );
           case 'flash_sales':
+          case 'flashsale':
+          case 'flash_sale':
+          case 'flash sale':
           return (
             <motion.section
   ref={refs.flashSales}
@@ -1067,7 +1106,7 @@ export default function HomeComponent() {
   id="flash_sales"
   className="home-section py-8 relative"
 >
-  {flashSalesData.filter(item => item.bgImage && item.productImage).length > 0 && (
+  {flashSalesData.filter(item => item.bgImage || item.productImage).length > 0 && (
 
     <div className="relative">
 
@@ -1137,7 +1176,7 @@ export default function HomeComponent() {
           </div>
         ) : (
           flashSalesData
-            .filter(item => item.bgImage && item.productImage)
+            .filter(item => item.bgImage || item.productImage)
             .map((item) => (
               <SwiperSlide key={item.id}>
                 <div
@@ -1314,6 +1353,8 @@ export default function HomeComponent() {
                   </motion.section>
               );
           case 'topbanner':
+          case 'top_banner':
+          case 'top banner':
   return (
     <motion.section 
       id="topbanner"
@@ -1786,19 +1827,35 @@ return (
       }
     };
     const getSectionComponentName = (sectionName) => {
+        if (!sectionName) return '';
+        const cleanName = sectionName.toString().toLowerCase().replace(/[\s_\-]/g, '');
         const mapping = {
-            'categorybanner': 'category_banner',
+            'topbanner': 'topbanner',
+            'topbanners': 'topbanner',
             'flashsale': 'flash_sales',
-            'Brands': 'brands',
-            'topbanner' : 'topbanner',
+            'flashsales': 'flash_sales',
+            'flashsalebanner': 'flash_sales',
+            'categorybanner': 'category_banner',
+            'categorybanners': 'category_banner',
+            'brands': 'brands',
+            'brand': 'brands',
+            'topbrands': 'brands',
             'singlebanner': 'singlebanner',
-            'singlebanner-two': 'singlebanner-two',
-            'features' : 'features',
-            'product'  :'product',
-            // Add more mappings as needed
+            'singlebanners': 'singlebanner',
+            'singlebannertwo': 'singlebanner-two',
+            'singlebanner2': 'singlebanner-two',
+            'features': 'features',
+            'feature': 'features',
+            'product': 'product',
+            'products': 'product',
+            'categoryproducts': 'product',
+            'videocard': 'videocard',
+            'videocards': 'videocard',
+            'offer': 'offer',
+            'offers': 'offer',
         };
         
-        return mapping[sectionName] || sectionName.toLowerCase();
+        return mapping[cleanName] || sectionName.toLowerCase();
     };
     return (
         <>
@@ -1835,8 +1892,11 @@ return (
                   ) : (
                       // Fallback order if no sections are configured
                       <>
+                          {renderSection('topbanner')}
                           {renderSection('category_banner')}
                           {renderSection('flash_sales')}
+                          {renderSection('singlebanner')}
+                          {renderSection('singlebanner-two')}
                           {renderSection('brands')}
                           {renderSection('features')}
                       </>
