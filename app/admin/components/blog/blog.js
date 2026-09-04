@@ -7,6 +7,8 @@ import TinyEditor from "@/app/admin/components/product/TinyEditor";
 export default function BlogComponent() {
   // State declarations
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [blogData, setBlogData] = useState({
     name: "",
     image: null,
@@ -366,6 +368,7 @@ export default function BlogComponent() {
       return;
     }
 
+    setIsEditSubmitting(true);
     const formData = new FormData();
     formData.append("id", editBlogData.id);
     formData.append("name", editBlogData.name);
@@ -414,6 +417,8 @@ export default function BlogComponent() {
       setAlertMessage("Failed to update blog.");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
+    } finally {
+      setIsEditSubmitting(false);
     }
   };
 
@@ -427,6 +432,7 @@ export default function BlogComponent() {
       return;
     }
 
+    setIsSubmitting(true);
     const formData = new FormData();
     formData.append("name", blogData.name);
     formData.append("description", blogData.description);
@@ -483,6 +489,8 @@ export default function BlogComponent() {
       setAlertMessage("Failed to add blog.");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -925,9 +933,17 @@ export default function BlogComponent() {
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full bg-red-600 text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-red-700 transition shadow-sm"
+                    disabled={isSubmitting}
+                    className="w-full bg-red-600 text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-red-700 transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Add Blog
+                    {isSubmitting ? (
+                      <>
+                        <Icon icon="line-md:loading-loop" className="w-4 h-4 animate-spin" />
+                        <span>Adding Blog...</span>
+                      </>
+                    ) : (
+                      "Add Blog"
+                    )}
                   </button>
                 </div>
               </form>
@@ -1107,9 +1123,17 @@ export default function BlogComponent() {
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full bg-red-600 text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-red-700 transition shadow-sm"
+                    disabled={isEditSubmitting}
+                    className="w-full bg-red-600 text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-red-700 transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Update Blog
+                    {isEditSubmitting ? (
+                      <>
+                        <Icon icon="line-md:loading-loop" className="w-4 h-4 animate-spin" />
+                        <span>Updating Blog...</span>
+                      </>
+                    ) : (
+                      "Update Blog"
+                    )}
                   </button>
                 </div>
               </form>
