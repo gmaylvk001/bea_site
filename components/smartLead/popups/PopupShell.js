@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 const DESIGN_WIDTH = 860;
 const DESIGN_HEIGHT = 480;
 const CATEGORY_WIDTH = 680;
+const PREMIUM_WIDTH = 780;
 
 function fitScale(width = DESIGN_WIDTH, height = DESIGN_HEIGHT) {
   if (typeof window === "undefined") return 1;
@@ -44,7 +45,12 @@ export default function PopupShell({
   const [hugHeight, setHugHeight] = useState(DESIGN_HEIGHT);
   const isHug =
     variant === "category" || variant === "comparison" || variant === "premium";
-  const designWidth = isHug ? CATEGORY_WIDTH : DESIGN_WIDTH;
+  const isPremium = variant === "premium";
+  const designWidth = isPremium
+    ? PREMIUM_WIDTH
+    : isHug
+      ? CATEGORY_WIDTH
+      : DESIGN_WIDTH;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -135,7 +141,6 @@ export default function PopupShell({
     variant === "model" ||
     variant === "premium";
   const isDark = variant === "model" || variant === "premium";
-  const isPremium = variant === "premium";
   const isSupport = variant === "support";
 
   const accentBar =
@@ -147,9 +152,11 @@ export default function PopupShell({
 
   const widthCls = isSupport
     ? "w-[min(100%,340px)] sm:w-[min(100%,360px)]"
-    : isHug
-      ? "w-[680px]"
-      : "w-[860px]";
+    : isPremium
+      ? "w-[780px]"
+      : isHug
+        ? "w-[680px]"
+        : "w-[860px]";
 
   const panelHeight = isSupport
     ? "max-h-[min(90dvh,420px)]"

@@ -82,7 +82,7 @@ function FeatureRow() {
           <span className="flex items-center justify-center" style={{ color: GOLD }}>
             {item.icon}
           </span>
-          <span className="text-[9px] font-semibold leading-tight px-0.5" style={{ color: GOLD }}>
+          <span className="text-[11px] font-semibold leading-tight px-0.5" style={{ color: GOLD }}>
             {item.label}
           </span>
         </li>
@@ -226,10 +226,10 @@ export default function PremiumIntentPopup({
             <br />
             Bring Home the Best.
           </h3>
-          <p className="mt-2 text-[14px] text-white leading-snug">
-            Considering the <span className="font-bold">{productName}</span>?
+          <p className="mt-2.5 text-[15px] text-white/95 leading-snug">
+            Considering the <span className="text-[18px] font-bold text-white">{productName}</span>?
           </p>
-          <p className="mt-1.5 text-[12px] text-white/80 leading-snug">{subcopy}</p>
+          <p className="mt-1.5 text-[15px] font-medium text-white/90 leading-snug">{subcopy}</p>
 
           <FeatureRow />
 

@@ -259,11 +259,11 @@ export default function CategoryIntentPopup({
           <div className="mt-2.5 grid grid-cols-[1fr_1fr] gap-3 items-start">
             <div className="min-w-0">
               <h3 className="font-bold leading-[1.15] tracking-tight">
-                <span className="block text-[28px] text-[#111827]">Looking for a</span>
-                <span className="block text-[28px] text-[#1A4BA0]">{categoryName}?</span>
+                <span className="block text-[22px] font-semibold text-[#111827]">Looking for a</span>
+                <span className="block text-[34px] font-extrabold text-[#1A4BA0]">{categoryName}?</span>
               </h3>
 
-              <p className="mt-1.5 text-[13px] text-gray-600 leading-snug max-w-[340px]">
+              <p className="mt-1.5 text-[15px] font-medium text-gray-700 leading-snug max-w-[340px]">
                 {subcopy}
               </p>
 
