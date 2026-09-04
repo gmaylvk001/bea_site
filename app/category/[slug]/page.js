@@ -9,9 +9,11 @@ import {
   buildBreadcrumbSchema,
 } from "@/lib/schema";
 
-async function getCategoryData(slug) {
+import { cache } from "react";
+
+const getCategoryData = cache(async (slug) => {
   return fetchJson(`/api/categories/${slug}`);
-}
+});
 
 export async function generateMetadata({ params }) {
   const awaitedParams = await params;

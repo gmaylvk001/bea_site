@@ -163,128 +163,69 @@ export default function HomeComponent() {
       }
     };
     useEffect(() => {
-        const fetchBannerData = async () => {
-            setIsBannerLoading(true);
-            try {
-                const response = await fetch('/api/topbanner');
-                const data = await response.json();
-                // console.log("Banner data:", data);
-                if (data.success && data.banners?.length > 0) {
-                    const bannerItems = data.banners
-                        .filter(banner => banner.status === "Active") // ✅ only Active
-                        .map(banner => ({
-                            id: banner._id,
-                            buttonLink: banner.redirect_url || "/shop",
-                            bgImageUrl: banner.banner_image,
-                            bannerImageUrl: banner.banner_image,
-                            redirectUrl: banner.redirect_url
-                        }));
-
-                    setBannerData({
-                        banner: { items: bannerItems }
-                    });
-                }
-            } catch (error) {
-                console.error("Error fetching banner data:", error);
-                setBannerData({
-                    banner: {
-                        items: [{
-                            id: 1,
-                            buttonLink: "/shop",
-                            bgImageUrl: "/images/banner-img1.png",
-                            bannerImageUrl: "/images/banner-product.png"
-                        }]
-                    }
-                });
-            } finally {
-                setIsBannerLoading(false);
-            }
-        };
-        const fetchFlashSales = async () => {
+        const fetchHomeUnifiedData = async () => {
+          setIsBannerLoading(true);
           setIsFlashSalesLoading(true);
-          try {
-            const response = await fetch("/api/flashsale");
-            const data = await response.json();
-
-            if (data.success && data.flashSales.length > 0) {
-              const salesItems = data.flashSales
-                .filter(item => item.status === "Active")   // ✅ only active
-                .map((item) => ({
-                  id: item._id,
-                  title: item.title,
-                  productImage: item.banner_image,
-                  bgImage: item.background_image,
-                  redirectUrl: item.redirect_url || "/shop",
-                }));
-              setFlashSalesData(salesItems);
-            }
-          } catch (error) {
-            console.error("Error fetching flash sales:", error);
-            setFlashSalesData([
-              {
-                id: "fs1",
-                title: "Summer Fruits Special",
-                productImage: "/images/summer-fruits.png",
-                bgImage: "/images/sale-bg1.jpg",
-                redirectUrl: "/summer-sale",
-              },
-              {
-                id: "fs2",
-                title: "Organic Vegetables",
-                productImage: "/images/veggies.png",
-                bgImage: "/images/sale-bg2.jpg",
-                redirectUrl: "/vegetables",
-              },
-            ]);
-          } finally {
-            setIsFlashSalesLoading(false);
-          }
-        };
-        const fetchHomeSections = async () => {
           setIsSectionLoading(true);
+          setIsBrandsLoading(true);
           try {
-            const response = await fetch("/api/home-sections");
+            const response = await fetch("/api/home-data");
             const data = await response.json();
 
-            if (data.success && data.data?.length > 0) {
-              const sectionItems = data.data
-                .filter(section => section.status === "active") // ✅ only active
-                .map(section => ({
-                  id: section._id,
-                  name: section.name,
-                  position: section.position
-                }));
+            if (data.success) {
+              if (data.banners?.length > 0) {
+                const bannerItems = data.banners
+                  .filter((banner) => banner.status === "Active")
+                  .map((banner) => ({
+                    id: banner._id,
+                    buttonLink: banner.redirect_url || "/shop",
+                    bgImageUrl: banner.banner_image,
+                    bannerImageUrl: banner.banner_image,
+                    redirectUrl: banner.redirect_url,
+                  }));
+                setBannerData({ banner: { items: bannerItems } });
+              }
 
-              setHomeSectionData({
-                sections: sectionItems
-              });
+              if (data.flashSales?.length > 0) {
+                const salesItems = data.flashSales
+                  .filter((item) => item.status === "Active")
+                  .map((item) => ({
+                    id: item._id,
+                    title: item.title,
+                    productImage: item.banner_image,
+                    bgImage: item.background_image,
+                    redirectUrl: item.redirect_url || "/shop",
+                  }));
+                setFlashSalesData(salesItems);
+              }
+
+              if (data.homeSections?.length > 0) {
+                const sectionItems = data.homeSections
+                  .filter((section) => section.status === "active")
+                  .map((section) => ({
+                    id: section._id,
+                    name: section.name,
+                    position: section.position,
+                  }));
+                setHomeSectionData({ sections: sectionItems });
+              }
+
+              if (data.brands?.length > 0) {
+                setBrands(data.brands);
+              }
+
+              if (data.videoCards?.length > 0) {
+                setVideos(data.videoCards);
+              }
             }
           } catch (error) {
-            console.error("Error fetching home sections:", error);
-            setHomeSectionData({
-              sections: []
-            });
+            console.error("Error fetching home unified data:", error);
           } finally {
+            setIsBannerLoading(false);
+            setIsFlashSalesLoading(false);
             setIsSectionLoading(false);
+            setIsBrandsLoading(false);
           }
-        };
-        const fetchBrands = async () => {
-            setIsBrandsLoading(true);
-            try {
-                const response = await fetch('/api/brand/get');
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const data = await response.json();
-                if (data.success) {
-                    setBrands(data.brands || []);
-                }
-            } catch (error) {
-                console.error("Error fetching brands:", error);
-                setBrands([]);
-            } finally {
-                setIsBrandsLoading(false);
-            }
         };
         const fetchCategories = async () => {
           try {
@@ -487,9 +428,7 @@ export default function HomeComponent() {
           }
         };
         fetchCategoryBanners();
-        fetchBannerData();
-        fetchFlashSales();
-        fetchBrands();
+        fetchHomeUnifiedData();
         fetchCategories();
         //fetchProducts();
         fetchSingleBannerData();
