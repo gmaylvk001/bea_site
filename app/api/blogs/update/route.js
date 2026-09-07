@@ -28,6 +28,24 @@ async function deleteOldFile(relativePath) {
   }
 }
 
+async function generateUniqueSlug(name, currentId) {
+  if (!name || typeof name !== "string") return `blog-${Date.now()}`;
+  let slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (!slug) slug = `blog-${Date.now()}`;
+
+  const existing = await Blog.findOne({ blog_slug: slug, _id: { $ne: currentId } });
+  if (existing) {
+    slug = `${slug}-${Date.now().toString().slice(-4)}`;
+  }
+  return slug;
+}
+
 export async function PUT(req) {
   try {
     await dbConnect();
@@ -105,12 +123,14 @@ export async function PUT(req) {
       }
     }
 
+    const slug = await generateUniqueSlug(name, id);
+
     // ── Save ─────────────────────────────────────────────────────────────────
     const updatedBlog = await Blog.findByIdAndUpdate(
       id,
       {
         blog_name:  name,
-        blog_slug:  name.toLowerCase().replace(/\s+/g, "-"),
+        blog_slug:  slug,
         description,
         category,
         status,

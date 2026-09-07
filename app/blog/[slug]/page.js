@@ -16,7 +16,23 @@ import { buildCanonicalUrl } from "@/components/CanonicalLink";
 async function getBlogPost(slug) {
   try {
     await dbConnect();
-    const blog = await Blog.findOne({ blog_slug: slug, status: "Active" })
+    let decodedSlug = slug;
+    try {
+      decodedSlug = decodeURIComponent(slug);
+    } catch {
+      // Fallback if decodeURIComponent fails
+    }
+
+    const sanitizedSlug = decodedSlug
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const possibleSlugs = Array.from(new Set([slug, decodedSlug, sanitizedSlug])).filter(Boolean);
+
+    const blog = await Blog.findOne({ blog_slug: { $in: possibleSlugs }, status: "Active" })
       .populate("category")
       .lean();
     return blog || null;
