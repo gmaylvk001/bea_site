@@ -90,11 +90,17 @@ const subCategoryIds = [
     const productIds = products.map(product => product._id);
     const productFilters = await ProductFilter.find({ product_id: { $in: productIds } });
     
-    // Extract unique filter IDs
+    // Extract unique filter IDs and counts
+    const filterCountMap = {};
+    productFilters.forEach(pf => {
+      const fid = pf.filter_id?.toString();
+      if (fid) filterCountMap[fid] = (filterCountMap[fid] || 0) + 1;
+    });
+
     const filterIds = [...new Set(productFilters.map(pf => pf.filter_id))];
     const filters = await Filter.find({ _id: { $in: filterIds } }).populate({
       path: 'filter_group',
-      select: 'filtergroup_name -_id',
+      select: 'filtergroup_name _id',
       model: FilterGroup
     }).lean();
     
@@ -102,7 +108,9 @@ const subCategoryIds = [
     const formattedFilters = filters.map(filter => ({
       ...filter,
       filter_group_name: filter.filter_group?.filtergroup_name || 'No Group',
-      filter_group: filter.filter_group?._id
+      filter_group: filter.filter_group?._id,
+      filter_group_id: filter.filter_group?._id?.toString() || filter.filter_group?.filtergroup_name || 'other',
+      count: filterCountMap[filter._id.toString()] || 0
     }));
 
     return Response.json({ 

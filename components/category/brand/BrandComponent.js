@@ -155,6 +155,12 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
         }
       });
       setFilterGroups(groups);
+
+      const initialExpanded = {};
+      Object.keys(groups).forEach(groupId => {
+        initialExpanded[groupId] = true;
+      });
+      setExpandedFilters(initialExpanded);
     } catch (error) {
       toast.error("Error fetching initial data");
     } finally {
@@ -205,8 +211,41 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
       }
 
       const res = await fetch(`/api/product/filter/category-brand/main?${query}`);
-      const { products, pagination: paginationData } = await res.json();
+      const data = await res.json();
+      const { products, pagination: paginationData, filters: returnedFilters } = data;
       setProducts(products || []);
+
+      if (returnedFilters) {
+        const groups = {};
+        returnedFilters.forEach(filter => {
+          const groupId = filter.filter_group_id || filter.filter_group_name;
+          if (groupId) {
+            if (!groups[groupId]) {
+              groups[groupId] = {
+                _id: groupId,
+                name: filter.filter_group_name,
+                slug: (filter.filter_group_name || '').toLowerCase().replace(/\s+/g, '-'),
+                filters: []
+              };
+            }
+            groups[groupId].filters.push(filter);
+          }
+        });
+        setFilterGroups(groups);
+
+        // Keep groups with selected filters expanded
+        if (selectedFilters.filters.length > 0) {
+          setExpandedFilters(prev => {
+            const updated = { ...prev };
+            Object.values(groups).forEach(group => {
+              if (group.filters.some(f => selectedFilters.filters.includes(f._id))) {
+                updated[group._id] = true;
+              }
+            });
+            return updated;
+          });
+        }
+      }
 
       if ((!products || products.length === 0) && pageNum === 1) {
         setNofound(true);

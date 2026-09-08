@@ -163,6 +163,12 @@ export default function BrandPage() {
         }
       });
       setFilterGroups(groups);
+
+      const initialExpanded = {};
+      Object.keys(groups).forEach(groupId => {
+        initialExpanded[groupId] = true;
+      });
+      setExpandedFilters(initialExpanded);
     } catch (error) {
       toast.error("Error fetching initial data");
     } finally {
@@ -255,21 +261,59 @@ export default function BrandPage() {
         query.set('filters', selectedFilters.filters.join(','));
       }
 
-      const res = await fetch(`/api/product/filter/brand/main?${query}`);
-      const { products, pagination: paginationData } = await res.json();
+      if (sortOption) {
+        query.set('sort', sortOption);
+      }
 
-      setProducts(products);
+      const res = await fetch(`/api/product/filter/brand/main?${query}`);
+      const data = await res.json();
+      const { products, pagination: paginationData, filters: returnedFilters } = data;
+
+      setProducts(products || []);
+
+      if (returnedFilters) {
+        const groups = {};
+        returnedFilters.forEach(filter => {
+          const groupId = filter.filter_group_id || filter.filter_group_name;
+          if (groupId) {
+            if (!groups[groupId]) {
+              groups[groupId] = {
+                _id: groupId,
+                name: filter.filter_group_name,
+                slug: (filter.filter_group_name || '').toLowerCase().replace(/\s+/g, '-'),
+                filters: []
+              };
+            }
+            groups[groupId].filters.push(filter);
+          }
+        });
+        setFilterGroups(groups);
+
+        if (selectedFilters.filters.length > 0) {
+          setExpandedFilters(prev => {
+            const updated = { ...prev };
+            Object.values(groups).forEach(group => {
+              if (group.filters.some(f => selectedFilters.filters.includes(f._id))) {
+                updated[group._id] = true;
+              }
+            });
+            return updated;
+          });
+        }
+      }
       
       // Update pagination state
-      setPagination({
-        currentPage: paginationData.currentPage,
-        totalPages: paginationData.totalPages,
-        hasNext: paginationData.hasNext,
-        hasPrev: paginationData.hasPrev,
-        totalProducts: paginationData.totalProducts
-      });
+      if (paginationData) {
+        setPagination({
+          currentPage: paginationData.currentPage,
+          totalPages: paginationData.totalPages,
+          hasNext: paginationData.hasNext,
+          hasPrev: paginationData.hasPrev,
+          totalProducts: paginationData.totalProducts
+        });
+      }
       
-      if (products.length === 0 && pageNum === 1) {
+      if ((!products || products.length === 0) && pageNum === 1) {
         setNofound(true);
       } else {
         setNofound(false);
@@ -279,7 +323,7 @@ export default function BrandPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedFilters]);
+  }, [selectedFilters, sortOption]);
   
   const handleProductClick = (product) => {
     const stored = JSON.parse(localStorage.getItem('recentlyViewed')) || [];
@@ -297,6 +341,25 @@ export default function BrandPage() {
     localStorage.setItem('recentlyViewed', JSON.stringify(limited));
   };
   
+  const sortFilterValues = (a, b) => {
+    const extractNum = (str) => {
+      const match = str.match(/[\d.]+/);
+      if (!match) return null;
+      let num = parseFloat(match[0]);
+      if (/TB/i.test(str)) num *= 1024;
+      else if (/MB/i.test(str)) num /= 1024;
+      if (/^(below|up to|upto|less than|under)/i.test(str)) return num - 0.5;
+      if (/^(above|more than|over)/i.test(str)) return num + 0.5;
+      return num;
+    };
+    const numA = extractNum(a.filter_name);
+    const numB = extractNum(b.filter_name);
+    if (numA !== null && numB !== null) return numA - numB;
+    if (numA !== null) return -1;
+    if (numB !== null) return 1;
+    return a.filter_name.localeCompare(b.filter_name);
+  };
+
   const [brandMap, setBrandMap] = useState([]);
  
   const fetchBrand = async () => {
@@ -1026,7 +1089,7 @@ export default function BrandPage() {
                                     
                                                 {expandedFilters[group._id] && (
                                                   <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
-                                                    {group.filters.map(filter => (
+                                                    {[...group.filters].sort(sortFilterValues).map(filter => (
                                                       <li key={filter._id} className="flex items-center">
                                                         <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
                                                           <input
@@ -1036,11 +1099,11 @@ export default function BrandPage() {
                                                             className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                                           />
                                                           <span className="text-sm text-gray-600">{filter.filter_name}</span>
-                                                          {/* {filter.count && (
+                                                          {filter.count !== undefined && filter.count !== null && filter.count > 0 && (
                                                             <span className="text-xs text-gray-400 ml-auto">
                                                               ({filter.count})
                                                             </span>
-                                                          )} */}
+                                                          )}
                                                         </label>
                                                       </li>
                                                     ))}

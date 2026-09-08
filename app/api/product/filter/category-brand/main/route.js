@@ -5,6 +5,7 @@ import ecom_category_info from "@/models/ecom_category_info";
 import Brand from "@/models/ecom_brand_info";
 import Filter from "@/models/ecom_filter_infos";
 import FilterGroup from "@/models/ecom_filter_group_infos";
+import mongoose from "mongoose";
 
 async function getAllSubCategoryIds(categoryId) {
   const subCategories = await ecom_category_info.find({ parentid: categoryId }).select('_id').lean();
@@ -205,12 +206,13 @@ export async function GET(req) {
       let matchingProductIds = new Set(preFilterIdStrings);
 
       for (const groupFilterIds of Object.values(filtersByGroup)) {
+        const groupFilterObjectIds = groupFilterIds
+          .filter(id => mongoose.Types.ObjectId.isValid(id))
+          .map(id => new mongoose.Types.ObjectId(id));
+
         const groupProductFilters = await ProductFilter.find({
-          $or: [
-            { product_id: { $in: preFilterIdStrings } },
-            { product_id: { $in: preFilterProductIds } },
-          ],
-          filter_id: { $in: groupFilterIds }
+          product_id: { $in: [...preFilterIdStrings, ...preFilterProductIds] },
+          filter_id: { $in: [...groupFilterIds, ...groupFilterObjectIds] }
         }).lean();
 
         const groupMatchingIds = new Set(
@@ -222,7 +224,12 @@ export async function GET(req) {
         );
       }
 
-      query._id = { $in: Array.from(matchingProductIds) };
+      const matchingList = Array.from(matchingProductIds);
+      const matchingObjectAndStringIds = [
+        ...matchingList,
+        ...matchingList.filter(id => mongoose.Types.ObjectId.isValid(id)).map(id => new mongoose.Types.ObjectId(id))
+      ];
+      query._id = { $in: matchingObjectAndStringIds };
       productsQuery = Product.find(query).populate(
         "brand",
         "brand_name brand_slug",
@@ -282,6 +289,117 @@ export async function GET(req) {
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
 
+    /* --------------------------------------------------
+       7️⃣ DYNAMIC FILTERS (Faceted aggregation)
+    -------------------------------------------------- */
+    const finalFilteredProductIds = await Product.distinct('_id', query);
+    const finalFilteredProductIdStrings = finalFilteredProductIds.map(id => id.toString());
+
+    let selectedFiltersByGroup = {};
+    if (filterIds.length > 0) {
+      const validFilterIds = filterIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+      const selectedFilterDocs = await Filter.find({ _id: { $in: validFilterIds } })
+        .populate({ path: "filter_group", select: "filtergroup_name", model: FilterGroup })
+        .lean();
+      selectedFilterDocs.forEach(f => {
+        const groupId = f.filter_group?._id?.toString() || "other";
+        if (!selectedFiltersByGroup[groupId]) selectedFiltersByGroup[groupId] = [];
+        selectedFiltersByGroup[groupId].push(f._id.toString());
+      });
+    }
+
+    const filterAggMap = {};
+
+    // Base query without filterIds (only category, brand, price, status)
+    const baseFilterQuery = {
+      status: "Active",
+      brand: { $in: [find_brand._id, brandIdStr] },
+      $and: [
+        categoryMatchClause, 
+        priceClause,
+      ],
+    };
+
+    if (filterIds.length > 0) {
+      for (const [groupId, groupFilterIds] of Object.entries(selectedFiltersByGroup)) {
+        let baseIds = await Product.distinct('_id', baseFilterQuery);
+        let baseIdStrings = baseIds.map(id => id.toString());
+
+        for (const [otherGroupId, otherGroupFilterIds] of Object.entries(selectedFiltersByGroup)) {
+          if (otherGroupId === groupId) continue;
+
+          const otherGroupObjIds = otherGroupFilterIds
+            .filter(id => mongoose.Types.ObjectId.isValid(id))
+            .map(id => new mongoose.Types.ObjectId(id));
+
+          const otherGroupPF = await ProductFilter.find({
+            product_id: { $in: [...baseIdStrings, ...baseIds] },
+            filter_id: { $in: [...otherGroupFilterIds, ...otherGroupObjIds] }
+          }).lean();
+
+          const otherMatchIds = new Set(otherGroupPF.map(pf => pf.product_id.toString()));
+          baseIds = baseIds.filter(id => otherMatchIds.has(id.toString()));
+          baseIdStrings = baseIds.map(id => id.toString());
+        }
+
+        const agg = await ProductFilter.aggregate([
+          {
+            $match: {
+              $or: [
+                { product_id: { $in: baseIdStrings } },
+                { product_id: { $in: baseIds } },
+              ],
+            }
+          },
+          { $group: { _id: "$filter_id", count: { $sum: 1 } } }
+        ]);
+
+        agg.forEach(item => {
+          filterAggMap[item._id.toString()] = item.count;
+        });
+      }
+    }
+
+    // Standard agg for all filters based on final filtered products
+    const filterAgg = await ProductFilter.aggregate([
+      {
+        $match: {
+          $or: [
+            { product_id: { $in: finalFilteredProductIdStrings } },
+            { product_id: { $in: finalFilteredProductIds } },
+          ],
+        },
+      },
+      { $group: { _id: "$filter_id", count: { $sum: 1 } } },
+    ]);
+
+    filterAgg.forEach(item => {
+      if (!filterAggMap[item._id.toString()]) {
+        filterAggMap[item._id.toString()] = item.count;
+      }
+    });
+
+    const filterIdList = [
+      ...new Set([
+        ...Object.keys(filterAggMap),
+        ...filterAgg.map(f => f._id.toString()),
+        ...filterIds
+      ])
+    ].filter(id => mongoose.Types.ObjectId.isValid(id));
+
+    const filterDocs = await Filter.find({ _id: { $in: filterIdList } })
+      .populate({ path: "filter_group", select: "filtergroup_name", model: FilterGroup })
+      .lean();
+
+    const filtersWithGroup = filterDocs
+      .map(f => ({
+        ...f,
+        filter_group_name: f.filter_group?.filtergroup_name || "Other",
+        filter_group_id: f.filter_group?._id?.toString() || "other",
+        count: filterAggMap[f._id.toString()] || 0,
+      }))
+      .filter(f => f.count > 0 || filterIds.includes(f._id.toString()));
+
     return Response.json({
       products,
       pagination: {
@@ -291,6 +409,7 @@ export async function GET(req) {
         hasNext: page < totalPages,
         hasPrev: page > 1,
       },
+      filters: filtersWithGroup,
     });
   } catch (error) {
     console.error("Error in category-brand filter:", error);
