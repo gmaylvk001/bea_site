@@ -41,6 +41,7 @@ export default function CategoryPage(params) {
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [filterGroups, setFilterGroups] = useState({});
   const [loading, setLoading] = useState(true);
+  const [isFiltering, setIsFiltering] = useState(false);
   const { slug,sub_slug } = useParams();
   //const { slug } = useParams();
   const [sortOption, setSortOption] = useState('');
@@ -85,6 +86,20 @@ export default function CategoryPage(params) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter(); // Added router
 
+  // Disable browser's automatic scroll restoration to prevent page jumping
+  // to top when window.history.replaceState is called during filter updates
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.history.scrollRestoration = 'manual';
+    }
+    return () => {
+      // Restore on unmount
+      if (typeof window !== 'undefined') {
+        window.history.scrollRestoration = 'auto';
+      }
+    };
+  }, []);
+
   // Fetch initial data
   useEffect(() => {
     setShowAllFilterGroups(false);
@@ -97,6 +112,7 @@ export default function CategoryPage(params) {
   }, [slug]);
   
   const scrollRef = useRef(null);
+  const productsRef = useRef(null);
   
   const scroll = (direction) => {
   const container = scrollRef.current;
@@ -133,23 +149,43 @@ const fetchInitialData = async () => {
       banners: categoryData.main_category?.banners || []
     });
 
+    // Read query params from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlBrands = urlParams.get("brands") ? urlParams.get("brands").split(",").filter(Boolean) : [];
+    const urlFilters = urlParams.get("filters") ? urlParams.get("filters").split(",").filter(Boolean) : [];
+    const urlCategories = urlParams.get("categories") ? urlParams.get("categories").split(",").filter(Boolean) : [];
+    const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
+    const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
+    const urlSort = urlParams.get("sort") || "";
+    if (urlSort) {
+      setSortOption(urlSort);
+    }
+
     // Price range logic
+    let minPrice = 0;
+    let maxPrice = 100000;
     if (categoryData.products?.length > 0) {
       const prices = categoryData.products.map(p => p.special_price || p.price);
-      let minPrice = Math.min(...prices);
-      let maxPrice = Math.max(...prices);
+      minPrice = Math.min(...prices);
+      maxPrice = Math.max(...prices);
 
       if (minPrice === maxPrice) {
         minPrice = Math.max(1, minPrice - 100);
         maxPrice = maxPrice + 100;
       }
-
-      setPriceRange([minPrice, maxPrice]);
-      setSelectedFilters(prev => ({
-        ...prev,
-        price: { min: minPrice, max: maxPrice }
-      }));
     }
+
+    setPriceRange([minPrice, maxPrice]);
+
+    const activeMin = urlMinPrice !== null ? urlMinPrice : minPrice;
+    const activeMax = urlMaxPrice !== null ? urlMaxPrice : maxPrice;
+
+    setSelectedFilters({
+      categories: urlCategories,
+      brands: urlBrands,
+      price: { min: activeMin, max: activeMax },
+      filters: urlFilters
+    });
 
     // IMPROVED FILTER GROUPING LOGIC
     if (categoryData.filters && categoryData.filters.length > 0) {
@@ -209,6 +245,7 @@ const fetchInitialData = async () => {
     router.push('/noproduct');
   } finally {
     setInitialLoadComplete(true);
+    setLoading(false);
   }
 };
   const [brandMap, setBrandMap] = useState([]);
@@ -258,7 +295,7 @@ const fetchInitialData = async () => {
 
   const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
     try {
-      if (!initialLoad) setLoading(true);
+      if (!initialLoad) setIsFiltering(true);
       const query = new URLSearchParams();
       const categoryIds = selectedFilters.categories.length > 0
         ? selectedFilters.categories
@@ -276,6 +313,10 @@ const fetchInitialData = async () => {
       
       if (selectedFilters.filters.length > 0) {
         query.set('filters', selectedFilters.filters.join(','));
+      }
+
+      if (sortOption) {
+        query.set('sort', sortOption);
       }
 
       const res = await fetch(`/api/product/filter/main-cat?${query}`);
@@ -297,14 +338,19 @@ const fetchInitialData = async () => {
       } else {
         setNofound(false);
       }
+
+      // Scroll products section into view so filter changes don't jump to top
+      if (!initialLoad && productsRef.current) {
+        productsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     } catch (error) {
-      toast.error('Error fetching products'+error);
-      // Redirect to 404 on error
-      router.push('/noproduct');
+      console.error('Error fetching products:', error);
+      toast.error('Error fetching products. Please try again.');
     } finally {
-      if (!initialLoad) setLoading(false);
+      if (!initialLoad) setIsFiltering(false);
+      setLoading(false);
     }
-  }, [selectedFilters]);
+  }, [selectedFilters, sortOption]);
 
   const handleProductClick = (product) => {
     const stored = JSON.parse(localStorage.getItem('recentlyViewed')) || [];
@@ -493,11 +539,38 @@ const getSortedProducts = () => {
     );
   };
 
+  const updateUrlParams = useCallback((filtersObj, sortOpt) => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    if (filtersObj.brands?.length > 0) {
+      params.set("brands", filtersObj.brands.join(","));
+    }
+    if (filtersObj.categories?.length > 0) {
+      params.set("categories", filtersObj.categories.join(","));
+    }
+    if (filtersObj.filters?.length > 0) {
+      params.set("filters", filtersObj.filters.join(","));
+    }
+    if (filtersObj.price?.min !== undefined && filtersObj.price?.min !== priceRange[0]) {
+      params.set("minPrice", filtersObj.price.min);
+    }
+    if (filtersObj.price?.max !== undefined && filtersObj.price?.max !== priceRange[1]) {
+      params.set("maxPrice", filtersObj.price.max);
+    }
+    if (sortOpt) {
+      params.set("sort", sortOpt);
+    }
+    const queryString = params.toString();
+    const newUrl = window.location.pathname + (queryString ? `?${queryString}` : "");
+    window.history.replaceState(null, "", newUrl);
+  }, [priceRange]);
+
   useEffect(() => {
     if (categoryData.main_category && categoryData.category && initialLoadComplete) {
+      updateUrlParams(selectedFilters, sortOption);
       fetchFilteredProducts(categoryData, 1);
     }
-  }, [selectedFilters, categoryData.main_category, categoryData.category, initialLoadComplete]);
+  }, [selectedFilters, sortOption, categoryData.main_category, categoryData.category, initialLoadComplete, updateUrlParams]);
 
   const clearAllFilters = () => {
     setSelectedFilters({
@@ -593,7 +666,7 @@ const getSortedProducts = () => {
   };
 
   // Show loader until all data is loaded
-  if (loading || !initialLoadComplete) {
+  if (!initialLoadComplete || !categoryData.category) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
@@ -817,7 +890,7 @@ const getSortedProducts = () => {
       
 
 
-     <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 lg:gap-8">
+     <div ref={productsRef} className="grid grid-cols-1 lg:grid-cols-4 gap-2 lg:gap-8">
   <div className="lg:col-span-1 space-y-6">
     <h1 className="text-3xl font-bold mb-3 text-gray-600 pl-1">{categoryData.main_category.category_name}</h1>
   </div>
@@ -1450,7 +1523,7 @@ const getSortedProducts = () => {
           
 
             {/* Products Section */}
-            <div className="flex-1">
+            <div className="flex-1 relative">
   {products.length > 0 ? (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
@@ -1628,9 +1701,9 @@ const getSortedProducts = () => {
     </div>
   )}
 
-  {loading && (
-    <div className="text-center py-4">
-      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+  {isFiltering && (
+    <div className="absolute inset-0 bg-white/60 flex justify-center items-center z-10 min-h-[200px]">
+      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
     </div>
   )}
 </div>

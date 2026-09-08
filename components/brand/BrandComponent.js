@@ -105,12 +105,26 @@ export default function BrandPage() {
         allCategoryIds: brandData.allCategoryIds || []
       });
 
+      // Read query params from URL if present
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlFilters = urlParams.get("filters") ? urlParams.get("filters").split(",").filter(Boolean) : [];
+      const urlCategories = urlParams.get("categories") ? urlParams.get("categories").split(",").filter(Boolean) : [];
+      const urlSubcategories = urlParams.get("subcategories") ? urlParams.get("subcategories").split(",").filter(Boolean) : [];
+      const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
+      const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
+      const urlSort = urlParams.get("sort") || "";
+      if (urlSort) {
+        setSortOption(urlSort);
+      }
+
+      let minPrice = 0;
+      let maxPrice = 100000;
       if (brandData.products?.length > 0) {
         const prices = brandData.products
           .map((p) => Number(p.special_price > 0 ? p.special_price : p.price))
           .filter((n) => Number.isFinite(n) && n >= 0);
-        let minPrice = prices.length ? Math.min(...prices) : 0;
-        let maxPrice = prices.length ? Math.max(...prices) : 100000;
+        minPrice = prices.length ? Math.min(...prices) : 0;
+        maxPrice = prices.length ? Math.max(...prices) : 100000;
         if (minPrice === maxPrice) {
           minPrice = 0;
         }
@@ -118,12 +132,20 @@ export default function BrandPage() {
           minPrice = 0;
           maxPrice = 100000;
         }
-        setPriceRange([minPrice, maxPrice]);
-        setSelectedFilters(prev => ({
-          ...prev,
-          price: { min: minPrice, max: maxPrice }
-        }));
       }
+      setPriceRange([minPrice, maxPrice]);
+
+      const activeMin = urlMinPrice !== null ? urlMinPrice : minPrice;
+      const activeMax = urlMaxPrice !== null ? urlMaxPrice : maxPrice;
+
+      const initialFilters = {
+        categories: urlCategories,
+        subcategories: urlSubcategories,
+        brands: brandData.brand?._id ? [brandData.brand._id] : [],
+        price: { min: activeMin, max: activeMax },
+        filters: urlFilters,
+      };
+      setSelectedFilters(initialFilters);
 
       const groups = {};
       (brandData.filters || []).forEach(filter => {
@@ -506,11 +528,38 @@ export default function BrandPage() {
     );
   };
 
+  const updateUrlParams = useCallback((filtersObj, sortOpt) => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    if (filtersObj.categories?.length > 0) {
+      params.set("categories", filtersObj.categories.join(","));
+    }
+    if (filtersObj.subcategories?.length > 0) {
+      params.set("subcategories", filtersObj.subcategories.join(","));
+    }
+    if (filtersObj.filters?.length > 0) {
+      params.set("filters", filtersObj.filters.join(","));
+    }
+    if (filtersObj.price?.min !== undefined && filtersObj.price?.min !== priceRange[0]) {
+      params.set("minPrice", filtersObj.price.min);
+    }
+    if (filtersObj.price?.max !== undefined && filtersObj.price?.max !== priceRange[1]) {
+      params.set("maxPrice", filtersObj.price.max);
+    }
+    if (sortOpt) {
+      params.set("sort", sortOpt);
+    }
+    const queryString = params.toString();
+    const newUrl = window.location.pathname + (queryString ? `?${queryString}` : "");
+    window.history.replaceState(null, "", newUrl);
+  }, [priceRange]);
+
   useEffect(() => {
     if (brandData.brand) {
+      updateUrlParams(selectedFilters, sortOption);
       fetchFilteredProducts(brandData, 1);
     }
-  }, [selectedFilters, brandData.brand]);
+  }, [selectedFilters, sortOption, brandData.brand, updateUrlParams]);
 
   const clearAllFilters = () => {
     setSelectedFilters({
@@ -606,7 +655,7 @@ export default function BrandPage() {
     );
   };
 
-  if ((loading || !brandData.brand) && pagination.currentPage === 1) {
+  if (!brandData.brand) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">

@@ -504,7 +504,7 @@ export default function CategoryPage() {
     );
   };
 
-  if ((loading || !categoryData.category) && page == 1) {
+  if (!categoryData.category) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">

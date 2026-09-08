@@ -190,40 +190,51 @@ const scroll = (direction) => {
      }));
       setChildCategoryTree(children);
     }
+    // Read query params from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlBrands = urlParams.get("brands") ? urlParams.get("brands").split(",").filter(Boolean) : [];
+    const urlFilters = urlParams.get("filters") ? urlParams.get("filters").split(",").filter(Boolean) : [];
+    const urlCategories = urlParams.get("categories") ? urlParams.get("categories").split(",").filter(Boolean) : [];
+    const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
+    const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
+    const urlSort = urlParams.get("sort") || "";
+    if (urlSort) {
+      setSortOption(urlSort);
+    }
+
+    let minPrice = 0;
+    let maxPrice = 100000;
+
     if (categoryData.products?.length > 0) {
-  // ✅ special_price இல்லன்னா price use பண்ணு, இரண்டும் இல்லன்னா 0
-  const prices = categoryData.products
-    .map(p => Number(p.special_price) > 0 ? Number(p.special_price) : Number(p.price))
-    .filter(p => !isNaN(p) && p > 0);
+      const prices = categoryData.products
+        .map(p => Number(p.special_price) > 0 ? Number(p.special_price) : Number(p.price))
+        .filter(p => !isNaN(p) && p > 0);
 
-  let minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  let maxPrice = prices.length > 0 ? Math.max(...prices) : 100000;
+      minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      maxPrice = prices.length > 0 ? Math.max(...prices) : 100000;
 
-  // ✅ min === max buffer
-  if (minPrice === maxPrice) {
-    minPrice = Math.max(0, minPrice - 100);
-    maxPrice = maxPrice + 100;
-  }
+      if (minPrice === maxPrice) {
+        minPrice = Math.max(0, minPrice - 100);
+        maxPrice = maxPrice + 100;
+      }
 
-  // ✅ Final safety check - NaN 
-  if (isNaN(minPrice) || isNaN(maxPrice)) {
-    minPrice = 0;
-    maxPrice = 100000;
-  }
+      if (isNaN(minPrice) || isNaN(maxPrice)) {
+        minPrice = 0;
+        maxPrice = 100000;
+      }
+    }
 
-  setPriceRange([minPrice, maxPrice]);
-  setSelectedFilters(prev => ({
-    ...prev,
-    price: { min: minPrice, max: maxPrice }
-  }));
-} else {
-  // ✅ Products 
-  setPriceRange([0, 100000]);
-  setSelectedFilters(prev => ({
-    ...prev,
-    price: { min: 0, max: 100000 }
-  }));
-}
+    setPriceRange([minPrice, maxPrice]);
+    const activeMin = urlMinPrice !== null ? urlMinPrice : minPrice;
+    const activeMax = urlMaxPrice !== null ? urlMaxPrice : maxPrice;
+
+    const initialFilters = {
+      categories: urlCategories,
+      brands: urlBrands,
+      price: { min: activeMin, max: activeMax },
+      filters: urlFilters
+    };
+    setSelectedFilters(initialFilters);
 
       const groups = {};
       categoryData.filters.forEach(filter => {
@@ -270,9 +281,6 @@ Object.keys(groups).forEach(key => {
  
   const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
     try {
-      if (!initialLoad) {
-      window.scrollTo({ top: 0, behavior: 'instant' }); 
-      }
       setLoading(true);
       const query = new URLSearchParams();
       const categoryIds = selectedFilters.categories.length > 0
@@ -509,6 +517,14 @@ Object.keys(groups).forEach(key => {
         setValues([selectedFilters.price.min, selectedFilters.price.max]);
       }, [selectedFilters.price.min, selectedFilters.price.max]);
 
+      const normalizedValues = [
+        Math.min(MAX, Math.max(MIN, Number(values[0]) || MIN)),
+        Math.min(MAX, Math.max(MIN, Number(values[1]) || MAX)),
+      ];
+      if (normalizedValues[0] > normalizedValues[1]) {
+        normalizedValues.reverse();
+      }
+
   const CategoryTree = ({ 
     categories, 
     level = 0, 
@@ -565,11 +581,38 @@ Object.keys(groups).forEach(key => {
     );
   };
 
+  const updateUrlParams = useCallback((filtersObj, sortOpt) => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    if (filtersObj.brands?.length > 0) {
+      params.set("brands", filtersObj.brands.join(","));
+    }
+    if (filtersObj.categories?.length > 0) {
+      params.set("categories", filtersObj.categories.join(","));
+    }
+    if (filtersObj.filters?.length > 0) {
+      params.set("filters", filtersObj.filters.join(","));
+    }
+    if (filtersObj.price?.min !== undefined && filtersObj.price?.min !== priceRange[0]) {
+      params.set("minPrice", filtersObj.price.min);
+    }
+    if (filtersObj.price?.max !== undefined && filtersObj.price?.max !== priceRange[1]) {
+      params.set("maxPrice", filtersObj.price.max);
+    }
+    if (sortOpt) {
+      params.set("sort", sortOpt);
+    }
+    const queryString = params.toString();
+    const newUrl = window.location.pathname + (queryString ? `?${queryString}` : "");
+    window.history.replaceState(null, "", newUrl);
+  }, [priceRange]);
+
 useEffect(() => {
   if (categoryData.main_category && categoryData.category) {
+    updateUrlParams(selectedFilters, sortOption);
     fetchFilteredProducts(categoryData, 1);
   }
-}, [selectedFilters, selectedChildCategory, sortOption, categoryData.main_category, categoryData.category, fetchFilteredProducts]);
+}, [selectedFilters, selectedChildCategory, sortOption, categoryData.main_category, categoryData.category, fetchFilteredProducts, updateUrlParams]);
 
   const clearAllFilters = () => {
     setSelectedFilters({
@@ -692,7 +735,7 @@ const handlePageChange = (page) => {
   const visibleFilterGroups = getVisibleFilterGroups(sortedFilterGroups, showAllFilterGroups);
   const shouldShowMoreFilters = sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
 
-  if ((loading || !categoryData.category) && pagination.currentPage === 1) {
+  if (!categoryData.category) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
@@ -1155,7 +1198,7 @@ const handlePageChange = (page) => {
                             <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
                       
                             <ReactRange 
-                              values={values}
+                              values={normalizedValues}
                               step={STEP}
                               min={MIN}
                               max={MAX}
@@ -1170,8 +1213,8 @@ const handlePageChange = (page) => {
                                   <div
                                     className="absolute h-2 bg-gray-500 rounded-lg"
                                     style={{
-                                      left: `${((values[0] - MIN) / (MAX - MIN)) * 100}%`,
-                                      width: `${((values[1] - values[0]) / (MAX - MIN)) * 100}%`,
+                                      left: `${((normalizedValues[0] - MIN) / (MAX - MIN)) * 100}%`,
+                                      width: `${((normalizedValues[1] - normalizedValues[0]) / (MAX - MIN)) * 100}%`,
                                     }}
                                   />
                                   {children}
@@ -1198,8 +1241,8 @@ const handlePageChange = (page) => {
                             />
                       
                             <div className="flex justify-between text-sm text-gray-600 mt-6">
-                              <span>₹{values[0].toLocaleString()}</span>
-                              <span>₹{values[1].toLocaleString()}</span>
+                              <span>₹{normalizedValues[0].toLocaleString()}</span>
+                              <span>₹{normalizedValues[1].toLocaleString()}</span>
                             </div>
                           </div>
         

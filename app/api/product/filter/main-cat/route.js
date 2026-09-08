@@ -57,14 +57,14 @@ let query = {
     query.$or = [
       { 
         $and: [
-          { special_price: { $ne: null } },
+          { special_price: { $ne: null, $ne: 0 } },
           { special_price: { $gte: minPrice, $lte: maxPrice } }
         ]
       },
       { 
         $and: [
-          { special_price: null },
-          { special_price: { $gte: minPrice, $lte: maxPrice } }
+          { $or: [{ special_price: null }, { special_price: 0 }] },
+          { price: { $gte: minPrice, $lte: maxPrice } }
         ]
       }
     ];
@@ -301,7 +301,7 @@ const brandBaseQuery = {
           {
             $match: {
               product_id: { $in: baseIds.map(id => id.toString()) },
-              filter_id: { $in: groupFilterIds.map(id => new mongoose.Types.ObjectId(id)) }
+              filter_id: { $in: groupFilterIds.filter(id => mongoose.Types.ObjectId.isValid(id)).map(id => new mongoose.Types.ObjectId(id)) }
             }
           },
           { $group: { _id: "$filter_id", count: { $sum: 1 } } }

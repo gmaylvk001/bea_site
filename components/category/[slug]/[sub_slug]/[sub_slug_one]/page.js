@@ -184,6 +184,17 @@ const handleShare = async (product) => {
 
       setCategoryData(categoryData);
 
+      // Read query params from URL if present
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlBrands = urlParams.get("brands") ? urlParams.get("brands").split(",").filter(Boolean) : [];
+      const urlFilters = urlParams.get("filters") ? urlParams.get("filters").split(",").filter(Boolean) : [];
+      const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
+      const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
+      const urlSort = urlParams.get("sort") || "";
+      if (urlSort) {
+        setSortOption(urlSort);
+      }
+
       let minPrice = 0;
       let maxPrice = 1000000;
 
@@ -207,13 +218,18 @@ const handleShare = async (product) => {
           minPrice = 0;
           maxPrice = 1000000;
         }
-
-        setPriceRange([minPrice, maxPrice]);
-        setSelectedFilters((prev) => ({
-          ...prev,
-          price: { min: minPrice, max: maxPrice },
-        }));
       }
+
+      setPriceRange([minPrice, maxPrice]);
+      const activeMin = urlMinPrice !== null ? urlMinPrice : minPrice;
+      const activeMax = urlMaxPrice !== null ? urlMaxPrice : maxPrice;
+
+      const initialFilters = {
+        brands: urlBrands,
+        price: { min: activeMin, max: activeMax },
+        filters: urlFilters,
+      };
+      setSelectedFilters(initialFilters);
 
       // Organize filters by their groups
       const groups = {};
@@ -268,10 +284,7 @@ const handleShare = async (product) => {
   // const fetchFilteredProducts = async (categoryId) => {
     const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false, priceOverride = null) => {
     try {
-      if (!initialLoad){ 
-         window.scrollTo({ top: 0, behavior: 'instant' });
-        setLoading(true);
-      }
+      setLoading(true);
       const query = new URLSearchParams();
    
 
@@ -475,12 +488,36 @@ const getSortedProducts = () => {
   }, [selectedFilters.price.min, selectedFilters.price.max]);
 
 
+  const updateUrlParams = useCallback((filtersObj, sortOpt) => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    if (filtersObj.brands?.length > 0) {
+      params.set("brands", filtersObj.brands.join(","));
+    }
+    if (filtersObj.filters?.length > 0) {
+      params.set("filters", filtersObj.filters.join(","));
+    }
+    if (filtersObj.price?.min !== undefined && filtersObj.price?.min !== priceRange[0]) {
+      params.set("minPrice", filtersObj.price.min);
+    }
+    if (filtersObj.price?.max !== undefined && filtersObj.price?.max !== priceRange[1]) {
+      params.set("maxPrice", filtersObj.price.max);
+    }
+    if (sortOpt) {
+      params.set("sort", sortOpt);
+    }
+    const queryString = params.toString();
+    const newUrl = window.location.pathname + (queryString ? `?${queryString}` : "");
+    window.history.replaceState(null, "", newUrl);
+  }, [priceRange]);
+
 useEffect(() => {
     if (categoryData.category?._id) {
+      updateUrlParams(selectedFilters, sortOption);
       setPage(1);
-      fetchFilteredProducts(categoryData,1);
+      fetchFilteredProducts(categoryData, 1);
     }
-  }, [selectedFilters, sortOption]);
+  }, [selectedFilters, sortOption, categoryData.category?._id, updateUrlParams]);
 
   const clearAllFilters = () => {
     setSelectedFilters({
@@ -584,7 +621,7 @@ const handlePageChange = (page) => {
   const visibleFilterGroups = getVisibleFilterGroups(sortedFilterGroups, showAllFilterGroups);
   const shouldShowMoreFilters = sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
 
-  if ((loading || !categoryData.category) && page == 1) {
+  if (!categoryData.category) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
