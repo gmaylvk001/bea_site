@@ -3,6 +3,18 @@ import Product from "@/models/product";
 import ProductFilter from "@/models/ecom_productfilter_info";
 import ecom_category_info from "@/models/ecom_category_info";
 import Brand from "@/models/ecom_brand_info";
+import Filter from "@/models/ecom_filter_infos";
+import FilterGroup from "@/models/ecom_filter_group_infos";
+
+async function getAllSubCategoryIds(categoryId) {
+  const subCategories = await ecom_category_info.find({ parentid: categoryId }).select('_id').lean();
+  let allIds = [categoryId.toString()];
+  for (const subCat of subCategories) {
+    const childIds = await getAllSubCategoryIds(subCat._id);
+    allIds = [...allIds, ...childIds];
+  }
+  return allIds;
+}
 
 export async function GET(req) {
   try {
@@ -136,55 +148,36 @@ export async function GET(req) {
 //       ],
 //     };
 
-let expandedCategoryIds = categoryIdsArray;
+    const allCategoryIdsInTree = await getAllSubCategoryIds(parentCategory._id);
+    let expandedCategoryIds = allCategoryIdsInTree;
 
-if (selectedSubcategoryIds.length > 0) {
-  expandedCategoryIds = selectedSubcategoryIds;
-} else if (selectedCategoryIds.length > 0) {
-  const childrenOfSelected = await ecom_category_info.find({
-    parentid: { $in: selectedCategoryIds },
-    status: "Active",
-  }).lean();
+    if (selectedSubcategoryIds.length > 0) {
+      expandedCategoryIds = selectedSubcategoryIds;
+    } else if (selectedCategoryIds.length > 0) {
+      let selectedAll = [];
+      for (const catId of selectedCategoryIds) {
+        const subIds = await getAllSubCategoryIds(catId);
+        selectedAll = [...selectedAll, ...subIds];
+      }
+      expandedCategoryIds = [...new Set(selectedAll)];
+    }
 
-  const selectedChildIds = childrenOfSelected.map((c) => c._id.toString());
-
-  const grandChildrenOfSelected = await ecom_category_info.find({
-    parentid: { $in: selectedChildIds },
-    status: "Active",
-  }).lean();
-
-  const selectedGrandChildIds = grandChildrenOfSelected.map((c) => c._id.toString());
-
-  expandedCategoryIds = [
-    ...new Set([
-      ...selectedCategoryIds,
-      ...selectedChildIds,
-      ...selectedGrandChildIds,
-    ]),
-  ];
-}
-
-const categoryMatchClause = {
-  $or: [
-    { category: { $in: expandedCategoryIds } },
-    { sub_category: { $in: expandedCategoryIds } },
-  ],
-};
-
-let query = {
-  status: "Active",
-  brand: find_brand._id.toString(),
-  $and: [
-    categoryMatchClause, 
-    priceClause,
-    {
+    const categoryMatchClause = {
       $or: [
-        { quantity: { $gt: 0 }, stock_status: "In Stock" },
-        { quantity: { $exists: false }, stock_status: "In Stock" },
+        { category: { $in: expandedCategoryIds } },
+        { sub_category: { $in: expandedCategoryIds } },
       ],
-    },
-  ],
-};
+    };
+
+    const brandIdStr = find_brand._id.toString();
+    let query = {
+      status: "Active",
+      brand: { $in: [find_brand._id, brandIdStr] },
+      $and: [
+        categoryMatchClause, 
+        priceClause,
+      ],
+    };
 
     let productsQuery = Product.find(query).populate(
       "brand",
@@ -192,28 +185,44 @@ let query = {
     );
 
     /* --------------------------------------------------
-       5️⃣ Apply FILTERS (must match ALL)
+       5️⃣ Apply FILTERS (OR within group, AND across groups)
     -------------------------------------------------- */
     if (filterIds.length > 0) {
-      const productIds = await productsQuery.distinct("_id");
+      const preFilterProductIds = await Product.distinct('_id', query);
+      const preFilterIdStrings = preFilterProductIds.map(id => id.toString());
 
-      const productFilters = await ProductFilter.find({
-        product_id: { $in: productIds },
-        filter_id: { $in: filterIds },
+      const selectedFilterDocs = await Filter.find({ _id: { $in: filterIds } })
+        .populate({ path: "filter_group", select: "filtergroup_name", model: FilterGroup })
+        .lean();
+
+      const filtersByGroup = {};
+      selectedFilterDocs.forEach(f => {
+        const groupId = f.filter_group?._id?.toString() || "other";
+        if (!filtersByGroup[groupId]) filtersByGroup[groupId] = [];
+        filtersByGroup[groupId].push(f._id.toString());
       });
 
-      const filterMap = {};
-      productFilters.forEach((pf) => {
-        const pid = pf.product_id.toString();
-        if (!filterMap[pid]) filterMap[pid] = new Set();
-        filterMap[pid].add(pf.filter_id.toString());
-      });
+      let matchingProductIds = new Set(preFilterIdStrings);
 
-      const matchedProductIds = productIds.filter((id) =>
-        filterIds.every((fid) => filterMap[id.toString()]?.has(fid)),
-      );
+      for (const groupFilterIds of Object.values(filtersByGroup)) {
+        const groupProductFilters = await ProductFilter.find({
+          $or: [
+            { product_id: { $in: preFilterIdStrings } },
+            { product_id: { $in: preFilterProductIds } },
+          ],
+          filter_id: { $in: groupFilterIds }
+        }).lean();
 
-      query._id = { $in: matchedProductIds };
+        const groupMatchingIds = new Set(
+          groupProductFilters.map(pf => pf.product_id.toString())
+        );
+
+        matchingProductIds = new Set(
+          [...matchingProductIds].filter(id => groupMatchingIds.has(id))
+        );
+      }
+
+      query._id = { $in: Array.from(matchingProductIds) };
       productsQuery = Product.find(query).populate(
         "brand",
         "brand_name brand_slug",

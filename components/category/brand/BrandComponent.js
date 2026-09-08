@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
@@ -32,6 +32,9 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [filterGroups, setFilterGroups] = useState({});
   const [loading, setLoading] = useState(true);
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const productsRef = useRef(null);
   const [sortOption, setSortOption] = useState('');
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
   const [isBrandsExpanded, setIsBrandsExpanded] = useState(true);
@@ -58,9 +61,14 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
     setExpandedFilters(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
   // Fetch initial data
   useEffect(() => {
-    //alert('ssss');
     if (categorySlug && brandSlug) {
       fetchInitialData();
       fetchBrand();
@@ -68,23 +76,36 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
   }, [categorySlug, brandSlug]);
   
   const fetchInitialData = async () => {
- 
     try {
       setLoading(true);
       const res = await fetch(`/api/brand/categories/${categorySlug}/brand/${brandSlug}`);
       const data = await res.json();
-      //console.log("Initial data fetched:", data);
       setCategoryData({
         ...data,
         allCategoryIds: data.allCategoryIds || []
       });
 
+      // Read query params from URL if present
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlBrands = urlParams.get("brands") ? urlParams.get("brands").split(",").filter(Boolean) : [];
+      const urlFilters = urlParams.get("filters") ? urlParams.get("filters").split(",").filter(Boolean) : [];
+      const urlCategories = urlParams.get("categories") ? urlParams.get("categories").split(",").filter(Boolean) : [];
+      const urlSubcategories = urlParams.get("subcategories") ? urlParams.get("subcategories").split(",").filter(Boolean) : [];
+      const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
+      const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
+      const urlSort = urlParams.get("sort") || "";
+      if (urlSort) {
+        setSortOption(urlSort);
+      }
+
+      let minPrice = 0;
+      let maxPrice = 100000;
       if (data.products?.length > 0) {
         const prices = data.products
           .map((p) => Number(p.special_price > 0 ? p.special_price : p.price))
           .filter((n) => Number.isFinite(n) && n >= 0);
-        let minPrice = prices.length ? Math.min(...prices) : 0;
-        let maxPrice = prices.length ? Math.max(...prices) : 100000;
+        minPrice = prices.length ? Math.min(...prices) : 0;
+        maxPrice = prices.length ? Math.max(...prices) : 100000;
         if (minPrice === maxPrice) {
           minPrice = 0;
         }
@@ -92,13 +113,31 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
           minPrice = 0;
           maxPrice = 100000;
         }
-        setPriceRange([minPrice, maxPrice]);
-        setSelectedFilters(prev => ({
-          ...prev,
-          price: { min: minPrice, max: maxPrice },
-          brands: [data.brand?._id]
-        }));
       }
+      setPriceRange([minPrice, maxPrice]);
+
+      const activeMin = urlMinPrice !== null ? urlMinPrice : minPrice;
+      const activeMax = urlMaxPrice !== null ? urlMaxPrice : maxPrice;
+
+      if (data.products?.length > 0) {
+        setProducts(data.products);
+        setPagination({
+          currentPage: 1,
+          totalPages: Math.ceil(data.products.length / itemsPerPage),
+          hasNext: data.products.length > itemsPerPage,
+          hasPrev: false,
+          totalProducts: data.products.length
+        });
+      }
+
+      setSelectedFilters(prev => ({
+        ...prev,
+        categories: urlCategories,
+        subcategories: urlSubcategories,
+        price: { min: activeMin, max: activeMax },
+        brands: urlBrands.length > 0 ? urlBrands : (data.brand?._id ? [data.brand._id] : []),
+        filters: urlFilters
+      }));
 
       const groups = {};
       (data.filters || []).forEach(filter => {
@@ -119,86 +158,78 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
     } catch (error) {
       toast.error("Error fetching initial data");
     } finally {
+      setInitialLoadComplete(true);
       setLoading(false);
     }
   };
-   const fetchFilteredProducts = useCallback(async (pageNum = 1) => {
-  try {
-    setLoading(true);
-    const query = new URLSearchParams();
 
-    // ✅ Always restrict by brand
-    if (categoryData.brand?._id) {
-      query.set('brands', categoryData.brand._id);
-    }
+  const fetchFilteredProducts = useCallback(async (pageNum = 1, initialLoad = false) => {
+    try {
+      if (!initialLoad) setIsFiltering(true);
+      const query = new URLSearchParams();
+
+      // ✅ Restrict by brand
+      if (selectedFilters.brands.length > 0) {
+        query.set('brands', selectedFilters.brands.join(','));
+      } else if (categoryData.brand?._id) {
+        query.set('brands', categoryData.brand._id);
+      }
+
+      // ✅ CATEGORY FILTER (user selected)
+      if (selectedFilters.categories.length > 0) {
+        query.set('categoryIds', selectedFilters.categories.join(','));
+      } 
+
+      // ✅ SUBCATEGORY FILTER
+      if (selectedFilters.subcategories.length > 0) {
+        query.set('subcategoryIds', selectedFilters.subcategories.join(','));
+      }
   
+      // Get slugs from props or path
+      const catSlug = categorySlug || (typeof window !== "undefined" ? window.location.pathname.split("/").filter(Boolean)[2] : "");
+      const bndSlug = brandSlug || (typeof window !== "undefined" ? window.location.pathname.split("/").filter(Boolean)[3] : "");
 
-   // ✅ CATEGORY FILTER (user selected)
-if (selectedFilters.categories.length > 0) {
- 
-  query.set('categoryIds', selectedFilters.categories.join(','));
-} 
+      query.set('categorySlug', catSlug);
+      query.set('brandSlug', bndSlug);
 
-// ✅ SUBCATEGORY FILTER
-if (selectedFilters.subcategories.length > 0) {
-  query.set('subcategoryIds', selectedFilters.subcategories.join(','));
-}
-  
-    // Get current URL path
-    const url = window.location.pathname; 
+      query.set('page', pageNum);
+      query.set('limit', itemsPerPage);
+      query.set('minPrice', selectedFilters.price.min);
+      query.set('maxPrice', selectedFilters.price.max);
 
-    // Split and extract
-    const parts = url.split("/").filter(Boolean); 
-  
+      if (selectedFilters.filters.length > 0) {
+        query.set('filters', selectedFilters.filters.join(','));
+      }
+      if (sortOption) {
+        query.set('sort', sortOption);
+      }
 
-    const categorySlugName = parts[2]; // "televisions"
-    const brandSlugName = parts[3];    // "samsung"
+      const res = await fetch(`/api/product/filter/category-brand/main?${query}`);
+      const { products, pagination: paginationData } = await res.json();
+      setProducts(products || []);
 
-    console.log(categorySlugName, brandSlugName);
+      if ((!products || products.length === 0) && pageNum === 1) {
+        setNofound(true);
+      } else {
+        setNofound(false);
+      }
 
-    // Assign to query or use anywhere
-    query.set('categorySlug', categorySlugName);
-    query.set('brandSlug', brandSlugName);
-
-    query.set('page', pageNum);
-    query.set('limit', itemsPerPage);
-    query.set('minPrice', selectedFilters.price.min);
-    query.set('maxPrice', selectedFilters.price.max);
-
-    if (selectedFilters.filters.length > 0) {
-      query.set('filters', selectedFilters.filters.join(','));
+      if (paginationData) {
+        setPagination({
+          currentPage: paginationData.currentPage || 1,
+          totalPages: paginationData.totalPages || 1,
+          hasNext: paginationData.hasNext || false,
+          hasPrev: paginationData.hasPrev || false,
+          totalProducts: paginationData.totalProducts || 0
+        });
+      }
+    } catch (error) {
+      toast.error('Error fetching products: ' + error.message);
+    } finally {
+      if (!initialLoad) setIsFiltering(false);
+      setLoading(false);
     }
-    if (sortOption) {
-      query.set('sort', sortOption);
-    }
-    console.log("FINAL QUERY:", query.toString());
-    const res = await fetch(`/api/product/filter/category-brand/main?${query}`);
-   
-    const { products, pagination: paginationData } = await res.json();
-console.log("Fetched products:", products);
-    setProducts(products || []);
-
-    if ((!products || products.length === 0) && pageNum === 1) {
-      setNofound(true);
-    } else {
-      setNofound(false);
-    }
-
-    if (paginationData) {
-      setPagination({
-        currentPage: paginationData.currentPage || 1,
-        totalPages: paginationData.totalPages || 1,
-        hasNext: paginationData.hasNext || false,
-        hasPrev: paginationData.hasPrev || false,
-        totalProducts: paginationData.totalProducts || 0
-      });
-    }
-  } catch (error) {
-    toast.error('Error fetching products: ' + error.message);
-  } finally {
-    setLoading(false);
-  }
-}, [selectedFilters, categoryData, sortOption]);
+  }, [selectedFilters, categoryData.brand, sortOption, categorySlug, brandSlug]);
 
   // const fetchFilteredProducts = useCallback(async (pageNum = 1) => {
   //   try {
@@ -537,11 +568,41 @@ console.log("Fetched products:", products);
     );
   };
 
+  const updateUrlParams = useCallback((filtersObj, sortOpt) => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    if (filtersObj.brands?.length > 0) {
+      params.set("brands", filtersObj.brands.join(","));
+    }
+    if (filtersObj.categories?.length > 0) {
+      params.set("categories", filtersObj.categories.join(","));
+    }
+    if (filtersObj.subcategories?.length > 0) {
+      params.set("subcategories", filtersObj.subcategories.join(","));
+    }
+    if (filtersObj.filters?.length > 0) {
+      params.set("filters", filtersObj.filters.join(","));
+    }
+    if (filtersObj.price?.min !== undefined && filtersObj.price?.min !== priceRange[0]) {
+      params.set("minPrice", filtersObj.price.min);
+    }
+    if (filtersObj.price?.max !== undefined && filtersObj.price?.max !== priceRange[1]) {
+      params.set("maxPrice", filtersObj.price.max);
+    }
+    if (sortOpt) {
+      params.set("sort", sortOpt);
+    }
+    const queryString = params.toString();
+    const newUrl = window.location.pathname + (queryString ? `?${queryString}` : "");
+    window.history.replaceState(null, "", newUrl);
+  }, [priceRange]);
+
   useEffect(() => {
-    if (categoryData.brand) {
+    if (categoryData.brand && initialLoadComplete) {
+      updateUrlParams(selectedFilters, sortOption);
       fetchFilteredProducts(1);
     }
-  }, [selectedFilters, categoryData.brand, fetchFilteredProducts]);
+  }, [selectedFilters, sortOption, categoryData.brand, initialLoadComplete, updateUrlParams, fetchFilteredProducts]);
 
   const clearAllFilters = () => {
     setSelectedFilters({
@@ -637,7 +698,7 @@ console.log("Fetched products:", products);
     );
   };
 
-  if ((loading || !categoryData.brand) && pagination.currentPage === 1) {
+  if (loading && !categoryData.brand) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
@@ -654,11 +715,7 @@ console.log("Fetched products:", products);
         brandSlug={brandSlug}
       />
       {/* Breadcrumb */}
-    
-
-      {!nofound && products.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1 space-y-6">
               {categoryData.brand?.image && (
                 <div className="w-32 h-12 relative mb-4">
@@ -1326,7 +1383,7 @@ console.log("Fetched products:", products);
         )}
 
             {/* Products Section */}
-            <div className="flex-1">
+            <div ref={productsRef} className="flex-1 relative">
              
               {products.length > 0 ? (
                 <>
@@ -1501,23 +1558,13 @@ console.log("Fetched products:", products);
                 </div>
               )}
 
-              {loading && (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+              {isFiltering && (
+                <div className="absolute inset-0 bg-white/60 flex justify-center items-center z-10 min-h-[200px]">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
               )}
             </div>
           </div>
-        </>
-      ) : (
-        <div className="text-center py-10">
-          <img 
-            src="/images/no-productbox.png" 
-            alt="No Products" 
-            className="mx-auto mb-4 w-32 h-32 md:w-40 md:h-40 object-contain" 
-          />
-        </div>
-      )}
       <ToastContainer />
     </div>
   );
