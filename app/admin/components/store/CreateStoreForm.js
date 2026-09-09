@@ -79,7 +79,7 @@ export default function CreateStoreForm({ storeId = null }) {
     multibrandstore: false,
     description: "",
     logo: null,
-    store_images: [null, null, null], // up to 3
+    store_images: [],
     banners: [], // banner files or urls
     featuredProducts: [], // { image, title }
     offers: [], // { title, validTill, image, description }
@@ -114,7 +114,7 @@ export default function CreateStoreForm({ storeId = null }) {
 
   const [errors, setErrors] = useState({});
   const [logoPreview, setLogoPreview] = useState(null);
-  const [storeImagePreviews, setStoreImagePreviews] = useState([null, null, null]);
+  const [storeImagePreviews, setStoreImagePreviews] = useState([]);
   const [generalImagePreviews, setGeneralImagePreviews] = useState([]);
   const [bannerPreviews, setBannerPreviews] = useState([]);
   const [customerImagePreviews, setCustomerImagePreviews] = useState([]);
@@ -144,7 +144,7 @@ export default function CreateStoreForm({ storeId = null }) {
           multibrandstore: result.multibrandstore === true,
           description: result.description || "",
           logo: result.logo || null,
-          store_images: result.store_images || [null, null, null],
+          store_images: (result.store_images || []).filter(Boolean),
           banners: result.banners || [],
           featuredProducts: result.featuredProducts || [],
           offers: result.offers || [],
@@ -184,7 +184,7 @@ export default function CreateStoreForm({ storeId = null }) {
 
         // Previews for images (strings or file URLs)
         setLogoPreview(result.logo || null);
-        setStoreImagePreviews(result.store_images || [null, null, null]);
+        setStoreImagePreviews((result.store_images || []).filter(Boolean));
         setGeneralImagePreviews(result.images || []);
         setBannerPreviews(result.banners || []);
         setCustomerImagePreviews(result.customer_images || []);
@@ -255,12 +255,9 @@ export default function CreateStoreForm({ storeId = null }) {
     }
 
     if (fieldName === "store_images") {
-      const newStoreImages = [...newStore.store_images];
-      const newPreviews = [...storeImagePreviews];
-      newStoreImages[index] = file;
-      newPreviews[index] = URL.createObjectURL(file);
-      setNewStore((prev) => ({ ...prev, store_images: newStoreImages }));
-      setStoreImagePreviews(newPreviews);
+      const fileArray = Array.from(files);
+      setNewStore((prev) => ({ ...prev, store_images: [...prev.store_images, ...fileArray] }));
+      setStoreImagePreviews((prev) => [...prev, ...fileArray.map((f) => URL.createObjectURL(f))]);
       return;
     }
 
@@ -329,12 +326,8 @@ export default function CreateStoreForm({ storeId = null }) {
 
   const handleRemoveImage = (fieldName, index) => {
     if (fieldName === "store_images") {
-      const newStoreImages = [...newStore.store_images];
-      const newPreviews = [...storeImagePreviews];
-      newStoreImages[index] = null;
-      newPreviews[index] = null;
-      setNewStore((prev) => ({ ...prev, store_images: newStoreImages }));
-      setStoreImagePreviews(newPreviews);
+      setNewStore((prev) => ({ ...prev, store_images: prev.store_images.filter((_, i) => i !== index) }));
+      setStoreImagePreviews((prev) => prev.filter((_, i) => i !== index));
     } else if (fieldName === "images") {
       const newImages = newStore.images.filter((_, i) => i !== index);
       const newPreviews = generalImagePreviews.filter((_, i) => i !== index);
@@ -496,11 +489,16 @@ export default function CreateStoreForm({ storeId = null }) {
       formData.append("existing_logo", newStore.logo);
     }
 
-    // store_images (three slots)
-    newStore.store_images.forEach((img, i) => {
-      if (img instanceof File) formData.append(`store_image_${i}`, img);
-      else if (typeof img === "string" && img) formData.append(`existing_store_image_${i}`, img);
+    // store_images
+    const storeExisting = [];
+    (newStore.store_images || []).forEach((img) => {
+      if (img instanceof File) {
+        formData.append("store_images", img);
+      } else if (typeof img === "string" && img) {
+        storeExisting.push(img);
+      }
     });
+    formData.append("existing_store_images", JSON.stringify(storeExisting));
 
     // additional general images
     newStore.images.forEach((img) => {
@@ -671,55 +669,34 @@ formData.append("existing_customer_images", JSON.stringify(customerExisting));
               {errors.logo && <span className="text-red-500 text-sm">{errors.logo}</span>}
             </div>
 
-           <div>
-  <div className="flex items-center justify-between mb-2">
-    <label className="block text-sm font-semibold text-gray-700">Store Images</label>
-    <button
-      type="button"
-      onClick={() => {
-        setNewStore((prev) => ({ ...prev, store_images: [...prev.store_images, null] }));
-        setStoreImagePreviews((prev) => [...prev, null]);
-      }}
-      className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition"
-    >
-      <FaPlus size={11} /> Add Image
-    </button>
-  </div>
-   {/*max image 3 changed part*/}
-  <div className="flex flex-wrap gap-3 mt-1">
-    {newStore.store_images.map((_, index) => (
-      <div key={index} className="relative">
-        {storeImagePreviews[index] ? (
-          <>
-            <img
-              src={storeImagePreviews[index]}
-              className="h-24 w-24 object-cover rounded-md border border-gray-200"
-              alt={`Store Image ${index + 1}`}
-            />
-            <button
-              type="button"
-              onClick={() => handleRemoveImage("store_images", index)}
-              className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs"
-            >
-              <FaTimes />
-            </button>
-          </>
-        ) : (
-          <label className="h-24 w-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-red-400 hover:bg-red-50 transition">
-            <FaPlus className="text-gray-400 mb-1" size={16} />
-            <span className="text-[10px] text-gray-400">Upload</span>
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => handleFileChange(e, "store_images", index)}
-            />
-          </label>
-        )}
-      </div>
-    ))}
-  </div>
-</div>
+            <div>
+              <label className="block mb-1 text-sm font-semibold text-gray-700">Store Images</label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, "store_images")}
+                className="block w-full text-sm text-gray-600 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+              />
+              <div className="flex flex-wrap gap-2 mt-3">
+                {storeImagePreviews.map((preview, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={preview}
+                      className="h-20 w-20 object-cover rounded-md"
+                      alt={`Store Image ${index + 1}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage("store_images", index)}
+                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 text-xs"
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>

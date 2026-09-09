@@ -132,42 +132,31 @@ export async function POST(req) {
     }
 
     // -----------------------
-    // STORE IMAGES (any indexed fields like store_image_0... OR filesMap.store_images)
+    // STORE IMAGES (filesMap.store_images OR existing_store_images OR legacy indexed fields)
     // -----------------------
     newStoreData.store_images = [];
 
-    // If client sent indexed keys like store_image_0, store_image_1...
-    const indexedStoreImageKeys = Object.keys(filesMap).filter((k) =>
-      /^store_image_\d+$/.test(k)
-    );
-    if (indexedStoreImageKeys.length) {
-      // sort by index
-      indexedStoreImageKeys
-        .sort((a, b) => {
-          const ai = Number(a.split("_").pop());
-          const bi = Number(b.split("_").pop());
-          return ai - bi;
-        })
-        .forEach((k) => {
-          filesMap[k].forEach(async (f) => {
-            // will be processed below synchronously with await; but to keep ordering we push placeholders then replace
-          });
-        });
-      // process in index order
-     for (const k of indexedStoreImageKeys.sort((a, b) => Number(a.split("_").pop()) - Number(b.split("_").pop()))) {
-  for (const f of filesMap[k]) {
-    const url = await saveFileToUploads(f, "storeimg");
-    newStoreData.store_images.push(url);
-  }
-}
-    } else if (filesMap.store_images) {
+    if (newStoreData.existing_store_images) {
+      newStoreData.store_images.push(...(Array.isArray(newStoreData.existing_store_images) ? newStoreData.existing_store_images : safeParseJSON(newStoreData.existing_store_images, [])));
+    }
+    if (filesMap.store_images) {
       for (const f of filesMap.store_images) {
         const url = await saveFileToUploads(f, "storeimg");
         newStoreData.store_images.push(url);
       }
-    } else if (newStoreData.existing_store_images) {
-      // optionally clients can send existing_store_images JSON array
-      newStoreData.store_images.push(...safeParseJSON(newStoreData.existing_store_images, []));
+    }
+
+    // Fallback if client sent indexed keys like store_image_0, store_image_1...
+    const indexedStoreImageKeys = Object.keys(filesMap).filter((k) =>
+      /^store_image_\d+$/.test(k)
+    );
+    if (indexedStoreImageKeys.length && newStoreData.store_images.length === 0) {
+      for (const k of indexedStoreImageKeys.sort((a, b) => Number(a.split("_").pop()) - Number(b.split("_").pop()))) {
+        for (const f of filesMap[k]) {
+          const url = await saveFileToUploads(f, "storeimg");
+          newStoreData.store_images.push(url);
+        }
+      }
     }
 
     // -----------------------

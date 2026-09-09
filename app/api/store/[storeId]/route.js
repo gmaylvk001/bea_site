@@ -133,11 +133,11 @@ export async function PUT(request, { params }) {
       keyHighlights: JSON.parse(fields.keyHighlights || "[]"),
       faqs: fields.faqs?.[0]
         ? JSON.parse(fields.faqs[0])
-            .map((item) => ({
-              question: String(item?.question || "").trim(),
-              answer: String(item?.answer || "").trim(),
-            }))
-            .filter((item) => item.question && item.answer)
+          .map((item) => ({
+            question: String(item?.question || "").trim(),
+            answer: String(item?.answer || "").trim(),
+          }))
+          .filter((item) => item.question && item.answer)
         : [],
     };
 
@@ -168,24 +168,24 @@ export async function PUT(request, { params }) {
     // SOCIAL TIMELINE with Thumbnail Upload Support
     // ======================================================
     // ---------- SOCIAL TIMELINE ----------
-updateData.socialTimeline = [];
-const socialPayload = fields.socialPayload ? JSON.parse(fields.socialPayload[0]) : [];
+    updateData.socialTimeline = [];
+    const socialPayload = fields.socialPayload ? JSON.parse(fields.socialPayload[0]) : [];
 
-socialPayload.forEach((item, i) => {
-  let thumbnail = item.thumbnail || null;
+    socialPayload.forEach((item, i) => {
+      let thumbnail = item.thumbnail || null;
 
-  // If new thumbnail uploaded
-  if (files[`social_thumbnail_${i}`]?.[0]) {
-    thumbnail = `/uploads/${path.basename(files[`social_thumbnail_${i}`][0].filepath)}`;
-  }
+      // If new thumbnail uploaded
+      if (files[`social_thumbnail_${i}`]?.[0]) {
+        thumbnail = `/uploads/${path.basename(files[`social_thumbnail_${i}`][0].filepath)}`;
+      }
 
-  updateData.socialTimeline.push({
-    media: item.media || "",
-    text: item.text || "",
-    postedOn: item.postedOn || "",
-    thumbnail: thumbnail
-  });
-});
+      updateData.socialTimeline.push({
+        media: item.media || "",
+        text: item.text || "",
+        postedOn: item.postedOn || "",
+        thumbnail: thumbnail
+      });
+    });
 
     // ---------- LOGO ----------
     if (files.logo?.[0]) {
@@ -195,20 +195,29 @@ socialPayload.forEach((item, i) => {
     }
 
     // ---------- STORE IMAGES ----------
-    const storeImages = [];
-    const maxImages = Math.max(
-  ...Object.keys(files).filter(k => /^store_image_\d+$/.test(k)).map(k => Number(k.split("_").pop()) + 1),
-  ...Object.keys(fields).filter(k => /^existing_store_image_\d+$/.test(k)).map(k => Number(k.split("_").pop()) + 1),
-  0
-);
-for (let i = 0; i < maxImages; i++) {
-      if (files[`store_image_${i}`]?.[0]) {
-        storeImages[i] = `/uploads/${path.basename(files[`store_image_${i}`][0].filepath)}`;
-      } else if (fields[`existing_store_image_${i}`]?.[0]) {
-        storeImages[i] = fields[`existing_store_image_${i}`][0];
+    updateData.store_images = [];
+    if (fields.existing_store_images?.[0]) {
+      updateData.store_images.push(...JSON.parse(fields.existing_store_images[0]));
+    }
+    if (files.store_images) {
+      const imgs = Array.isArray(files.store_images) ? files.store_images : [files.store_images];
+      imgs.forEach(f => updateData.store_images.push(`/uploads/${path.basename(f.filepath)}`));
+    }
+    // Backward compatibility with legacy indexed keys like store_image_0 / existing_store_image_0
+    const legacyStoreKeys = [
+      ...Object.keys(files).filter(k => /^store_image_\d+$/.test(k)),
+      ...Object.keys(fields).filter(k => /^existing_store_image_\d+$/.test(k))
+    ];
+    if (legacyStoreKeys.length > 0 && updateData.store_images.length === 0) {
+      const maxImages = Math.max(...legacyStoreKeys.map(k => Number(k.split("_").pop()) + 1), 0);
+      for (let i = 0; i < maxImages; i++) {
+        if (files[`store_image_${i}`]?.[0]) {
+          updateData.store_images.push(`/uploads/${path.basename(files[`store_image_${i}`][0].filepath)}`);
+        } else if (fields[`existing_store_image_${i}`]?.[0]) {
+          updateData.store_images.push(fields[`existing_store_image_${i}`][0]);
+        }
       }
     }
-    updateData.store_images = storeImages;
 
     // ---------- GENERAL IMAGES ----------
     updateData.images = [];
@@ -231,16 +240,16 @@ for (let i = 0; i < maxImages; i++) {
       const banners = Array.isArray(files.banners) ? files.banners : [files.banners];
       banners.forEach(f => updateData.banners.push(`/uploads/${path.basename(f.filepath)}`));
     }
-     // ---------- CUSTOMER IMAGES ----------
-updateData.customer_images = [];
-if (fields.existing_customer_images?.[0]) {
-  updateData.customer_images.push(...JSON.parse(fields.existing_customer_images[0]));
-}
-if (files.customer_images) {
-  const imgs = Array.isArray(files.customer_images) ? files.customer_images : [files.customer_images];
-  imgs.forEach(f => updateData.customer_images.push(`/uploads/${path.basename(f.filepath)}`));
-}
-// ---------- FEATURED PRODUCTS ----------
+    // ---------- CUSTOMER IMAGES ----------
+    updateData.customer_images = [];
+    if (fields.existing_customer_images?.[0]) {
+      updateData.customer_images.push(...JSON.parse(fields.existing_customer_images[0]));
+    }
+    if (files.customer_images) {
+      const imgs = Array.isArray(files.customer_images) ? files.customer_images : [files.customer_images];
+      imgs.forEach(f => updateData.customer_images.push(`/uploads/${path.basename(f.filepath)}`));
+    }
+    // ---------- FEATURED PRODUCTS ----------
     updateData.featuredProducts = fields.featuredProducts?.[0]
       ? JSON.parse(fields.featuredProducts[0])
       : [];
@@ -280,7 +289,7 @@ if (files.customer_images) {
     });
 
     // ---------- SAVE DB ----------
- 
+
 
     const updated = await Store.findOneAndUpdate(
       buildStoreQuery(storeId),
