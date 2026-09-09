@@ -1,2 +1,36 @@
+# robots.txt for Bharath Electronics
+# https://www.bharathelectronics.in/
+
 User-agent: *
-Disallow: /upload/
+
+# Allow all public pages
+Allow: /
+
+# Admin and internal APIs
+Disallow: /admin/
+Disallow: /api/
+
+# Authentication and customer account pages
+Disallow: /login/
+Disallow: /register/
+Disallow: /account/
+Disallow: /profile/
+Disallow: /address/
+
+# Customer-specific pages
+Disallow: /wishlist/
+
+# Shopping and transaction pages
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /order/
+Disallow: /orders/
+
+# Internal search
+Disallow: /search/
+
+# Sitemap
+Sitemap: https://www.bharathelectronics.in/sitemap.xml
+
+User-agent: GPTBot 
+Disallow: /
