@@ -1580,68 +1580,15 @@ const fetchBrand = async () => {
     </div>
   )}
   
-{/* MOBILE VIEW */}
-<div className="flex flex-col gap-6 my-8 md:hidden">
-  {/* FAQ — Mobile */}
-  {faqs.length > 0 && (
-    <div>
-      <h2 className="text-base font-bold text-blue-700 mb-3">
-        Frequently Asked Questions
-      </h2>
-      <div className="border border-gray-200 rounded-sm overflow-hidden divide-y divide-gray-200">
-        {faqs.map((faq, i) => (
-          <FaqItem key={i} question={faq.question} answer={faq.answer} />
-        ))}
-      </div>
-    </div>
-  )}
-
-  {/* Exchange — Mobile */}
-  <div className="border border-gray-200 rounded-sm p-4 bg-white">
-    <div className="flex flex-col gap-3">
-      <h3 className="text-base font-bold text-blue-700">Exchange Your Old Appliance</h3>
-      <p className="text-sm text-gray-500 leading-relaxed">
-        Upgrade to a new product and get the best value for your old one.
-      </p>
-      <div className="flex items-center gap-3 justify-center my-2">
-       <img
-  src={
-    product.images?.[0]?.startsWith("http")
-      ? product.images[0]
-      : `/uploads/products/${product.images?.[0]}`
-  }
-  alt="old product"
-  className="w-24 h-32 object-contain opacity-40"
-/>
-<span className="text-gray-400 text-xl">→</span>
-<img
-  src={
-    product.images?.[0]?.startsWith("http")
-      ? product.images[0]
-      : `/uploads/products/${product.images?.[0]}`
-  }
-  alt="new product"
-  className="w-24 h-32 object-contain"
-/>
-      </div>
-      <button className="w-fit border border-blue-600 text-blue-600 text-sm font-semibold px-4 py-2 rounded hover:bg-blue-50 transition">
-        Check Exchange Value
-      </button>
-    </div>
-  </div>
-
-</div>
   
 </div>
 {/* ===== END MOBILE & TABLET VIEW ===== */}
 
-{/* ===== DESKTOP VIEW (hidden on mobile/tablet) ===== */}
-<div className="hidden lg:flex flex-row gap-6 items-start mt-4"></div>
         {/* OUTER FLEX: Left 70% + Right 30% */}
 <div className="hidden lg:flex flex-row gap-6 items-start mt-4 w-full">
 
           {/* LEFT 70% */}
-      <div className="w-full lg:w-[75%] flex flex-col gap-6 min-w-0">
+      <div className="w-full lg:w-[75%] product-layout-left-1024 flex flex-col gap-6 min-w-0">
 
             {/* Image + Info Row */}
 <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
@@ -1971,7 +1918,7 @@ const fetchBrand = async () => {
           {/* END Left 70% */}
 
           {/* RIGHT 30% - Sidebar */}
-<div className="hidden lg:flex lg:w-[25%] flex-col space-y-4 lg:self-start lg:sticky lg:top-4">
+<div className="hidden lg:flex lg:w-[25%] product-layout-right-1024 flex-col space-y-4 lg:self-start lg:sticky lg:top-4">
 {isDesktop && (
   <div className="border border-gray-300 rounded-lg shadow-sm bg-white p-4 overflow-hidden w-full">
     <h3 className="font-semibold text-gray-800 text-sm mb-3">Available Offers</h3>
@@ -2197,76 +2144,11 @@ const fetchBrand = async () => {
     
         </div>
         {/* END Outer Flex */}
-{/* DESKTOP ONLY — FAQ + EXCHANGE */}
-<div className="hidden md:flex gap-8 my-10 items-start">
-
-  {/* LEFT — FAQ (50%) */}
-  <div className="w-1/2">
-    <h2 className="text-base font-bold text-blue-700 mb-3">
-      Frequently Asked Questions
-    </h2>
-
-    {faqs.length > 0 ? (
-      <div className="border border-gray-200 rounded-sm overflow-hidden">
-        {faqs.map((faq, i) => (
-          <FaqItem key={i} question={faq.question} answer={faq.answer} />
-        ))}
-      </div>
-    ) : (
-      <div className="border border-gray-200 rounded-sm p-6 text-center text-sm text-gray-400">
-        No questions available
-      </div>
-    )}
-  </div>
-
-{/* EXCHANGE BOX */}
-<div className="w-1/2 border border-gray-200 rounded-sm p-5 bg-white">
-  <div className="flex items-center justify-between h-full gap-4">
-    
-    {/* LEFT — Title, text, button */}
-    <div className="flex flex-col gap-3 flex-1">
-      <h3 className="text-base font-bold text-blue-700">
-        Exchange Your Old Appliance
-      </h3>
-      <p className="text-sm text-gray-500 leading-relaxed">
-        Upgrade to a new {ProductBreadcrumb?.[2]?.name || "product"} and get the best value for your old one.
-      </p>
-      <button className="w-fit border border-blue-600 text-blue-600 text-sm font-semibold px-4 py-2 rounded hover:bg-blue-50 transition">
-        Check Exchange Value
-      </button>
-    </div>
-
-    {/* RIGHT — Two images + arrow */}
-    <div className="flex items-center gap-3 flex-shrink-0">
-     <img
-  src={
-    product.images?.[0]?.startsWith("http")
-      ? product.images[0]
-      : `/uploads/products/${product.images?.[0]}`
-  }
-  alt="old product"
-  className="w-28 h-36 object-contain opacity-40"
-/>
-<span className="text-gray-400 text-xl">→</span>
-<img
-  src={
-    product.images?.[0]?.startsWith("http")
-      ? product.images[0]
-      : `/uploads/products/${product.images?.[0]}`
-  }
-  alt="new product"
-  className="w-28 h-36 object-contain"
-/>
-    </div>
-
-  </div>
-</div>
-</div>
 
 
         <RelatedProducts relatedProducts={product.related_products} />
 {recentlyViewedProducts.length > 0 && (
-  <div className="w-full mt-6 px-4">
+  <div className="w-full mt-6 px-4 product-section-align-1024">
     {/* Header Section */}
     <div className="flex justify-between items-center mb-3">
       <h2 className="text-base font-bold text-blue-700">Recently Viewed</h2>

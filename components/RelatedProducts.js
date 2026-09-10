@@ -16,6 +16,7 @@ import { FaShareAlt } from "react-icons/fa";
   const [loading, setLoading] = useState(true);
   const [navigating, setNavigating] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [is1024, setIs1024] = useState(false);
 
   /* const fetchRelatedProducts = async () => {
     try {
@@ -133,24 +134,22 @@ import { FaShareAlt } from "react-icons/fa";
     setStartIndex(Math.min(startIndex + step, relatedProducts.length - visibleCount));
   };
 
-  const visibleCount = isMobile ? 3 : 5;
+  const visibleCount = isMobile ? 3 : (is1024 ? 4 : 5);
   const visibleProducts = relatedProducts.slice(startIndex, startIndex + visibleCount);
 
-    useEffect(() => {
-  const checkIfMobile = () => {
-    setIsMobile(window.innerWidth < 768);
-  };
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIs1024(window.innerWidth >= 1024 && window.innerWidth < 1280);
+    };
 
-  checkIfMobile();
-  window.addEventListener('resize', checkIfMobile);
+    handleResize();
+    window.addEventListener('resize', handleResize);
 
-  return () => {
-    window.removeEventListener('resize', checkIfMobile);
-  };
-}, []);
-
-
-  
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
  if (!relatedProducts.length) {
   return null;
@@ -163,7 +162,7 @@ import { FaShareAlt } from "react-icons/fa";
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
         </div>
       )}
-    <section className="mb-10 px-4 py-4">
+    <section className="mb-10 px-4 product-section-align-1024 py-4">
   <div className="bg-gray-100 rounded-2xl p-6">
     <div className="flex justify-between items-center mb-6">
       <h5 className="text-xl font-bold">Related Products</h5>
@@ -186,7 +185,7 @@ import { FaShareAlt } from "react-icons/fa";
     </div>
 
     {/* Wider grid layout */}
-    <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 overflow-x-auto sm:overflow-visible px-1">
+    <div className="flex sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 related-grid-1024 gap-6 overflow-x-auto sm:overflow-visible px-1">
       {visibleProducts.map((product) => (
         <div
                 key={product._id}

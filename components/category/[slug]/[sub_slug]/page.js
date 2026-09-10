@@ -19,6 +19,7 @@ function activeCategoryCards(tree) {
 
 export default function CategoryPage() {
   const [categoryData, setCategoryData] = useState({
+    main_category: null,
     category: null,
     brands: [],
     filters: []
@@ -176,10 +177,14 @@ const scroll = (direction) => {
       const categoryRes = await fetch(`/api/categories/${sub_slug}`);
       const categoryData = await categoryRes.json();
       //console.log('categoryData: ',categoryData);
+      if (categoryData?.error || !categoryData?.category) {
+        router.push('/noproduct');
+        return;
+      }
       setCategoryData({
         ...categoryData,
         categoryTree: categoryData.category,
-        allCategoryIds: categoryData.allCategoryIds
+        allCategoryIds: categoryData.allCategoryIds || []
       });
        if (categoryData.category?.length > 0) {
       const children = categoryData.category.map(c => ({
@@ -237,7 +242,7 @@ const scroll = (direction) => {
     setSelectedFilters(initialFilters);
 
       const groups = {};
-      categoryData.filters.forEach(filter => {
+      (categoryData.filters || []).forEach(filter => {
         const groupId = filter.filter_group_name;
         if (groupId) {
           if (!groups[groupId]) {
@@ -288,7 +293,9 @@ Object.keys(groups).forEach(key => {
         : categoryData.allCategoryIds;
 
       //query.set('categoryIds', categoryIds.join(','));
-      query.set('sub_category_new',  categoryData.main_category.md5_cat_name);
+      if (categoryData?.main_category?.md5_cat_name) {
+        query.set('sub_category_new',  categoryData.main_category.md5_cat_name);
+      }
        const activeChild = selectedChildCategoryRef.current;
         if (activeChild) {
            const node = childCategoryTree.find(c => c.category_name === activeChild);
@@ -735,7 +742,7 @@ const handlePageChange = (page) => {
   const visibleFilterGroups = getVisibleFilterGroups(sortedFilterGroups, showAllFilterGroups);
   const shouldShowMoreFilters = sortedFilterGroups.length > VISIBLE_FILTER_GROUP_LIMIT;
 
-  if (!categoryData.category) {
+  if (!categoryData?.category || !categoryData?.main_category) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
@@ -759,25 +766,27 @@ const handlePageChange = (page) => {
    
   return (
     <div className="container mx-auto px-4 py-2 pb-3 max-w-7xl">
-      {categoryData.main_category.banners && categoryData.main_category.banners.length > 0 && (
+      {categoryData.main_category?.banners && categoryData.main_category.banners.length > 0 && (
         <div className="relative w-full mb-8 rounded-lg overflow-hidden shadow-md">
           <div className="relative w-full aspect-[16/6] sm:aspect-[16/7] lg:aspect-[16/5] cursor-pointer"
             onClick={() => {
-              const redirectUrl = categoryData.main_category.banners[currentCategoryBannerIndex].redirect_url;
+              const redirectUrl = categoryData.main_category?.banners?.[currentCategoryBannerIndex]?.redirect_url;
               if (redirectUrl) window.location.href = redirectUrl;
             }}
           >
-            <Image
-              src={
-                categoryData.main_category.banners[currentCategoryBannerIndex].banner_image.startsWith("http")
-                  ? categoryData.main_category.banners[currentCategoryBannerIndex].banner_image
-                  : `${categoryData.main_category.banners[currentCategoryBannerIndex].banner_image}`
-              }
-              alt={categoryData.main_category.banners[currentCategoryBannerIndex].banner_name}
-              fill
-              className="object-cover w-full h-full"
-              unoptimized
-            />
+            {categoryData.main_category.banners[currentCategoryBannerIndex] && (
+              <Image
+                src={
+                  categoryData.main_category.banners[currentCategoryBannerIndex].banner_image?.startsWith("http")
+                    ? categoryData.main_category.banners[currentCategoryBannerIndex].banner_image
+                    : `${categoryData.main_category.banners[currentCategoryBannerIndex].banner_image || ''}`
+                }
+                alt={categoryData.main_category.banners[currentCategoryBannerIndex].banner_name || "Category Banner"}
+                fill
+                className="object-cover w-full h-full"
+                unoptimized
+              />
+            )}
       
 
       
@@ -920,7 +929,7 @@ const handlePageChange = (page) => {
 
        <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 lg:gap-8">
   <div className="lg:col-span-1 space-y-6">
-    <h1 className="text-3xl font-bold mb-3 text-gray-600 pl-1">{categoryData.main_category.category_name}</h1>
+    <h1 className="text-3xl font-bold mb-3 text-gray-600 pl-1">{categoryData.main_category?.category_name || ""}</h1>
   </div>
   <div className="lg:col-span-3">
     {/* Mobile: Products count at top */}
@@ -1256,7 +1265,7 @@ const handlePageChange = (page) => {
                         </div>
                         {isBrandsExpanded && (
                           <ul className="mt-2 max-h-48 overflow-y-auto pr-2">
-                            {[...categoryData.brands].sort((a, b) => a.brand_name.localeCompare(b.brand_name)).map(brand => (
+                            {[...(categoryData.brands || [])].sort((a, b) => (a.brand_name || "").localeCompare(b.brand_name || "")).map(brand => (
                               <li key={brand._id} className="flex items-center">
                                 <label className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-50 rounded p-2 transition-colors">
                                 <input

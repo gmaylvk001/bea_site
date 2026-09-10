@@ -53,7 +53,13 @@ export async function GET(request, { params }) {
     await dbConnect();
 
     // Fetch main category
-    const main_category = await ecom_category_info.findOne({ category_slug: slug }).lean();
+    const main_category = await ecom_category_info.findOne({
+      $or: [
+        { category_slug: slug },
+        { category_slug: decodeURIComponent(slug) },
+        { category_slug: slug.toLowerCase() },
+      ]
+    }).lean();
     if (!main_category) {
       return Response.json({ error: "Main Category not found" }, { status: 404 });
     }
@@ -88,7 +94,14 @@ export async function GET(request, { params }) {
     }).lean();
 
     if (!products || products.length === 0) {
-      const emptyResult = { category: categoryTree, products: [], brands: [], filters: [] };
+      const emptyResult = {
+        main_category,
+        category: categoryTree,
+        allCategoryIds,
+        products: [],
+        brands: [],
+        filters: [],
+      };
       slugCache.set(slug, { data: emptyResult, timestamp: Date.now() });
       return Response.json(emptyResult);
     }

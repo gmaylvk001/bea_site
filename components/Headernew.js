@@ -26,6 +26,142 @@ const alphaSortString = (a, b) => {
   return sa.localeCompare(sb, undefined, { sensitivity: 'base' });
 };
 
+// Specified brand placement order for Large Appliances:
+// LG, Samsung, Haier, Lloyd, Godrej, IFB, Bosch, Whirlpool, Daikin, Blue Star, Liebherr
+const LARGE_APPLIANCES_BRAND_ORDER = [
+  {
+    key: 'lg',
+    match: (name, slug) => slug === 'lg' || name === 'lg' || /^lg\b/i.test(name) || /^lg-/i.test(slug),
+  },
+  {
+    key: 'samsung',
+    match: (name, slug) => name.includes('samsung') || slug.includes('samsung') || name.includes('samasung') || slug.includes('samasung'),
+  },
+  {
+    key: 'haier',
+    match: (name, slug) => name.includes('haier') || slug.includes('haier'),
+  },
+  {
+    key: 'lloyd',
+    match: (name, slug) => name.includes('lloyd') || slug.includes('lloyd'),
+  },
+  {
+    key: 'godrej',
+    match: (name, slug) => name.includes('godrej') || slug.includes('godrej'),
+  },
+  {
+    key: 'ifb',
+    match: (name, slug) => slug === 'ifb' || name === 'ifb' || /^ifb\b/i.test(name) || /^ifb-/i.test(slug),
+  },
+  {
+    key: 'bosch',
+    match: (name, slug) => name.includes('bosch') || slug.includes('bosch'),
+  },
+  {
+    key: 'whirlpool',
+    match: (name, slug) => name.includes('whirlpool') || slug.includes('whirlpool'),
+  },
+  {
+    key: 'daikin',
+    match: (name, slug) => name.includes('daikin') || slug.includes('daikin'),
+  },
+  {
+    key: 'bluestar',
+    match: (name, slug) => {
+      const cleanName = name.replace(/[^a-z0-9]/g, '');
+      const cleanSlug = slug.replace(/[^a-z0-9]/g, '');
+      return cleanName.includes('bluestar') || cleanSlug.includes('bluestar') ||
+        (cleanName.includes('blue') && cleanName.includes('star')) ||
+        (cleanSlug.includes('blue') && cleanSlug.includes('star'));
+    },
+  },
+  {
+    key: 'liebherr',
+    match: (name, slug) => name.includes('liebherr') || slug.includes('liebherr'),
+  },
+];
+
+const getLargeAppliancesBrandRank = (brand) => {
+  if (!brand) return 999;
+  const name = (brand.brand_name || '').toLowerCase().trim();
+  const slug = (brand.brand_slug || '').toLowerCase().trim();
+  const index = LARGE_APPLIANCES_BRAND_ORDER.findIndex((item) => item.match(name, slug));
+  return index !== -1 ? index : 999;
+};
+
+const isCategoryLargeAppliances = (category) => {
+  if (!category) return false;
+  const slug = (category.category_slug || '').toLowerCase().trim();
+  const name = (category.category_name || '').toLowerCase().trim();
+  return slug === 'large-appliances' ||
+    slug.includes('large-appliance') ||
+    name === 'large appliances' ||
+    name.includes('large appliance');
+};
+
+// Specified brand placement order for Television Category:
+// LG, Samsung, Sony, Haier, Lloyd, Onida, VZY
+const TELEVISION_BRAND_ORDER = [
+  {
+    key: 'lg',
+    match: (name, slug) => slug === 'lg' || name === 'lg' || /^lg\b/i.test(name) || /^lg-/i.test(slug),
+  },
+  {
+    key: 'samsung',
+    match: (name, slug) => name.includes('samsung') || slug.includes('samsung') || name.includes('samasung') || slug.includes('samasung'),
+  },
+  {
+    key: 'sony',
+    match: (name, slug) => name.includes('sony') || slug.includes('sony'),
+  },
+  {
+    key: 'haier',
+    match: (name, slug) => name.includes('haier') || slug.includes('haier'),
+  },
+  {
+    key: 'lloyd',
+    match: (name, slug) => name.includes('lloyd') || slug.includes('lloyd'),
+  },
+  {
+    key: 'onida',
+    match: (name, slug) => name.includes('onida') || slug.includes('onida'),
+  },
+  {
+    key: 'vzy',
+    match: (name, slug) => {
+      const cleanName = name.replace(/[^a-z0-9]/g, '');
+      const cleanSlug = slug.replace(/[^a-z0-9]/g, '');
+      return cleanName.includes('vzy') || cleanSlug.includes('vzy');
+    },
+  },
+];
+
+const getTelevisionBrandRank = (brand) => {
+  if (!brand) return 999;
+  const name = (brand.brand_name || '').toLowerCase().trim();
+  const slug = (brand.brand_slug || '').toLowerCase().trim();
+  const index = TELEVISION_BRAND_ORDER.findIndex((item) => item.match(name, slug));
+  return index !== -1 ? index : 999;
+};
+
+const isCategoryTelevision = (category) => {
+  if (!category) return false;
+  const slug = (category.category_slug || '').toLowerCase().trim();
+  const name = (category.category_name || '').toLowerCase().trim();
+  return slug === 'television' ||
+    slug === 'televisions' ||
+    slug === 'tv' ||
+    slug === 'tvs' ||
+    slug.startsWith('television') ||
+    slug.startsWith('tv-') ||
+    name === 'television' ||
+    name === 'televisions' ||
+    name === 'tv' ||
+    name === 'tvs' ||
+    name.startsWith('television') ||
+    name.startsWith('tv ');
+};
+
 const HEADER_ACTION_LINK_CLASS =
   "group flex flex-col items-center gap-0.5 rounded-lg px-1.5 py-1 transition-all duration-200 hover:bg-orange-50 hover:-translate-y-0.5 active:translate-y-0 active:scale-95";
 const HEADER_ACTION_ICON_CLASS =
@@ -2352,7 +2488,33 @@ const Header = () => {
       {(() => {
         const ROWS_VISIBLE = 9;
         const ROW_HEIGHT_PX = 28;
-        const brands = hoveredCategory.brands || [];
+        const isLargeAppliances = isCategoryLargeAppliances(hoveredCategory);
+        const isTelevision = isCategoryTelevision(hoveredCategory);
+        const hasCustomOrder = isLargeAppliances || isTelevision;
+        let brands = hoveredCategory.brands || [];
+
+        // If Large Appliances or Television, ensure any requested priority brands available in brandsForSearch are included
+        if (hasCustomOrder && Array.isArray(brandsForSearch) && brandsForSearch.length > 0) {
+          const targetBrandOrder = isLargeAppliances ? LARGE_APPLIANCES_BRAND_ORDER : TELEVISION_BRAND_ORDER;
+          const getRankFn = isLargeAppliances ? getLargeAppliancesBrandRank : getTelevisionBrandRank;
+          const presentRanks = new Set(
+            brands.map((b) => getRankFn(b)).filter((r) => r !== 999)
+          );
+          targetBrandOrder.forEach((def, targetRank) => {
+            if (!presentRanks.has(targetRank)) {
+              const found = brandsForSearch.find((b) => {
+                const name = (b?.brand_name || '').toLowerCase().trim();
+                const slug = (b?.brand_slug || '').toLowerCase().trim();
+                return def.match(name, slug);
+              });
+              if (found) {
+                brands = [...brands, found];
+                presentRanks.add(targetRank);
+              }
+            }
+          });
+        }
+
         const navImgs = hoveredCategory?.navImage
           ? (typeof hoveredCategory.navImage === 'string'
               ? hoveredCategory.navImage.split(',').map(s => s.trim()).filter(Boolean)
@@ -2376,7 +2538,18 @@ const Header = () => {
             ? sub.brands
             : brands;
           return [...subBrands]
-            .sort((a, b) => alphaSortString(a.brand_name, b.brand_name))
+            .sort((a, b) => {
+              if (isLargeAppliances) {
+                const rankA = getLargeAppliancesBrandRank(a);
+                const rankB = getLargeAppliancesBrandRank(b);
+                if (rankA !== rankB) return rankA - rankB;
+              } else if (isTelevision) {
+                const rankA = getTelevisionBrandRank(a);
+                const rankB = getTelevisionBrandRank(b);
+                if (rankA !== rankB) return rankA - rankB;
+              }
+              return alphaSortString(a.brand_name, b.brand_name);
+            })
             .map((brand) => ({
               key: brand._id || brand.brand_slug,
               label: brand.brand_name,
@@ -2423,26 +2596,49 @@ const Header = () => {
             </div>
           );
         };
-        const renderBrands = () => brands.length > 0 && (
-          <div style={{ marginTop: 'auto', paddingTop: '12px', paddingLeft: '196px', borderTop: '1px solid #e5e7eb', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
-            <div style={{
-              fontSize: '11px', fontWeight: 700, color: '#1e3a8a',
-              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px',
-            }}>
-              Top Brands
-            </div>
-            <div className="dd-brands" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(5, minmax(80px, 1fr))',
-              gridTemplateRows: 'repeat(2, auto)',
-              gap: '8px 16px',
-              alignItems: 'center',
-              justifyItems: 'start',
-            }}>
-              {[...brands]
-                .sort((a, b) => alphaSortString(a.brand_name, b.brand_name))
-                .slice(0, 10)
-                .map((brand) => (
+        const renderBrands = () => {
+          if (!brands || brands.length === 0) return null;
+
+          const sortedBrands = isLargeAppliances
+            ? [...brands].sort((a, b) => {
+                const rankA = getLargeAppliancesBrandRank(a);
+                const rankB = getLargeAppliancesBrandRank(b);
+                if (rankA !== rankB) return rankA - rankB;
+                return alphaSortString(a?.brand_name, b?.brand_name);
+              })
+            : isTelevision
+            ? [...brands].sort((a, b) => {
+                const rankA = getTelevisionBrandRank(a);
+                const rankB = getTelevisionBrandRank(b);
+                if (rankA !== rankB) return rankA - rankB;
+                return alphaSortString(a?.brand_name, b?.brand_name);
+              })
+            : [...brands].sort((a, b) => alphaSortString(a?.brand_name, b?.brand_name));
+
+          const maxVisibleBrands = isLargeAppliances ? 11 : 10;
+          const visibleBrands = sortedBrands.slice(0, maxVisibleBrands);
+          const remainingCount = sortedBrands.length - maxVisibleBrands;
+
+
+          return (
+            <div style={{ marginTop: 'auto', paddingTop: '12px', paddingLeft: '196px', borderTop: '1px solid #e5e7eb', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
+              <div style={{
+                fontSize: '11px', fontWeight: 700, color: '#1e3a8a',
+                textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px',
+              }}>
+                Top Brands
+              </div>
+              <div className="dd-brands" style={{
+                display: 'grid',
+                gridTemplateColumns: isLargeAppliances
+                  ? 'repeat(6, minmax(70px, 1fr))'
+                  : 'repeat(5, minmax(80px, 1fr))',
+                gridTemplateRows: 'repeat(2, auto)',
+                gap: '8px 16px',
+                alignItems: 'center',
+                justifyItems: 'start',
+              }}>
+                {visibleBrands.map((brand) => (
                   <Link
                     key={brand._id || brand.brand_slug}
                     href={`/category/brand/${hoveredCategory.category_slug}/${brand.brand_slug}`}
@@ -2472,18 +2668,19 @@ const Header = () => {
                     </span>
                   </Link>
                 ))}
-              {brands.length > 10 && (
-                <Link
-                  href={`/category/${hoveredCategory.category_slug}`}
-                  onClick={() => setHoveredCategory(null)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '5px 6px', fontSize: '11px', fontWeight: 600, color: '#2453D3', textDecoration: 'none' }}
-                >
-                  +{brands.length - 10} more <FiChevronRight size={11} />
-                </Link>
-              )}
+                {remainingCount > 0 && (
+                  <Link
+                    href={`/category/${hoveredCategory.category_slug}`}
+                    onClick={() => setHoveredCategory(null)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '5px 6px', fontSize: '11px', fontWeight: 600, color: '#2453D3', textDecoration: 'none' }}
+                  >
+                    +{remainingCount} more <FiChevronRight size={11} />
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
-        );
+          );
+        };
         return (
           <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: '420px' }}>
             <div style={{ flex: 1, padding: '16px 20px', minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '420px' }}>

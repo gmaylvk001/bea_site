@@ -877,7 +877,11 @@ export default function StoreDetail() {
         {/* Address */}
         <div className="flex items-start gap-2.5 mb-2.5 text-[12.5px] text-gray-600 leading-relaxed">
           <span className="mt-0.5 flex-shrink-0 text-[#1A56DB]"><MapPinIcon size={14}/></span>
-          <span>{store.address}{store.zipcode ? `, ${store.zipcode}` : ""}</span>
+          <span>
+            {store.address?.includes(store.zipcode) || /\b\d{6}\b/.test(store.address || "")
+              ? store.address
+              : `${store.address || ""}${store.zipcode ? `, ${store.zipcode}` : ""}`}
+          </span>
         </div>
 
         {/* Phone */}
@@ -1026,7 +1030,11 @@ export default function StoreDetail() {
   {/* Address */}
   <div className="flex items-start gap-2 mb-1.5 text-[12px] text-gray-600">
     <span className="mt-0.5 flex-shrink-0 text-blue-600"><MapPinIcon size={12}/></span>
-    <span>{store.address}{store.zipcode ? `, ${store.zipcode}` : ""}</span>
+    <span>
+      {store.address?.includes(store.zipcode) || /\b\d{6}\b/.test(store.address || "")
+        ? store.address
+        : `${store.address || ""}${store.zipcode ? `, ${store.zipcode}` : ""}`}
+    </span>
   </div>
 
   {/* Phone */}
@@ -1636,7 +1644,7 @@ export default function StoreDetail() {
               </div>
             )}
             <div className="text-center mt-3">
-              <Link href="/our-branches">
+              <Link href="/location">
                 <button className="text-blue-600 text-[12px] font-semibold hover:underline inline-flex items-center gap-1">
                   View All Stores <ArrowRightIcon />
                 </button>
