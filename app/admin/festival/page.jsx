@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
 
 export default function AdminFestivalPage() {
@@ -57,6 +57,7 @@ export default function AdminFestivalPage() {
     miniBannerImage: "",
   });
   const [miniBannerFile, setMiniBannerFile] = useState(null);
+  const miniBannerInputRef = useRef(null);
 
   useEffect(() => {
     fetchPageData();
@@ -375,6 +376,47 @@ export default function AdminFestivalPage() {
   // ---------------------------------------------------------------------------
   // Right Section Submission (Form & Mini Banner)
   // ---------------------------------------------------------------------------
+  const handleDeleteMiniBanner = async () => {
+    const hasDbImage = Boolean(pageData?.rightFormSection?.miniBannerImage);
+    if (hasDbImage) {
+      if (!window.confirm("Are you sure you want to delete this mini banner?")) {
+        return;
+      }
+      try {
+        setSaving(true);
+        const res = await fetch("/api/festival?type=mini_banner", {
+          method: "DELETE",
+        });
+        const json = await res.json();
+        if (json.success) {
+          setPageData(json.data);
+          setFormSectionSettings((prev) => ({
+            ...prev,
+            miniBannerImage: "",
+          }));
+          setMiniBannerFile(null);
+          if (miniBannerInputRef.current) {
+            miniBannerInputRef.current.value = "";
+          }
+          showNotification("success", "Mini banner deleted successfully!");
+        } else {
+          showNotification("error", json.message || "Failed to delete mini banner.");
+        }
+      } catch (err) {
+        showNotification("error", err.message);
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      setFormSectionSettings((prev) => ({ ...prev, miniBannerImage: "" }));
+      setMiniBannerFile(null);
+      if (miniBannerInputRef.current) {
+        miniBannerInputRef.current.value = "";
+      }
+      showNotification("success", "Mini banner removed.");
+    }
+  };
+
   const handleSaveRightSection = async (e) => {
     e.preventDefault();
     try {
@@ -388,6 +430,11 @@ export default function AdminFestivalPage() {
 
       if (miniBannerFile) {
         formData.append("miniBannerFile", miniBannerFile);
+      } else if (!formSectionSettings.miniBannerImage) {
+        formData.append("removeMiniBanner", "true");
+        formData.append("miniBannerImage", "");
+      } else {
+        formData.append("miniBannerImage", formSectionSettings.miniBannerImage);
       }
 
       const res = await fetch("/api/festival", {
@@ -397,6 +444,19 @@ export default function AdminFestivalPage() {
       const json = await res.json();
       if (json.success) {
         setPageData(json.data);
+        if (json.data?.rightFormSection) {
+          setFormSectionSettings({
+            tagText: json.data.rightFormSection.tagText ?? "FESTIVE EXCLUSIVE",
+            titlePrefix: json.data.rightFormSection.titlePrefix ?? "",
+            titleHighlight: json.data.rightFormSection.titleHighlight ?? "",
+            subtitle: json.data.rightFormSection.subtitle ?? "",
+            miniBannerImage: json.data.rightFormSection.miniBannerImage || "",
+          });
+        }
+        setMiniBannerFile(null);
+        if (miniBannerInputRef.current) {
+          miniBannerInputRef.current.value = "";
+        }
         showNotification("success", "Right Form section saved!");
       } else {
         showNotification("error", json.message || "Failed to save settings.");
@@ -980,6 +1040,7 @@ export default function AdminFestivalPage() {
                   Upload Form Mini Banner Image (Optional)
                 </label>
                 <input
+                  ref={miniBannerInputRef}
                   type="file"
                   accept="image/*"
                   onChange={(e) => setMiniBannerFile(e.target.files[0])}
@@ -1001,14 +1062,12 @@ export default function AdminFestivalPage() {
                     />
                     <button
                       type="button"
-                      onClick={() => {
-                        setFormSectionSettings((prev) => ({ ...prev, miniBannerImage: "" }));
-                        setMiniBannerFile(null);
-                      }}
-                      className="px-3 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-semibold rounded-lg flex items-center gap-1"
+                      disabled={saving}
+                      onClick={handleDeleteMiniBanner}
+                      className="px-3 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-semibold rounded-lg flex items-center gap-1 disabled:opacity-50"
                     >
                       <Icon icon="mdi:trash-can" className="w-3.5 h-3.5" />
-                      Remove Mini Banner Image
+                      Delete Mini Banner
                     </button>
                   </>
                 ) : (

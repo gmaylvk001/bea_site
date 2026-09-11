@@ -1600,9 +1600,12 @@ export default function StoreDetail() {
           {/* Nearby Stores — dynamic */}
           <div className="bea-card">
             <h3 className="text-[14px] font-bold mb-3" style={{ color: "#2957a4" }}>More BEA Stores Near You</h3>
-            {store.nearbyStores?.length > 0 ? (
+            {store.nearbyStores?.filter((ns) => ns?.name?.trim() || ns?.address?.trim()).length > 0 ? (
               <div className="space-y-2.5">
-                {store.nearbyStores.slice(0, 3).map((ns, i) => (
+                {store.nearbyStores
+                  .filter((ns) => ns?.name?.trim() || ns?.address?.trim())
+                  .slice(0, 3)
+                  .map((ns, i) => (
                   <div key={i} className="flex items-center gap-2.5 border border-gray-200 rounded-lg p-2.5">
                     <div className="flex-shrink-0 w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
                       <StoreFrontIcon size={18} color="#2957a4" />
@@ -1611,21 +1614,27 @@ export default function StoreDetail() {
                       <div className="text-[13px] sm:text-[14px] font-semibold text-gray-900 truncate">{ns.name}</div>
                       <div className="text-[11px] text-gray-500">{ns.address || ns.city}</div>
                     </div>
-                    {ns.distance && (
-                      <span className="text-[12px] text-blue-700 font-semibold flex-shrink-0 whitespace-nowrap">{ns.distance}</span>
+                    {ns.slug ? (
+                      <Link
+                        href={`/store/${ns.slug}`}
+                        className="flex-shrink-0 border border-blue-600 text-blue-600 bg-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                      >
+                        View Store
+                      </Link>
+                    ) : (
+                      <button className="flex-shrink-0 border border-blue-600 text-blue-600 bg-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
+                        View Store
+                      </button>
                     )}
-                    <button className="flex-shrink-0 border border-blue-600 text-blue-600 bg-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-                      View Store
-                    </button>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="space-y-2.5">
                 {[
-                  { name: "BEA Trichy Road", city: "Coimbatore", dist: "4.3 km" },
-                  { name: "BEA 100 Feet Road", city: "Coimbatore", dist: "5.8 km" },
-                  { name: "BEA Gandhipuram", city: "Coimbatore", dist: "6.1 km" },
+                  { name: "BEA Trichy Road", city: "Coimbatore" },
+                  { name: "BEA 100 Feet Road", city: "Coimbatore" },
+                  { name: "BEA Gandhipuram", city: "Coimbatore" },
                 ].map((ns, i) => (
                   <div key={i} className="flex items-center gap-2.5 border border-gray-200 rounded-lg p-2.5">
                     <div className="flex-shrink-0 w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
@@ -1635,7 +1644,6 @@ export default function StoreDetail() {
                       <div className="text-[13px] sm:text-[14px] font-semibold text-gray-900">{ns.name}</div>
                       <div className="text-[11px] text-gray-500">{ns.city}</div>
                     </div>
-                    <span className="text-[12px] text-blue-700 font-semibold flex-shrink-0 whitespace-nowrap">{ns.dist}</span>
                     <button className="flex-shrink-0 border border-blue-600 text-blue-600 bg-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
                       View Store
                     </button>

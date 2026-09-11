@@ -162,6 +162,26 @@ const isCategoryTelevision = (category) => {
     name.startsWith('tv ');
 };
 
+const TELEVISION_UNIQUE_FILTERS_ROW1 = [
+  { id: '68ad48b142f3d7cbe1c8d8d0', name: 'OLED', group: 'DISPLAY TECHNOLOGY' },
+  { id: '68ad48bd42f3d7cbe1c8d8d5', name: 'QLED', group: 'DISPLAY TECHNOLOGY' },
+  { id: '695f5838bff076aaaca3d061', name: 'Mini LED', group: 'DISPLAY TECHNOLOGY' },
+  { id: '69e626c109232fd7bb50245e', name: 'Ultra HD', group: 'DISPLAY TECHNOLOGY' },
+  { id: '69e6266409232fd7bb501359', name: 'FULL HD', group: 'DISPLAY TECHNOLOGY' },
+  { id: '69e6268109232fd7bb5013c8', name: 'HD Ready', group: 'DISPLAY TECHNOLOGY' },
+];
+
+const TELEVISION_UNIQUE_FILTERS_ROW2 = [
+  { id: '695f570fbff076aaaca3be10', name: '32 inches to 39 inches', group: 'SCREEN SIZE' },
+  { id: '695f5721bff076aaaca3be1c', name: '40 inches to 49 inches', group: 'SCREEN SIZE' },
+  { id: '695f572dbff076aaaca3c71a', name: '50 inches to 59 inches', group: 'SCREEN SIZE' },
+  { id: '695f5739bff076aaaca3c720', name: '60 inches to 69 inches', group: 'SCREEN SIZE' },
+  { id: '695f5743bff076aaaca3c726', name: '70 inches to 79 inches', group: 'SCREEN SIZE' },
+  { id: '695f574ebff076aaaca3c72c', name: '80 inches to 89 inches', group: 'SCREEN SIZE' },
+  { id: '695f5758bff076aaaca3c73b', name: '90 inches to 99 inches', group: 'SCREEN SIZE' },
+  { id: '69e37dc9bb8b7014f1607897', name: '100 inches to 115 inches', group: 'SCREEN SIZE' },
+];
+
 const HEADER_ACTION_LINK_CLASS =
   "group flex flex-col items-center gap-0.5 rounded-lg px-1.5 py-1 transition-all duration-200 hover:bg-orange-50 hover:-translate-y-0.5 active:translate-y-0 active:scale-95";
 const HEADER_ACTION_ICON_CLASS =
@@ -2684,7 +2704,107 @@ const Header = () => {
         return (
           <div style={{ display: 'flex', alignItems: 'stretch', flex: 1, minHeight: '420px' }}>
             <div style={{ flex: 1, padding: '16px 20px', minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '420px' }}>
-              {activeSub ? (
+              {isTelevision ? (
+                <div style={{ flex: 1, minHeight: 0 }}>
+                  <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+                    {/* Column 1: Television Child Categories */}
+                    {renderListColumn(
+                      getSubListItems(hoveredCategory.subcategories?.[0]) || [],
+                      `${hoveredCategory._id}-col-child`,
+                      {
+                        showBorder: true,
+                        padLeft: false,
+                        header: (
+                          <Link
+                            href={`/category/${hoveredCategory.category_slug}/${hoveredCategory.subcategories?.[0]?.category_slug || 'television'}`}
+                            onClick={() => setHoveredCategory(null)}
+                            style={{
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              color: '#2453D3',
+                              textDecoration: 'none',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                              marginBottom: '8px',
+                              paddingBottom: '6px',
+                              borderBottom: 'none',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {hoveredCategory.subcategories?.[0]?.category_name || 'Television'}
+                          </Link>
+                        ),
+                      }
+                    )}
+
+                    {/* Column 2: Display Technology */}
+                    {renderListColumn(
+                      TELEVISION_UNIQUE_FILTERS_ROW1.map((filter) => ({
+                        key: filter.id,
+                        label: filter.name,
+                        href: `/category/${hoveredCategory.category_slug || 'televisions'}?filters=${filter.id}`,
+                        kind: 'filter',
+                      })),
+                      `${hoveredCategory._id}-col-display-tech`,
+                      {
+                        showBorder: true,
+                        padLeft: true,
+                        header: (
+                          <span
+                            style={{
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              color: '#2453D3',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                              marginBottom: '8px',
+                              paddingBottom: '6px',
+                              borderBottom: 'none',
+                              whiteSpace: 'nowrap',
+                              display: 'block',
+                            }}
+                          >
+                            Display Technology
+                          </span>
+                        ),
+                      }
+                    )}
+
+                    {/* Column 3: Screen Size */}
+                    {renderListColumn(
+                      TELEVISION_UNIQUE_FILTERS_ROW2.map((filter) => ({
+                        key: filter.id,
+                        label: filter.name,
+                        href: `/category/${hoveredCategory.category_slug || 'televisions'}?filters=${filter.id}`,
+                        kind: 'filter',
+                      })),
+                      `${hoveredCategory._id}-col-screen-size`,
+                      {
+                        showBorder: false,
+                        padLeft: true,
+                        header: (
+                          <span
+                            style={{
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              color: '#2453D3',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                              marginBottom: '8px',
+                              paddingBottom: '6px',
+                              borderBottom: 'none',
+                              whiteSpace: 'nowrap',
+                              display: 'block',
+                            }}
+                          >
+                            Screen Size
+                          </span>
+                        ),
+                      }
+                    )}
+                  </div>
+                </div>
+              ) : activeSub ? (
                 <div style={{ flex: 1, minHeight: 0 }}>
                   <>
                     <div style={{ marginBottom: '10px', paddingBottom: '8px', borderBottom: 'none' }}>

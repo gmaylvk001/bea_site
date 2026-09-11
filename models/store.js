@@ -77,6 +77,7 @@ featuredProducts: [
       {
         name: String,
         address: String,
+        slug: String,
         rating: String,
       },
     ],

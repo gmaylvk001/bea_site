@@ -84,7 +84,7 @@ export default function CreateStoreForm({ storeId = null }) {
     featuredProducts: [], // { image, title }
     offers: [], // { title, validTill, image, description }
     highlights: [], // { image, label }
-    nearbyStores: [], // { name, address, rating }
+    nearbyStores: [], // { name, address, slug }
     businessHours: [], // { day, timing }
     faqs: [{ question: "", answer: "" }], // { question, answer }
     socialTimeline: [], // { media, text, postedOn, thumbnail, thumbnailPreview, thumbnailFile }
@@ -572,7 +572,10 @@ const customerExisting = [];
 formData.append("existing_customer_images", JSON.stringify(customerExisting));
 
     // nearbyStores, businessHours, keyHighlights -> send as JSON
-    formData.append("nearbyStores", JSON.stringify(newStore.nearbyStores || []));
+    const validNearbyStores = (newStore.nearbyStores || []).filter(
+      (s) => (s?.name || "").trim() || (s?.address || "").trim() || (s?.slug || "").trim()
+    );
+    formData.append("nearbyStores", JSON.stringify(validNearbyStores));
     formData.append("businessHours", JSON.stringify(newStore.businessHours || []));
     formData.append("keyHighlights", JSON.stringify(newStore.keyHighlights || []));
     formData.append(
@@ -967,14 +970,22 @@ formData.append("existing_customer_images", JSON.stringify(customerExisting));
             <section className="border rounded p-4">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-semibold">Nearby Stores</h3>
-                <button type="button" onClick={() => addListItem("nearbyStores", { name: "", address: "", rating: "" })} className="px-3 py-1 bg-blue-600 text-white rounded">+ Add</button>
+                <button type="button" onClick={() => addListItem("nearbyStores", { name: "", address: "", slug: "" })} className="px-3 py-1 bg-blue-600 text-white rounded">+ Add</button>
               </div>
 
               {(newStore.nearbyStores || []).map((s, idx) => (
-                <div key={idx} className="grid grid-cols-3 gap-3 mb-3">
-                  <input className="p-2 border rounded" placeholder="Store Name" value={s.name} onChange={(e) => updateListField("nearbyStores", idx, "name", e.target.value)} />
-                  <input className="p-2 border rounded" placeholder="Address" value={s.address} onChange={(e) => updateListField("nearbyStores", idx, "address", e.target.value)} />
-                  <input className="p-2 border rounded" placeholder="Rating" value={s.rating} onChange={(e) => updateListField("nearbyStores", idx, "rating", e.target.value)} />
+                <div key={idx} className="flex flex-col md:flex-row gap-3 mb-3 items-center">
+                  <input className="p-2 border rounded flex-1 w-full" placeholder="Store Name" value={s.name} onChange={(e) => updateListField("nearbyStores", idx, "name", e.target.value)} />
+                  <input className="p-2 border rounded flex-1 w-full" placeholder="Address" value={s.address} onChange={(e) => updateListField("nearbyStores", idx, "address", e.target.value)} />
+                  <input className="p-2 border rounded flex-1 w-full" placeholder="Enter the location id" value={s.slug ?? s.rating ?? ""} onChange={(e) => updateListField("nearbyStores", idx, "slug", e.target.value)} />
+                  <button
+                    type="button"
+                    onClick={() => removeListItem("nearbyStores", idx)}
+                    className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm flex items-center justify-center gap-1 shrink-0 w-full md:w-auto"
+                    title="Cancel"
+                  >
+                    <FaTimes /> Cancel
+                  </button>
                 </div>
               ))}
             </section>

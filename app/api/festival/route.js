@@ -300,18 +300,21 @@ export async function POST(req) {
       else if (action === "update_right_form") {
         const miniBannerFile = formData.get("miniBannerFile");
         const removeMiniBanner = formData.get("removeMiniBanner") === "true";
+        const miniBannerImage = formData.get("miniBannerImage");
         const tagText = formData.get("tagText");
         const titlePrefix = formData.get("titlePrefix");
         const titleHighlight = formData.get("titleHighlight");
         const subtitle = formData.get("subtitle");
 
-        if (removeMiniBanner) {
+        if (removeMiniBanner || miniBannerImage === "") {
           pageData.rightFormSection.miniBannerImage = "";
         } else if (miniBannerFile && miniBannerFile.size > 0) {
           pageData.rightFormSection.miniBannerImage = await saveUploadedFile(
             miniBannerFile,
             "festival/mini_banner"
           );
+        } else if (miniBannerImage !== null && miniBannerImage !== undefined) {
+          pageData.rightFormSection.miniBannerImage = miniBannerImage;
         }
 
         if (tagText !== null) pageData.rightFormSection.tagText = tagText;
@@ -393,6 +396,10 @@ export async function DELETE(req) {
         if (!isNaN(idx) && idx >= 0 && idx < pageData.topBanners.length) {
           pageData.topBanners.splice(idx, 1);
         }
+      }
+    } else if (type === "mini_banner") {
+      if (pageData.rightFormSection) {
+        pageData.rightFormSection.miniBannerImage = "";
       }
     } else {
       if (id) {
