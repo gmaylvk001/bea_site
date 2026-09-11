@@ -8,40 +8,70 @@ export async function POST(req) {
   try {
     await connectDB();
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { email, otp, newPassword } = body;
 
-    if (!email || !otp || !newPassword) {
-      return NextResponse.json({ message: "All fields are required." }, { status: 400 });
+    const cleanEmail = (email || "").trim().toLowerCase();
+    const cleanOtp = (otp || "").toString().trim();
+
+    if (!cleanEmail || !cleanOtp || !newPassword) {
+      return NextResponse.json(
+        { success: false, message: "All fields are required.", error: "All fields are required." },
+        { status: 400 }
+      );
     }
 
-    // Check OTP
-    const otpRecord = await Otp.findOne({ email, otp });
+    const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const otpRecord = await Otp.findOne({
+      email: { $regex: new RegExp(`^${escapedEmail}$`, "i") },
+      otp: cleanOtp,
+    });
+
     if (!otpRecord) {
-      return NextResponse.json({ message: "Invalid OTP." }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Invalid OTP.", error: "Invalid OTP." },
+        { status: 400 }
+      );
     }
 
     if (otpRecord.expiresAt < new Date()) {
-      return NextResponse.json({ message: "OTP expired." }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "OTP expired.", error: "OTP expired." },
+        { status: 400 }
+      );
     }
 
-    // Find user
-    const user = await User.findOne({ email });
+    // Find user with case-insensitive email
+    const user = await User.findOne({
+      email: { $regex: new RegExp(`^${escapedEmail}$`, "i") },
+    });
+
     if (!user) {
-      return NextResponse.json({ message: "User not found." }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "User not found.", error: "User not found." },
+        { status: 400 }
+      );
     }
 
-    // Hash password
+    // Hash password and save
     const hashed = await bcrypt.hash(newPassword, 10);
     user.password = hashed;
     await user.save();
 
     // Remove OTP
-    await Otp.deleteOne({ _id: otpRecord._id });
+    await Otp.deleteMany({
+      email: { $regex: new RegExp(`^${escapedEmail}$`, "i") },
+    });
 
-    return NextResponse.json({ message: "Password reset successfully." });
+    return NextResponse.json({
+      success: true,
+      message: "Password reset successfully.",
+    });
   } catch (error) {
     console.error("Reset password error:", error);
-    return NextResponse.json({ message: "Server error." }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Server error.", error: error.message || "Server error." },
+      { status: 500 }
+    );
   }
 }

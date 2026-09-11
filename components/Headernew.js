@@ -2175,11 +2175,11 @@ const Header = () => {
                                             const res = await fetch('/api/auth/request-reset', {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ email: forgotPasswordEmail }),
+                                                body: JSON.stringify({ email: (forgotPasswordEmail || '').trim() }),
                                             });
                                             const data = await res.json();
-                                            if (!res.ok) throw new Error(data.message || 'Error sending OTP');
-                                            setForgotPasswordMessage('OTP sent to your email.');
+                                            if (!res.ok) throw new Error(data.message || data.error || 'Error sending OTP');
+                                            setForgotPasswordMessage(data.message || 'OTP sent to your email.');
                                             setForgotStep(2);
                                         } catch (err) {
                                             setForgotPasswordError(err.message);
@@ -2229,13 +2229,13 @@ const Header = () => {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 body: JSON.stringify({
-                                                    email: forgotPasswordEmail,
-                                                    otp: forgotOTP,
+                                                    email: (forgotPasswordEmail || '').trim(),
+                                                    otp: (forgotOTP || '').trim(),
                                                 }),
                                             });
                                             const data = await res.json();
-                                            if (!res.ok) throw new Error(data.message || 'Invalid OTP');
-                                            setForgotPasswordMessage('OTP verified. Please set your new password.');
+                                            if (!res.ok) throw new Error(data.message || data.error || 'Invalid OTP');
+                                            setForgotPasswordMessage(data.message || 'OTP verified. Please set your new password.');
                                             setForgotStep(3);
                                         } catch (err) {
                                             setForgotPasswordError(err.message);
@@ -2275,16 +2275,16 @@ const Header = () => {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 body: JSON.stringify({
-                                                    email: forgotPasswordEmail,
-                                                    otp: forgotOTP,
+                                                    email: (forgotPasswordEmail || '').trim(),
+                                                    otp: (forgotOTP || '').trim(),
                                                     newPassword,
                                                 }),
                                             });
 
                                             const data = await res.json();
-                                            if (!res.ok) throw new Error(data.message || 'Error resetting password');
+                                            if (!res.ok) throw new Error(data.message || data.error || 'Error resetting password');
 
-                                            setForgotPasswordMessage('Password reset successful.');
+                                            setForgotPasswordMessage(data.message || 'Password reset successful.');
                                             setTimeout(() => {
                                                 setShowForgotPasswordModal(false);
                                                 setShowAuthModal(true); // reopen login
