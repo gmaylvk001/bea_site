@@ -1,7 +1,7 @@
 // 'use client';
 import Link from "next/link";
 import Image from 'next/image';
-import { FiSearch, FiMapPin, FiHeart, FiShoppingCart, FiUser, FiMenu, FiX, FiPhoneCall, FiMessageSquare, FiChevronRight } from "react-icons/fi";
+import { FiSearch, FiMapPin, FiHeart, FiShoppingCart, FiUser, FiMenu, FiX, FiPhoneCall, FiMessageSquare, FiChevronRight, FiEye, FiEyeOff } from "react-icons/fi";
 import { FaBars, FaShoppingBag, FaUserShield, FaSearch } from "react-icons/fa";
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
@@ -637,6 +637,9 @@ const Header = () => {
     // New password inputs
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showAuthPassword, setShowAuthPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     // Close mobile menu when clicking outside
 
     const handleClickOutside = (event) => {
@@ -2016,14 +2019,14 @@ const Header = () => {
                 {showAuthModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white rounded-lg p-8 w-96 max-w-full relative">
-                            <button onClick={() => { setShowAuthModal(false); setFormError(''); setError(''); setErrors({ login: {}, register: {} }); setLoginData({ email: "", password: "" }); setRegisterData({ name: "", email: "", mobile: "", password: "" }); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl" aria-label="Close login dialog">
+                            <button onClick={() => { setShowAuthModal(false); setShowAuthPassword(false); setFormError(''); setError(''); setErrors({ login: {}, register: {} }); setLoginData({ email: "", password: "" }); setRegisterData({ name: "", email: "", mobile: "", password: "" }); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl" aria-label="Close login dialog">
                                 &times;
                             </button>
                             <div className="flex gap-4 mb-6 border-b">
-                                <button className={`pb-2 px-1 ${activeTab === 'login' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('login')}>
+                                <button className={`pb-2 px-1 ${activeTab === 'login' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => { setActiveTab('login'); setShowAuthPassword(false); }}>
                                     Login
                                 </button>
-                                <button className={`pb-2 px-1 ${activeTab === 'register' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('register')}>
+                                <button className={`pb-2 px-1 ${activeTab === 'register' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => { setActiveTab('register'); setShowAuthPassword(false); }}>
                                     Register
                                 </button>
                             </div>
@@ -2061,8 +2064,8 @@ const Header = () => {
                                 }
                                 onChange={(e) =>
                                   activeTab === "login"
-                                    ? setLoginData({ ...loginData, email: e.target.value })
-                                    : setRegisterData({ ...registerData, email: e.target.value })
+                                    ? setLoginData({ ...loginData, email: e.target.value.toLowerCase() })
+                                    : setRegisterData({ ...registerData, email: e.target.value.toLowerCase() })
                                 }
                                 className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                   errors?.[activeTab]?.email ? "border-red-500" : ""
@@ -2096,23 +2099,33 @@ const Header = () => {
 
                               {/* Password Field */}
                               <label htmlFor="header-auth-password" className="sr-only">Password</label>
-                              <input
-                                id="header-auth-password"
-                                type="password"
-                                placeholder="Password"
-                                value={
-                                  activeTab === "login" ? loginData.password : registerData.password
-                                }
-                                onChange={(e) =>
-                                  activeTab === "login"
-                                    ? setLoginData({ ...loginData, password: e.target.value })
-                                    : setRegisterData({ ...registerData, password: e.target.value })
-                                }
-                                className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  errors?.[activeTab]?.password ? "border-red-500" : ""
-                                }`}
-                                minLength={6}
-                              />
+                              <div className="relative">
+                                <input
+                                  id="header-auth-password"
+                                  type={showAuthPassword ? "text" : "password"}
+                                  placeholder="Password"
+                                  value={
+                                    activeTab === "login" ? loginData.password : registerData.password
+                                  }
+                                  onChange={(e) =>
+                                    activeTab === "login"
+                                      ? setLoginData({ ...loginData, password: e.target.value })
+                                      : setRegisterData({ ...registerData, password: e.target.value })
+                                  }
+                                  className={`w-full px-4 py-2 pr-10 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                    errors?.[activeTab]?.password ? "border-red-500" : ""
+                                  }`}
+                                  minLength={6}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowAuthPassword(!showAuthPassword)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                  aria-label={showAuthPassword ? "Hide password" : "Show password"}
+                                >
+                                  {showAuthPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                                </button>
+                              </div>
                               {errors?.[activeTab]?.password && (
                                 <p className="text-red-500 text-sm">{errors[activeTab].password}</p>
                               )}
@@ -2144,10 +2157,12 @@ const Header = () => {
                                       setShowAuthModal(false);
                                       setShowForgotPasswordModal(true);
                                       setForgotStep(1);
-                                      setForgotPasswordEmail(formData?.email || "");
+                                      setForgotPasswordEmail((loginData?.email || formData?.email || "").toLowerCase());
                                       setForgotOTP("");
                                       setNewPassword("");
                                       setConfirmPassword("");
+                                      setShowNewPassword(false);
+                                      setShowConfirmPassword(false);
                                       setForgotPasswordMessage("");
                                       setForgotPasswordError("");
                                     }}
@@ -2164,7 +2179,7 @@ const Header = () => {
                 {showForgotPasswordModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white rounded-lg p-6 w-96 max-w-full relative">
-                            <button onClick={() => setShowForgotPasswordModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                            <button onClick={() => { setShowForgotPasswordModal(false); setShowNewPassword(false); setShowConfirmPassword(false); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
                             {/* STEP 1: Enter Email */}
                             {forgotStep === 1 && (
                                 <>
@@ -2175,7 +2190,7 @@ const Header = () => {
                                             const res = await fetch('/api/auth/request-reset', {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ email: (forgotPasswordEmail || '').trim() }),
+                                                body: JSON.stringify({ email: (forgotPasswordEmail || '').trim().toLowerCase() }),
                                             });
                                             const data = await res.json();
                                             if (!res.ok) throw new Error(data.message || data.error || 'Error sending OTP');
@@ -2191,7 +2206,7 @@ const Header = () => {
                                             type="email"
                                             placeholder="Enter your email"
                                             value={forgotPasswordEmail}
-                                            onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                                            onChange={(e) => setForgotPasswordEmail(e.target.value.toLowerCase())}
                                             required
                                             className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
@@ -2287,6 +2302,8 @@ const Header = () => {
                                             setForgotPasswordMessage(data.message || 'Password reset successful.');
                                             setTimeout(() => {
                                                 setShowForgotPasswordModal(false);
+                                                setShowNewPassword(false);
+                                                setShowConfirmPassword(false);
                                                 setShowAuthModal(true); // reopen login
                                             }, 1500);
                                         } catch (err) {
@@ -2295,8 +2312,44 @@ const Header = () => {
                                             setForgotPasswordLoading(false);
                                         }
                                     }} className="space-y-4">
-                                        <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                        <input type="password" placeholder="Confirm New Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                        <div className="relative">
+                                            <input 
+                                                type={showNewPassword ? "text" : "password"} 
+                                                placeholder="New Password" 
+                                                value={newPassword} 
+                                                onChange={(e) => setNewPassword(e.target.value)} 
+                                                required 
+                                                minLength={6} 
+                                                className="w-full px-4 py-2 pr-10 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                                aria-label={showNewPassword ? "Hide password" : "Show password"}
+                                            >
+                                                {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                                            </button>
+                                        </div>
+                                        <div className="relative">
+                                            <input 
+                                                type={showConfirmPassword ? "text" : "password"} 
+                                                placeholder="Confirm New Password" 
+                                                value={confirmPassword} 
+                                                onChange={(e) => setConfirmPassword(e.target.value)} 
+                                                required 
+                                                minLength={6} 
+                                                className="w-full px-4 py-2 pr-10 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                                            >
+                                                {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                                            </button>
+                                        </div>
                                         {forgotPasswordError && (
                                             <p className="text-red-500 text-sm">{forgotPasswordError}</p>
                                         )}

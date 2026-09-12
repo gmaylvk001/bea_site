@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useHeaderdetails } from '@/context/HeaderContext';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 export const AuthModal = ({ onClose, onSuccess, error }) => {
   const [activeTab, setActiveTab] = useState('login');
@@ -10,6 +11,7 @@ export const AuthModal = ({ onClose, onSuccess, error }) => {
   const [formData, setFormData] = useState({ email: '', password: '', name: '', mobile: '' });
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
     email: '',
     password: ''
@@ -140,6 +142,7 @@ export const AuthModal = ({ onClose, onSuccess, error }) => {
             }`}
             onClick={() => {
               setActiveTab('login');
+              setShowPassword(false);
               clearErrors();
             }}
           >
@@ -153,6 +156,7 @@ export const AuthModal = ({ onClose, onSuccess, error }) => {
             }`}
             onClick={() => {
               setActiveTab('register');
+              setShowPassword(false);
               clearErrors();
             }}
           >
@@ -180,7 +184,7 @@ export const AuthModal = ({ onClose, onSuccess, error }) => {
               placeholder="Email"
               value={formData.email}
               onChange={(e) => {
-                setFormData({...formData, email: e.target.value});
+                setFormData({...formData, email: e.target.value.toLowerCase()});
                 if (fieldErrors.email) clearErrors();
               }}
               className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -206,20 +210,28 @@ export const AuthModal = ({ onClose, onSuccess, error }) => {
             </div>
           )}
           
-          <div>
+          <div className="relative">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={formData.password}
               onChange={(e) => {
                 setFormData({...formData, password: e.target.value});
                 if (fieldErrors.password) clearErrors();
               }}
-              className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-4 py-2 pr-10 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 fieldErrors.password ? 'border-red-500' : ''
               }`}
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+            </button>
             {fieldErrors.password && (
               <p className="mt-1 text-sm text-red-500">{fieldErrors.password}</p>
             )}

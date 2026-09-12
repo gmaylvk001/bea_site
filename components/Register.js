@@ -5,6 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const schema = yup.object().shape({
   mobile: yup
@@ -27,6 +28,8 @@ export default function Register() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
 
   const onSubmit = async (data) => {
@@ -35,6 +38,9 @@ export default function Register() {
 
     try {
       const { confirmPassword, ...userData } = data; // Remove confirmPassword before sending
+      if (userData.email) {
+        userData.email = userData.email.toLowerCase();
+      }
 
       const res = await fetch("/api/register", {
         method: "POST",
@@ -83,19 +89,58 @@ export default function Register() {
           </div>
           <div className="mb-4">
             <label className="block text-gray-700">Email</label>
-            <input {...register("email")} type="email" className="w-full px-4 py-2 border rounded-lg" placeholder="Enter your email" />
+            <input
+              {...register("email", {
+                onChange: (e) => {
+                  e.target.value = e.target.value.toLowerCase();
+                },
+              })}
+              type="email"
+              className="w-full px-4 py-2 border rounded-lg"
+              placeholder="Enter your email"
+            />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
           </div>
 
           <div className="mb-4">
             <label className="block text-gray-700">Password</label>
-            <input {...register("password")} type="password" className="w-full px-4 py-2 border rounded-lg" placeholder="Enter your password" />
+            <div className="relative">
+              <input
+                {...register("password")}
+                type={showPassword ? "text" : "password"}
+                className="w-full px-4 py-2 pr-10 border rounded-lg"
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
           </div>
 
           <div className="mb-4">
             <label className="block text-gray-700">Confirm Password</label>
-            <input {...register("confirmPassword")} type="password" className="w-full px-4 py-2 border rounded-lg" placeholder="Confirm your password" />
+            <div className="relative">
+              <input
+                {...register("confirmPassword")}
+                type={showConfirmPassword ? "text" : "password"}
+                className="w-full px-4 py-2 pr-10 border rounded-lg"
+                placeholder="Confirm your password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
             {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>}
           </div>
 

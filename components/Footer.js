@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { FaFacebookF, FaInstagram, FaYoutube, FaWhatsapp } from "react-icons/fa";
-import { FiMail, FiPhone, FiMapPin, FiClock } from "react-icons/fi";
+import { FiMail, FiPhone, FiMapPin, FiClock, FiEye, FiEyeOff } from "react-icons/fi";
 import { FaLinkedinIn, FaXTwitter } from "react-icons/fa6";
 import { IoReload, IoStorefront, IoCardOutline, IoShieldCheckmark } from "react-icons/io5";
 import { TbTruckDelivery } from "react-icons/tb";
@@ -28,6 +28,7 @@ const Footer = () => {
   
   // Auth state
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
   const [formData, setFormData] = useState({
     name: '',
@@ -798,7 +799,7 @@ const Footer = () => {
                     ? 'border-b-2 border-blue-500 text-blue-600' 
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                onClick={() => setActiveTab('login')}
+                onClick={() => { setActiveTab('login'); setShowPassword(false); }}
               >
                 Login
               </button>
@@ -808,7 +809,7 @@ const Footer = () => {
                     ? 'border-b-2 border-blue-500 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
-                onClick={() => setActiveTab('register')}
+                onClick={() => { setActiveTab('register'); setShowPassword(false); }}
               >
                 Register
               </button>
@@ -834,7 +835,7 @@ const Footer = () => {
                 type="email"
                 placeholder="Email"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) => setFormData({...formData, email: e.target.value.toLowerCase()})}
                 className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
@@ -853,16 +854,26 @@ const Footer = () => {
                 </>
               )}
               <label htmlFor="footer-auth-password" className="sr-only">Password</label>
-              <input
-                id="footer-auth-password"
-                type="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-                minLength={6}
-              />
+              <div className="relative">
+                <input
+                  id="footer-auth-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  className="w-full px-4 py-2 pr-10 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+              </div>
               
               {(formError || error) && (
                 <div className="text-red-500 text-sm">

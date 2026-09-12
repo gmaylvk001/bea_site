@@ -5,6 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const schema = yup.object().shape({
   email: yup.string().required("Email is required").email("Invalid email format"),
@@ -66,7 +67,16 @@ export default function Login() {
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-4">
             <label className="block text-gray-700">Email</label>
-            <input {...register("email")} type="email" className="w-full px-4 py-2 border rounded-lg" placeholder="Enter your email" />
+            <input
+              {...register("email", {
+                onChange: (e) => {
+                  e.target.value = e.target.value.toLowerCase();
+                },
+              })}
+              type="email"
+              className="w-full px-4 py-2 border rounded-lg"
+              placeholder="Enter your email"
+            />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
           </div>
 
@@ -75,11 +85,16 @@ export default function Login() {
             <input
               {...register("password")}
               type={showPassword ? "text" : "password"}
-              className="w-full px-4 py-2 border rounded-lg"
+              className="w-full px-4 py-2 pr-10 border rounded-lg"
               placeholder="Enter your password"
             />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-9 text-gray-500">
-              {showPassword ? "🙈" : "👁️"}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
             </button>
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
           </div>
