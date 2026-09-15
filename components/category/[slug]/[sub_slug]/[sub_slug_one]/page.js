@@ -86,6 +86,7 @@ export default function CategoryPage() {
 
   const [currentCategoryBannerIndex, setCurrentCategoryBannerIndex] = useState(0);
   const [nofound,setNofound]=useState(false);
+  const isFirstLoadDone = useRef(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -186,8 +187,8 @@ const handleShare = async (product) => {
 
       // Read query params from URL if present
       const urlParams = new URLSearchParams(window.location.search);
-      const urlBrands = urlParams.get("brands") ? urlParams.get("brands").split(",").filter(Boolean) : [];
-      const urlFilters = urlParams.get("filters") ? urlParams.get("filters").split(",").filter(Boolean) : [];
+      const urlBrands = (urlParams.get("brands") || "").split(",").filter(Boolean);
+      const urlFilters = (urlParams.get("filters") || "").split(",").filter(Boolean);
       const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
       const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
       const urlSort = urlParams.get("sort") || "";
@@ -251,11 +252,7 @@ const handleShare = async (product) => {
       setFilterGroups(groups);
 
       if (categoryData.products?.length > 0) {
-        // Pass computed price so first fetch is not stuck at default max 100000
-        await fetchFilteredProducts(categoryData, 1, true, {
-          min: minPrice,
-          max: maxPrice,
-        });
+        await fetchFilteredProducts(categoryData, 1, true, initialFilters, urlSort);
       } else {
         setProducts([]);
         setNofound(true);
@@ -282,31 +279,34 @@ const handleShare = async (product) => {
   // }, [hasMore, products.length]);
 
   // const fetchFilteredProducts = async (categoryId) => {
-    const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false, priceOverride = null) => {
+    const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false, filtersOverride = null, sortOverride = null) => {
     try {
       setLoading(true);
       const query = new URLSearchParams();
-   
+      const currentFilters = filtersOverride || selectedFilters;
 
      // query.set('categoryIds', categoryIds.join(','));
       query.set('sub_category_new',  categoryData.category.md5_cat_name);
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
-      if (selectedFilters.brands.length > 0) {
-        query.set('brands', selectedFilters.brands.join(','));
+      if (currentFilters.brands && currentFilters.brands.length > 0) {
+        query.set('brands', currentFilters.brands.join(','));
       }
-      const minPrice = priceOverride?.min ?? selectedFilters.price.min;
-      const maxPrice = priceOverride?.max ?? selectedFilters.price.max;
-      query.set('minPrice', minPrice);
-      query.set('maxPrice', maxPrice);
+      if (currentFilters.price?.min !== undefined && currentFilters.price?.min !== null) {
+        query.set('minPrice', currentFilters.price.min);
+      }
+      if (currentFilters.price?.max !== undefined && currentFilters.price?.max !== null) {
+        query.set('maxPrice', currentFilters.price.max);
+      }
       
-if (selectedFilters.filters.length > 0) {
-        query.set('filters', selectedFilters.filters.join(','));
+      if (currentFilters.filters && currentFilters.filters.length > 0) {
+        query.set('filters', currentFilters.filters.join(','));
       }
 
-       if (sortOption) {
-        query.set('sort', sortOption);
+      const activeSort = sortOverride !== null && sortOverride !== undefined ? sortOverride : sortOption;
+      if (activeSort) {
+        query.set('sort', activeSort);
       }
 
       //const res = await fetch(`/api/product/filter/main?${query}`);
@@ -513,6 +513,10 @@ const getSortedProducts = () => {
 
 useEffect(() => {
     if (categoryData.category?._id) {
+      if (!isFirstLoadDone.current) {
+        isFirstLoadDone.current = true;
+        return;
+      }
       updateUrlParams(selectedFilters, sortOption);
       setPage(1);
       fetchFilteredProducts(categoryData, 1);

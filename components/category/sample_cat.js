@@ -38,6 +38,7 @@ export default function CategoryPrimaryPage(params) {
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [filterGroups, setFilterGroups] = useState({});
   const [loading, setLoading] = useState(true);
+  const [isFiltering, setIsFiltering] = useState(false);
   const { slug } = useParams();
   const [sortOption, setSortOption] = useState('');
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
@@ -67,6 +68,7 @@ export default function CategoryPrimaryPage(params) {
   };
   const [nofound, setNofound] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const isFirstLoadDone = useRef(false);
   // const [currentCategoryBannerIndex, setCurrentCategoryBannerIndex] = useState(0);
   
   // Pagination state
@@ -108,23 +110,45 @@ const fetchInitialData = async () => {
       banners: categoryData.main_category?.banners || []
     });
 
+    // Read query params from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlBrands = (urlParams.get("brands") || "").split(",").filter(Boolean);
+    const urlFilters = (urlParams.get("filters") || "").split(",").filter(Boolean);
+    const urlCategories = (urlParams.get("categories") || urlParams.get("categoryIds") || "").split(",").filter(Boolean);
+    const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
+    const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
+    const urlSort = urlParams.get("sort") || "";
+    if (urlSort) {
+      setSortOption(urlSort);
+    }
+
+    let minPrice = 0;
+    let maxPrice = 100000;
+
     // Price range logic
     if (categoryData.products?.length > 0) {
       const prices = categoryData.products.map(p => p.special_price || p.price);
-      let minPrice = Math.min(...prices);
-      let maxPrice = Math.max(...prices);
+      minPrice = Math.min(...prices);
+      maxPrice = Math.max(...prices);
 
       if (minPrice === maxPrice) {
         minPrice = Math.max(1, minPrice - 100);
         maxPrice = maxPrice + 100;
       }
-
-      setPriceRange([minPrice, maxPrice]);
-      setSelectedFilters(prev => ({
-        ...prev,
-        price: { min: minPrice, max: maxPrice }
-      }));
     }
+
+    setPriceRange([minPrice, maxPrice]);
+
+    const activeMin = urlMinPrice !== null ? urlMinPrice : minPrice;
+    const activeMax = urlMaxPrice !== null ? urlMaxPrice : maxPrice;
+
+    const initialFilters = {
+      categories: urlCategories,
+      brands: urlBrands,
+      price: { min: activeMin, max: activeMax },
+      filters: urlFilters
+    };
+    setSelectedFilters(initialFilters);
 
     // IMPROVED FILTER GROUPING LOGIC
     if (categoryData.filters && categoryData.filters.length > 0) {
@@ -176,7 +200,7 @@ const fetchInitialData = async () => {
       setFilterGroups({});
     }
 
-    await fetchFilteredProducts(categoryData, 1, true);
+    await fetchFilteredProducts(categoryData, 1, true, initialFilters, urlSort);
     
   } catch (error) {
     console.error('💥 Error in fetchInitialData:', error);
@@ -184,6 +208,7 @@ const fetchInitialData = async () => {
     router.push('/noproduct');
   } finally {
     setInitialLoadComplete(true);
+    setLoading(false);
   }
 };
   const [brandMap, setBrandMap] = useState([]);
@@ -213,26 +238,38 @@ const fetchInitialData = async () => {
     fetchBrand();
   }, []);
 
-  const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
+  const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false, filtersOverride = null, sortOverride = null) => {
     try {
-      if (!initialLoad) setLoading(true);
+      if (!initialLoad) setIsFiltering(true);
       const query = new URLSearchParams();
-      const categoryIds = selectedFilters.categories.length > 0
-        ? selectedFilters.categories
+      const currentFilters = filtersOverride || selectedFilters;
+      const categoryIds = (currentFilters.categories && currentFilters.categories.length > 0)
+        ? currentFilters.categories
         : categoryData.allCategoryIds;
 
-      query.set('categoryIds', categoryIds.join(','));
+      if (categoryIds && categoryIds.length > 0) {
+        query.set('categoryIds', categoryIds.join(','));
+      }
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
-      if (selectedFilters.brands.length > 0) {
-        query.set('brands', selectedFilters.brands.join(','));
+      if (currentFilters.brands && currentFilters.brands.length > 0) {
+        query.set('brands', currentFilters.brands.join(','));
       }
-      query.set('minPrice', selectedFilters.price.min);
-      query.set('maxPrice', selectedFilters.price.max);
+      if (currentFilters.price?.min !== undefined && currentFilters.price?.min !== null) {
+        query.set('minPrice', currentFilters.price.min);
+      }
+      if (currentFilters.price?.max !== undefined && currentFilters.price?.max !== null) {
+        query.set('maxPrice', currentFilters.price.max);
+      }
       
-      if (selectedFilters.filters.length > 0) {
-        query.set('filters', selectedFilters.filters.join(','));
+      if (currentFilters.filters && currentFilters.filters.length > 0) {
+        query.set('filters', currentFilters.filters.join(','));
+      }
+
+      const activeSort = sortOverride !== null && sortOverride !== undefined ? sortOverride : sortOption;
+      if (activeSort) {
+        query.set('sort', activeSort);
       }
 
       const res = await fetch(`/api/product/filter/main-cat?${query}`);
@@ -255,13 +292,13 @@ const fetchInitialData = async () => {
         setNofound(false);
       }
     } catch (error) {
-      toast.error('Error fetching products'+error);
-      // Redirect to 404 on error
-      router.push('/noproduct');
+      console.error('Error fetching products:', error);
+      toast.error('Error fetching products. Please try again.');
     } finally {
-      if (!initialLoad) setLoading(false);
+      if (!initialLoad) setIsFiltering(false);
+      setLoading(false);
     }
-  }, [selectedFilters]);
+  }, [selectedFilters, sortOption]);
 
   const handleProductClick = (product) => {
     const stored = JSON.parse(localStorage.getItem('recentlyViewed')) || [];
@@ -416,11 +453,42 @@ const fetchInitialData = async () => {
     );
   };
 
+  const updateUrlParams = useCallback((filtersObj, sortOpt) => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams();
+    if (filtersObj.brands?.length > 0) {
+      params.set("brands", filtersObj.brands.join(","));
+    }
+    if (filtersObj.categories?.length > 0) {
+      params.set("categories", filtersObj.categories.join(","));
+    }
+    if (filtersObj.filters?.length > 0) {
+      params.set("filters", filtersObj.filters.join(","));
+    }
+    if (filtersObj.price?.min !== undefined && filtersObj.price?.min !== priceRange[0]) {
+      params.set("minPrice", filtersObj.price.min);
+    }
+    if (filtersObj.price?.max !== undefined && filtersObj.price?.max !== priceRange[1]) {
+      params.set("maxPrice", filtersObj.price.max);
+    }
+    if (sortOpt) {
+      params.set("sort", sortOpt);
+    }
+    const queryString = params.toString();
+    const newUrl = window.location.pathname + (queryString ? `?${queryString}` : "");
+    window.history.replaceState(null, "", newUrl);
+  }, [priceRange]);
+
   useEffect(() => {
     if (categoryData.main_category && categoryData.category && initialLoadComplete) {
+      if (!isFirstLoadDone.current) {
+        isFirstLoadDone.current = true;
+        return;
+      }
+      updateUrlParams(selectedFilters, sortOption);
       fetchFilteredProducts(categoryData, 1);
     }
-  }, [selectedFilters, categoryData.main_category, categoryData.category, initialLoadComplete]);
+  }, [selectedFilters, sortOption, categoryData.main_category, categoryData.category, initialLoadComplete, updateUrlParams]);
 
   const clearAllFilters = () => {
     setSelectedFilters({
@@ -520,12 +588,16 @@ const fetchInitialData = async () => {
    const [hasFlashContent, setHasFlashContent] = useState(false);
    const [hasCategoryMainContent, setHasCategoryMainContent] = useState(false);
    const [checkingContent, setCheckingContent] = useState(false);
+   const checkedSlugRef = useRef(null);
  
    // Function to check if components have content
-    // Function to check if components have content
   const checkComponentsContent = useCallback(async () => {
     if (!slug) {
       console.log("❌ No slug provided");
+      return;
+    }
+
+    if (checkedSlugRef.current === slug) {
       return;
     }
     
@@ -533,38 +605,25 @@ const fetchInitialData = async () => {
     console.log("🔍 Starting content check for slug:", slug);
     
     try {
-      // Check BannerSlider content
-      // console.log("📋 Checking BannerSlider...");
       const bannerUrl = `/api/main-cat-banner?categorySlug=${slug}`;
-      // console.log("📡 Banner API URL:", bannerUrl);
       const bannerRes = await fetch(bannerUrl);
       const bannerData = await bannerRes.json();
-      // console.log("📦 Banner response:", bannerData);
       const hasBanners = bannerData && bannerData.banners && bannerData.banners.length > 0;
-      // console.log("✅ Banner content found:", hasBanners);
       setHasBannerContent(hasBanners);
 
-      // Check FlashCategorySlider content
-      // console.log("📋 Checking FlashCategorySlider...");
       const flashUrl = `/api/fetchflashcat?categorySlug=${slug}`;
-      // console.log("📡 Flash API URL:", flashUrl);
       const flashRes = await fetch(flashUrl);
       const flashData = await flashRes.json();
-      // console.log("📦 Flash response:", flashData);
       const hasFlash = flashData && flashData.banners && flashData.banners.length > 0;
-      // console.log("✅ Flash content found:", hasFlash);
       setHasFlashContent(hasFlash);
 
-      // Check CategoryMainPage content
-      // console.log("📋 Checking CategoryMainPage...");
       const mainUrl = `/api/main-tird-sec/${slug}`;
-      // console.log("📡 Main API URL:", mainUrl);
       const mainRes = await fetch(mainUrl);
       const mainData = await mainRes.json();
-      // console.log("📦 Main response:", mainData);
       const hasMainContent = mainData && mainData.data && mainData.data.length > 0;
-      // console.log("✅ Main content found:", hasMainContent);
       setHasCategoryMainContent(hasMainContent);
+
+      checkedSlugRef.current = slug;
 
       console.log("📊 Final content check results:", {
         banners: hasBanners,
@@ -573,9 +632,6 @@ const fetchInitialData = async () => {
       });
     } catch (error) {
       console.error("❌ Error checking component content:", error);
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-      // If there's an error checking, assume no content
       setHasBannerContent(false);
       setHasFlashContent(false);
       setHasCategoryMainContent(false);
@@ -600,7 +656,7 @@ const fetchInitialData = async () => {
 
  
    // Show loader while checking content or loading
-   if (checkingContent || loading || !initialLoadComplete) {
+  if (checkingContent || !initialLoadComplete) {
      return (
        <div className="container mx-auto px-4 py-8">
          <div className="flex justify-center items-center h-64">

@@ -39,9 +39,14 @@ export async function GET(req) {
     }
 
     // Category filter
+    const categoriesParam = searchParams.get("categories");
     if (category) {
+      const isObjectId = mongoose.Types.ObjectId.isValid(category);
       const categoryDoc = await Category.findOne({
-        category_name: { $regex: `^${category}$`, $options: "i" },
+        $or: [
+          ...(isObjectId ? [{ _id: new mongoose.Types.ObjectId(category) }] : []),
+          { category_name: { $regex: `^${category}$`, $options: "i" } },
+        ],
       }).lean();
 
       if (categoryDoc) {
@@ -61,6 +66,40 @@ export async function GET(req) {
         query.$or = [
           { category: { $in: allCategoryIds } },
           { sub_category: { $in: allCategoryIds } },
+        ];
+      }
+    } else if (categoriesParam) {
+      const catList = categoriesParam.split(",").filter(Boolean);
+      const catObjectIds = catList
+        .filter((c) => mongoose.Types.ObjectId.isValid(c))
+        .map((c) => new mongoose.Types.ObjectId(c));
+      const catDocs = await Category.find({
+        $or: [
+          ...(catObjectIds.length > 0 ? [{ _id: { $in: catObjectIds } }] : []),
+          { category_name: { $in: catList } },
+        ],
+      }).lean();
+
+      if (catDocs.length > 0) {
+        const getAllChildIds = async (parentId) => {
+          const children = await Category.find({ parentid: parentId }).lean();
+          let ids = [new mongoose.Types.ObjectId(parentId.toString())];
+          for (const child of children) {
+            const childIds = await getAllChildIds(child._id);
+            ids = ids.concat(childIds);
+          }
+          return ids;
+        };
+
+        let allIds = [];
+        for (const doc of catDocs) {
+          const childIds = await getAllChildIds(doc._id);
+          allIds = allIds.concat(childIds);
+        }
+
+        query.$or = [
+          { category: { $in: allIds } },
+          { sub_category: { $in: allIds } },
         ];
       }
     }

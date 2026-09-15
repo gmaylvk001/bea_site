@@ -24,6 +24,15 @@ export async function GET(req) {
     if (filterGroupsParam) {
       try { filterGroupsMap = JSON.parse(filterGroupsParam); } catch (e) { filterGroupsMap = {}; }
     }
+    if (Object.keys(filterGroupsMap).length === 0) {
+      const filterIdsParam = searchParams.get('filters');
+      if (filterIdsParam) {
+        const filterIds = filterIdsParam.split(',').filter(Boolean);
+        if (filterIds.length > 0) {
+          filterGroupsMap = { default_group: filterIds };
+        }
+      }
+    }
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 12;
     const sort = searchParams.get('sort') || 'featured';

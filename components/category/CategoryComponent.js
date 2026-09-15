@@ -98,6 +98,7 @@ export default function CategoryPage(params) {
   };
   const [nofound, setNofound] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const isFirstLoadDone = useRef(false);
   const [currentCategoryBannerIndex, setCurrentCategoryBannerIndex] = useState(0);
   
   // Pagination state
@@ -162,9 +163,9 @@ const fetchInitialData = async () => {
 
     // Read query params from URL if present
     const urlParams = new URLSearchParams(window.location.search);
-    const urlBrands = urlParams.get("brands") ? urlParams.get("brands").split(",").filter(Boolean) : [];
-    const urlFilters = urlParams.get("filters") ? urlParams.get("filters").split(",").filter(Boolean) : [];
-    const urlCategories = urlParams.get("categories") ? urlParams.get("categories").split(",").filter(Boolean) : [];
+    const urlBrands = (urlParams.get("brands") || "").split(",").filter(Boolean);
+    const urlFilters = (urlParams.get("filters") || "").split(",").filter(Boolean);
+    const urlCategories = (urlParams.get("categories") || urlParams.get("categoryIds") || "").split(",").filter(Boolean);
     const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
     const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
     const urlSort = urlParams.get("sort") || "";
@@ -191,12 +192,13 @@ const fetchInitialData = async () => {
     const activeMin = urlMinPrice !== null ? urlMinPrice : minPrice;
     const activeMax = urlMaxPrice !== null ? urlMaxPrice : maxPrice;
 
-    setSelectedFilters({
+    const initialFilters = {
       categories: urlCategories,
       brands: urlBrands,
       price: { min: activeMin, max: activeMax },
       filters: urlFilters
-    });
+    };
+    setSelectedFilters(initialFilters);
 
     // IMPROVED FILTER GROUPING LOGIC
     if (categoryData.filters && categoryData.filters.length > 0) {
@@ -248,7 +250,7 @@ const fetchInitialData = async () => {
       setFilterGroups({});
     }
 
-    await fetchFilteredProducts(categoryData, 1, true);
+    await fetchFilteredProducts(categoryData, 1, true, initialFilters, urlSort);
     
   } catch (error) {
     console.error('💥 Error in fetchInitialData:', error);
@@ -302,26 +304,38 @@ const fetchInitialData = async () => {
     fetchBrand();
   }, []);
 
-  const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
+  const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false, filtersOverride = null, sortOverride = null) => {
     try {
       if (!initialLoad) setLoading(true);
       const query = new URLSearchParams();
-      const categoryIds = selectedFilters.categories.length > 0
-        ? selectedFilters.categories
+      const currentFilters = filtersOverride || selectedFilters;
+      const categoryIds = (currentFilters.categories && currentFilters.categories.length > 0)
+        ? currentFilters.categories
         : categoryData.allCategoryIds;
 
-      query.set('categoryIds', categoryIds.join(','));
+      if (categoryIds && categoryIds.length > 0) {
+        query.set('categoryIds', categoryIds.join(','));
+      }
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
-      if (selectedFilters.brands.length > 0) {
-        query.set('brands', selectedFilters.brands.join(','));
+      if (currentFilters.brands && currentFilters.brands.length > 0) {
+        query.set('brands', currentFilters.brands.join(','));
       }
-      query.set('minPrice', selectedFilters.price.min);
-      query.set('maxPrice', selectedFilters.price.max);
+      if (currentFilters.price?.min !== undefined && currentFilters.price?.min !== null) {
+        query.set('minPrice', currentFilters.price.min);
+      }
+      if (currentFilters.price?.max !== undefined && currentFilters.price?.max !== null) {
+        query.set('maxPrice', currentFilters.price.max);
+      }
       
-      if (selectedFilters.filters.length > 0) {
-        query.set('filters', selectedFilters.filters.join(','));
+      if (currentFilters.filters && currentFilters.filters.length > 0) {
+        query.set('filters', currentFilters.filters.join(','));
+      }
+
+      const activeSort = sortOverride !== null && sortOverride !== undefined ? sortOverride : sortOption;
+      if (activeSort) {
+        query.set('sort', activeSort);
       }
 
       const res = await fetch(`/api/product/filter/main?${query}`);
@@ -566,6 +580,10 @@ const fetchInitialData = async () => {
 
   useEffect(() => {
     if (categoryData.main_category && categoryData.category && initialLoadComplete) {
+      if (!isFirstLoadDone.current) {
+        isFirstLoadDone.current = true;
+        return;
+      }
       updateUrlParams(selectedFilters, sortOption);
       fetchFilteredProducts(categoryData, 1);
     }

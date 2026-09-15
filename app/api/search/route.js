@@ -155,10 +155,10 @@ export async function GET(req) {
 
     /* --- CATEGORY IDS FILTER --- */
 
-    const categoryIds = (searchParams.get("categoryIds") || "")
+    const categoryIds = (searchParams.get("categoryIds") || searchParams.get("categories") || "")
       .split(",")
       .filter((v) => mongoose.Types.ObjectId.isValid(v));
-    const subcategoryIds = (searchParams.get("subcategoryIds") || "")
+    const subcategoryIds = (searchParams.get("subcategoryIds") || searchParams.get("subcategories") || "")
       .split(",")
       .filter((v) => mongoose.Types.ObjectId.isValid(v));
 

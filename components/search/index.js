@@ -47,15 +47,25 @@ export default function SearchPage() {
   // selected (kept in state and synced to URL)
   const [selectedBrands, setSelectedBrands] = useState(() => (params.get("brands") || "").split(",").filter(Boolean));
   const [selectedFilters, setSelectedFilters] = useState(() => (params.get("filters") || "").split(",").filter(Boolean));
-  const [values, setValues] = useState([0, 500000]); // current slider values
+  const [values, setValues] = useState(() => {
+    const min = params.get("minPrice") ? Number(params.get("minPrice")) : 0;
+    const max = params.get("maxPrice") ? Number(params.get("maxPrice")) : 500000;
+    return [min, max];
+  });
   const [priceRange, setPriceRange] = useState([0, 500000]); // available min/max
- const [allFiltersFromResults, setAllFiltersFromResults] = useState([]);
+  const [allFiltersFromResults, setAllFiltersFromResults] = useState([]);
   const [brandsExpanded, setBrandsExpanded] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState({});
   const [categoryData, setCategoryData] = useState({ categories: [] });
-const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
-const [selectedCategories, setSelectedCategories] = useState([]);
-const [selectedSubcategories, setSelectedSubcategories] = useState([]);
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
+  const [selectedCategories, setSelectedCategories] = useState(() => {
+    const cats = params.get("categoryIds") || params.get("categories") || "";
+    return cats.split(",").filter(Boolean);
+  });
+  const [selectedSubcategories, setSelectedSubcategories] = useState(() => {
+    const subcats = params.get("subcategoryIds") || params.get("subcategories") || "";
+    return subcats.split(",").filter(Boolean);
+  });
 
   const [page, setPage] = useState(urlPage);
 
@@ -63,14 +73,16 @@ const [selectedSubcategories, setSelectedSubcategories] = useState([]);
   useEffect(() => {
     const b = (params.get("brands") || "").split(",").filter(Boolean);
     const f = (params.get("filters") || "").split(",").filter(Boolean);
+    const cats = (params.get("categoryIds") || params.get("categories") || "").split(",").filter(Boolean);
+    const subcats = (params.get("subcategoryIds") || params.get("subcategories") || "").split(",").filter(Boolean);
     const p = Number(params.get("page") || 1);
     const min = params.get("minPrice") ? Number(params.get("minPrice")) : null;
     const max = params.get("maxPrice") ? Number(params.get("maxPrice")) : null;
 
-    
-
     setSelectedBrands(b);
     setSelectedFilters(f);
+    setSelectedCategories(cats);
+    setSelectedSubcategories(subcats);
     setPage(p);
 
     if (min !== null && max !== null) {
@@ -502,8 +514,36 @@ useEffect(() => {
         <h1 className="text-3xl font-bold mb-3 text-gray-600">Search Results {category && `in ${category}`} {searchQuery && `for '${searchQuery}'`}</h1>
 
         {/* Applied Filter Chips */}
-        {(selectedBrands.length > 0 || selectedFilters.length > 0 || hasActivePriceFilter) && (
+        {(selectedBrands.length > 0 || selectedFilters.length > 0 || hasActivePriceFilter || selectedCategories.length > 0 || selectedSubcategories.length > 0) && (
           <div className="flex flex-wrap gap-2 mb-4">
+            {selectedCategories.map((id) => {
+              const cat = categoryData.categories.find((c) => String(c._id) === String(id));
+              const label = cat ? getCategoryLabel(cat) : id;
+              return (
+                <span key={`chip-cat-${id}`} className="flex items-center gap-2 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs">
+                  {label}
+                  <button onClick={() => handleCategoryFilterChange("reset")} className="ml-1 font-bold">×</button>
+                </span>
+              );
+            })}
+
+            {selectedSubcategories.map((id) => {
+              let label = id;
+              for (const cat of categoryData.categories) {
+                const sub = (cat.subCategories || []).find((s) => String(s._id) === String(id));
+                if (sub) {
+                  label = getCategoryLabel(sub);
+                  break;
+                }
+              }
+              return (
+                <span key={`chip-subcat-${id}`} className="flex items-center gap-2 bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs">
+                  {label}
+                  <button onClick={() => handleCategoryFilterChange("allChildren", selectedCategories[0])} className="ml-1 font-bold">×</button>
+                </span>
+              );
+            })}
+
             {selectedBrands.map((id) => (
               <span key={`chip-brand-${id}`} className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs">
                 {brandMap[id] || id}

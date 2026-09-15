@@ -71,6 +71,7 @@ export default function BrandPage() {
     setExpandedFilters(prev => ({ ...prev, [id]: !prev[id] }));
   };
   const [nofound, setNofound] = useState(false);
+  const isFirstLoadDone = useRef(false);
 
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -107,9 +108,9 @@ export default function BrandPage() {
 
       // Read query params from URL if present
       const urlParams = new URLSearchParams(window.location.search);
-      const urlFilters = urlParams.get("filters") ? urlParams.get("filters").split(",").filter(Boolean) : [];
-      const urlCategories = urlParams.get("categories") ? urlParams.get("categories").split(",").filter(Boolean) : [];
-      const urlSubcategories = urlParams.get("subcategories") ? urlParams.get("subcategories").split(",").filter(Boolean) : [];
+      const urlFilters = (urlParams.get("filters") || "").split(",").filter(Boolean);
+      const urlCategories = (urlParams.get("categories") || urlParams.get("categoryIds") || "").split(",").filter(Boolean);
+      const urlSubcategories = (urlParams.get("subcategories") || urlParams.get("subcategoryIds") || "").split(",").filter(Boolean);
       const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
       const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
       const urlSort = urlParams.get("sort") || "";
@@ -169,6 +170,8 @@ export default function BrandPage() {
         initialExpanded[groupId] = true;
       });
       setExpandedFilters(initialExpanded);
+
+      await fetchFilteredProducts(brandData, 1, true, initialFilters, urlSort);
     } catch (error) {
       toast.error("Error fetching initial data");
     } finally {
@@ -233,36 +236,42 @@ export default function BrandPage() {
     }
   }, [brandData.brand?.banners]);
 
-  const fetchFilteredProducts = useCallback(async (brandData, pageNum = 1, initialLoad = false) => {
+  const fetchFilteredProducts = useCallback(async (brandData, pageNum = 1, initialLoad = false, filtersOverride = null, sortOverride = null) => {
     try {
-      setLoading(true);
+      if (!initialLoad) setIsFiltering(true);
       const query = new URLSearchParams();
+      const currentFilters = filtersOverride || selectedFilters;
       
       // Always filter by the current brand
       query.set('brands', brandData.brand._id);
       
       // Add category filters if any
-      if (selectedFilters.categories.length > 0) {
-        query.set('categoryIds', selectedFilters.categories.join(','));
+      if (currentFilters.categories && currentFilters.categories.length > 0) {
+        query.set('categoryIds', currentFilters.categories.join(','));
       }
       
       // Add subcategory filters if any
-      if (selectedFilters.subcategories.length > 0) {
-        query.set('subcategoryIds', selectedFilters.subcategories.join(','));
+      if (currentFilters.subcategories && currentFilters.subcategories.length > 0) {
+        query.set('subcategoryIds', currentFilters.subcategories.join(','));
       }
       
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
-      query.set('minPrice', selectedFilters.price.min);
-      query.set('maxPrice', selectedFilters.price.max);
+      if (currentFilters.price?.min !== undefined && currentFilters.price?.min !== null) {
+        query.set('minPrice', currentFilters.price.min);
+      }
+      if (currentFilters.price?.max !== undefined && currentFilters.price?.max !== null) {
+        query.set('maxPrice', currentFilters.price.max);
+      }
       
-      if (selectedFilters.filters.length > 0) {
-        query.set('filters', selectedFilters.filters.join(','));
+      if (currentFilters.filters && currentFilters.filters.length > 0) {
+        query.set('filters', currentFilters.filters.join(','));
       }
 
-      if (sortOption) {
-        query.set('sort', sortOption);
+      const activeSort = sortOverride !== null && sortOverride !== undefined ? sortOverride : sortOption;
+      if (activeSort) {
+        query.set('sort', activeSort);
       }
 
       const res = await fetch(`/api/product/filter/brand/main?${query}`);
@@ -619,6 +628,10 @@ export default function BrandPage() {
 
   useEffect(() => {
     if (brandData.brand) {
+      if (!isFirstLoadDone.current) {
+        isFirstLoadDone.current = true;
+        return;
+      }
       updateUrlParams(selectedFilters, sortOption);
       fetchFilteredProducts(brandData, 1);
     }

@@ -130,6 +130,7 @@ const CUSTOM_FILTER_ORDER = [
     totalProducts: 0
   });
   const itemsPerPage = 24;
+  const isFirstLoadDone = useRef(false);
 
 
 
@@ -197,9 +198,9 @@ const scroll = (direction) => {
     }
     // Read query params from URL if present
     const urlParams = new URLSearchParams(window.location.search);
-    const urlBrands = urlParams.get("brands") ? urlParams.get("brands").split(",").filter(Boolean) : [];
-    const urlFilters = urlParams.get("filters") ? urlParams.get("filters").split(",").filter(Boolean) : [];
-    const urlCategories = urlParams.get("categories") ? urlParams.get("categories").split(",").filter(Boolean) : [];
+    const urlBrands = (urlParams.get("brands") || "").split(",").filter(Boolean);
+    const urlFilters = (urlParams.get("filters") || "").split(",").filter(Boolean);
+    const urlCategories = (urlParams.get("categories") || urlParams.get("categoryIds") || "").split(",").filter(Boolean);
     const urlMinPrice = urlParams.get("minPrice") !== null && !isNaN(urlParams.get("minPrice")) ? Number(urlParams.get("minPrice")) : null;
     const urlMaxPrice = urlParams.get("maxPrice") !== null && !isNaN(urlParams.get("maxPrice")) ? Number(urlParams.get("maxPrice")) : null;
     const urlSort = urlParams.get("sort") || "";
@@ -270,7 +271,7 @@ Object.keys(groups).forEach(key => {
 
       setFilterGroups(groups);
       if (categoryData.products?.length > 0) {
-      await fetchFilteredProducts(categoryData, 1, true);
+      await fetchFilteredProducts(categoryData, 1, true, initialFilters, groups, urlSort);
       }else{
         // Redirect to 404 if no products found
         router.push('/noproduct');
@@ -284,12 +285,13 @@ Object.keys(groups).forEach(key => {
     }
   };
  
-  const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false) => {
+  const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, initialLoad = false, filtersOverride = null, groupsOverride = null, sortOverride = null) => {
     try {
       setLoading(true);
       const query = new URLSearchParams();
-      const categoryIds = selectedFilters.categories.length > 0
-        ? selectedFilters.categories
+      const currentFilters = filtersOverride || selectedFilters;
+      const categoryIds = currentFilters.categories.length > 0
+        ? currentFilters.categories
         : categoryData.allCategoryIds;
 
       //query.set('categoryIds', categoryIds.join(','));
@@ -306,19 +308,25 @@ Object.keys(groups).forEach(key => {
       query.set('page', pageNum);
       query.set('limit', itemsPerPage);
 
-      if (selectedFilters.brands.length > 0) {
-        query.set('brands', selectedFilters.brands.join(','));
+      if (currentFilters.brands && currentFilters.brands.length > 0) {
+        query.set('brands', currentFilters.brands.join(','));
       }
-      query.set('minPrice', selectedFilters.price.min);
-      query.set('maxPrice', selectedFilters.price.max);
+      if (currentFilters.price?.min !== undefined && currentFilters.price?.min !== null) {
+        query.set('minPrice', currentFilters.price.min);
+      }
+      if (currentFilters.price?.max !== undefined && currentFilters.price?.max !== null) {
+        query.set('maxPrice', currentFilters.price.max);
+      }
       
-      if (selectedFilters.filters.length > 0) {
+      if (currentFilters.filters && currentFilters.filters.length > 0) {
+        query.set('filters', currentFilters.filters.join(','));
         // Group filter IDs by their filter group name
         // This enables AND-between-groups, OR-within-group logic in the API
+        const groupsToUse = groupsOverride || filterGroups || {};
         const filtersByGroup = {};
-        selectedFilters.filters.forEach(filterId => {
-          for (const group of Object.values(filterGroups)) {
-            if (group.filters.some(f => f._id === filterId)) {
+        currentFilters.filters.forEach(filterId => {
+          for (const group of Object.values(groupsToUse)) {
+            if (group.filters && group.filters.some(f => f._id === filterId)) {
               if (!filtersByGroup[group.name]) filtersByGroup[group.name] = [];
               filtersByGroup[group.name].push(filterId);
               break;
@@ -330,8 +338,9 @@ Object.keys(groups).forEach(key => {
         }
       }
 
-      if (sortOption) {
-        query.set('sort', sortOption);
+      const activeSort = sortOverride !== null && sortOverride !== undefined ? sortOverride : sortOption;
+      if (activeSort) {
+        query.set('sort', activeSort);
       }
 
       const res = await fetch(`/api/product/filter/main?${query}`);
@@ -616,6 +625,10 @@ Object.keys(groups).forEach(key => {
 
 useEffect(() => {
   if (categoryData.main_category && categoryData.category) {
+    if (!isFirstLoadDone.current) {
+      isFirstLoadDone.current = true;
+      return;
+    }
     updateUrlParams(selectedFilters, sortOption);
     fetchFilteredProducts(categoryData, 1);
   }
