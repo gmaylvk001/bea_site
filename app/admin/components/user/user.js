@@ -36,7 +36,7 @@ export default function UserComponent() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("/api/users/get");
+      const response = await axios.get(`/api/users/get?t=${Date.now()}`);
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -51,37 +51,45 @@ export default function UserComponent() {
 
   const handleEdit = (user) => {
     setFormData({
-      name: user.name,
-      mobile: user.mobile,
-      email: user.email,
+      name: user.name || "",
+      mobile: user.mobile || "",
+      email: user.email || "",
       password: "",
       confirmPassword: "",
-      user_type: user.user_type,
-      status: user.status,
+      user_type: user.user_type || "user",
+      status: user.status || "Active",
     });
     setCurrentUserId(user._id);
     setIsEditMode(true);
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (userId) => {
+  const handleToggleStatus = async (user) => {
+    const targetStatus = user.status === "Active" ? "Inactive" : "Active";
     try {
-      const response = await axios.delete(`/api/users/delete`, {
-        data: { userId },
+      const response = await axios.patch("/api/users/status", {
+        userId: user._id,
+        status: targetStatus,
       });
-  
+
       if (response.data.success) {
-        setAlertMessage("✅ User set to inactive successfully!");
+        setAlertMessage(`✅ User marked as ${targetStatus} successfully!`);
         setShowAlert(true);
         setTimeout(() => setShowAlert(false), 3000);
+        setUsers((prevUsers) =>
+          prevUsers.map((u) =>
+            u._id === user._id ? { ...u, status: targetStatus } : u
+          )
+        );
         fetchUsers();
       } else {
-        setAlertMessage("❌ Error setting user to inactive");
+        setAlertMessage("❌ Error updating user status");
         setShowAlert(true);
         setTimeout(() => setShowAlert(false), 3000);
       }
     } catch (error) {
-      setAlertMessage("❌ Error setting user to inactive");
+      console.error("Error updating user status:", error);
+      setAlertMessage(error.response?.data?.error || "❌ Error updating user status");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
     }
@@ -100,13 +108,21 @@ export default function UserComponent() {
     try {
       if (isEditMode) {
         // Edit existing user
-        await axios.put("/api/users/edit", {
+        const response = await axios.put("/api/users/edit", {
           userId: currentUserId,
           name: formData.name,
           mobile: formData.mobile,
           email: formData.email,
           status: formData.status,
         });
+
+        if (response.data?.user) {
+          setUsers((prevUsers) =>
+            prevUsers.map((u) =>
+              u._id === currentUserId ? response.data.user : u
+            )
+          );
+        }
         setAlertMessage("✅ User updated successfully!");
       } else {
         // Add new user
@@ -122,12 +138,10 @@ export default function UserComponent() {
       setTimeout(() => {
         setShowAlert(false);
         setIsModalOpen(false);
-      }, 3000);
+        resetForm();
+      }, 1500);
       
-      fetchUsers();
-      setTimeout(() => {
-      resetForm();
-       }, 3000);
+      await fetchUsers();
     } catch (error) {
       console.log(error);
       setAlertMessage(error.response?.data?.error || "❌ Error processing request");
@@ -265,6 +279,12 @@ export default function UserComponent() {
       <div className="flex justify-between items-center mb-5 mt-5">
         <h2 className="text-2xl font-bold">User List</h2>
       </div>
+
+      {showAlert && (
+        <div className="fixed top-5 right-5 z-50 bg-green-600 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-2">
+          <span>{alertMessage}</span>
+        </div>
+      )}
   
       {isLoading ? (
         <p>Loading...</p>
@@ -343,15 +363,19 @@ export default function UserComponent() {
               <tbody>
                 {currentUsers.length > 0 ? (
                   currentUsers.map((user, index) => (
-                    <tr key={index} className="text-center border-b">
+                    <tr key={user._id || index} className="text-center border-b">
                       <td className="p-2 font-bold">{user.email || '-'}</td>
                       <td className="p-2">{user.name || '-'}</td>
                       <td className="p-2">{user.mobile || '-'}</td>
                       <td className="p-2 font-semibold">{user.user_type || '-'}</td>
                       <td className="p-2">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span
+                          onClick={() => handleToggleStatus(user)}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer select-none transition hover:opacity-80 ${
+                            user.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}
+                          title={`Click to set ${user.status === 'Active' ? 'Inactive' : 'Active'}`}
+                        >
                           {user.status || '-'}
                         </span>
                       </td>
@@ -360,19 +384,26 @@ export default function UserComponent() {
                       </td>
                       <td className="p-2">
                         <div className="flex items-center gap-2 justify-center">
+                          {/* Edit Button */}
                           <button
                             onClick={() => handleEdit(user)}
-                            className="w-7 h-7 bg-red-100 text-red-600 rounded-full inline-flex items-center justify-center"
+                            className="w-7 h-7 bg-red-100 text-red-600 rounded-full inline-flex items-center justify-center hover:bg-red-200 transition"
                             title="Edit"
                           >
                             <Icon icon="mingcute:edit-line" />
                           </button>
+
+                          {/* Status Toggle Button (Active <-> Inactive) */}
                           <button
-                            onClick={() => handleDelete(user._id)}
-                            className="w-7 h-7 bg-pink-100 text-pink-600 rounded-full inline-flex items-center justify-center"
-                            title="Delete"
+                            onClick={() => handleToggleStatus(user)}
+                            className={`w-7 h-7 rounded-full inline-flex items-center justify-center transition ${
+                              user.status === 'Active'
+                                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
+                            title={user.status === 'Active' ? 'Deactivate (Set to Inactive)' : 'Activate (Set to Active)'}
                           >
-                            <Icon icon="mingcute:delete-2-line" />
+                            <Icon icon={user.status === 'Active' ? 'mingcute:pause-circle-line' : 'mingcute:check-circle-line'} />
                           </button>
                         </div>
                       </td>

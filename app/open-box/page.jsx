@@ -1049,77 +1049,87 @@ const handleShare = async (product) => {
     return (
       <div
         key={product._id}
-        className="min-w-[300px] w-[300px] sm:min-w-[340px] sm:w-[340px] snap-start relative flex bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md overflow-hidden h-[300px]"
+        className="group min-w-[300px] w-[300px] sm:min-w-[340px] sm:w-[340px] snap-start relative flex bg-gradient-to-br from-[#eff6ff] via-[#f8fbff] to-[#dbeafe] rounded-2xl border border-blue-100/90 hover:border-[#1E5FA8]/50 shadow-[0_4px_16px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_32px_-6px_rgba(30,95,168,0.22)] overflow-hidden h-[300px] transition-all duration-300 ease-out hover:-translate-y-1.5 cursor-pointer"
       >
         {discount > 0 && (
-          <span className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded">
+          <span className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[11px] font-extrabold px-2.5 py-1 rounded-md shadow-sm transition-transform duration-300 group-hover:scale-105">
             {discount}% OFF
           </span>
         )}
 
         {(brandImage || brandName) && (
-          <div className="absolute top-3 right-3 z-10 max-w-[40%] flex items-center justify-end">
-            {brandImage ? (
-              <Image
-                src={brandImage}
-                alt={brandName || "Brand"}
-                width={110}
-                height={40}
-                className="object-contain max-h-9 sm:max-h-10 w-auto h-auto"
-                unoptimized
-              />
-            ) : (
-              <p className="text-[11px] sm:text-xs font-bold text-[#1E5FA8] uppercase tracking-wide truncate text-right">
-                {brandName}
-              </p>
-            )}
+          <div className="absolute top-3 right-3 z-10 max-w-[42%] flex items-center justify-end">
+            <div className="bg-white/85 backdrop-blur-xs px-2 py-0.5 rounded-md border border-white/80 shadow-xs group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
+              {brandImage ? (
+                <Image
+                  src={brandImage}
+                  alt={brandName || "Brand"}
+                  width={100}
+                  height={36}
+                  className="object-contain max-h-8 sm:max-h-9 w-auto h-auto"
+                  unoptimized
+                />
+              ) : (
+                <p className="text-[11px] sm:text-xs font-bold text-gray-700 uppercase tracking-wide truncate text-right">
+                  {brandName}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
         <div className="relative w-[48%] shrink-0 flex flex-col items-center justify-center p-3 pt-12 pb-3">
-          <div className="flex-1 w-full flex items-center justify-center min-h-0">
+          <div className="flex-1 w-full flex items-center justify-center min-h-0 bg-white/80 rounded-xl p-2.5 shadow-sm border border-white/90 group-hover:bg-white group-hover:shadow-md transition-all duration-300">
             {imageSrc ? (
               <Image
                 src={imageSrc}
                 alt={product.name}
                 width={220}
                 height={220}
-                className="object-contain max-h-[200px] w-auto h-auto"
+                className="object-contain max-h-[190px] w-auto h-auto transition-transform duration-500 ease-out group-hover:scale-108"
                 unoptimized
               />
             ) : (
-              <div className="w-full h-full bg-gray-50 rounded" />
+              <div className="w-full h-full bg-gray-50 rounded-lg" />
             )}
           </div>
         </div>
 
-        <div className="flex flex-col justify-center flex-1 py-5 pt-12 pr-4 pl-1 min-w-0 gap-2">
-          <Link
-            href={`/product/${product.slug}`}
-            className="block"
-            onClick={() => handleProductClick(product)}
-          >
-            <h3 className="text-sm sm:text-[15px] font-semibold text-[#1E5FA8] leading-snug line-clamp-4 hover:underline">
-              {product.name}
-            </h3>
-          </Link>
-          <div className="mt-1">
-            {hasDiscount && (
-              <span className="text-xs text-gray-400 line-through block leading-none mb-1">
-                ₹{Math.round(product.price).toLocaleString()}
+        <div className="flex flex-col justify-between flex-1 pt-12 pb-5 pr-4 pl-1 min-w-0 h-full">
+          <div className="flex flex-col min-w-0">
+            <Link
+              href={`/product/${product.slug}`}
+              className="block"
+              onClick={() => handleProductClick(product)}
+            >
+              <h3 className="text-sm sm:text-[15px] font-semibold text-gray-800 leading-snug line-clamp-3 min-h-[58px] sm:min-h-[63px] group-hover:text-[#1E5FA8] hover:underline transition-colors duration-200">
+                {product.name}
+              </h3>
+            </Link>
+            <div className="mt-2 min-h-[44px] flex flex-col justify-end">
+              {hasDiscount ? (
+                <span className="text-xs text-gray-400 line-through block leading-none mb-1">
+                  ₹{Math.round(product.price).toLocaleString()}
+                </span>
+              ) : (
+                <span className="h-3 block mb-1" aria-hidden="true" />
+              )}
+              <span className="text-xl sm:text-2xl font-bold text-[#1E5FA8] leading-tight">
+                ₹{salePrice.toLocaleString()}
               </span>
-            )}
-            <span className="text-xl sm:text-2xl font-bold text-[#1E5FA8] leading-tight">
-              ₹{salePrice.toLocaleString()}
-            </span>
+            </div>
           </div>
-          <Link
-            href={`/product/${product.slug}`}
-            onClick={() => handleProductClick(product)}
-            className="mt-3 inline-flex items-center justify-center self-start rounded-md bg-[#1E5FA8] hover:bg-[#174a86] text-white text-xs sm:text-sm font-bold tracking-wide px-6 py-2.5 transition-colors"
-          >
-            SHOP NOW
-          </Link>
+
+          <div className="pt-2">
+            <Link
+              href={`/product/${product.slug}`}
+              onClick={() => handleProductClick(product)}
+              className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg bg-[#1E5FA8] hover:bg-[#164a85] text-white text-xs sm:text-sm font-bold tracking-wide px-5 py-2.5 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:gap-2.5"
+            >
+              <span>SHOP NOW</span>
+              <ChevronRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -1163,7 +1173,7 @@ const handleShare = async (product) => {
           </button>
           <div
             ref={scrollRef}
-            className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 px-1 scrollbar-hide"
+            className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory py-4 px-2 scrollbar-hide"
           >
             {products.map((product) => renderShowcaseCard(product))}
           </div>
