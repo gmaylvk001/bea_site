@@ -169,7 +169,7 @@ export default function HomeComponent() {
           setIsSectionLoading(true);
           setIsBrandsLoading(true);
           try {
-            const response = await fetch("/api/home-data");
+            const response = await fetch("/api/home-data?refresh=true", { cache: "no-store" });
             const data = await response.json();
 
             if (data.success) {
@@ -204,16 +204,44 @@ export default function HomeComponent() {
                   .catch((err) => console.error("Error fallback fetching topbanner:", err));
               }
 
+              const formatFlashSaleItem = (item) => {
+                const rawProductImg =
+                  item.banner_image ||
+                  item.bannerImage ||
+                  item.product_image ||
+                  item.productImage ||
+                  item.image ||
+                  "";
+                const rawBgImg =
+                  item.background_image ||
+                  item.backgroundImage ||
+                  item.bg_image ||
+                  item.bgImage ||
+                  "";
+                const normalizeUrl = (url) => {
+                  if (!url) return "";
+                  if (
+                    url.startsWith("http://") ||
+                    url.startsWith("https://") ||
+                    url.startsWith("/")
+                  ) {
+                    return url;
+                  }
+                  return `/${url}`;
+                };
+                return {
+                  id: item._id,
+                  title: item.title,
+                  productImage: normalizeUrl(rawProductImg),
+                  bgImage: normalizeUrl(rawBgImg),
+                  redirectUrl: item.redirect_url || item.redirectUrl || "/shop",
+                };
+              };
+
               if (data.flashSales?.length > 0) {
                 const salesItems = data.flashSales
                   .filter((item) => !item.status || item.status.toLowerCase() === "active")
-                  .map((item) => ({
-                    id: item._id,
-                    title: item.title,
-                    productImage: item.banner_image || item.product_image || item.image || "",
-                    bgImage: item.background_image || item.bg_image || "",
-                    redirectUrl: item.redirect_url || "/shop",
-                  }));
+                  .map(formatFlashSaleItem);
                 setFlashSalesData(salesItems);
               } else {
                 fetch("/api/flashsale")
@@ -222,13 +250,7 @@ export default function HomeComponent() {
                     if (fsData.success && fsData.flashSales?.length > 0) {
                       const fallbackSales = fsData.flashSales
                         .filter((item) => !item.status || item.status.toLowerCase() === "active")
-                        .map((item) => ({
-                          id: item._id,
-                          title: item.title,
-                          productImage: item.banner_image || item.product_image || item.image || "",
-                          bgImage: item.background_image || item.bg_image || "",
-                          redirectUrl: item.redirect_url || "/shop",
-                        }));
+                        .map(formatFlashSaleItem);
                       setFlashSalesData(fallbackSales);
                     }
                   })
@@ -1180,9 +1202,9 @@ export default function HomeComponent() {
             .map((item) => (
               <SwiperSlide key={item.id}>
                 <div
-                  className="relative shadow-md overflow-hidden flex items-center p-6 min-h-[250px]"
+                  className="relative shadow-md overflow-hidden flex items-center p-6 min-h-[250px] rounded-xl"
                   style={{
-                    backgroundImage: `url(${item.bgImage})`,
+                    backgroundImage: item.bgImage ? `url(${item.bgImage})` : undefined,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }}
@@ -1192,17 +1214,18 @@ export default function HomeComponent() {
                     
                     {/* Image */}
                     <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ duration: 0.4 }}
-                      className="w-1/2 flex justify-center"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.3 }}
+                      className="w-1/2 flex items-center justify-center p-1"
                     >
-                      <Image
-                        src={item.productImage}
-                        alt={item.title}
-                        width={300}
-                        height={300}
-                        className="object-cover rounded-lg"
-                      />
+                      {item.productImage ? (
+                        <img
+                          src={item.productImage}
+                          alt={item.title || "Flash Sale Banner"}
+                          className="max-h-[200px] w-auto max-w-full object-contain rounded-lg drop-shadow-md"
+                          loading="lazy"
+                        />
+                      ) : null}
                     </motion.div>
 
                     {/* Text */}

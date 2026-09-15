@@ -6,10 +6,13 @@ import HomeSection from "@/models/homeSection";
 import Brand from "@/models/ecom_brand_info";
 import VideoCard from "@/models/VideoCard";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Server-side in-memory cache
 let cachedHomeData = null;
 let cacheTimestamp = 0;
-const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes cache
+const CACHE_TTL_MS = 15 * 1000; // 15 seconds cache to avoid overload while reflecting updates promptly
 
 export async function GET(req) {
   try {
