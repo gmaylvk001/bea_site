@@ -41,6 +41,7 @@ export default function AdminSider({ collapsed }) {
       { icon: 'mdi:cancel', label: 'Cancel Order', link: 'order/cancel-order', dotColor: 'bg-blue-500' },
       { icon: 'mdi:truck-delivery-outline', label: 'Shipped Order', link: 'shippedorder', dotColor: 'bg-green-500' },
       { icon: 'mdi:account-star-outline', label: 'Website Leads', link: 'smart-leads', dotColor: 'bg-orange-500' },
+      { icon: 'mdi:cart-alert', label: 'Out of Stock Enquiries', link: 'out-of-stock-enquiries', dotColor: 'bg-red-500' },
     ]
   },
 

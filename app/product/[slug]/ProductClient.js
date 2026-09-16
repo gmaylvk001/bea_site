@@ -28,6 +28,7 @@ import ProductBreadcrumb from "@/components/ProductBreadcrumb";
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import RelatedProducts from "@/components/RelatedProducts";
 import RazorpayOffers from "@/components/RazorpayOffers";
+import OutOfStockModal from "@/components/OutOfStockModal";
 import { v4 as uuidv4 } from "uuid";
 import { ga4ViewItem } from "@/utils/nextjs-event-tracking";
 import { useVisitorIntent } from "@/context/VisitorIntentContext";
@@ -720,6 +721,13 @@ const resolveImagePath = (image) => {
   const [showReplacementModal, setShowReplacementModal] = useState(false);
   const [showWarrantyModal, setshowWarrantyModal] = useState(false);
   const [showGstInvoiceModal, setshowGstInvoiceModal] = useState(false);
+  const [showOutOfStockModal, setShowOutOfStockModal] = useState(false);
+  const [outOfStockAction, setOutOfStockAction] = useState("add_to_cart");
+
+  const handleOutOfStockClick = (action = "add_to_cart") => {
+    setOutOfStockAction(action);
+    setShowOutOfStockModal(true);
+  };
 
   // ###### Show Customer Reviews ###### //
   const [reviews, setReviews] = useState([]);
@@ -1345,7 +1353,7 @@ const fetchBrand = async () => {
         {quantityWarning && <p className="text-red-500 text-xs">Max {product.quantity} only</p>}
       </div>
 
-      {product.stock_status === "In Stock" && product.quantity > 0 && (
+      {product.stock_status === "In Stock" && product.quantity > 0 ? (
         <div className="flex gap-3">
          <button
   onClick={handleBuyNow}
@@ -1377,6 +1385,25 @@ const fetchBrand = async () => {
                  productSlug={product.slug}  
             />
           </div>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => handleOutOfStockClick("buy_now")}
+            className="flex-1 font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm bg-blue-700 hover:bg-blue-800 text-white cursor-pointer shadow transition"
+          >
+            <FaStore className="w-4 h-4" />
+            Buy Now
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOutOfStockClick("add_to_cart")}
+            className={`flex-1 ${addToCartOutlineClass} flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-lg cursor-pointer transition`}
+          >
+            <FaShoppingCart className="w-4 h-4" />
+            Add to Cart
+          </button>
         </div>
       )}
     </div>
@@ -1842,7 +1869,7 @@ const fetchBrand = async () => {
                   </div>
                   {quantityWarning && <p className="text-red-500 text-xs">Max {product.quantity} only</p>}
                 </div>
-                {product.stock_status === "In Stock" && product.quantity > 0 && (
+                {product.stock_status === "In Stock" && product.quantity > 0 ? (
                   <div className="flex gap-3 mb-3">
                   <button
   onClick={handleBuyNow}
@@ -1874,6 +1901,25 @@ const fetchBrand = async () => {
                         productSlug={product.slug}  
                       />
                     </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-3 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => handleOutOfStockClick("buy_now")}
+                      className="flex-1 font-semibold py-2 rounded-lg flex items-center justify-center gap-2 text-sm whitespace-nowrap bg-blue-700 hover:bg-blue-800 text-white cursor-pointer shadow transition"
+                    >
+                      <FaStore className="w-4 h-4 flex-shrink-0" />
+                      Buy Now
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOutOfStockClick("add_to_cart")}
+                      className={`flex-1 ${addToCartOutlineClass} flex items-center justify-center gap-2 text-sm font-semibold py-2 rounded-lg cursor-pointer transition`}
+                    >
+                      <FaShoppingCart className="w-4 h-4 flex-shrink-0" />
+                      Add to Cart
+                    </button>
                   </div>
                 )}
                 <div className="border-b border-gray-400 mt-2"></div>
@@ -2179,6 +2225,12 @@ const fetchBrand = async () => {
     </div>
   </div>
 )}
+        <OutOfStockModal
+          isOpen={showOutOfStockModal}
+          onClose={() => setShowOutOfStockModal(false)}
+          product={product}
+          action={outOfStockAction}
+        />
       </div>
     </div>
   );
