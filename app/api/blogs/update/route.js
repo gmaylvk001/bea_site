@@ -28,9 +28,9 @@ async function deleteOldFile(relativePath) {
   }
 }
 
-async function generateUniqueSlug(name, currentId) {
-  if (!name || typeof name !== "string") return `blog-${Date.now()}`;
-  let slug = name
+async function generateUniqueSlug(customSlugOrName, currentId) {
+  if (!customSlugOrName || typeof customSlugOrName !== "string") return `blog-${Date.now()}`;
+  let slug = customSlugOrName
     .toLowerCase()
     .trim()
     .replace(/[^\w\s-]/g, "")
@@ -63,6 +63,7 @@ export async function PUT(req) {
 
     const id            = formData.get("id");
     const name          = formData.get("name");
+    const customSlug    = formData.get("slug");
     const description   = formData.get("description");
     const category      = formData.get("category");
     const status        = formData.get("status");
@@ -123,7 +124,7 @@ export async function PUT(req) {
       }
     }
 
-    const slug = await generateUniqueSlug(name, id);
+    const slug = await generateUniqueSlug(customSlug || name, id);
 
     // ── Save ─────────────────────────────────────────────────────────────────
     const updatedBlog = await Blog.findByIdAndUpdate(

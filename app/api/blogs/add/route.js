@@ -25,9 +25,9 @@ async function saveFile(file, folder) {
   }
 }
 
-async function generateUniqueSlug(name) {
-  if (!name || typeof name !== "string") return `blog-${Date.now()}`;
-  let slug = name
+async function generateUniqueSlug(customSlugOrName) {
+  if (!customSlugOrName || typeof customSlugOrName !== "string") return `blog-${Date.now()}`;
+  let slug = customSlugOrName
     .toLowerCase()
     .trim()
     .replace(/[^\w\s-]/g, "")
@@ -50,7 +50,7 @@ export async function POST(req) {
     const contentType = req.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
-      const { name, description, category, status, video, meta_title, meta_description, meta_keyword } = await req.json();
+      const { name, slug: customSlug, description, category, status, video, meta_title, meta_description, meta_keyword } = await req.json();
 
       if (!name || !name.trim()) {
         return NextResponse.json(
@@ -66,7 +66,7 @@ export async function POST(req) {
         );
       }
 
-      const slug = await generateUniqueSlug(name);
+      const slug = await generateUniqueSlug(customSlug || name);
 
       const newBlog = new Blog({
         blog_name: name.trim(),
@@ -91,6 +91,7 @@ export async function POST(req) {
       const formData = await req.formData();
 
       const name        = formData.get("name");
+      const customSlug  = formData.get("slug");
       const description = formData.get("description") || "";
       const category    = formData.get("category");
       const status      = formData.get("status") || "Active";
@@ -131,7 +132,7 @@ export async function POST(req) {
         }
       }
 
-      const slug = await generateUniqueSlug(String(name));
+      const slug = await generateUniqueSlug(customSlug || String(name));
 
       const newBlog = new Blog({
         blog_name: String(name).trim(),

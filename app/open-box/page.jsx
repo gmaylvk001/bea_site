@@ -1058,19 +1058,19 @@ const handleShare = async (product) => {
         )}
 
         {(brandImage || brandName) && (
-          <div className="absolute top-3 right-3 z-10 max-w-[42%] flex items-center justify-end">
-            <div className="bg-white/85 backdrop-blur-xs px-2 py-0.5 rounded-md border border-white/80 shadow-xs group-hover:bg-white group-hover:shadow-sm transition-all duration-300">
+          <div className="absolute top-2.5 right-2.5 z-10 max-w-[28%] flex items-center justify-end pointer-events-none">
+            <div className="bg-white/90 backdrop-blur-xs px-1.5 py-0.5 rounded border border-white/80 shadow-xs group-hover:bg-white transition-all duration-300">
               {brandImage ? (
                 <Image
                   src={brandImage}
                   alt={brandName || "Brand"}
-                  width={100}
-                  height={36}
-                  className="object-contain max-h-8 sm:max-h-9 w-auto h-auto"
+                  width={60}
+                  height={20}
+                  className="object-contain max-h-4 sm:max-h-5 max-w-[65px] sm:max-w-[75px] w-auto h-auto"
                   unoptimized
                 />
               ) : (
-                <p className="text-[11px] sm:text-xs font-bold text-gray-700 uppercase tracking-wide truncate text-right">
+                <p className="text-[10px] font-bold text-gray-700 uppercase tracking-wide truncate text-right">
                   {brandName}
                 </p>
               )}

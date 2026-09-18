@@ -123,26 +123,103 @@ export default function OutOfStockModal({ isOpen, onClose, product, action = "ad
         if (e.target === e.currentTarget && !isSubmitting) onClose();
       }}
     >
-      <div className="relative w-full max-w-[390px] bg-white rounded-2xl shadow-2xl px-5 py-4 sm:px-6 sm:py-4.5 my-auto max-h-[94vh] overflow-y-auto animate-in fade-in zoom-in duration-150">
+      <style>{`
+        .oos-modal-box {
+          width: 100%;
+          max-width: 440px;
+        }
+        .oos-heading {
+          font-size: 19px;
+        }
+        .oos-subtitle {
+          font-size: 14px;
+        }
+        .oos-desc {
+          font-size: 12px;
+          max-width: 340px;
+        }
+        @media (min-width: 640px) {
+          .oos-modal-box {
+            max-width: 450px;
+          }
+          .oos-heading {
+            font-size: 21px;
+          }
+          .oos-subtitle {
+            font-size: 15px;
+          }
+          .oos-desc {
+            font-size: 13px;
+            max-width: 380px;
+          }
+        }
+        @media (min-width: 1240px) {
+          .oos-modal-box {
+            max-width: 480px;
+          }
+          .oos-heading {
+            font-size: 24px;
+          }
+          .oos-subtitle {
+            font-size: 16.5px;
+          }
+          .oos-desc {
+            font-size: 14px;
+            max-width: 440px;
+          }
+        }
+        @media (min-width: 1440px) {
+          .oos-modal-box {
+            max-width: 500px;
+          }
+          .oos-heading {
+            font-size: 27px;
+          }
+          .oos-subtitle {
+            font-size: 18.5px;
+          }
+          .oos-desc {
+            font-size: 15.5px;
+            max-width: 470px;
+          }
+        }
+        @media (min-width: 1920px) {
+          .oos-modal-box {
+            max-width: 530px;
+          }
+          .oos-heading {
+            font-size: 31px;
+          }
+          .oos-subtitle {
+            font-size: 21px;
+          }
+          .oos-desc {
+            font-size: 17px;
+            max-width: 500px;
+          }
+        }
+      `}</style>
+
+      <div className="oos-modal-box relative bg-white rounded-2xl shadow-2xl px-5 py-4 sm:px-6 sm:py-5 my-auto max-h-[94vh] overflow-y-auto animate-in fade-in zoom-in duration-150">
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
           disabled={isSubmitting}
-          className="absolute top-3 right-3 p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+          className="absolute top-3.5 right-3.5 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors z-10"
           aria-label="Close"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Illustration & Header */}
         <div className="flex flex-col items-center text-center">
-          {/* Shopping Cart with Out-of-Stock Illustration - Compact */}
-          <div className="relative mb-1 flex items-center justify-center">
-            <div className="w-20 h-14 bg-blue-50 rounded-full blur-sm absolute -z-10" />
+          {/* Shopping Cart with Out-of-Stock Illustration */}
+          <div className="relative mb-1.5 flex items-center justify-center">
+            <div className="w-18 h-12 sm:w-20 sm:h-14 bg-blue-50 rounded-full blur-sm absolute -z-10" />
 
             <svg
-              className="w-16 h-13"
+              className="w-16 h-12 sm:w-16 sm:h-13"
               viewBox="0 0 120 95"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -195,55 +272,55 @@ export default function OutOfStockModal({ isOpen, onClose, product, action = "ad
           </div>
 
           {/* Heading */}
-          <h2 className="text-[17px] sm:text-[18px] font-bold text-[#0F172A] leading-tight">
+          <h2 className="oos-heading font-bold text-[#0F172A] leading-tight">
             This Product is Currently Out of Stock
           </h2>
 
           {/* Subtitle */}
-          <h3 className="text-[13px] font-semibold text-[#1E293B] mt-1 leading-snug">
+          <h3 className="oos-subtitle font-semibold text-[#1E293B] mt-1 leading-snug">
             Need this product now?
           </h3>
-          <p className="text-[11px] text-gray-500 mt-0.5 leading-tight max-w-[290px]">
+          <p className="oos-desc text-gray-500 mt-1 leading-normal mx-auto">
             Fill out the details below. Our salesperson will contact you about the product.
           </p>
         </div>
 
-        {/* Form - Compact fields */}
-        <form onSubmit={handleSubmit} className="mt-3 space-y-2">
+        {/* Form - Inputs one by one like mobile and tablet */}
+        <form onSubmit={handleSubmit} className="mt-3.5 space-y-2.5">
           {/* Your Name */}
           <div>
             <div
-              className={`flex items-center gap-2 px-3 py-1.5 sm:py-2 rounded-lg border transition-colors ${
+              className={`flex items-center gap-2.5 px-3.5 py-2 rounded-lg border transition-colors ${
                 errors.fullName
                   ? "border-red-400 bg-red-50/20"
                   : "border-gray-200 hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
               }`}
             >
-              <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <input
                 type="text"
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
                 placeholder="Your Name *"
-                className="w-full text-xs text-gray-800 placeholder-gray-400 bg-transparent outline-none"
+                className="w-full text-xs sm:text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
               />
             </div>
             {errors.fullName && (
-              <p className="text-[10.5px] text-red-500 mt-0.5 ml-1">{errors.fullName}</p>
+              <p className="text-xs text-red-500 mt-1 ml-1">{errors.fullName}</p>
             )}
           </div>
 
           {/* Mobile Number */}
           <div>
             <div
-              className={`flex items-center gap-2 px-3 py-1.5 sm:py-2 rounded-lg border transition-colors ${
+              className={`flex items-center gap-2.5 px-3.5 py-2 rounded-lg border transition-colors ${
                 errors.phone
                   ? "border-red-400 bg-red-50/20"
                   : "border-gray-200 hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
               }`}
             >
-              <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <input
                 type="tel"
                 name="phone"
@@ -251,61 +328,61 @@ export default function OutOfStockModal({ isOpen, onClose, product, action = "ad
                 onChange={handleChange}
                 placeholder="Mobile Number *"
                 maxLength={10}
-                className="w-full text-xs text-gray-800 placeholder-gray-400 bg-transparent outline-none"
+                className="w-full text-xs sm:text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
               />
             </div>
             {errors.phone && (
-              <p className="text-[10.5px] text-red-500 mt-0.5 ml-1">{errors.phone}</p>
+              <p className="text-xs text-red-500 mt-1 ml-1">{errors.phone}</p>
             )}
           </div>
 
           {/* Email ID */}
           <div>
             <div
-              className={`flex items-center gap-2 px-3 py-1.5 sm:py-2 rounded-lg border transition-colors ${
+              className={`flex items-center gap-2.5 px-3.5 py-2 rounded-lg border transition-colors ${
                 errors.email
                   ? "border-red-400 bg-red-50/20"
                   : "border-gray-200 hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
               }`}
             >
-              <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Email ID"
-                className="w-full text-xs text-gray-800 placeholder-gray-400 bg-transparent outline-none"
+                className="w-full text-xs sm:text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
               />
             </div>
             {errors.email && (
-              <p className="text-[10.5px] text-red-500 mt-0.5 ml-1">{errors.email}</p>
+              <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>
             )}
           </div>
 
           {/* City */}
-          <div className="flex items-center gap-2 px-3 py-1.5 sm:py-2 rounded-lg border border-gray-200 hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-colors">
-            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-lg border border-gray-200 hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-colors">
+            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <input
               type="text"
               name="city"
               value={formData.city}
               onChange={handleChange}
               placeholder="City"
-              className="w-full text-xs text-gray-800 placeholder-gray-400 bg-transparent outline-none"
+              className="w-full text-xs sm:text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
             />
           </div>
 
           {/* Any specific requirement? (Optional) */}
-          <div className="flex items-center gap-2 px-3 py-1.5 sm:py-2 rounded-lg border border-gray-200 hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-colors">
-            <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-lg border border-gray-200 hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-colors">
+            <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <input
               type="text"
               name="requirement"
               value={formData.requirement}
               onChange={handleChange}
               placeholder="Any specific requirement? (Optional)"
-              className="w-full text-xs text-gray-800 placeholder-gray-400 bg-transparent outline-none"
+              className="w-full text-xs sm:text-sm text-gray-800 placeholder-gray-400 bg-transparent outline-none"
             />
           </div>
 
@@ -314,11 +391,11 @@ export default function OutOfStockModal({ isOpen, onClose, product, action = "ad
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 px-4 bg-[#1E50DE] hover:bg-[#1842BE] active:scale-[0.99] text-white font-semibold text-xs sm:text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
+              className="w-full py-2.5 sm:py-3 bg-[#1E50DE] hover:bg-[#1842BE] active:scale-[0.99] text-white font-semibold text-xs sm:text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Submitting...</span>
                 </>
               ) : (
@@ -328,34 +405,34 @@ export default function OutOfStockModal({ isOpen, onClose, product, action = "ad
           </div>
         </form>
 
-        {/* Trust Badges - 3 items with dividers - Compact */}
-        <div className="mt-3 pt-2.5 border-t border-gray-100 grid grid-cols-3 gap-1 text-center">
+        {/* Trust Badges - 3 items with dividers */}
+        <div className="mt-3.5 pt-3 border-t border-gray-100 grid grid-cols-3 gap-1 text-center">
           {/* Badge 1 */}
           <div className="flex flex-col items-center px-1">
-            <div className="w-6 h-6 rounded-full bg-blue-50 text-[#1E50DE] flex items-center justify-center mb-1 flex-shrink-0">
-              <Headphones className="w-3 h-3" />
+            <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-full bg-blue-50 text-[#1E50DE] flex items-center justify-center mb-1 flex-shrink-0">
+              <Headphones className="w-3.5 h-3.5" />
             </div>
-            <p className="text-[9.5px] text-gray-600 leading-tight">
+            <p className="text-[10.5px] sm:text-[11.5px] text-gray-600 leading-tight">
               Our sales team will contact you
             </p>
           </div>
 
           {/* Badge 2 */}
           <div className="flex flex-col items-center px-1 border-x border-gray-100">
-            <div className="w-6 h-6 rounded-full bg-blue-50 text-[#1E50DE] flex items-center justify-center mb-1 flex-shrink-0">
-              <ShieldCheck className="w-3 h-3" />
+            <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-full bg-blue-50 text-[#1E50DE] flex items-center justify-center mb-1 flex-shrink-0">
+              <ShieldCheck className="w-3.5 h-3.5" />
             </div>
-            <p className="text-[9.5px] text-gray-600 leading-tight">
+            <p className="text-[10.5px] sm:text-[11.5px] text-gray-600 leading-tight">
               Your information is safe with us
             </p>
           </div>
 
           {/* Badge 3 */}
           <div className="flex flex-col items-center px-1">
-            <div className="w-6 h-6 rounded-full bg-blue-50 text-[#1E50DE] flex items-center justify-center mb-1 flex-shrink-0">
-              <Users className="w-3 h-3" />
+            <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-full bg-blue-50 text-[#1E50DE] flex items-center justify-center mb-1 flex-shrink-0">
+              <Users className="w-3.5 h-3.5" />
             </div>
-            <p className="text-[9.5px] text-gray-600 leading-tight">
+            <p className="text-[10.5px] sm:text-[11.5px] text-gray-600 leading-tight">
               Get the best price &amp; offers
             </p>
           </div>

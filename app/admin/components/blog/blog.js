@@ -4,6 +4,17 @@ import { Icon } from '@iconify/react';
 import DateRangePicker from '@/components/DateRangePicker';
 import TinyEditor from "@/app/admin/components/product/TinyEditor";
 
+const slugify = (text) => {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
 export default function BlogComponent() {
   // State declarations
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,6 +22,7 @@ export default function BlogComponent() {
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [blogData, setBlogData] = useState({
     name: "",
+    slug: "",
     image: null,
     description: "",
     status: "Active",
@@ -21,6 +33,7 @@ export default function BlogComponent() {
     meta_description: "",
     meta_keyword: "",
   });
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState(new Set());
   const [imagePreview, setImagePreview] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -45,6 +58,7 @@ export default function BlogComponent() {
   const [editBlogData, setEditBlogData] = useState({
     id: "",
     name: "",
+    slug: "",
     image: null,
     existingImage: "",
     description: "",
@@ -58,6 +72,7 @@ export default function BlogComponent() {
     meta_keyword: "",
   });
   const [editSelectedCategories, setEditSelectedCategories] = useState(new Set());
+  const [isEditSlugManuallyEdited, setIsEditSlugManuallyEdited] = useState(false);
   const [previewBlog, setPreviewBlog] = useState(null);
 
   // Fetch categories and blogs on component mount
@@ -150,7 +165,26 @@ export default function BlogComponent() {
   };
 
   const handleInputChange = (e) => {
-    setBlogData({ ...blogData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "name") {
+      setBlogData((prev) => ({
+        ...prev,
+        name: value,
+        slug: isSlugManuallyEdited ? prev.slug : slugify(value),
+      }));
+    } else if (name === "slug") {
+      setIsSlugManuallyEdited(true);
+      const formattedSlug = value
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w-]/g, "");
+      setBlogData((prev) => ({
+        ...prev,
+        slug: formattedSlug,
+      }));
+    } else {
+      setBlogData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleDescriptionChange = (content) => {
@@ -274,6 +308,7 @@ export default function BlogComponent() {
     setEditBlogData({
       id: blog._id,
       name: blog.blog_name,
+      slug: blog.blog_slug || slugify(blog.blog_name),
       description: blog.description,
       status: blog.status,
       existingImage: blog.image || "",
@@ -285,6 +320,7 @@ export default function BlogComponent() {
       meta_description: blog.meta_description || "",
       meta_keyword: blog.meta_keyword || "",
     });
+    setIsEditSlugManuallyEdited(Boolean(blog.blog_slug));
     
     const newSelected = new Set();
     if (blog.category && blog.category._id) {
@@ -296,7 +332,26 @@ export default function BlogComponent() {
   };
 
   const handleEditInputChange = (e) => {
-    setEditBlogData({ ...editBlogData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "name") {
+      setEditBlogData((prev) => ({
+        ...prev,
+        name: value,
+        slug: isEditSlugManuallyEdited ? prev.slug : slugify(value),
+      }));
+    } else if (name === "slug") {
+      setIsEditSlugManuallyEdited(true);
+      const formattedSlug = value
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w-]/g, "");
+      setEditBlogData((prev) => ({
+        ...prev,
+        slug: formattedSlug,
+      }));
+    } else {
+      setEditBlogData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleEditDescriptionChange = (content) => {
@@ -372,6 +427,7 @@ export default function BlogComponent() {
     const formData = new FormData();
     formData.append("id", editBlogData.id);
     formData.append("name", editBlogData.name);
+    formData.append("slug", editBlogData.slug);
     formData.append("description", editBlogData.description);
     formData.append("category", Array.from(editSelectedCategories)[0] || "");
     formData.append("status", editBlogData.status);
@@ -435,6 +491,7 @@ export default function BlogComponent() {
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append("name", blogData.name);
+    formData.append("slug", blogData.slug);
     formData.append("description", blogData.description);
     formData.append("category", Array.from(selectedCategories)[0]);
     formData.append("status", blogData.status);
@@ -465,6 +522,7 @@ export default function BlogComponent() {
         setIsModalOpen(false);
         setBlogData({ 
           name: "", 
+          slug: "",
           image: null, 
           description: "", 
           status: "Active",
@@ -475,6 +533,7 @@ export default function BlogComponent() {
           meta_description: "",
           meta_keyword: "",
         });
+        setIsSlugManuallyEdited(false);
         setSelectedCategories(new Set());
         setImagePreview(null);
         fetchBlogs();
@@ -671,7 +730,23 @@ export default function BlogComponent() {
 
             <div>
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setBlogData({
+                    name: "",
+                    slug: "",
+                    image: null,
+                    description: "",
+                    status: "Active",
+                    videoType: "url",
+                    videoUrl: "",
+                    videoFile: null,
+                    meta_title: "",
+                    meta_description: "",
+                    meta_keyword: "",
+                  });
+                  setIsSlugManuallyEdited(false);
+                  setIsModalOpen(true);
+                }}
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition duration-150"
               >
                 + Add Blog
@@ -728,15 +803,16 @@ export default function BlogComponent() {
                           </td>
                           <td className="p-2">
                             <div className="flex items-center gap-2">
-                              {blog.blog_slug && (
-                                <button
-                                  type="button"
-                                  onClick={() => setPreviewBlog(blog)}
+                              {(blog.blog_slug || blog.blog_name) && (
+                                <a
+                                  href={`/blog/${blog.blog_slug || slugify(blog.blog_name)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   className="w-7 h-7 bg-blue-100 text-blue-600 rounded-full inline-flex items-center justify-center hover:bg-blue-200 transition"
-                                  title="Preview"
+                                  title="View Blog"
                                 >
                                   <FaEye />
-                                </button>
+                                </a>
                               )}
                               <button
                                 onClick={() => handleEdit(blog)}
@@ -799,6 +875,41 @@ export default function BlogComponent() {
                     placeholder="Enter Blog Name"
                     required
                   />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="blog_slug" className="block text-sm font-semibold text-gray-700">
+                      Blog Slug
+                    </label>
+                    {isSlugManuallyEdited && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSlugManuallyEdited(false);
+                          setBlogData((prev) => ({
+                            ...prev,
+                            slug: slugify(prev.name),
+                          }));
+                        }}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Reset to auto-generate
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    name="slug"
+                    value={blogData.slug}
+                    onChange={handleInputChange}
+                    id="blog_slug"
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400 text-sm font-mono text-gray-700 bg-gray-50 focus:bg-white"
+                    placeholder="auto-generated-slug"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    URL: <span className="font-mono text-gray-600">/blog/{blogData.slug || "your-slug"}</span>
+                  </p>
                 </div>
 
                 <div>
@@ -981,6 +1092,39 @@ export default function BlogComponent() {
                     placeholder="Enter Blog Name"
                     required
                   />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="edit_blog_slug" className="block text-sm font-semibold text-gray-700">Blog Slug</label>
+                    {isEditSlugManuallyEdited && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditSlugManuallyEdited(false);
+                          setEditBlogData((prev) => ({
+                            ...prev,
+                            slug: slugify(prev.name),
+                          }));
+                        }}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Reset to auto-generate
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    name="slug"
+                    value={editBlogData.slug}
+                    onChange={handleEditInputChange}
+                    id="edit_blog_slug"
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400 text-sm font-mono text-gray-700 bg-gray-50 focus:bg-white"
+                    placeholder="auto-generated-slug"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    URL: <span className="font-mono text-gray-600">/blog/{editBlogData.slug || "your-slug"}</span>
+                  </p>
                 </div>
 
                 <div>
