@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaPlus, FaMinus, FaEdit, FaEye } from "react-icons/fa";
 import { Icon } from '@iconify/react';
 import DateRangePicker from '@/components/DateRangePicker';
-import TinyEditor from "@/app/admin/components/product/TinyEditor";
+import JoditBlogEditor from "@/app/admin/components/blog/JoditBlogEditor";
 
 const slugify = (text) => {
   if (!text) return "";
@@ -73,7 +73,6 @@ export default function BlogComponent() {
   });
   const [editSelectedCategories, setEditSelectedCategories] = useState(new Set());
   const [isEditSlugManuallyEdited, setIsEditSlugManuallyEdited] = useState(false);
-  const [previewBlog, setPreviewBlog] = useState(null);
 
   // Fetch categories and blogs on component mount
   useEffect(() => {
@@ -188,7 +187,7 @@ export default function BlogComponent() {
   };
 
   const handleDescriptionChange = (content) => {
-    setBlogData({ ...blogData, description: content });
+    setBlogData((prev) => ({ ...prev, description: content }));
   };
 
   const handleImageChange = (e) => {
@@ -327,7 +326,7 @@ export default function BlogComponent() {
       newSelected.add(blog.category._id);
     }
     setEditSelectedCategories(newSelected);
-    
+
     setIsEditModalOpen(true);
   };
 
@@ -355,7 +354,7 @@ export default function BlogComponent() {
   };
 
   const handleEditDescriptionChange = (content) => {
-    setEditBlogData({ ...editBlogData, description: content });
+    setEditBlogData((prev) => ({ ...prev, description: content }));
   };
 
   const handleEditImageChange = (e) => {
@@ -635,12 +634,26 @@ export default function BlogComponent() {
     );
   };
 
-  // Regular expression cleanup method to strip <tags> from displaying inside your list map loop
+  // Regular expression cleanup method to strip <tags> and code blocks from displaying inside table snippet
   const stripHtml = (htmlString) => {
     if (!htmlString) return "";
-    return htmlString
-      .replace(/<[^>]*>/g, "")   // Automatically strips out structural HTML tags 
-      .replace(/&nbsp;/g, " ")   // Clears out visual raw blank space entities
+    return String(htmlString)
+      .replace(/<head[\s\S]*?<\/head>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<title[\s\S]*?<\/title>/gi, "")
+      .replace(/<svg[\s\S]*?<\/svg>/gi, "")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;|&apos;/gi, "'")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/\{\s*"@context"[\s\S]*?\}/gi, "")
+      .replace(/\s+/g, " ")
       .trim();
   };
 
@@ -969,16 +982,12 @@ export default function BlogComponent() {
 
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">Blog Description</label>
-                  <div className="bg-white">
-                    {isModalOpen && (
-                      <TinyEditor
-                        value={blogData.description}
-                        fullToolbar
-                        placeholder="Enter blog description..."
-                        onChange={(e) => handleDescriptionChange(e.target.value)}
-                      />
-                    )}
-                  </div>
+                  <JoditBlogEditor
+                    value={blogData.description}
+                    onChange={handleDescriptionChange}
+                    isModalOpen={isModalOpen}
+                    placeholder="Enter blog description or click 'Source' (<>) to paste HTML..."
+                  />
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -1187,16 +1196,12 @@ export default function BlogComponent() {
 
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">Blog Description</label>
-                  <div className="bg-white">
-                    {isEditModalOpen && (
-                      <TinyEditor
-                        value={editBlogData.description}
-                        fullToolbar
-                        placeholder="Enter blog description..."
-                        onChange={(e) => handleEditDescriptionChange(e.target.value)}
-                      />
-                    )}
-                  </div>
+                  <JoditBlogEditor
+                    value={editBlogData.description}
+                    onChange={handleEditDescriptionChange}
+                    isModalOpen={isEditModalOpen}
+                    placeholder="Enter blog description or click 'Source' (<>) to paste HTML..."
+                  />
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -1286,146 +1291,7 @@ export default function BlogComponent() {
         </div>
       )}
 
-      {/* Blog preview popup — stays on admin, does not open the storefront */}
-      {previewBlog && (
-        <div
-          className="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 overflow-y-auto p-4"
-          onClick={() => setPreviewBlog(null)}
-        >
-          <div
-            className="bg-gray-50 rounded-2xl shadow-2xl w-full max-w-4xl my-6 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="blog-preview-title"
-          >
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-white border-b px-5 py-3">
-              <h3 className="text-base font-semibold text-gray-900">Blog Preview</h3>
-              <button
-                type="button"
-                onClick={() => setPreviewBlog(null)}
-                className="w-9 h-9 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 text-2xl leading-none flex items-center justify-center"
-                aria-label="Close preview"
-              >
-                ×
-              </button>
-            </div>
 
-            <article className="px-5 sm:px-8 py-6 max-h-[80vh] overflow-y-auto">
-              {previewBlog.category?.category_name && (
-                <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mb-4">
-                  {previewBlog.category.category_name}
-                </span>
-              )}
-
-              <h1
-                id="blog-preview-title"
-                className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight"
-              >
-                {previewBlog.blog_name}
-              </h1>
-
-              <div className="flex items-center text-gray-500 text-sm gap-3 mb-6">
-                {previewBlog.createdAt && (
-                  <span>
-                    Published on{" "}
-                    {new Date(previewBlog.createdAt).toLocaleDateString("en-GB", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                )}
-                {previewBlog.status && (
-                  <span
-                    className={
-                      previewBlog.status === "Active"
-                        ? "text-green-600 font-medium"
-                        : "text-red-500 font-medium"
-                    }
-                  >
-                    {previewBlog.status}
-                  </span>
-                )}
-              </div>
-
-              {previewBlog.video && String(previewBlog.video).trim() !== "" ? (
-                <>
-                  <div className="mb-6 rounded-xl overflow-hidden shadow-lg bg-black">
-                    {getYouTubeId(previewBlog.video) ? (
-                      <div className="aspect-video">
-                        <iframe
-                          className="w-full h-full"
-                          src={`https://www.youtube.com/embed/${getYouTubeId(previewBlog.video)}`}
-                          title="Blog video preview"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
-                    ) : (
-                      <video
-                        className="w-full"
-                        src={previewBlog.video}
-                        controls
-                        playsInline
-                      />
-                    )}
-                  </div>
-                  {previewBlog.image && (
-                    <div className="mb-6 rounded-lg overflow-hidden shadow border border-gray-100">
-                      <img
-                        src={previewBlog.image}
-                        alt={previewBlog.blog_name}
-                        className="w-full h-56 object-cover"
-                      />
-                    </div>
-                  )}
-                </>
-              ) : previewBlog.image ? (
-                <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
-                  <img
-                    src={previewBlog.image}
-                    alt={previewBlog.blog_name}
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
-              ) : null}
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:p-8">
-                <style>{`
-                  .admin-blog-preview-body { font-family: Roboto, Calibri, Helvetica, Arial, sans-serif; font-size: 16.5px; line-height: 1.8; color: #1f2937; }
-                  .admin-blog-preview-body p { margin-bottom: 1.15rem; }
-                  .admin-blog-preview-body h1 { font-size: 2rem; font-weight: 700; margin: 1.75rem 0 1rem; color: #111827; }
-                  .admin-blog-preview-body h2 { font-size: 1.6rem; font-weight: 700; margin: 1.5rem 0 0.85rem; color: #111827; }
-                  .admin-blog-preview-body h3 { font-size: 1.3rem; font-weight: 600; margin: 1.25rem 0 0.7rem; color: #111827; }
-                  .admin-blog-preview-body h4 { font-size: 1.1rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-                  .admin-blog-preview-body ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1.15rem; }
-                  .admin-blog-preview-body ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1.15rem; }
-                  .admin-blog-preview-body li { margin-bottom: 0.4rem; }
-                  .admin-blog-preview-body a { color: #2563eb; text-decoration: underline; }
-                  .admin-blog-preview-body img { max-width: 100%; height: auto; border-radius: 0.75rem; margin: 1.5rem 0; }
-                  .admin-blog-preview-body table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
-                  .admin-blog-preview-body th, .admin-blog-preview-body td { border: 1px solid #e5e7eb; padding: 0.6rem 0.75rem; text-align: left; }
-                  .admin-blog-preview-body iframe, .admin-blog-preview-body video { max-width: 100%; margin: 1.5rem 0; }
-                `}</style>
-                <div className="admin-blog-preview-body">
-                  {previewBlog.description && /<\/?[a-z][\s\S]*>/i.test(previewBlog.description) ? (
-                    <div dangerouslySetInnerHTML={{ __html: previewBlog.description }} />
-                  ) : (
-                    (previewBlog.description || "").split("\n").map((paragraph, index) =>
-                      paragraph.trim() ? (
-                        <p key={index} className="mb-5 last:mb-0">
-                          {paragraph}
-                        </p>
-                      ) : null
-                    )
-                  )}
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      )}
 
       {/* Confirmation Modal */}
       {showConfirmationModal && (

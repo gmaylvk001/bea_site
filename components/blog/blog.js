@@ -37,20 +37,33 @@ function formatDate(dateStr) {
 
 
 
-// Built-in clean text stripper to drop structural tags from text metrics
-
+// Built-in clean text stripper to drop structural tags, scripts, styles, and head metadata from preview snippets
 function stripHtmlTags(str) {
-
   if (!str) return "";
 
-  return str
-
-    .replace(/<[^>]*>/g, "")   // Automatically wipes out <p>, </p>, <strong> etc.
-
-    .replace(/&nbsp;/g, " ")   // Converts space entities into clean spaces
-
+  return String(str)
+    // 1. Remove non-visible code blocks and head elements completely
+    .replace(/<head[\s\S]*?<\/head>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<title[\s\S]*?<\/title>/gi, "")
+    .replace(/<svg[\s\S]*?<\/svg>/gi, "")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    // 2. Remove remaining HTML tags
+    .replace(/<[^>]*>/g, " ")
+    // 3. Decode common HTML entities
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    // 4. Remove stray JSON schema blocks if any
+    .replace(/\{\s*"@context"[\s\S]*?\}/gi, "")
+    // 5. Normalize whitespace
+    .replace(/\s+/g, " ")
     .trim();
-
 }
 
 
@@ -749,7 +762,9 @@ export default function BlogComponent() {
 
                       <p className="text-[13px] text-gray-600 mb-4 flex-1 leading-relaxed line-clamp-3">
 
-                        {stripHtmlTags(guide.description)}
+                        {(guide.meta_description && guide.meta_description !== "none" && guide.meta_description.trim())
+                          ? guide.meta_description
+                          : stripHtmlTags(guide.description)}
 
                       </p>
 

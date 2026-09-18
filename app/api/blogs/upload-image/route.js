@@ -5,15 +5,25 @@ import { mkdir, writeFile } from "fs/promises";
 export async function POST(req) {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") || formData.get("image");
 
-    if (!file || typeof file === "string" || !file.name) {
-      return NextResponse.json({ error: "No image file received" }, { status: 400 });
+    // Check all possible field names used by Jodit and standard file uploaders
+    let file =
+      formData.get("file") ||
+      formData.get("image") ||
+      formData.get("files[0]") ||
+      formData.get("files");
+
+    if (!file) {
+      for (const [, val] of formData.entries()) {
+        if (val && typeof val === "object" && typeof val.arrayBuffer === "function" && val.name) {
+          file = val;
+          break;
+        }
+      }
     }
 
-    const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
-    if (file.type && !allowed.includes(file.type) && !file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 });
+    if (!file || typeof file === "string" || !file.name) {
+      return NextResponse.json({ success: false, error: "No image file received" }, { status: 400 });
     }
 
     const ext = path.extname(file.name) || ".jpg";
@@ -25,9 +35,28 @@ export async function POST(req) {
     await writeFile(path.join(dir, fileName), Buffer.from(await file.arrayBuffer()));
 
     const location = `/uploads/blogs/${fileName}`;
-    return NextResponse.json({ location, url: location });
+
+    // Return both standard JSON and Jodit uploader compatible response
+    return NextResponse.json({
+      success: true,
+      location,
+      url: location,
+      data: {
+        baseurl: "",
+        messages: [],
+        files: [location],
+        isImages: [true],
+        code: 220,
+      },
+    });
   } catch (error) {
     console.error("Blog image upload error:", error);
-    return NextResponse.json({ error: error.message || "Failed to upload image. Ensure server filesystem allows write access to public/uploads/blogs." }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || "Failed to upload image. Ensure server filesystem allows write access.",
+      },
+      { status: 500 }
+    );
   }
 }

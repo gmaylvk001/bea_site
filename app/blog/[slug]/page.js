@@ -12,6 +12,7 @@ import {
   buildBreadcrumbSchema,
 } from "@/lib/schema";
 import { buildCanonicalUrl } from "@/components/CanonicalLink";
+import BlogLeadPopup from "@/components/blog/BlogLeadPopup";
 
 async function getBlogPost(slug) {
   try {
@@ -131,6 +132,7 @@ export default async function BlogPost({ params }) {
 
   return (
     <article className="min-h-screen bg-gray-50 py-12">
+      <BlogLeadPopup blogTitle={blog.blog_name} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap');
         .blog-article-body { font-family: Roboto, Calibri, Helvetica, Arial, sans-serif; font-size: 16.5px; line-height: 1.8; color: #1f2937; }
