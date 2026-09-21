@@ -235,15 +235,294 @@ const Footer = () => {
     return grouped;
   };
 
-  // Prepare normalized sections for rendering:
-  // - For Large Appliances: one block per ["Dishwasher","Air Conditioner","Washing Machine","Refrigerator"]
-  //   with order: title -> all subcategories -> single Brands list.
-  // - For others: keep existing brand logic (subcategories + nested + one Brands list).
-  const prepareFooterSections = (grouped) => {
-    const sections = [];
-    if (!grouped || !Array.isArray(grouped.main)) return sections;
+  const DEFAULT_SEO_SECTIONS = [
+    {
+      key: "def-tv",
+      title: "Televisions",
+      brandTitle: "Television Brands",
+      items: [
+        { name: "Smart TVs", href: "/category/televisions/smart-tvs" },
+        { name: "32 Inch TVs", href: "/category/televisions/32-inch-tvs" },
+        { name: "43 Inch TVs", href: "/category/televisions/43-inch-tvs" },
+        { name: "50 Inch TVs", href: "/category/televisions/50-inch-tvs" },
+        { name: "55 Inch TVs", href: "/category/televisions/55-inch-tvs" },
+        { name: "65 Inch TVs", href: "/category/televisions/65-inch-tvs" },
+        { name: "4K Ultra HD TVs", href: "/category/televisions/4k-ultra-hd-tvs" },
+        { name: "OLED TVs", href: "/category/televisions/oled-tvs" },
+        { name: "QLED TVs", href: "/category/televisions/qled-tvs" },
+        { name: "LED TVs", href: "/category/televisions/led-tvs" },
+        { name: "Google TVs", href: "/category/televisions/google-tvs" },
+        { name: "Android TVs", href: "/category/televisions/android-tvs" },
+      ],
+      brands: [
+        { name: "Sony", href: "/category/brand/televisions/sony" },
+        { name: "Samsung", href: "/category/brand/televisions/samsung" },
+        { name: "LG", href: "/category/brand/televisions/lg" },
+        { name: "OnePlus", href: "/category/brand/televisions/oneplus" },
+        { name: "TCL", href: "/category/brand/televisions/tcl" },
+        { name: "Xiaomi", href: "/category/brand/televisions/xiaomi" },
+        { name: "Vu", href: "/category/brand/televisions/vu" },
+        { name: "Haier", href: "/category/brand/televisions/haier" },
+        { name: "Lloyd", href: "/category/brand/televisions/lloyd" },
+        { name: "Onida", href: "/category/brand/televisions/onida" },
+        { name: "Sansui", href: "/category/brand/televisions/sansui" },
+        { name: "Acer", href: "/category/brand/televisions/acer" },
+      ],
+    },
+    {
+      key: "def-ref",
+      title: "Refrigerators",
+      brandTitle: "Refrigerator Brands",
+      items: [
+        { name: "Single Door Refrigerators", href: "/category/large-appliances/refrigerators/single-door" },
+        { name: "Double Door Refrigerators", href: "/category/large-appliances/refrigerators/double-door" },
+        { name: "Side by Side Refrigerators", href: "/category/large-appliances/refrigerators/side-by-side" },
+        { name: "French Door Refrigerators", href: "/category/large-appliances/refrigerators/french-door" },
+        { name: "Triple Door Refrigerators", href: "/category/large-appliances/refrigerators/triple-door" },
+        { name: "Bottom Freezer Refrigerators", href: "/category/large-appliances/refrigerators/bottom-freezer" },
+        { name: "Mini Refrigerators", href: "/category/large-appliances/refrigerators/mini-refrigerator" },
+        { name: "Inverter Refrigerators", href: "/category/large-appliances/refrigerators/inverter-refrigerator" },
+      ],
+      brands: [
+        { name: "LG", href: "/category/brand/refrigerators/lg" },
+        { name: "Samsung", href: "/category/brand/refrigerators/samsung" },
+        { name: "Whirlpool", href: "/category/brand/refrigerators/whirlpool" },
+        { name: "Haier", href: "/category/brand/refrigerators/haier" },
+        { name: "Godrej", href: "/category/brand/refrigerators/godrej" },
+        { name: "Bosch", href: "/category/brand/refrigerators/bosch" },
+        { name: "Liebherr", href: "/category/brand/refrigerators/liebherr" },
+        { name: "Panasonic", href: "/category/brand/refrigerators/panasonic" },
+        { name: "Voltas Beko", href: "/category/brand/refrigerators/voltas-beko" },
+      ],
+    },
+    {
+      key: "def-wm",
+      title: "Washing Machines",
+      brandTitle: "Washing Machine Brands",
+      items: [
+        { name: "Front Load Washing Machines", href: "/category/large-appliances/washing-machines/front-load" },
+        { name: "Top Load Washing Machines", href: "/category/large-appliances/washing-machines/top-load" },
+        { name: "Semi Automatic Washing Machines", href: "/category/large-appliances/washing-machines/semi-automatic" },
+        { name: "Fully Automatic Washing Machines", href: "/category/large-appliances/washing-machines/fully-automatic" },
+        { name: "Washer Dryers", href: "/category/large-appliances/washing-machines/washer-dryer" },
+        { name: "Inverter Washing Machines", href: "/category/large-appliances/washing-machines/inverter" },
+      ],
+      brands: [
+        { name: "LG", href: "/category/brand/washing-machines/lg" },
+        { name: "Samsung", href: "/category/brand/washing-machines/samsung" },
+        { name: "Bosch", href: "/category/brand/washing-machines/bosch" },
+        { name: "IFB", href: "/category/brand/washing-machines/ifb" },
+        { name: "Whirlpool", href: "/category/brand/washing-machines/whirlpool" },
+        { name: "Godrej", href: "/category/brand/washing-machines/godrej" },
+        { name: "Panasonic", href: "/category/brand/washing-machines/panasonic" },
+        { name: "Lloyd", href: "/category/brand/washing-machines/lloyd" },
+        { name: "Haier", href: "/category/brand/washing-machines/haier" },
+      ],
+    },
+    {
+      key: "def-ac",
+      title: "Air Conditioners",
+      brandTitle: "Air Conditioner Brands",
+      items: [
+        { name: "Split ACs", href: "/category/large-appliances/air-conditioners/split-ac" },
+        { name: "Inverter ACs", href: "/category/large-appliances/air-conditioners/inverter-ac" },
+        { name: "Window ACs", href: "/category/large-appliances/air-conditioners/window-ac" },
+        { name: "1 Ton ACs", href: "/category/large-appliances/air-conditioners/1-ton-ac" },
+        { name: "1.5 Ton ACs", href: "/category/large-appliances/air-conditioners/1-5-ton-ac" },
+        { name: "2 Ton ACs", href: "/category/large-appliances/air-conditioners/2-ton-ac" },
+        { name: "5 Star ACs", href: "/category/large-appliances/air-conditioners/5-star-ac" },
+        { name: "3 Star ACs", href: "/category/large-appliances/air-conditioners/3-star-ac" },
+        { name: "Hot & Cold ACs", href: "/category/large-appliances/air-conditioners/hot-cold-ac" },
+      ],
+      brands: [
+        { name: "Daikin", href: "/category/brand/air-conditioners/daikin" },
+        { name: "Voltas", href: "/category/brand/air-conditioners/voltas" },
+        { name: "Blue Star", href: "/category/brand/air-conditioners/blue-star" },
+        { name: "LG", href: "/category/brand/air-conditioners/lg" },
+        { name: "Lloyd", href: "/category/brand/air-conditioners/lloyd" },
+        { name: "Carrier", href: "/category/brand/air-conditioners/carrier" },
+        { name: "Hitachi", href: "/category/brand/air-conditioners/hitachi" },
+        { name: "Panasonic", href: "/category/brand/air-conditioners/panasonic" },
+        { name: "Samsung", href: "/category/brand/air-conditioners/samsung" },
+        { name: "Mitsubishi", href: "/category/brand/air-conditioners/mitsubishi" },
+      ],
+    },
+    {
+      key: "def-dw",
+      title: "Dishwashers",
+      brandTitle: "Dishwasher Brands",
+      items: [
+        { name: "12 Place Settings Dishwashers", href: "/category/large-appliances/dishwashers/12-place-settings" },
+        { name: "14 Place Settings Dishwashers", href: "/category/large-appliances/dishwashers/14-place-settings" },
+        { name: "16 Place Settings Dishwashers", href: "/category/large-appliances/dishwashers/16-place-settings" },
+        { name: "Free Standing Dishwashers", href: "/category/large-appliances/dishwashers/free-standing" },
+        { name: "Built-in Dishwashers", href: "/category/large-appliances/dishwashers/built-in" },
+      ],
+      brands: [
+        { name: "Bosch", href: "/category/brand/dishwashers/bosch" },
+        { name: "IFB", href: "/category/brand/dishwashers/ifb" },
+        { name: "LG", href: "/category/brand/dishwashers/lg" },
+        { name: "Siemens", href: "/category/brand/dishwashers/siemens" },
+        { name: "Faber", href: "/category/brand/dishwashers/faber" },
+        { name: "Voltas Beko", href: "/category/brand/dishwashers/voltas-beko" },
+      ],
+    },
+    {
+      key: "def-laptop",
+      title: "Laptops & Computers",
+      brandTitle: "Laptop Brands",
+      items: [
+        { name: "Laptops", href: "/category/computers-laptops/laptops" },
+        { name: "Gaming Laptops", href: "/category/computers-laptops/gaming-laptops" },
+        { name: "Thin & Light Laptops", href: "/category/computers-laptops/thin-light-laptops" },
+        { name: "Student Laptops", href: "/category/computers-laptops/student-laptops" },
+        { name: "Business Laptops", href: "/category/computers-laptops/business-laptops" },
+        { name: "All-in-One PCs", href: "/category/computers-laptops/all-in-one-pcs" },
+        { name: "Desktop Computers", href: "/category/computers-laptops/desktop-computers" },
+      ],
+      brands: [
+        { name: "HP", href: "/category/brand/computers-laptops/hp" },
+        { name: "Dell", href: "/category/brand/computers-laptops/dell" },
+        { name: "Lenovo", href: "/category/brand/computers-laptops/lenovo" },
+        { name: "Asus", href: "/category/brand/computers-laptops/asus" },
+        { name: "Apple", href: "/category/brand/computers-laptops/apple" },
+        { name: "Acer", href: "/category/brand/computers-laptops/acer" },
+        { name: "MSI", href: "/category/brand/computers-laptops/msi" },
+        { name: "Samsung", href: "/category/brand/computers-laptops/samsung" },
+      ],
+    },
+    {
+      key: "def-mobiles",
+      title: "Mobile Phones & Tablets",
+      brandTitle: "Mobile Brands",
+      items: [
+        { name: "5G Mobile Phones", href: "/category/mobiles-accessories/5g-mobiles" },
+        { name: "Android Smartphones", href: "/category/mobiles-accessories/android-smartphones" },
+        { name: "iPhones", href: "/category/mobiles-accessories/iphones" },
+        { name: "Feature Phones", href: "/category/mobiles-accessories/feature-phones" },
+        { name: "Tablets", href: "/category/mobiles-accessories/tablets" },
+        { name: "iPads", href: "/category/mobiles-accessories/ipads" },
+        { name: "Smartwatches", href: "/category/mobiles-accessories/smartwatches" },
+      ],
+      brands: [
+        { name: "Apple", href: "/category/brand/mobiles-accessories/apple" },
+        { name: "Samsung", href: "/category/brand/mobiles-accessories/samsung" },
+        { name: "OnePlus", href: "/category/brand/mobiles-accessories/oneplus" },
+        { name: "Vivo", href: "/category/brand/mobiles-accessories/vivo" },
+        { name: "Oppo", href: "/category/brand/mobiles-accessories/oppo" },
+        { name: "Realme", href: "/category/brand/mobiles-accessories/realme" },
+        { name: "Xiaomi", href: "/category/brand/mobiles-accessories/xiaomi" },
+        { name: "Motorola", href: "/category/brand/mobiles-accessories/motorola" },
+        { name: "Nothing", href: "/category/brand/mobiles-accessories/nothing" },
+      ],
+    },
+    {
+      key: "def-kitchen",
+      title: "Kitchen Appliances",
+      brandTitle: "Kitchen Appliance Brands",
+      items: [
+        { name: "Mixer Grinders", href: "/category/small-appliances/mixer-grinders" },
+        { name: "Microwave Ovens", href: "/category/small-appliances/microwave-ovens" },
+        { name: "Air Fryers", href: "/category/small-appliances/air-fryers" },
+        { name: "Induction Cooktops", href: "/category/small-appliances/induction-cooktops" },
+        { name: "Water Purifiers", href: "/category/small-appliances/water-purifiers" },
+        { name: "Electric Kettles", href: "/category/small-appliances/electric-kettles" },
+        { name: "Kitchen Chimneys", href: "/category/small-appliances/chimneys" },
+        { name: "Gas Stoves", href: "/category/small-appliances/gas-stoves" },
+      ],
+      brands: [
+        { name: "Philips", href: "/category/brand/small-appliances/philips" },
+        { name: "Prestige", href: "/category/brand/small-appliances/prestige" },
+        { name: "Butterfly", href: "/category/brand/small-appliances/butterfly" },
+        { name: "Preethi", href: "/category/brand/small-appliances/preethi" },
+        { name: "Faber", href: "/category/brand/small-appliances/faber" },
+        { name: "Kent", href: "/category/brand/small-appliances/kent" },
+        { name: "Bosch", href: "/category/brand/small-appliances/bosch" },
+        { name: "Crompton", href: "/category/brand/small-appliances/crompton" },
+        { name: "Bajaj", href: "/category/brand/small-appliances/bajaj" },
+      ],
+    },
+    {
+      key: "def-home",
+      title: "Home Appliances",
+      brandTitle: "Home Appliance Brands",
+      items: [
+        { name: "Vacuum Cleaners", href: "/category/small-appliances/vacuum-cleaners" },
+        { name: "Water Heaters (Geysers)", href: "/category/small-appliances/water-heaters" },
+        { name: "Air Coolers", href: "/category/small-appliances/air-coolers" },
+        { name: "Ceiling Fans", href: "/category/small-appliances/ceiling-fans" },
+        { name: "Irons & Garment Steamers", href: "/category/small-appliances/irons" },
+        { name: "Voltage Stabilizers", href: "/category/small-appliances/voltage-stabilizers" },
+      ],
+      brands: [
+        { name: "Havells", href: "/category/brand/small-appliances/havells" },
+        { name: "Crompton", href: "/category/brand/small-appliances/crompton" },
+        { name: "Bajaj", href: "/category/brand/small-appliances/bajaj" },
+        { name: "Philips", href: "/category/brand/small-appliances/philips" },
+        { name: "Usha", href: "/category/brand/small-appliances/usha" },
+        { name: "V-Guard", href: "/category/brand/small-appliances/v-guard" },
+      ],
+    },
+    {
+      key: "def-audio",
+      title: "Audio & Sound",
+      brandTitle: "Audio Brands",
+      items: [
+        { name: "Bluetooth Speakers", href: "/category/mobiles-accessories/bluetooth-speakers" },
+        { name: "Soundbars", href: "/category/televisions/soundbars" },
+        { name: "Home Theatres", href: "/category/televisions/home-theatres" },
+        { name: "Truly Wireless Earbuds", href: "/category/mobiles-accessories/true-wireless-earbuds" },
+        { name: "Neckbands", href: "/category/mobiles-accessories/neckbands" },
+        { name: "Headphones", href: "/category/mobiles-accessories/headphones" },
+      ],
+      brands: [
+        { name: "Sony", href: "/category/brand/mobiles-accessories/sony" },
+        { name: "JBL", href: "/category/brand/mobiles-accessories/jbl" },
+        { name: "boAt", href: "/category/brand/mobiles-accessories/boat" },
+        { name: "Bose", href: "/category/brand/mobiles-accessories/bose" },
+        { name: "Marshall", href: "/category/brand/mobiles-accessories/marshall" },
+        { name: "Noise", href: "/category/brand/mobiles-accessories/noise" },
+      ],
+    },
+    {
+      key: "def-personal",
+      title: "Personal Care",
+      brandTitle: "Personal Care Brands",
+      items: [
+        { name: "Hair Dryers", href: "/category/small-appliances/hair-dryers" },
+        { name: "Hair Straighteners", href: "/category/small-appliances/hair-straighteners" },
+        { name: "Beard Trimmers", href: "/category/small-appliances/trimmers" },
+        { name: "Shavers", href: "/category/small-appliances/shavers" },
+      ],
+      brands: [
+        { name: "Philips", href: "/category/brand/small-appliances/philips" },
+        { name: "Havells", href: "/category/brand/small-appliances/havells" },
+        { name: "Vega", href: "/category/brand/small-appliances/vega" },
+        { name: "Braun", href: "/category/brand/small-appliances/braun" },
+      ],
+    },
+  ];
 
-    // Use lowercase for consistent matching
+  // Helper to find fallback section by name
+  const findFallbackSection = (title) => {
+    const lower = String(title || "").toLowerCase();
+    return DEFAULT_SEO_SECTIONS.find((s) => {
+      const sLower = s.title.toLowerCase();
+      const firstWord = sLower.split(" ")[0];
+      return lower.includes(firstWord) || sLower.includes(lower) || lower.includes(sLower);
+    });
+  };
+
+  // Prepare normalized sections for rendering SEO category & brand directory:
+  // - For Large Appliances: one block per subcategory (Refrigerator, Washing Machine, Air Conditioner, Dishwasher, etc.)
+  //   with format: subcategory name -> products / children, and subcategory name brands -> brands.
+  // - For others: category name -> subcategories / products, and category name brands -> brands.
+  const prepareFooterSections = (grouped) => {
+    if (!grouped || !Array.isArray(grouped.main) || grouped.main.length === 0) {
+      return DEFAULT_SEO_SECTIONS;
+    }
+
+    const sections = [];
     const LARGE_SET = new Set([
       "dishwasher",
       "air conditioner",
@@ -253,37 +532,83 @@ const Footer = () => {
 
     grouped.main.forEach((mainCat) => {
       const subs = grouped.subs[mainCat._id] || [];
-      if (mainCat.category_name?.toLowerCase() === "large appliances") {
+      const mainName = (mainCat.category_name || "").toLowerCase();
+
+      if (mainName.includes("large appliance")) {
         subs.forEach((subcat) => {
-          const subName = subcat.category_name?.toLowerCase();
-          if (LARGE_SET.has(subName)) {
-            const children = grouped.subs[subcat._id] || [];
-            const brands =
-              (Array.isArray(subcat.brands) && subcat.brands.length
-                ? subcat.brands
-                : mainCat.brands) || [];
-            sections.push({
-              type: "la",
-              key: `la-${subcat._id}`,
-              main: mainCat,
-              la: subcat,
-              children,
-              brands,
-            });
-          }
+          const children = grouped.subs[subcat._id] || [];
+          const brands =
+            (Array.isArray(subcat.brands) && subcat.brands.length
+              ? subcat.brands
+              : mainCat.brands) || [];
+
+          const fallback = findFallbackSection(subcat.category_name);
+
+          const items =
+            children.length > 0
+              ? children.map((c) => ({
+                  key: `child-${c._id}`,
+                  name: c.category_name,
+                  href: `/category/${mainCat.category_slug}/${subcat.category_slug}/${c.category_slug}`,
+                }))
+              : fallback?.items || [
+                  {
+                    key: `sub-${subcat._id}`,
+                    name: subcat.category_name,
+                    href: `/category/${mainCat.category_slug}/${subcat.category_slug}`,
+                  },
+                ];
+
+          const brandList =
+            brands.length > 0
+              ? brands.map((b) => ({
+                  key: `b-${b._id || b.brand_slug}`,
+                  name: b.brand_name || b,
+                  href: `/category/brand/${subcat.category_slug || mainCat.category_slug}/${b.brand_slug || String(b.brand_name || b).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+                }))
+              : fallback?.brands || [];
+
+          sections.push({
+            key: `la-${subcat._id}`,
+            title: subcat.category_name,
+            brandTitle: `${subcat.category_name} Brands`,
+            items,
+            brands: brandList,
+          });
         });
       } else {
+        const fallback = findFallbackSection(mainCat.category_name);
+        const brands = mainCat.brands || [];
+
+        const items =
+          subs.length > 0
+            ? subs.map((s) => ({
+                key: `sub-${s._id}`,
+                name: s.category_name,
+                href: `/category/${mainCat.category_slug}/${s.category_slug}`,
+              }))
+            : fallback?.items || [];
+
+        const brandList =
+          brands.length > 0
+            ? brands.map((b) => ({
+                key: `b-${b._id || b.brand_slug}`,
+                name: b.brand_name || b,
+                href: `/category/brand/${mainCat.category_slug}/${b.brand_slug || String(b.brand_name || b).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+              }))
+            : fallback?.brands || [];
+
         sections.push({
-          type: "default",
           key: `def-${mainCat._id}`,
-          main: mainCat,
-          subs,
-          brands: mainCat.brands || [],
+          title: mainCat.category_name,
+          brandTitle: `${mainCat.category_name} Brands`,
+          items,
+          brands: brandList,
         });
       }
     });
 
-    return sections;
+    return sections.length > 0 ? sections : DEFAULT_SEO_SECTIONS;
   };
 
   const preparedSections = useMemo(
@@ -730,7 +1055,63 @@ const Footer = () => {
     </div>
   </div>
 </div>
-          <div className="bg-[#02133a] text-gray-300 py-4">
+
+          {/* SEO CATEGORY & BRAND DIRECTORY */}
+          <div className="bg-[#02133a] border-t border-[#0e2c69] text-gray-400 py-6 sm:py-8 text-xs">
+            <div className="container mx-auto px-3 sm:px-4 lg:max-w-[1400px] lg:px-2 min-[1440px]:max-w-[1600px] min-[1440px]:px-1 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0">
+              <div className="space-y-4">
+                {preparedSections.map((sec, idx) => (
+                  <div key={sec.key || `seo-sec-${idx}`} className="text-[11px] sm:text-xs leading-relaxed">
+                    {/* Subcategory / Category Name: Products */}
+                    {sec.items && sec.items.length > 0 && (
+                      <p className="text-gray-400">
+                        <span className="font-semibold text-white">
+                          {sec.title}:
+                        </span>{" "}
+                        {sec.items.map((item, i) => (
+                          <span key={item.key || `item-${i}`}>
+                            <Link
+                              href={item.href}
+                              className="hover:text-white hover:underline transition-colors"
+                            >
+                              {item.name}
+                            </Link>
+                            {i < sec.items.length - 1 && (
+                              <span className="text-gray-600 mx-1.5">|</span>
+                            )}
+                          </span>
+                        ))}
+                      </p>
+                    )}
+
+                    {/* Subcategory Name that's Brand: Brands */}
+                    {sec.brands && sec.brands.length > 0 && (
+                      <p className="text-gray-400 mt-1">
+                        <span className="font-semibold text-white">
+                          {sec.brandTitle || `${sec.title} Brands`}:
+                        </span>{" "}
+                        {sec.brands.map((brand, i) => (
+                          <span key={brand.key || `brand-${i}`}>
+                            <Link
+                              href={brand.href}
+                              className="hover:text-white hover:underline transition-colors"
+                            >
+                              {brand.name}
+                            </Link>
+                            {i < sec.brands.length - 1 && (
+                              <span className="text-gray-600 mx-1.5">|</span>
+                            )}
+                          </span>
+                        ))}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#02133a] border-t border-[#0d2a6b] text-gray-300 py-4">
             <div className="container mx-auto px-3 sm:px-4 lg:max-w-[1400px] lg:px-2 min-[1440px]:max-w-[1600px] min-[1440px]:px-1 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0 flex flex-col md:flex-row items-center justify-between gap-4">
 
               {/* Left Side */}
