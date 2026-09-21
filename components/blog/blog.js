@@ -494,13 +494,13 @@ export default function BlogComponent() {
 
               {[
 
-                { label: "Years of Trust", value: "25+", icon :"/uploads/25.png" },
+                { label: "Years of Trust", value: "25+", icon: "/uploads/blogs/25.png" },
 
-                { label: "Happy Customers", value: "50 Lakh+",icon:"/uploads/55lakhs.png"  },
+                { label: "Happy Customers", value: "50 Lakh+", icon: "/uploads/blogs/55lakhs.png" },
 
-                { label: "Stores Across Tamil Nadu", value: "47+",icon:"/uploads/47.png"  },
+                { label: "Stores Across Tamil Nadu", value: "47+", icon: "/uploads/blogs/47.png" },
 
-                { label: "Products", value: "5000+",icon:"/uploads/5000.png" },
+                { label: "Products", value: "5000+", icon: "/uploads/blogs/5000.png" },
 
               ].map((stat, i) => (
 
@@ -805,15 +805,15 @@ export default function BlogComponent() {
   <div className="flex justify-between gap-3 overflow-x-auto pb-4 hide-scrollbar">
 
     {[
-      { name: "Television", icon: "/uploads/Television.png" },
-      { name: "Air Conditioner", icon: "/uploads/AC.png" },
-      { name: "Refrigerator", icon: "/uploads/Fridge.png" },
-      { name: "Washing Machine", icon: "/uploads/washing.png" },
-      { name: "Kitchen Appliance", icon: "/uploads/kitchen.png" },
-      { name: "Laptop", icon: "/uploads/laptop.png" },
-      { name: "Audio", icon: "/uploads/Audio.png" },
-      { name: "Mobile & Gadget", icon: "/uploads/mobile.png" },
-      { name: "New Technology", icon: "/uploads/new_technology.png" },
+      { name: "Television", icon: "/uploads/blogs/Television.png" },
+      { name: "Air Conditioner", icon: "/uploads/blogs/AC.png" },
+      { name: "Refrigerator", icon: "/uploads/blogs/Fridge.png" },
+      { name: "Washing Machine", icon: "/uploads/blogs/washing.png" },
+      { name: "Kitchen Appliance", icon: "/uploads/blogs/kitchen.png" },
+      { name: "Laptop", icon: "/uploads/blogs/laptop.png" },
+      { name: "Audio", icon: "/uploads/blogs/Audio.png" },
+      { name: "Mobile & Gadget", icon: "/uploads/blogs/mobile.png" },
+      { name: "New Technology", icon: "/uploads/blogs/new_technology.png" },
     ].map((cat, i) => (
 
       <div key={i} className="flex flex-col items-center gap-3 cursor-pointer group min-w-[100px]">
@@ -1702,13 +1702,13 @@ export default function BlogComponent() {
 
                 {[
 
-                  { img: "/uploads/25_years.png", title: "25+ Years", desc: "Helping TamilNadu Families choose better" },
+                  { img: "/uploads/blogs/25_years.png", title: "25+ Years", desc: "Helping TamilNadu Families choose better" },
 
-                  { img: "/uploads/Brand.png", title: "Expert Team", desc: "Certified Product specialists" },
+                  { img: "/uploads/blogs/Brand.png", title: "Expert Team", desc: "Certified Product specialists" },
 
-                  { img: "/uploads/Real_Customer.png", title: "50 Lakh+", desc: "Based on 50 lakh+ customers" },
+                  { img: "/uploads/blogs/Real_Customer.png", title: "50 Lakh+", desc: "Based on 50 lakh+ customers" },
 
-                  { img: "/uploads/47+_Stores.png", title: "47+ Stores", desc: "Experience from daily customer interactions" },
+                  { img: "/uploads/blogs/47+_Stores.png", title: "47+ Stores", desc: "Experience from daily customer interactions" },
 
                 ].map((point, i) => (
 
@@ -1716,7 +1716,16 @@ export default function BlogComponent() {
 
                     <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 text-xl">
 
-                      <img src={point.img} alt={point.title} className="w-full h-full object-contain" />
+                      <img
+                        src={point.img}
+                        alt={point.title}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          if (point.img.includes("Brand.png")) {
+                            e.currentTarget.src = "/uploads/blogs/Brand.PNG";
+                          }
+                        }}
+                      />
 
                     </div>
 
