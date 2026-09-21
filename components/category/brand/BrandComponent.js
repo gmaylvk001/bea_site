@@ -31,8 +31,8 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
   });
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [filterGroups, setFilterGroups] = useState({});
+  const filterGroupsRef = useRef({});
   const [loading, setLoading] = useState(true);
-  const [isFiltering, setIsFiltering] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const isFirstLoadDone = useRef(false);
   const productsRef = useRef(null);
@@ -131,13 +131,13 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
 
       const groups = {};
       (data.filters || []).forEach(filter => {
-        const groupId = filter.filter_group_id || filter.filter_group_name;
+        const groupId = filter.filter_group_name;
         if (groupId) {
           if (!groups[groupId]) {
             groups[groupId] = {
               _id: groupId,
               name: filter.filter_group_name,
-              slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
+              slug: (filter.filter_group_name || '').toLowerCase().replace(/\s+/g, '-'),
               filters: []
             };
           }
@@ -145,6 +145,7 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
         }
       });
       setFilterGroups(groups);
+      filterGroupsRef.current = groups;
 
       const initialExpanded = {};
       Object.keys(groups).forEach(groupId => {
@@ -152,7 +153,7 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
       });
       setExpandedFilters(initialExpanded);
 
-      await fetchFilteredProducts(1, true, initialFilters, urlSort);
+      await fetchFilteredProducts(1, true, initialFilters, groups, urlSort);
     } catch (error) {
       toast.error("Error fetching initial data");
     } finally {
@@ -161,9 +162,9 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
     }
   };
 
-  const fetchFilteredProducts = useCallback(async (pageNum = 1, initialLoad = false, filtersOverride = null, sortOverride = null) => {
+  const fetchFilteredProducts = useCallback(async (pageNum = 1, initialLoad = false, filtersOverride = null, groupsOverride = null, sortOverride = null) => {
     try {
-      if (!initialLoad) setIsFiltering(true);
+      setLoading(true);
       const query = new URLSearchParams();
       const currentFilters = filtersOverride || selectedFilters;
 
@@ -202,7 +203,23 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
 
       if (currentFilters.filters && currentFilters.filters.length > 0) {
         query.set('filters', currentFilters.filters.join(','));
+        // Group filter IDs by their filter group name (same method as subcategory page)
+        const groupsToUse = groupsOverride || filterGroupsRef.current || {};
+        const filtersByGroup = {};
+        currentFilters.filters.forEach(filterId => {
+          for (const group of Object.values(groupsToUse)) {
+            if (group.filters && group.filters.some(f => f._id === filterId)) {
+              if (!filtersByGroup[group.name]) filtersByGroup[group.name] = [];
+              filtersByGroup[group.name].push(filterId);
+              break;
+            }
+          }
+        });
+        if (Object.keys(filtersByGroup).length > 0) {
+          query.set('filterGroups', JSON.stringify(filtersByGroup));
+        }
       }
+
       const activeSort = sortOverride !== null && sortOverride !== undefined ? sortOverride : sortOption;
       if (activeSort) {
         query.set('sort', activeSort);
@@ -216,7 +233,7 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
       if (returnedFilters) {
         const groups = {};
         returnedFilters.forEach(filter => {
-          const groupId = filter.filter_group_id || filter.filter_group_name;
+          const groupId = filter.filter_group_name;
           if (groupId) {
             if (!groups[groupId]) {
               groups[groupId] = {
@@ -230,13 +247,14 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
           }
         });
         setFilterGroups(groups);
+        filterGroupsRef.current = groups;
 
         // Keep groups with selected filters expanded
-        if (selectedFilters.filters.length > 0) {
+        if (currentFilters.filters && currentFilters.filters.length > 0) {
           setExpandedFilters(prev => {
             const updated = { ...prev };
             Object.values(groups).forEach(group => {
-              if (group.filters.some(f => selectedFilters.filters.includes(f._id))) {
+              if (group.filters.some(f => currentFilters.filters.includes(f._id))) {
                 updated[group._id] = true;
               }
             });
@@ -263,7 +281,6 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
     } catch (error) {
       toast.error('Error fetching products: ' + error.message);
     } finally {
-      if (!initialLoad) setIsFiltering(false);
       setLoading(false);
     }
   }, [selectedFilters, categoryData.brand, sortOption, categorySlug, brandSlug]);
@@ -1599,9 +1616,9 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
                 </div>
               )}
 
-              {isFiltering && (
-                <div className="absolute inset-0 bg-white/60 flex justify-center items-center z-10 min-h-[200px]">
-                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+              {loading && (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
                 </div>
               )}
             </div>
