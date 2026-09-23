@@ -1078,19 +1078,19 @@ const handleShare = async (product) => {
           </div>
         )}
 
-        <div className="relative w-[48%] shrink-0 flex flex-col items-center justify-center p-3 pt-12 pb-3">
-          <div className="flex-1 w-full flex items-center justify-center min-h-0 bg-white/80 rounded-xl p-2.5 shadow-sm border border-white/90 group-hover:bg-white group-hover:shadow-md transition-all duration-300">
+        <div className="relative w-[50%] shrink-0 flex flex-col items-center justify-center p-2 pt-10 pb-3 sm:pt-11">
+          <div className="flex-1 w-full flex items-center justify-center min-h-0">
             {imageSrc ? (
               <Image
                 src={imageSrc}
                 alt={product.name}
-                width={220}
-                height={220}
-                className="object-contain max-h-[190px] w-auto h-auto transition-transform duration-500 ease-out group-hover:scale-108"
+                width={260}
+                height={260}
+                className="object-contain max-h-[220px] sm:max-h-[235px] w-auto h-auto transition-transform duration-500 ease-out group-hover:scale-108 mix-blend-multiply"
                 unoptimized
               />
             ) : (
-              <div className="w-full h-full bg-gray-50 rounded-lg" />
+              <div className="w-full h-full rounded-lg" />
             )}
           </div>
         </div>

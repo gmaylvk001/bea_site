@@ -1,41 +1,38 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-// import { useVisitorIntent } from "@/context/VisitorIntentContext";
-// import { useSmartLeadConfig } from "@/context/SmartLeadConfigContext";
-// import {
-//   buildSmartLeadWhatsAppUrl,
-//   getConfiguredWhatsAppPhone,
-// } from "@/lib/smartLead";
-// import {
-//   trackSmartLeadEvent,
-//   buildEventContextFromSnapshot,
-// } from "@/lib/smartLead/trackEvent.js";
+import { useState, useEffect } from "react";
 
 /**
- * Site WhatsApp float.
- * Smart Lead / visitor-intent wiring commented until popup work is finished.
+ * Site WhatsApp float + Desktop/Laptop Scroll-to-Top button.
  */
 export default function WhatsAppFloat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  // const { snapshot } = useVisitorIntent();
-  // const { config } = useSmartLeadConfig();
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const whatsappUrl = "https://wa.me/919585685500?text=hello";
-  // const whatsappUrl = useMemo(
-  //   () =>
-  //     buildSmartLeadWhatsAppUrl({
-  //       baseText: "Hi there! How can we help you today? Connect with us to know more.",
-  //       snapshot,
-  //       talkToId: snapshot?.talkToId || "",
-  //       leadId: snapshot?.popupState?.lastLeadId || "",
-  //       mobile: snapshot?.popupState?.capturedMobile || "",
-  //       phone: getConfiguredWhatsAppPhone(config),
-  //       config,
-  //     }),
-  //   [snapshot, config]
-  // );
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Visible when scrolled mid-page / past 350px
+      if (window.scrollY > 350) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   if (pathname?.startsWith("/admin")) return null;
 
@@ -87,14 +84,6 @@ export default function WhatsAppFloat() {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              // onClick={() =>
-              //   trackSmartLeadEvent({
-              //     eventType: "whatsapp_click",
-              //     leadId: snapshot?.popupState?.lastLeadId || "",
-              //     displayMode: "float",
-              //     ...buildEventContextFromSnapshot(snapshot),
-              //   })
-              // }
               className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20c05c] text-white font-bold py-3 rounded-full text-sm transition active:scale-[0.97]"
               aria-label="Chat on WhatsApp"
               title="Chat on WhatsApp"
@@ -112,6 +101,30 @@ export default function WhatsAppFloat() {
             </a>
           </div>
         </div>
+      )}
+
+      {/* Scroll to Top Arrow - Laptop/Desktop Only */}
+      {!open && showScrollTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          className="hidden lg:flex fixed bottom-[156px] right-6 z-[9999] items-center justify-center w-11 h-11 rounded-full bg-[#015aaa] hover:bg-white text-white hover:text-[#015aaa] border-2 border-[#015aaa] shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 group cursor-pointer"
+          aria-label="Scroll to top"
+          title="Back to top"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-5 h-5 transition-transform duration-200 group-hover:-translate-y-1"
+          >
+            <path d="M18 15l-6-6-6 6" />
+          </svg>
+        </button>
       )}
 
       <button
