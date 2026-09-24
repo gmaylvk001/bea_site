@@ -550,6 +550,7 @@ export default function Header() {
                 width={80} 
                 height={80} 
                 className="object-contain"
+                unoptimized
               />
             ) : (
               <div className="w-10 h-10 bg-gray-300 rounded-full"></div>

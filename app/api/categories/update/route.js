@@ -75,16 +75,25 @@ export async function PUT(req) {
     // Handle image upload/update
     let image_url = existingImage;
 
-    if (file) {
-      // Delete old image if it exists
+    if (file && typeof file !== "string" && file.name && file.size > 0) {
+      // Delete old image only if it exists, is not shared by another category, and is a generated upload
       if (existingImage) {
         try {
-          const oldImagePath = path.join(
-            process.cwd(),
-            "public",
-            existingImage.replace("http://localhost:3000", "")
-          );
-          await unlink(oldImagePath);
+          const cleanExisting = existingImage.replace(/^https?:\/\/[^/]+/, "");
+          const fileNameOnly = path.basename(cleanExisting);
+
+          // Check if another category is also using this image
+          const isShared = await Category.findOne({
+            image: { $regex: fileNameOnly },
+            _id: { $ne: _id },
+          });
+
+          // Only delete if NOT shared and is an uploaded category file (avoid deleting default/seed images like tv.png)
+          if (!isShared && fileNameOnly.startsWith("category_")) {
+            const relativePath = cleanExisting.startsWith("/") ? cleanExisting.slice(1) : cleanExisting;
+            const oldImagePath = path.join(process.cwd(), "public", relativePath);
+            await unlink(oldImagePath);
+          }
         } catch (err) {
           console.error("Error deleting old image:", err);
         }
@@ -98,18 +107,21 @@ export async function PUT(req) {
       image_url = `/uploads/categories/${fileName}`;
     }
     // Handle navImage upload/update BEFORE updating category
-    // const existingNavImage = formData.get("existingNavImage");
     let nav_image_url = existingNavImage;
-    //  const navFile = formData.get("navImage");
-    if (navFile) {
+    if (navFile && typeof navFile !== "string" && navFile.name && navFile.size > 0) {
       if (nav_image_url) {
         try {
-          const oldNavImagePath = path.join(
-            process.cwd(),
-            "public",
-            nav_image_url.replace("http://localhost:3000","")
-          );
-          await unlink(oldNavImagePath);
+          const cleanNav = nav_image_url.replace(/^https?:\/\/[^/]+/, "");
+          const fileNameOnly = path.basename(cleanNav);
+          const isShared = await Category.findOne({
+            navImage: { $regex: fileNameOnly },
+            _id: { $ne: _id },
+          });
+          if (!isShared && fileNameOnly.startsWith("category_nav_")) {
+            const relativePath = cleanNav.startsWith("/") ? cleanNav.slice(1) : cleanNav;
+            const oldNavImagePath = path.join(process.cwd(), "public", relativePath);
+            await unlink(oldNavImagePath);
+          }
         } catch (err) {
           console.error("Error deleting old navImage:", err);
         }
@@ -119,7 +131,7 @@ export async function PUT(req) {
       const fileName = `category_nav_${Date.now()}${path.extname(navFile.name)}`;
       await writeFile(path.join(uploadDir, fileName), buffer);
       nav_image_url = `/uploads/categories/${fileName}`;
-      console.log('nav_image_url:',nav_image_url);
+      console.log('nav_image_url:', nav_image_url);
     }
        // Handle icon image upload/update
 let icon_url = existingIconImage;

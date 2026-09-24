@@ -19,6 +19,17 @@ const CustomOption = (props) => (
     </div>
   </components.Option>
 );
+
+// Helper to safely resolve category image paths (handles bare filenames, relative paths, full URLs)
+const getCategoryImageUrl = (image) => {
+  if (!image || typeof image !== "string") return null;
+  const clean = image.trim();
+  if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
+  if (clean.startsWith("/uploads/")) return clean;
+  if (clean.startsWith("uploads/")) return `/${clean}`;
+  return `/uploads/categories/${clean}`;
+};
+
 export default function CategoryComponent() {
   const [categories, setCategories] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState({});
@@ -90,7 +101,7 @@ export default function CategoryComponent() {
   // Fetch categories from API
   const fetchCategories = async () => {
     try {
-      const response = await fetch("/api/categories/get");
+      const response = await fetch(`/api/categories/get?refresh=true&_t=${Date.now()}`);
       const data = await response.json();
       setCategories(data);
       setIsLoading(false);
@@ -225,7 +236,8 @@ export default function CategoryComponent() {
       // First set the basic category data
       setCategoryToUpdate({
         ...category,
-        existingImage: category.image?.replace(/^https?:\/\/[^/]+/, "") || null,
+        image: null,
+        existingImage: getCategoryImageUrl(category.image),
         existingNavImage: category.navImage?.replace(/^https?:\/\/[^/]+/, "") || null,
         selectedFilters: [], // Initialize as empty
         existingFilters: [],
@@ -292,31 +304,34 @@ export default function CategoryComponent() {
     const file = e.target.files[0];
     setImageError("");
 
-    // AFTER (Optional):
     if (!file) {
-      // No file selected - this is allowed now
       setNewCategory((prev) => ({ ...prev, image: null }));
       setImagePreview(null);
       return;
     }
 
-    // Check image dimensions
+    // Check image validity
     const img = new Image();
     img.src = URL.createObjectURL(file);
 
     img.onload = function () {
-      if (this.width !== 260 || this.height !== 240) {
-        setImageError("Image must be exactly 260px width and 240px height");
+      if (this.width < 50 || this.height < 50) {
+        setImageError("Image resolution too low. Please upload a clear image.");
         setNewCategory((prev) => ({ ...prev, image: null }));
         setImagePreview(null);
       } else {
+        if (this.width !== 260 || this.height !== 240) {
+          setImageError("Note: Recommended size is 260px X 240px for optimal display.");
+        }
         setNewCategory((prev) => ({ ...prev, image: file }));
         setImagePreview(img.src);
       }
     };
 
     img.onerror = function () {
-      setImageError("Invalid image file");
+      setImageError("Invalid image file. Please select a valid PNG, JPG, or WebP image.");
+      setNewCategory((prev) => ({ ...prev, image: null }));
+      setImagePreview(null);
     };
   };
   // Check if category name already exists
@@ -360,12 +375,12 @@ export default function CategoryComponent() {
     formData.append("category_name", trimmedCategoryName);
     formData.append("parentid", newCategory.parentid);
     formData.append("status", newCategory.status);
-    formData.append("image", newCategory.image);
-    formData.append("navImage", newCategory.navImage);
     formData.append("meta_title", newCategory.meta_title);
     formData.append("meta_description", newCategory.meta_description);
     formData.append("meta_keyword", newCategory.meta_keyword);
-    formData.append("icon_image", newCategory.icon_image);
+    if (newCategory.icon_image instanceof File) {
+      formData.append("icon_image", newCategory.icon_image);
+    }
 
     // Send selected filters as JSON string
     formData.append(
@@ -375,12 +390,12 @@ export default function CategoryComponent() {
 
     formData.append("content", newCategory.content);
 
-    // Only append image if provided
-    if (newCategory.image) {
+    // Only append image if provided as a File
+    if (newCategory.image instanceof File) {
       formData.append("image", newCategory.image);
     }
 
-    if (newCategory.navImage) {
+    if (newCategory.navImage instanceof File) {
       formData.append("navImage", newCategory.navImage);
     }
 
@@ -536,29 +551,6 @@ export default function CategoryComponent() {
 
     // Check if a new image is being uploaded
     if (categoryToUpdate.image instanceof File) {
-      const img = new Image();
-      img.src = URL.createObjectURL(categoryToUpdate.image);
-
-      const isValid = await new Promise((resolve) => {
-        img.onload = function () {
-          if (this.width !== 260 || this.height !== 240) {
-            setUpdateImageError(
-              "Image must be exactly 260px width and 240px height",
-            );
-            resolve(false);
-          } else {
-            resolve(true);
-          }
-        };
-
-        img.onerror = function () {
-          setUpdateImageError("Invalid image file");
-          resolve(false);
-        };
-      });
-
-      if (!isValid) return; // Block submission if image is invalid
-
       formData.append("image", categoryToUpdate.image);
     }
 
@@ -619,23 +611,25 @@ export default function CategoryComponent() {
       return;
     }
 
-    // Check image dimensions
+    // Check image validity
     const img = new Image();
     img.src = URL.createObjectURL(file);
 
     img.onload = function () {
-      if (this.width !== 260 || this.height !== 240) {
-        setUpdateImageError(
-          "Image must be exactly 260px width and 240px height",
-        );
+      if (this.width < 50 || this.height < 50) {
+        setUpdateImageError("Image resolution too low. Please upload a clear image.");
         setCategoryToUpdate((prev) => ({ ...prev, image: null }));
       } else {
+        if (this.width !== 260 || this.height !== 240) {
+          setUpdateImageError("Note: Recommended size is 260px X 240px for optimal display.");
+        }
         setCategoryToUpdate((prev) => ({ ...prev, image: file }));
       }
     };
 
     img.onerror = function () {
-      setUpdateImageError("Invalid image file");
+      setUpdateImageError("Invalid image file. Please select a valid PNG, JPG, or WebP image.");
+      setCategoryToUpdate((prev) => ({ ...prev, image: null }));
     };
   };
   const handleNavImageChange = async (e) => {
@@ -920,12 +914,16 @@ export default function CategoryComponent() {
         <td>
           {category.image ? (
             <img
-              src={category.image}
-              alt="Category"
-              className="h-8 mx-auto rounded-lg"
+              src={getCategoryImageUrl(category.image)}
+              alt={category.category_name || "Category"}
+              className="h-8 mx-auto rounded-lg object-contain"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/no-catimg.png";
+              }}
             />
           ) : (
-            "No Image"
+            <span className="text-xs text-gray-400">No Image</span>
           )}
         </td>
         <td>
@@ -1699,10 +1697,14 @@ export default function CategoryComponent() {
                         src={
                           categoryToUpdate.image instanceof File
                             ? URL.createObjectURL(categoryToUpdate.image)
-                            : categoryToUpdate.existingImage
+                            : getCategoryImageUrl(categoryToUpdate.existingImage)
                         }
                         alt="Preview"
                         className="h-16 rounded-md object-contain"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/no-catimg.png";
+                        }}
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         Current Table Image Preview

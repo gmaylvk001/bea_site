@@ -86,8 +86,22 @@ export async function GET(req) {
         if (brandObj) brands.push(brandObj);
       });
 
+      // Normalize image path for consistent frontend rendering
+      const rawImage = cat.image ? String(cat.image).trim() : null;
+      let normalizedImage = null;
+      if (rawImage) {
+        if (rawImage.startsWith("http://") || rawImage.startsWith("https://") || rawImage.startsWith("/uploads/")) {
+          normalizedImage = rawImage;
+        } else if (rawImage.startsWith("uploads/")) {
+          normalizedImage = `/${rawImage}`;
+        } else {
+          normalizedImage = `/uploads/categories/${rawImage}`;
+        }
+      }
+
       return {
         ...cat,
+        image: normalizedImage,
         parentid: cat.parentid?.toString() || "none",
         brands,
       };
