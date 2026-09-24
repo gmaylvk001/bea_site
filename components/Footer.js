@@ -618,7 +618,7 @@ const Footer = () => {
 
   return (
     <>
-        <footer className="bg-white">
+        <footer className="bg-white overflow-hidden w-full max-w-full">
           {/* TOP FEATURES */}
           <div className="py-3 bg-gray-50">
             <div className="container mx-auto px-4 lg:max-w-[1400px] lg:px-2 min-[1440px]:max-w-[1600px] min-[1440px]:px-1 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0">
@@ -811,6 +811,7 @@ const Footer = () => {
                       <li><Link href="/contact">Contact</Link></li>
                       <li><Link href="/live-video-demo">Live Video Demo</Link></li>
                       <li><Link href="/bulk-orders-and-gift-card-enquiry">B2B / Corporate Enquiries</Link></li>
+                      <li><Link href="/bajaj-finance">Bajaj Finance EMI</Link></li>
                     </ul>
                   </div>
 
@@ -1057,19 +1058,19 @@ const Footer = () => {
 </div>
 
           {/* SEO CATEGORY & BRAND DIRECTORY */}
-          <div className="bg-[#02133a] border-t border-[#0e2c69] text-gray-400 py-6 sm:py-8 text-xs">
-            <div className="container mx-auto px-3 sm:px-4 lg:max-w-[1400px] lg:px-2 min-[1440px]:max-w-[1600px] min-[1440px]:px-1 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0">
-              <div className="space-y-4">
+          <div className="bg-[#02133a] border-t border-[#0e2c69] text-gray-400 py-6 sm:py-8 text-xs overflow-hidden w-full">
+            <div className="container mx-auto px-3 sm:px-4 lg:max-w-[1400px] lg:px-2 min-[1440px]:max-w-[1600px] min-[1440px]:px-1 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0 w-full max-w-full">
+              <div className="space-y-4 w-full">
                 {preparedSections.map((sec, idx) => (
-                  <div key={sec.key || `seo-sec-${idx}`} className="text-[11px] sm:text-xs leading-relaxed">
+                  <div key={sec.key || `seo-sec-${idx}`} className="text-[11px] sm:text-xs leading-relaxed break-words [overflow-wrap:anywhere]">
                     {/* Subcategory / Category Name: Products */}
                     {sec.items && sec.items.length > 0 && (
-                      <p className="text-gray-400">
+                      <p className="text-gray-400 break-words [overflow-wrap:anywhere]">
                         <span className="font-semibold text-white">
                           {sec.title}:
                         </span>{" "}
                         {sec.items.map((item, i) => (
-                          <span key={item.key || `item-${i}`}>
+                          <span key={item.key || `item-${i}`} className="inline">
                             <Link
                               href={item.href}
                               className="hover:text-white hover:underline transition-colors"
@@ -1079,6 +1080,7 @@ const Footer = () => {
                             {i < sec.items.length - 1 && (
                               <span className="text-gray-600 mx-1.5">|</span>
                             )}
+                            {" "}
                           </span>
                         ))}
                       </p>
@@ -1086,12 +1088,12 @@ const Footer = () => {
 
                     {/* Subcategory Name that's Brand: Brands */}
                     {sec.brands && sec.brands.length > 0 && (
-                      <p className="text-gray-400 mt-1">
+                      <p className="text-gray-400 mt-1 break-words [overflow-wrap:anywhere]">
                         <span className="font-semibold text-white">
                           {sec.brandTitle || `${sec.title} Brands`}:
                         </span>{" "}
                         {sec.brands.map((brand, i) => (
-                          <span key={brand.key || `brand-${i}`}>
+                          <span key={brand.key || `brand-${i}`} className="inline">
                             <Link
                               href={brand.href}
                               className="hover:text-white hover:underline transition-colors"
@@ -1101,6 +1103,7 @@ const Footer = () => {
                             {i < sec.brands.length - 1 && (
                               <span className="text-gray-600 mx-1.5">|</span>
                             )}
+                            {" "}
                           </span>
                         ))}
                       </p>

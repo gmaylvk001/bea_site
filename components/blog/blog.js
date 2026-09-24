@@ -639,6 +639,13 @@ export default function BlogComponent() {
 
             )}
 
+            <Link
+              href="/bajaj-finance"
+              className="text-[#0b2a5b] bg-amber-100 hover:bg-amber-200 border border-amber-300/80 px-2.5 py-1.5 rounded cursor-pointer transition font-bold whitespace-nowrap flex items-center gap-1"
+            >
+              <span>💳</span> Bajaj Finance EMI
+            </Link>
+
           </div>
 
         </div>
@@ -1535,6 +1542,32 @@ export default function BlogComponent() {
                   className="w-full h-auto object-contain bg-transparent"
                 />
               </div>
+            </div>
+
+            {/* Bajaj Finance EMI Promo */}
+            <div className="rounded-xl border border-amber-300 bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)]">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="bg-[#0b2a5b] text-[#ffc72c] text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">
+                  No Cost EMI
+                </span>
+                <img
+                  src="/uploads/bajajLogo.png"
+                  alt="Bajaj Finserv"
+                  className="h-5 w-auto object-contain"
+                />
+              </div>
+              <h4 className="font-extrabold text-[#0b2a5b] text-[14px] leading-snug mb-1">
+                Shop on Bajaj Finance EMI
+              </h4>
+              <p className="text-[12px] text-gray-700 mb-3 leading-relaxed">
+                Check your EMI card limit, pre-approved offers, and instant eligibility for all appliances.
+              </p>
+              <Link
+                href="/bajaj-finance"
+                className="inline-flex items-center gap-1.5 bg-[#0b2a5b] hover:bg-[#102a50] text-[#ffc72c] text-[12px] font-bold py-2 px-3.5 rounded-lg transition-colors shadow-sm"
+              >
+                Check EMI Options <span>&rarr;</span>
+              </Link>
             </div>
 
             <div className="bg-[#f5f8ff] p-5 rounded-lg border border-[#e8efff] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)] relative overflow-hidden">

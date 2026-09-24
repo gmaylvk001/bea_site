@@ -1,5 +1,6 @@
  "use client";
 import { useState, useEffect, useRef } from "react";
+import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { ToastContainer, toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
@@ -1326,6 +1327,35 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                   </button>
                 ))}
               </div>
+
+              {/* Bajaj Finance EMI Navigation Card */}
+              <div className="mt-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-gradient-to-r from-amber-50/80 via-blue-50/60 to-white border border-amber-200 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-lg p-1 border border-amber-200 flex items-center justify-center shrink-0 shadow-sm">
+                    <img
+                      src="/uploads/bajajLogo.png"
+                      alt="Bajaj Finserv"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#0b2a5b]">
+                      Looking for Bajaj Finance EMI Options?
+                    </p>
+                    <p className="text-[11px] text-gray-600">
+                      Check your EMI card limit, eligibility &amp; offers before completing your purchase.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/bajaj-finance"
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#0b2a5b] text-[#ffc72c] hover:bg-[#102a50] px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap shadow-sm shrink-0"
+                >
+                  Explore Bajaj EMI ↗
+                </Link>
+              </div>
+
               {paymentMethod === 'emi' && IS_RAZORPAY_TEST_MODE && (
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900 leading-relaxed">
                   <p className="font-semibold mb-1">Razorpay test mode — EMI testing</p>
@@ -1736,6 +1766,21 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                     </span>
                   </button>
                 </div>
+              </div>
+
+              {/* Bajaj Finance EMI Callout */}
+              <div className="px-5 pb-3">
+                <Link
+                  href="/bajaj-finance"
+                  target="_blank"
+                  className="flex items-center justify-between p-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl text-xs hover:border-amber-300 transition-all group"
+                >
+                  <span className="flex items-center gap-2 font-medium text-gray-800">
+                    <img src="/uploads/bajajLogo.png" alt="Bajaj" className="h-4 w-auto object-contain" />
+                    <span className="text-[11px] font-semibold text-[#0b2a5b]">Pay in Easy EMIs with Bajaj Finance</span>
+                  </span>
+                  <span className="font-bold text-xs text-blue-700 group-hover:underline">Explore ↗</span>
+                </Link>
               </div>
 
               {/* CTA button */}

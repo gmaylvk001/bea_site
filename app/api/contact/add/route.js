@@ -16,8 +16,11 @@ export async function POST(request) {
       return NextResponse.json({ success: false, message: "Spam detected" }, { status: 400 });
     }
 
+    const resolvedEmail = (email_address && email_address.trim()) || "bajajfinance@bharathelectronics.in";
+    const resolvedCity = (city && city.trim()) || "Bajaj Finance";
+
     // Validate fields
-    if (!name || !email_address || !mobile_number || !message || !city) {
+    if (!name || !resolvedEmail || !mobile_number || !message || !resolvedCity) {
       return NextResponse.json(
         { success: false, message: "All fields are required" },
         { status: 400 }
@@ -34,10 +37,10 @@ export async function POST(request) {
     const finalStatus = (status || "active").toLowerCase();
     const newContact = await ContactModel.create({
       name: name.trim(),
-      email_address: email_address.trim(),
+      email_address: resolvedEmail,
       mobile_number: digitsPhone,
       message: message.trim(),
-      city: city.trim(),
+      city: resolvedCity,
       status: finalStatus === "inactive" ? "inactive" : "active",
     });
 

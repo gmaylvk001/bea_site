@@ -308,6 +308,32 @@ export default async function BlogPost({ params }) {
                 </Link>
               ))}
             </div>
+
+            {/* Bajaj Finance EMI Promo */}
+            <div className="mt-8 p-4 rounded-xl border border-amber-200 bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="bg-[#0b2a5b] text-[#ffc72c] text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">
+                  No Cost EMI
+                </span>
+                <img
+                  src="/uploads/bajajLogo.png"
+                  alt="Bajaj Finserv"
+                  className="h-5 w-auto object-contain"
+                />
+              </div>
+              <h3 className="text-sm font-bold text-[#0b2a5b] leading-snug mb-1">
+                Shop on Bajaj Finance EMI
+              </h3>
+              <p className="text-xs text-gray-700 mb-3 leading-relaxed">
+                Check your eligibility and explore zero down payment EMI schemes across TVs, ACs &amp; appliances.
+              </p>
+              <Link
+                href="/bajaj-finance"
+                className="inline-flex items-center gap-1 bg-[#0b2a5b] text-[#ffc72c] font-bold text-xs px-3 py-1.5 rounded-lg hover:bg-[#102a50] transition"
+              >
+                Check EMI Options →
+              </Link>
+            </div>
           </aside>
         )}
         </div>
