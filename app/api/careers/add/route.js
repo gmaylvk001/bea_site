@@ -40,9 +40,11 @@ export async function POST(request) {
 
     fs.writeFileSync(filePath, buffer);
     
-    // Email list - original emails commented out for testing purpose
-    // const emailadmin = ["ecom@bharathelectronics.in","customercare@bharatelectronics.in","careers@bharathelectronics.in"];
-    const emailadmin = ["hariharan.g@eywamedia.com"];
+    const emailadmin = [
+      "ecom@bharathelectronics.in",
+      "customercare@bharatelectronics.in",
+      "careers@bharathelectronics.in",
+    ];
 
     // Loop through emails one by one
     for (const adminEmail of emailadmin) {
