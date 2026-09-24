@@ -20,6 +20,7 @@ export default function ContactBEA() {
     city: "",
     job_post: "",
     resume: null,
+    declaration: false,
     _hp: "",
   });
 
@@ -127,13 +128,24 @@ const opportunities = [
     const file = e.target.files[0];
 
     if (file) {
-      const allowed = [
-        "application/pdf",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ];
+      // 1. PDF Only Check
+      const isPdf =
+        file.type === "application/pdf" ||
+        file.name.toLowerCase().endsWith(".pdf");
 
-      if (!allowed.includes(file.type)) {
-        setErrors({ ...errors, resume: "Only PDF or DOCX files are allowed" });
+      if (!isPdf) {
+        setErrors({ ...errors, resume: "Only PDF files are allowed" });
+        setForm({ ...form, resume: null });
+        return;
+      }
+
+      // 2. 5MB File Size Limit Check
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+      if (file.size > MAX_FILE_SIZE) {
+        setErrors({
+          ...errors,
+          resume: "File size exceeds 5MB limit. Please upload a smaller file.",
+        });
         setForm({ ...form, resume: null });
         return;
       }
@@ -164,7 +176,11 @@ const opportunities = [
 
     if (!form.job_post.trim()) newErrors.job_post = "Please select a job post";
 
-    if (!form.resume) newErrors.resume = "Resume (PDF/DOCX) is required";
+    if (!form.resume) newErrors.resume = "Resume (PDF only, max 5MB) is required";
+
+    if (!form.declaration) {
+      newErrors.declaration = "Please check the declaration before submitting";
+    }
 
     return newErrors;
   };
@@ -217,6 +233,7 @@ const opportunities = [
           city: "",
           job_post: "",
           resume: null,
+          declaration: false,
           _hp: "",
         });
         setTouched({});
@@ -610,82 +627,68 @@ const opportunities = [
             </div>
 
             <div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">
+                  Upload Resume <span className="text-red-500">*</span>
+                </label>
+                <span className="text-xs text-gray-500 font-normal">
+                  (PDF only, Max: 5MB)
+                </span>
+              </div>
 
-            <label className="text-sm font-medium">
-              Upload Resume (PDF/DOCX)
-              <span className="text-red-500">*</span>
-            </label>
+              <input
+                key={fileKey}
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={handleFileChange}
+                className="w-full mt-1 border rounded-md p-2 text-sm bg-white"
+              />
 
-            <input
-              key={fileKey}
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={handleFileChange}
-              className="p-2"
-            />
+              {form.resume && (
+                <p className="text-green-600 text-sm mt-1 flex items-center gap-1">
+                  <span>✓</span>
+                  <span>{form.resume.name}</span>
+                  <span className="text-xs text-gray-500">
+                    ({(form.resume.size / (1024 * 1024)).toFixed(2)} MB)
+                  </span>
+                </p>
+              )}
 
-
-            {form.resume && (
-              <p className="text-green-600 text-sm mt-1">
-                {form.resume.name}
-              </p>
-            )}
-          </div>
-
-            {/* Experience */}
-            {/* <div>
-              <label className="text-sm font-medium">
-                Experience
-              </label>
-
-              <select className="w-full border rounded-lg px-3 py-2">
-                <option>-- Select Experience --</option>
-                <option>Fresher</option>
-                <option>1-3 Years</option>
-                <option>3-5 Years</option>
-                <option>5+ Years</option>
-              </select>
-            </div> */}
+              {errors.resume && (
+                <p className="text-red-500 text-sm mt-1">{errors.resume}</p>
+              )}
+            </div>
 
           </div>
-
-          {/* Resume */}
-          {/* <div className="mt-5">
-
-            <label className="text-sm font-medium">
-              Upload Resume (PDF/DOCX)
-              <span className="text-red-500">*</span>
-            </label>
-
-            <input
-              key={fileKey}
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={handleFileChange}
-              className="w-full mt-2 border rounded-lg p-2"
-            />
-
-            <p className="text-xs text-gray-500 mt-1">
-              Max size: 5MB
-            </p>
-
-            {form.resume && (
-              <p className="text-green-600 text-sm mt-1">
-                {form.resume.name}
-              </p>
-            )}
-          </div> */}
 
           {/* Declaration */}
-          <div className="flex items-start gap-2 mt-5">
+          <div>
+            <div className="flex items-start gap-2 mt-5">
+              <input
+                type="checkbox"
+                id="declaration"
+                name="declaration"
+                checked={Boolean(form.declaration)}
+                onChange={(e) => {
+                  setForm({ ...form, declaration: e.target.checked });
+                  if (e.target.checked) {
+                    setErrors((prev) => {
+                      const { declaration: _, ...rest } = prev;
+                      return rest;
+                    });
+                  }
+                }}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
 
-            <input type="checkbox" />
+              <label htmlFor="declaration" className="text-sm text-gray-600 cursor-pointer select-none">
+                I hereby declare that the above information is true to the best of my knowledge. <span className="text-red-500">*</span>
+              </label>
+            </div>
 
-            <label className="text-sm text-gray-600">
-              I hereby declare that the above information is
-              true to the best of my knowledge.
-            </label>
-
+            {errors.declaration && (
+              <p className="text-red-500 text-sm mt-1">{errors.declaration}</p>
+            )}
           </div>
 
           {/* Submit */}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
-import ContactModel from "@/models/ecom_contact_info";
+import JobApplication from "@/models/JobApplication";
 import fs from "fs";
 import path from "path";
 import { appendToJobsSheet } from "@/lib/googleSheets";
@@ -35,67 +35,49 @@ export async function POST(request) {
     }
 
     const buffer = Buffer.from(await resumeFile.arrayBuffer());
-    const fileName = `${Date.now()}-${resumeFile.name}`;
+    const fileName = `${Date.now()}-${resumeFile.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
     const filePath = path.join(uploadDir, fileName);
 
     fs.writeFileSync(filePath, buffer);
     
-    
-    // Email list
-    const emailadmin = ["ecom@bharathelectronics.in","customercare@bharatelectronics.in","careers@bharathelectronics.in"];
-    // const emailadmin = ["sorambeeviuit@gmail.com"];
-    
-    //"arunkarthik@bharathelectronics.in"
+    // Email list - original emails commented out for testing purpose
+    // const emailadmin = ["ecom@bharathelectronics.in","customercare@bharatelectronics.in","careers@bharathelectronics.in"];
+    const emailadmin = ["hariharan.g@eywamedia.com"];
 
     // Loop through emails one by one
     for (const adminEmail of emailadmin) {
-      const adminForm = new FormData();
-      adminForm.append("campaign_id", "ce8a4ccc-8ade-4cdb-b850-fe3d4574ddc5");
-      adminForm.append("email", adminEmail);
-      //const resume_link = `<a style="background-color: #d62828; padding: 12px 20px; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;" href="${process.env.NEXT_PUBLIC_API_URL}/uploads/resumes/${fileName}" target="_blank"> View Resume </a>`;
-      const resume_link = `<a style="background-color:#d62828;color:#fff;padding: 12px 20px;border-radius:5px;font-weight:bold;text-decoration:none;" href="${process.env.NEXT_PUBLIC_API_URL}/uploads/resumes/${fileName}" > View Resume </a>`;
-      adminForm.append("params", JSON.stringify([name, mobile_number, email, city, job_post, resume_link]));
-      
-   /*  return NextResponse.json(
-      { success: true, resume_link },
-      { status: 201 }
-    );  */
-       
+      try {
+        const adminForm = new FormData();
+        adminForm.append("campaign_id", "ce8a4ccc-8ade-4cdb-b850-fe3d4574ddc5");
+        adminForm.append("email", adminEmail);
+        const resume_link = `<a style="background-color:#d62828;color:#fff;padding: 12px 20px;border-radius:5px;font-weight:bold;text-decoration:none;" href="${process.env.NEXT_PUBLIC_API_URL}/uploads/resumes/${fileName}" target="_blank"> View Resume </a>`;
+        adminForm.append("params", JSON.stringify([name, mobile_number, email, city, job_post, resume_link]));
 
-      const adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L",
-        },
-        body: adminForm,
-      });
-
-      const adminData = await adminresponse.json();
-      //console.log("Mail Sent:", adminEmail, adminData);
+        await fetch("https://bea.eygr.in/api/email/send-msg", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L",
+          },
+          body: adminForm,
+        });
+      } catch (emailErr) {
+        console.error("Email send error for", adminEmail, emailErr);
+      }
     }
 
-
-    /* return NextResponse.json(
-      { success: true, adminData },
-      { status: 201 }
-    ); */
-        
-        
-
-
-    /*
-    // ✔ Save in DB
-    const newEntry = new ContactModel({
+    // ✔ Save in MongoDB Database for Admin View
+    const newEntry = new JobApplication({
       name,
-      email_address: email,
+      email,
       mobile_number,
       city,
       job_post,
-      resume_path: `/uploads/resumes/${fileName}`, // store file path
-      status: 1,
+      resume_path: `/uploads/resumes/${fileName}`,
+      resume_name: resumeFile.name,
+      status: "New",
     });
 
-    await newEntry.save();*/
+    await newEntry.save();
 
     // 📊 APPEND TO GOOGLE SHEET
     appendToJobsSheet({

@@ -59,8 +59,8 @@ export default function AdminSider({ collapsed }) {
     ]
   },
     { icon: 'mdi:tag-outline', label: 'Offer', link: 'offer' },
-    // { icon: 'mdi:heart-flash', label: 'Wishlist Mail Alerts', link: 'wishlist-mail' },
     { icon: "mdi:briefcase-account-outline", label: "Job Positions", link: "careers" },
+    { icon: "mdi:file-account-outline", label: "Job Applications", link: "job-applications" },
     { icon: 'mdi:note-text-outline', label: 'Blog', link: 'blog' },
     { icon: 'mdi:account-outline', label: 'User', link: 'user' },
     { icon: 'mdi:phone-outline', label: 'Contact Us', link: 'contact' },
