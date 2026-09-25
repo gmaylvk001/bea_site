@@ -5,7 +5,6 @@ import Link from "next/link";
 import "./bajaj-finance.css";
 
 export default function BajajFinancePage() {
-  const [activeTab, setActiveTab] = useState("homepage");
   const [leadModal, setLeadModal] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -70,157 +69,15 @@ export default function BajajFinancePage() {
   return (
     <div className="bajaj-finance-page">
       <main className="wrap">
-        {/* ================= HOMEPAGE ================= */}
-
-        <div
-          className={`panel ${activeTab === "homepage" ? "active" : ""
-            }`}
-        >
-          <div className="browser">
-            <div className="chrome">
-              <i className="dot"></i>
-              <i className="dot"></i>
-              <i className="dot"></i>
-            </div>
-
-            <div className="nav">
-              <div className="brand">
-                BHARATH <b>●</b>
-              </div>
-
-              <div className="links">
-                <span>TVs</span>
-                <span>Refrigerators</span>
-                <span>Washing Machines</span>
-                <span>Air Conditioners</span>
-              </div>
-
-              <Link
-                href="/location"
-                className="right"
-                style={{
-                  textDecoration: "none",
-                  cursor: "pointer",
-                }}
-              >
-                Find a Store
-              </Link>
-            </div>
-
-            {/* ================= ORIGINAL HOMEPAGE HERO ================= */}
-
-            <div
-              className="hero"
-              onClick={() => setActiveTab("landing")}
-              title="Click banner to open QR landing page"
-              style={{ cursor: "pointer" }}
-            >
-              <div className="copy">
-                <div className="eyebrow">
-                  BHARATH × BAJAJ FINANCE
-                </div>
-
-                <h1>
-                  Buy electronics &amp; appliances on EMI at Bharath
-                </h1>
-
-                <p>
-                  Shopping for a TV, fridge, washing machine or AC? Check
-                  your Bajaj Finance EMI Card limit or explore your
-                  eligibility before you buy.
-                </p>
-
-                <a
-                  className="cta"
-                  href="#"
-                  onClick={openLeadModal}
-                >
-                  Check my EMI options &nbsp;→
-                </a>
-
-                <div className="fine">
-                  Mobile number and OTP may be required · Subject to
-                  eligibility and Bajaj Finance terms
-                </div>
-              </div>
-
-              <div className="art">
-                <div className="circle">
-                  <div className="phone">
-                    <div className="tiny">
-                      BAJAJ FINANCE
-                    </div>
-
-                    <strong>
-                      Explore your
-                      <br />
-                      EMI options
-                    </strong>
-
-                    <div className="line"></div>
-
-                    <div className="line short"></div>
-
-                    <div className="mini">
-                      CHECK ELIGIBILITY
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pill">
-                  Shop now. <span>Plan better.</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="under">
-              <span>
-                <strong>Placement:</strong> homepage carousel or
-                promotional strip (click banner to go to QR landing page)
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* ================= LANDING PAGE ================= */}
 
-        <div
-          className={`panel ${activeTab === "landing" ? "active" : ""
-            }`}
-        >
-          <button
-            className="back-banner-btn"
-            onClick={() => setActiveTab("homepage")}
-          >
-            ← Back to Homepage Banner
-          </button>
+        <div className="panel active">
 
           {/* ================= MOBILE VIEW ================= */}
 
           <div className="mobile-only-view">
            
-            <div className="mobile">
-
-              <div className="mnav">
-                <img
-                  src="/user/bea-new.png"
-                  alt="Bharath Electronics & Appliances"
-                  style={{
-                    height: "38px",
-                    width: "auto",
-                    objectFit: "contain",
-                  }}
-                />
-
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 800,
-                  }}
-                >
-                  Need help?
-                </span>
-              </div>
+            <div className="page-content">
 
               <div className="mhero">
                 <div className="partner">
@@ -471,36 +328,7 @@ export default function BajajFinancePage() {
           <div className="desktop-only-view">
          
 
-            <div className="browser">
-              <div className="chrome">
-                <i className="dot"></i>
-                <i className="dot"></i>
-                <i className="dot"></i>
-              </div>
-
-              <div className="nav">
-                <img
-                  src="/user/bea-new.png"
-                  alt="Bharath Electronics & Appliances"
-                  style={{
-                    height: "46px",
-                    width: "auto",
-                    objectFit: "contain",
-                  }}
-                />
-
-                <div className="links">
-                  <span>TVs</span>
-                  <span>Refrigerators</span>
-                  <span>Washing Machines</span>
-                  <span>Air Conditioners</span>
-                </div>
-
-                <div className="right">
-                  Need help?
-                </div>
-              </div>
-
+            <div className="page-content">
               <div className="desk-hero">
                 <div>
                   <div className="desk-logo-row">
