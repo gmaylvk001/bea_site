@@ -43,6 +43,7 @@ export default function HomeComponent() {
     ];
     const scrollContainerRef = useRef(null);
     const containerRef = useRef(null);
+    const topBannerSliderRef = useRef(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isBannerLoading, setIsBannerLoading] = useState(true);
     const [isFlashSalesLoading, setIsFlashSalesLoading] = useState(true);
@@ -710,6 +711,7 @@ export default function HomeComponent() {
       ...settings,
       dots: true,
       dotsClass: "slick-dots",
+      pauseOnHover: true,
       responsive: [
         {
           breakpoint: 1025,
@@ -1394,50 +1396,82 @@ export default function HomeComponent() {
           </div>
         ) : bannerData.banner.items.length > 0 ? (
           bannerData.banner.items.length > 1 ? (
-            <Slider {...topBannerSettings} className="relative topbanner-slider">
-              {bannerData.banner.items.map((banner, bannerIndex) => (
-                <motion.div
-                  key={banner.id}
-                  className="relative w-full aspect-[2000/667] max-h-auto"
-                  variants={itemVariants}
-                >
-                  <div
-                    className="absolute inset-0 overflow-hidden cursor-pointer"
-                    role="link"
-                    tabIndex={0}
-                    aria-label={banner?.alt || banner?.title || banner?.redirectUrl || "Banner"}
-                    onClick={() => {
-                      const href = banner?.redirectUrl;
-                      if (!href) return;
-                      if (href.startsWith("/")) {
-                        router.push(href);
-                      } else {
-                        window.location.href = href;
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      const href = banner?.redirectUrl;
-                      if (!href) return;
-                      if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
-                        e.preventDefault();
+            <div className="relative group">
+              <Slider
+                ref={topBannerSliderRef}
+                {...topBannerSettings}
+                className="relative topbanner-slider"
+              >
+                {bannerData.banner.items.map((banner, bannerIndex) => (
+                  <motion.div
+                    key={banner.id}
+                    className="relative w-full aspect-[2000/667] max-h-auto"
+                    variants={itemVariants}
+                  >
+                    <div
+                      className="absolute inset-0 overflow-hidden cursor-pointer"
+                      role="link"
+                      tabIndex={0}
+                      aria-label={banner?.alt || banner?.title || banner?.redirectUrl || "Banner"}
+                      onClick={() => {
+                        const href = banner?.redirectUrl;
+                        if (!href) return;
                         if (href.startsWith("/")) {
                           router.push(href);
                         } else {
                           window.location.href = href;
                         }
-                      }
-                    }}
-                  >
-                    <img
-                      src={banner.bgImageUrl}
-                      alt={banner?.alt || banner?.title || "Homepage banner"}
-                      className="absolute inset-0 w-full h-full object-fill"
-                      style={{ objectPosition: "center 30%" }}
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </Slider>
+                      }}
+                      onKeyDown={(e) => {
+                        const href = banner?.redirectUrl;
+                        if (!href) return;
+                        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+                          e.preventDefault();
+                          if (href.startsWith("/")) {
+                            router.push(href);
+                          } else {
+                            window.location.href = href;
+                          }
+                        }
+                      }}
+                    >
+                      <img
+                        src={banner.bgImageUrl}
+                        alt={banner?.alt || banner?.title || "Homepage banner"}
+                        className="absolute inset-0 w-full h-full object-fill"
+                        style={{ objectPosition: "center 30%" }}
+                      />
+                    </div>
+                  </motion.div>
+                ))}
+              </Slider>
+
+              {/* Left Arrow Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  topBannerSliderRef.current?.slickPrev();
+                }}
+                className="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md hover:shadow-xl border border-gray-100 backdrop-blur-sm flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 opacity-85 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                aria-label="Previous banner"
+              >
+                <FiChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800" />
+              </button>
+
+              {/* Right Arrow Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  topBannerSliderRef.current?.slickNext();
+                }}
+                className="absolute right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md hover:shadow-xl border border-gray-100 backdrop-blur-sm flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 opacity-85 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                aria-label="Next banner"
+              >
+                <FiChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800" />
+              </button>
+            </div>
           ) : (
             <motion.div
               className="p-4 md:p-6 relative aspect-[2000/667] max-h-auto"

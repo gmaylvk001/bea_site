@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ToastContainer, toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
-export default function BulkUploadPage() {
+export default function BulkUploadPage({ defaultSection }) {
   const [excelFile, setExcelFile] = useState(null);
   const [excelFileMovement, setExcelFileMovement] = useState(null);
 
@@ -36,7 +36,7 @@ export default function BulkUploadPage() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-  const [selectedSection, setSelectedSection] = useState("section-product-overview");
+  const [selectedSection, setSelectedSection] = useState(defaultSection || "section-product-overview");
 
   const sap_featuresFormRef = useRef(null);
   const product_nameRef = useRef(null);
@@ -60,6 +60,9 @@ const brandManufacturerFileRef = useRef(null);
 const [storeFaqFile, setStoreFaqFile] = useState(null);
 const [isStoreFaqUploadLoading, setIsStoreFaqUploadLoading] = useState(false);
 const storeFaqFileRef = useRef(null);
+const [freeDeliveryFile, setFreeDeliveryFile] = useState(null);
+const [isFreeDeliveryUploadLoading, setIsFreeDeliveryUploadLoading] = useState(false);
+const freeDeliveryFileRef = useRef(null);
   const notifiedRef = useRef(false);
 const fileInputRef = useRef(null);
 const fileBulkParticularInputRef = useRef(null);
@@ -67,6 +70,17 @@ const fileBulkUploadAddonsInputRef = useRef(null);
 const fileImageBulkParticularInputRef = useRef(null);
 
 const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const sec = params.get("section");
+      if (sec) {
+        setSelectedSection(sec);
+      }
+    }
+  }, []);
+
   const showToast = (type, message) => {
     if (notifiedRef.current) return;
     notifiedRef.current = true;
@@ -92,6 +106,9 @@ const router = useRouter();
     setWarrantyFile(null);
     setWarrantyMapFile(null);
     setPincodeFile(null);
+    setFreeDeliveryFile(null);
+    setIsFreeDeliveryUploadLoading(false);
+    if (freeDeliveryFileRef.current) freeDeliveryFileRef.current.value = "";
     // clear flags and messages
     setIsLoading(false);
     setActiveUploadType(null);
@@ -1668,6 +1685,56 @@ const handleStoreFaqUpload = async (e) => {
     if (storeFaqFileRef.current) storeFaqFileRef.current.value = "";
   }
 };
+
+const handleFreeDeliveryUpload = async (e) => {
+  e.preventDefault();
+
+  if (!freeDeliveryFile) {
+    showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+    return;
+  }
+  if (!validateFilterFile(freeDeliveryFile)) {
+    showToast("error", "Please upload a valid Excel (.xlsx) or CSV (.csv) file.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", freeDeliveryFile);
+
+  setIsFreeDeliveryUploadLoading(true);
+
+  try {
+    const res = await fetch("/api/free-delivery-location/bulk-upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast("success", `Free Delivery Location Upload Done! Total: ${data.totalRows}, Inserted: ${data.inserted}, Updated: ${data.updated}${data.skipped ? `, Skipped: ${data.skipped}` : ""}`);
+    } else {
+      showToast("error", data.error || "Upload failed");
+    }
+  } catch (err) {
+    console.error("Free delivery upload error:", err);
+    showToast("error", "Upload failed. Please try again.");
+  } finally {
+    setIsFreeDeliveryUploadLoading(false);
+    setFreeDeliveryFile(null);
+    if (freeDeliveryFileRef.current) freeDeliveryFileRef.current.value = "";
+  }
+};
+
+const handleFreeDeliverySampleDownload = () => {
+  const link = document.createElement("a");
+  link.href = `/api/free-delivery-location/sample?t=${Date.now()}`;
+  link.download = "free_delivery_pincode_sample.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
   const sections = [
     { id: "section-product-overview", label: "Product - All Details Upload", image: "/uploads/files/Product_all_upload_first_box.png" },
     { id: "section-filter-upload", label: "Filter Values Upload", image: "/uploads/files/Filter_Bulk_Upload_second_box.png" },
@@ -1701,6 +1768,7 @@ const handleStoreFaqUpload = async (e) => {
      { id: "pincode-serviceability-bulk-upload", label: "Pincode Serviceability Upload", image: "/uploads/files/pincode-serviceability-bulk-upload.png" },
      { id: "brand-manufacturer-bulk-upload", label: "Brand Manufacturer Details Upload", image: "/uploads/files/brand-manufacturer-bulk-upload.png" },
      { id: "store-faq-bulk-upload", label: "Store FAQ Bulk Upload", image: "/uploads/files/brand-manufacturer-bulk-upload.png" },
+     { id: "free-delivery-pincodes-bulk-upload", label: "Free Delivery Location Pincodes Upload", image: "/uploads/freeDeliveryPincodeExcel.png" },
   ];
 
   return (
@@ -3021,6 +3089,75 @@ const handleStoreFaqUpload = async (e) => {
           </>
         ) : (
           "Upload Store FAQs"
+        )}
+      </button>
+    </div>
+  </form>
+)}
+
+{selectedSection === "free-delivery-pincodes-bulk-upload" && (
+  <form
+    id="free-delivery-pincodes-bulk-upload"
+    onSubmit={handleFreeDeliveryUpload}
+    className="bg-white rounded-xl shadow-lg overflow-hidden p-6 space-y-8"
+  >
+    <div className="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+      <div className="mb-4">
+        <h2 className="text-md font-semibold text-blue-600 mb-6 border-b pb-2">
+          Free Delivery Location Pincodes Bulk Upload
+        </h2>
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Excel / CSV File
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Upload free delivery location pincodes. Columns: <code className="bg-gray-100 px-1 rounded">pincode</code>,{" "}
+          <code className="bg-gray-100 px-1 rounded">Area</code>,{" "}
+          <code className="bg-gray-100 px-1 rounded">District</code>.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <input
+          type="file"
+          accept=".xlsx,.csv"
+          ref={freeDeliveryFileRef}
+          onClick={(e) => { e.target.value = ""; setFreeDeliveryFile(null); }}
+          onChange={(e) => setFreeDeliveryFile(e.target.files?.[0] || null)}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          required
+        />
+        <button
+          type="button"
+          onClick={handleFreeDeliverySampleDownload}
+          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Sample Format
+        </button>
+      </div>
+    </div>
+
+    <div className="flex mt-5">
+      <button
+        type="submit"
+        disabled={isFreeDeliveryUploadLoading}
+        className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center"
+      >
+        {isFreeDeliveryUploadLoading ? (
+          <>
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            Uploading...
+          </>
+        ) : (
+          "Upload Free Delivery Pincodes"
         )}
       </button>
     </div>

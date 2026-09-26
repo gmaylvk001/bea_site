@@ -370,8 +370,59 @@ export default function CheckoutPage() {
   const hasFiredAddShippingInfoRef = useRef(false);
   const hasFiredAddPaymentInfoRef = useRef(false);
   const hasFiredPurchaseRef = useRef(false);
+  const [isFreeDeliveryLocation, setIsFreeDeliveryLocation] = useState(null);
+  const [pincodeChecking, setPincodeChecking] = useState(false);
 
   const extraCities = ["Ariyalur","Chennai","Coimbatore","Cuddalore","Dharmapuri","Dindigul","Erode","Kanchipuram","Kanyakumari","Karur","Krishnagiri","Madurai","Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram","Salem","Sivaganga","Thanjavur","Theni","Thoothukudi","Tirunelveli","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore","Viluppuram","Virudhunagar","Singanallur","Sivananthapuram","Vadavalli","Annur","Mettupalayam","Thennur","Ariyamangalam","Komarapalayam","Kattur"];
+
+  // Check customer pincode against FreeDeliveryLocation
+  useEffect(() => {
+    if (formData.deliveryType === 'store') {
+      setIsFreeDeliveryLocation(true);
+      return;
+    }
+
+    const currentPincode = (useSavedAddress && selectedAddress !== null && useraddress[selectedAddress]?.postCode)
+      ? useraddress[selectedAddress].postCode
+      : formData.postCode;
+
+    const cleanPin = String(currentPincode || "").replace(/\s+/g, "").trim();
+
+    if (cleanPin.length !== 6 || !/^\d{6}$/.test(cleanPin)) {
+      setIsFreeDeliveryLocation(null);
+      return;
+    }
+
+    let isCancelled = false;
+    setPincodeChecking(true);
+
+    fetch(`/api/free-delivery-location/check?pincode=${encodeURIComponent(cleanPin)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isCancelled) {
+          if (data.success && data.isFreeDelivery) {
+            setIsFreeDeliveryLocation(true);
+          } else {
+            setIsFreeDeliveryLocation(false);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Free delivery check error:", err);
+        if (!isCancelled) {
+          setIsFreeDeliveryLocation(false);
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setPincodeChecking(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [formData.postCode, formData.deliveryType, selectedAddress, useSavedAddress, useraddress]);
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -696,6 +747,27 @@ export default function CheckoutPage() {
 }, 0);
 const sellingPrice = mrpTotal - itemDiscountTotal;
 
+  const productPrice = orderSummary.subtotal + orderSummary.discount;
+  const effectiveProductPrice = (orderSummary.subtotal > 0 ? orderSummary.subtotal : subtotal) || subtotal || 0;
+
+  const currentPincode = (useSavedAddress && selectedAddress !== null && useraddress[selectedAddress]?.postCode)
+    ? useraddress[selectedAddress].postCode
+    : formData.postCode;
+  const cleanPin = String(currentPincode || "").replace(/\s+/g, "").trim();
+  const hasEnteredPincode = cleanPin.length === 6 && /^\d{6}$/.test(cleanPin);
+
+  // Free delivery pincode check & delivery charge rule:
+  // 1. If customer pincode matches our free delivery pincode -> don't add any delivery charges (0).
+  // 2. If it does not match:
+  //    - Product price < 10,000 => 299
+  //    - Product price >= 10,000 => 499
+  let deliveryCharge = 0;
+  if (formData.deliveryType === 'home' && isFreeDeliveryLocation === false) {
+    deliveryCharge = effectiveProductPrice < 10000 ? 299 : 499;
+  }
+  const shippingCost = deliveryCharge;
+  const finalTotal = orderSummary.total + shippingCost;
+
   const uniqueCities = [...new Set(stores.map(s => s.city))];
   const finalCities = [...new Set([...uniqueCities, ...extraCities])].sort();
 
@@ -747,13 +819,13 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         hasFiredAddPaymentInfoRef.current = true;
         ga4AddPaymentInfo({
           items: cartItems,
-          value: orderSummary.total + (shippingMethod === 'express' ? 299 : 0),
+          value: finalTotal,
           paymentType: paymentMethod,
         });
       }
 
       setIsSubmitting(true);
-      const totalAmount = orderSummary.total;
+      const totalAmount = finalTotal;
       let savedAddressId = null;
 
       if (!useSavedAddress || selectedAddress === null) {
@@ -914,7 +986,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           } catch (e) { console.error('Loyalty award failed:', e); }
         }
 
-        // SAP sync — send order data to SAP
+        // SAP sync — send order data to SAP (commented out for order testing)
+        /*
         try {
           await fetch('/api/send-order-detail-to-sap', {
             method: 'POST',
@@ -924,6 +997,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         } catch (e) {
           console.error('SAP sync failed:', e);
         }
+        */
 
         try {
           const name = `${addressData.firstName} ${addressData.lastName}`;
@@ -936,15 +1010,17 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
             hour12: true,
           });
 
-          const adminEmails = [
-            "arunkarthik@bharathelectronics.in",
-            "ecom@bharathelectronics.in",
-            "itadmin@bharathelectronics.in",
-            "telemarketing@bharathelectronics.in",
-            "sekarcorp@bharathelectronics.in",
-            "abu@bharathelectronics.in",
-            "customercare@bharathelectronics.in",
-          ];
+          // Commented out original admin emails for order testing
+          // const adminEmails = [
+          //   "arunkarthik@bharathelectronics.in",
+          //   "ecom@bharathelectronics.in",
+          //   "itadmin@bharathelectronics.in",
+          //   "telemarketing@bharathelectronics.in",
+          //   "sekarcorp@bharathelectronics.in",
+          //   "abu@bharathelectronics.in",
+          //   "customercare@bharathelectronics.in",
+          // ];
+          const adminEmails = ["hariharan.g@gmail.com"];
 
           const emailRes = await fetch("/api/send-order-email", {
             method: "POST",
@@ -999,11 +1075,6 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
       </div>
     );
   }
-
-  // ─── Price summary helpers ─────────────────────────────────────────────────
-  const productPrice = orderSummary.subtotal + orderSummary.discount;
-  const shippingCost = shippingMethod === 'express' ? 299 : 0;
-  const finalTotal = orderSummary.total + shippingCost;
 
   return (
     <div className="min-h-screen bg-white">
@@ -1106,7 +1177,14 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                     <FloatInput label="Pincode" name="postCode" required
                       value={formData.postCode} onChange={handleChange} onBlur={handleBlur}
                       error={getFieldError('postCode')}
-                      inputMode="numeric" maxLength={6} />
+                      inputMode="numeric" maxLength={6}
+                      hint={
+                        formData.deliveryType === 'home' && formData.postCode?.trim().length === 6 ? (
+                          pincodeChecking ? "Checking delivery eligibility..." :
+                          isFreeDeliveryLocation === true ? "✓ Free Delivery available for this pincode" :
+                          isFreeDeliveryLocation === false ? `Delivery charge: ₹${deliveryCharge}` : null
+                        ) : null
+                      } />
                   </div>
                   <FloatInput label="Country" name="country" required readOnly showLock
                     value={formData.country || 'India'} onChange={handleChange} onBlur={handleBlur}
@@ -1530,11 +1608,16 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
   <span>₹{orderSummary.subtotal.toLocaleString('en-IN')}</span>
 </div>
                 <div className="flex justify-between text-sm text-gray-700">
-                  <span>Delivery</span>
-                  {shippingCost === 0
-                    ? <span className="text-green-600 font-medium">FREE</span>
-                    : <span>₹{shippingCost}</span>
-                  }
+                  <span>Delivery charge</span>
+                  {formData.deliveryType === 'store' ? (
+                    <span className="text-green-600 font-medium">FREE</span>
+                  ) : !hasEnteredPincode || isFreeDeliveryLocation === null ? (
+                    <span className="text-gray-400 font-medium">₹---</span>
+                  ) : isFreeDeliveryLocation === true ? (
+                    <span className="text-green-600 font-medium">FREE</span>
+                  ) : (
+                    <span className="font-medium text-gray-900">₹{shippingCost}</span>
+                  )}
                 </div>
 
                 {/* Loyalty points — online & EMI (earn only on non-EMI payments) */}
