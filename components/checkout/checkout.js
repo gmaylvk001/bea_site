@@ -986,8 +986,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           } catch (e) { console.error('Loyalty award failed:', e); }
         }
 
-        // SAP sync — send order data to SAP (commented out for order testing)
-        /*
+        // SAP sync — send order data to SAP
         try {
           await fetch('/api/send-order-detail-to-sap', {
             method: 'POST',
@@ -997,7 +996,6 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         } catch (e) {
           console.error('SAP sync failed:', e);
         }
-        */
 
         try {
           const name = `${addressData.firstName} ${addressData.lastName}`;
@@ -1010,17 +1008,15 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
             hour12: true,
           });
 
-          // Commented out original admin emails for order testing
-          // const adminEmails = [
-          //   "arunkarthik@bharathelectronics.in",
-          //   "ecom@bharathelectronics.in",
-          //   "itadmin@bharathelectronics.in",
-          //   "telemarketing@bharathelectronics.in",
-          //   "sekarcorp@bharathelectronics.in",
-          //   "abu@bharathelectronics.in",
-          //   "customercare@bharathelectronics.in",
-          // ];
-          const adminEmails = ["hariharan.g@gmail.com"];
+          const adminEmails = [
+            "arunkarthik@bharathelectronics.in",
+            "ecom@bharathelectronics.in",
+            "itadmin@bharathelectronics.in",
+            "telemarketing@bharathelectronics.in",
+            "sekarcorp@bharathelectronics.in",
+            "abu@bharathelectronics.in",
+            "customercare@bharathelectronics.in",
+          ];
 
           const emailRes = await fetch("/api/send-order-email", {
             method: "POST",
