@@ -16,8 +16,22 @@ export async function GET(request, context) {
   }
 
   try {
+    let decodedSlug = slug;
+    try {
+      decodedSlug = decodeURIComponent(slug);
+    } catch {}
+
+    const candidates = Array.from(new Set([slug, decodedSlug])).filter(Boolean);
+    const conditions = [{ slug: { $in: candidates } }];
+    const validIds = candidates.filter((c) => /^[0-9a-fA-F]{24}$/.test(c));
+    if (validIds.length > 0) {
+      conditions.push({ _id: { $in: validIds } });
+    }
+
+    const query = conditions.length === 1 ? conditions[0] : { $or: conditions };
+
     const product = await Product.findOne(withValidPrice({
-      slug,
+      ...query,
       status: "Active",
     })).lean();
 

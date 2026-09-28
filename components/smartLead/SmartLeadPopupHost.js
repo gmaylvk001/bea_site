@@ -68,9 +68,9 @@ export default function SmartLeadPopupHost() {
   const browseSlugRef = useRef("");
   const closeCtxRef = useRef({});
 
-  // Reset dwell during render on route change so the selection effect never
+  // Reset dwell on route change so the selection effect never
   // sees the previous page's timer (that caused instant Model popups).
-  if (dwellPath !== pathname) {
+  useEffect(() => {
     setDwellPath(pathname);
     setPageActiveMs(0);
     setOpenType(POPUP_TYPES.NONE);
@@ -78,7 +78,7 @@ export default function SmartLeadPopupHost() {
     setActiveLeadId(null);
     pageEnteredAtRef.current = Date.now();
     shownGuardRef.current = "";
-  }
+  }, [pathname]);
 
   const pageType = useMemo(() => detectPageType(pathname || ""), [pathname]);
   const displayMode = useMemo(() => getPopupDisplayMode(snapshot), [snapshot]);

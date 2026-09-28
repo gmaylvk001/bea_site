@@ -14,6 +14,106 @@ const OrderDetails = () => {
   const orderId = params?.orderId;
 
   const [order, setOrder] = useState(null);
+  const [pincodeDeliveryCharge, setPincodeDeliveryCharge] = useState(null);
+
+  useEffect(() => {
+    if (!order) return;
+
+    if (order.delivery_type === "store_pickup") {
+      setPincodeDeliveryCharge(0);
+      return;
+    }
+
+    if (
+      order.delivery_charge != null ||
+      order.shipping_fee != null ||
+      order.shipping_cost != null ||
+      order.delivery_fee != null
+    ) {
+      return;
+    }
+
+    const pinMatch = String(order.order_deliveryaddress || "").match(/\b\d{6}\b/);
+    if (!pinMatch) return;
+
+    const pin = pinMatch[0];
+    let isCancelled = false;
+
+    fetch(`/api/free-delivery-location/check?pincode=${encodeURIComponent(pin)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isCancelled) return;
+        if (data.success && data.isFreeDelivery) {
+          setPincodeDeliveryCharge(0);
+        } else {
+          const itemsTotal = (order.order_details || []).reduce((sum, item) => {
+            const price = Number(item.product_price || 0);
+            return sum + (Number(item.quantity || 1) * price);
+          }, 0);
+          const priceToCheck = itemsTotal > 0 ? itemsTotal : (parseFloat(order.order_amount) || 0);
+          setPincodeDeliveryCharge(priceToCheck < 10000 ? 299 : 499);
+        }
+      })
+      .catch((err) => {
+        console.error("Free delivery check error:", err);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [order]);
+
+  const getDeliveryCharge = () => {
+    if (!order) return 0;
+
+    if (order.delivery_charge !== undefined && order.delivery_charge !== null) {
+      return Number(order.delivery_charge);
+    }
+    if (order.shipping_fee !== undefined && order.shipping_fee !== null) {
+      return Number(order.shipping_fee);
+    }
+    if (order.shipping_cost !== undefined && order.shipping_cost !== null) {
+      return Number(order.shipping_cost);
+    }
+    if (order.delivery_fee !== undefined && order.delivery_fee !== null) {
+      return Number(order.delivery_fee);
+    }
+
+    if (order.delivery_type === "store_pickup") {
+      return 0;
+    }
+
+    const total = parseFloat(order.order_amount || 0);
+    const itemsTotal = (order.order_details || []).reduce((sum, item) => {
+      const price = Number(item.product_price || 0);
+      return sum + (Number(item.quantity || 1) * price);
+    }, 0);
+    const warrantyTotal = (order.order_item || []).reduce((sum, item) => {
+      return sum + Number(item.extendedWarranty || item.warrantyData?.price || 0);
+    }, 0);
+    const discounts = Number(order.loyalty_discount || 0) + Number(order.promotion_discount_applied || 0);
+    const calculatedProductsTotal = itemsTotal + warrantyTotal - discounts;
+
+    const diff = Math.round(total - calculatedProductsTotal);
+
+    if (diff === 299 || diff === 499) {
+      return diff;
+    }
+
+    if (pincodeDeliveryCharge !== null) {
+      return pincodeDeliveryCharge;
+    }
+
+    if (diff > 0 && calculatedProductsTotal > 0 && diff < total) {
+      return diff;
+    }
+
+    return 0;
+  };
+
+  const deliveryCharge = getDeliveryCharge();
+  const totalAmount = parseFloat(order?.order_amount || 0);
+  const subTotalAmount = Math.max(0, totalAmount - deliveryCharge);
 
   const orderr = {
     history: [
@@ -93,8 +193,14 @@ const OrderDetails = () => {
         <tr>
           <td className="p-2 flex items-center gap-2 font-semibold text-gray-700">
             <MdOutlineLocalShipping className="bg-red-500 text-white p-1 rounded-md w-6 h-6" />
-            Shipping:</td>
-          <td className="p-2"> Free Shipping</td>
+            Delivery Charge:</td>
+          <td className="p-2">
+            {deliveryCharge > 0 ? (
+              <span className="font-semibold text-red-600">₹{deliveryCharge}</span>
+            ) : (
+              <span className="text-green-600 font-medium">Free Shipping</span>
+            )}
+          </td>
         </tr>
       </tbody>
     </table>
@@ -228,7 +334,7 @@ const OrderDetails = () => {
   </tr>
 ))}
 
-{order.order_item.map((item, index) =>
+{order.order_item?.map((item, index) =>
   item.extendedWarranty > 0 && (
     <tr key={index} className="font-semibold">
       <td colSpan="4" className="p-2 text-right text-[#0069c6]">
@@ -243,13 +349,13 @@ const OrderDetails = () => {
 
   <tr className="font-semibold">
     <td colSpan="4" className="p-2 text-right">Sub-Total:</td>
-    {/* <td className="p-2 text-right">₹{order.sub_total}</td> */}
-    <td className="p-2 text-right">₹0.00</td>
+    <td className="p-2 text-right">₹{subTotalAmount}</td>
   </tr>
   <tr>
-    <td colSpan="4" className="p-2 text-right">Shipping:</td>
-    {/* <td className="p-2 text-right">₹{order.shipping_fee}</td> */}
-     <td className="p-2 text-right">₹0.00</td>
+    <td colSpan="4" className="p-2 text-right">Delivery Charge:</td>
+    <td className={`p-2 text-right ${deliveryCharge > 0 ? "text-red-600 font-semibold" : ""}`}>
+      {deliveryCharge > 0 ? `₹${deliveryCharge}` : "₹0.00"}
+    </td>
   </tr>
   <tr className="font-bold bg-gray-100">
     <td colSpan="4" className="p-2 text-right">Total:</td>

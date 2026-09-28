@@ -65,7 +65,12 @@ export default function ProductClient({ initialProduct = null }) {
   const params = useParams();
   const pathname = usePathname();
   const { trackProductView } = useVisitorIntent();
-  const slug = (pathname || "").split("/").filter(Boolean).pop() || params?.slug;
+  const rawSlug = (pathname || "").split("/").filter(Boolean).pop() || params?.slug || "";
+  let decodedSlug = rawSlug;
+  try {
+    decodedSlug = decodeURIComponent(rawSlug);
+  } catch {}
+  const slug = decodedSlug;
   const [hasMounted, setHasMounted] = useState(false);
   const [relatedProductsLoading, setRelatedProductsLoading] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -120,7 +125,10 @@ const addOnIds = Array.isArray(product?.add_ons)
 
   useEffect(() => {
     setHasMounted(true);
-  }, []);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [slug]);
 
   useEffect(() => {
     if (!product?._id) return;
@@ -746,7 +754,7 @@ const resolveImagePath = (image) => {
       rating: avgRating,
       reviewCount,
     });
-  }, [product?._id, trackProductView, matchedBrandForManufacturer?.label, brand, avgRating, reviewCount]);
+  }, [product?._id]);
 
   useEffect(() => {
     const applyProductData = (data) => {
@@ -775,8 +783,15 @@ const resolveImagePath = (image) => {
       }
     };
 
+    // If current product state already matches this slug, we already have it
+    if (product && (product.slug === slug || product.slug === rawSlug || String(product._id) === slug)) {
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     // Prefer server-provided product (already loaded in page.js) — enables SSR gallery/H1
-    if (initialProduct?.slug && initialProduct.slug === slug) {
+    if (initialProduct && (initialProduct.slug === slug || initialProduct.slug === rawSlug || String(initialProduct._id) === slug)) {
       applyProductData(initialProduct);
       setLoading(false);
       setError(null);
@@ -786,7 +801,7 @@ const resolveImagePath = (image) => {
     const fetchProduct = async () => {
       if (!slug) return;
 
-      const cached = variantCacheRef.current[slug];
+      const cached = variantCacheRef.current[slug] || variantCacheRef.current[rawSlug];
       if (cached) {
         applyingVariantRef.current = false;
         applyProductData(cached);
@@ -796,7 +811,7 @@ const resolveImagePath = (image) => {
 
       try {
         setLoading((currentLoading) => (product ? currentLoading : true));
-        const response = await fetch(`/api/product/${slug}`);
+        const response = await fetch(`/api/product/${encodeURIComponent(slug)}`);
 
         if (!response.ok) {
           setErrorMessage("Content not loading. Please try again later.");
@@ -811,12 +826,12 @@ const resolveImagePath = (image) => {
         }
 
         if (Array.isArray(data)) {
-          const foundProduct = data.find((p) => p.slug === slug);
+          const foundProduct = data.find((p) => p.slug === slug || p.slug === rawSlug || String(p._id) === slug);
           if (!foundProduct) {
             throw new Error("Product not found");
           }
           applyProductData(foundProduct);
-        } else if (data && data.slug) {
+        } else if (data && (data.slug || data._id)) {
           applyProductData(data);
         } else {
           throw new Error("Invalid product data");
@@ -831,7 +846,7 @@ const resolveImagePath = (image) => {
     };
 
     fetchProduct();
-  }, [slug, initialProduct]);
+  }, [slug, rawSlug, initialProduct]);
 
   useEffect(() => {
     if (!product?._id) return;
