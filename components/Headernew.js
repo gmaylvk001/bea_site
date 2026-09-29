@@ -615,6 +615,7 @@ const Header = () => {
   const [searchDropdownLeft, setSearchDropdownLeft] = useState(0);
   const [searchDropdownTop, setSearchDropdownTop] = useState(0);
   const [searchDropdownWidth, setSearchDropdownWidth] = useState(0);
+  const searchAbortRef = useRef(null);
   // Toggle mobile menu
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -736,9 +737,8 @@ const Header = () => {
     }
   };
   const handleSearch = () => {
-
     if (!searchQuery.trim() && selectedCategory === "All Category") return;
-
+    setSearchDropdownVisible(false);
     const params = new URLSearchParams();
     if (searchQuery.trim()) params.append("query", searchQuery.trim());
     if (selectedCategory !== "All Category") {
@@ -746,16 +746,18 @@ const Header = () => {
     }
     router.push(`/search?${params.toString()}`);
   };
+
   const handleSearchBtnClick = () => {
     if (!searchQuery.trim() && selectedCategory === "All Category") return;
+    setSearchDropdownVisible(false);
     const params = new URLSearchParams();
     if (searchQuery.trim()) params.append("query", searchQuery.trim());
     if (selectedCategory !== "All Category") {
       params.append("category", selectedCategory);
     }
-
     router.push(`/search?${params.toString()}`);
   };
+
   useEffect(() => {
     let mounted = true;
     const loadBrands = async () => {
@@ -790,7 +792,34 @@ const Header = () => {
   // Memoized sorted products using existing getSortedProducts flow
   const sortedProducts = useMemo(() => getSortedProducts(), [products, sortOption]);
 
-  // ADD: clearSearch helper for new mobile search design (from reference mobile view)
+  // Recalculate dropdown fixed viewport coordinates
+  const updateDropdownPosition = useCallback(() => {
+    if (searchInputRef.current) {
+      const rect = searchInputRef.current.getBoundingClientRect();
+      setSearchDropdownLeft(rect.left);
+      setSearchDropdownTop(rect.bottom + 4);
+      setSearchDropdownWidth(rect.width);
+    }
+  }, []);
+
+  // Keep dropdown aligned on resize and scroll
+  useEffect(() => {
+    if (!searchDropdownVisible) return;
+    updateDropdownPosition();
+
+    const handleWindowChange = () => {
+      updateDropdownPosition();
+    };
+
+    window.addEventListener('resize', handleWindowChange);
+    window.addEventListener('scroll', handleWindowChange, true);
+    return () => {
+      window.removeEventListener('resize', handleWindowChange);
+      window.removeEventListener('scroll', handleWindowChange, true);
+    };
+  }, [searchDropdownVisible, updateDropdownPosition]);
+
+  // Clear search helper
   const clearSearch = useCallback(() => {
     setSearchQuery('');
     setSuggestions([]);
@@ -799,33 +828,36 @@ const Header = () => {
     if (searchInputRef.current) searchInputRef.current.blur();
   }, []);
 
-  // helper to fetch suggestions (safe JSON handling) - now uses local products for instant results
+  // Helper to fetch suggestions with request cancellation and local fallback
   const fetchSuggestions = useCallback(async (q) => {
     if (!q || q.trim().length < 1) {
       setSuggestions([]);
+      setSearchDropdownVisible(false);
       return;
     }
 
     const trimmed = q.trim();
 
+    if (searchAbortRef.current) {
+      searchAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+
     try {
-      const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(trimmed)}`);
+      const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(trimmed)}`, {
+        signal: controller.signal,
+      });
       if (res.ok) {
         const data = await res.json();
         const items = Array.isArray(data) ? data : (data?.results || []);
-        if (items.length > 0) {
-          setSuggestions(items.slice(0, 12));
-          setSearchDropdownVisible(true);
-          if (searchInputRef.current) {
-            const rect = searchInputRef.current.getBoundingClientRect();
-            setSearchDropdownLeft(rect.left);
-            setSearchDropdownTop(rect.bottom + window.scrollY);
-            setSearchDropdownWidth(rect.width);
-          }
-          return;
-        }
+        setSuggestions(items.slice(0, 12));
+        setSearchDropdownVisible(true);
+        updateDropdownPosition();
+        return;
       }
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('Error fetching suggestions:', err);
     }
 
@@ -837,13 +869,7 @@ const Header = () => {
         });
         setSuggestions(filtered);
         setSearchDropdownVisible(filtered.length > 0);
-
-        if (searchInputRef.current) {
-          const rect = searchInputRef.current.getBoundingClientRect();
-          setSearchDropdownLeft(rect.left);
-          setSearchDropdownTop(rect.bottom + window.scrollY);
-          setSearchDropdownWidth(rect.width);
-        }
+        updateDropdownPosition();
       } else {
         setSuggestions([]);
       }
@@ -851,7 +877,7 @@ const Header = () => {
       console.error('Local filter error', err);
       setSuggestions([]);
     }
-  }, [sortedProducts, brandsForSearch]);
+  }, [sortedProducts, brandsForSearch, updateDropdownPosition]);
 
   // Debounced effect: call fetchSuggestions while typing
   useEffect(() => {
@@ -863,16 +889,14 @@ const Header = () => {
       return;
     }
 
-    // Ensure dropdown becomes visible as soon as user types (even for one char)
     setSearchDropdownVisible(true);
 
-    // Immediate fetch for the first character, otherwise debounce for performance
     if (q.length === 1) {
       fetchSuggestions(q);
       return;
     }
 
-    debounceRef.current = setTimeout(() => fetchSuggestions(q), 200);
+    debounceRef.current = setTimeout(() => fetchSuggestions(q), 180);
     return () => clearTimeout(debounceRef.current);
   }, [searchQuery, fetchSuggestions]);
 
@@ -888,9 +912,8 @@ const Header = () => {
       if (
         searchDropdownVisible &&
         searchInputRef.current &&
-        searchDropdownRef.current &&
         !searchInputRef.current.contains(target) &&
-        !searchDropdownRef.current.contains(target)
+        (!searchDropdownRef.current || !searchDropdownRef.current.contains(target))
       ) {
         setSearchDropdownVisible(false);
       }
@@ -1246,26 +1269,52 @@ const Header = () => {
     if (Number.isNaN(num)) return '';
     return '₹' + num.toLocaleString('en-IN');
   };
-  // FIX: renderSuggestionItem slug bug
+  // Dedicated, robust navigation handler for suggestions
+  const navigateToProduct = useCallback((item) => {
+    if (!item) return;
+    const rawSlug = item.slug || item._id || item.id;
+    if (!rawSlug) return;
+    const cleanSlug = String(rawSlug).replace(/^\/+/, '').trim();
+    if (!cleanSlug) return;
+
+    setSearchDropdownVisible(false);
+    if (searchInputRef.current) {
+      searchInputRef.current.blur();
+    }
+
+    const targetUrl = `/product/${encodeURIComponent(cleanSlug)}`;
+
+    // If currently on a product page, soft client navigation can get trapped
+    // by pushState desync from variant selections or Next.js App Router cache.
+    // Force a fresh navigation using window.location.href.
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/product/')) {
+      window.location.href = targetUrl;
+    } else {
+      router.push(targetUrl);
+    }
+  }, [router]);
+
+  // Mobile suggestion item renderer
   const renderSuggestionItem = useCallback((item, idx) => {
     const id = item._id || item.id || idx;
-    const rawSlug = item.slug || item._id || item.id || '';
-    const cleanSlug = String(rawSlug).replace(/^\/+/, '');
     const price = item.special_price ?? item.price;
     const imageSrc = item.image || (Array.isArray(item.images) && item.images.length > 0 ? `/uploads/products/${item.images[0]}` : null);
-    const productHref = `/product/${encodeURIComponent(cleanSlug)}`;
 
     return (
-      <Link
+      <div
         key={id}
-        href={productHref}
-        onClick={() => {
-          setSearchDropdownVisible(false);
+        role="option"
+        tabIndex={0}
+        onMouseDown={(e) => {
+          e.preventDefault();
         }}
-        className="group block mb-2 last:mb-0 rounded-lg bg-[#e9e9ec] hover:bg-white border border-transparent hover:border-blue-300 shadow-sm hover:shadow transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
+        onClick={() => {
+          navigateToProduct(item);
+        }}
+        className="group block mb-2 last:mb-0 rounded-lg bg-[#f0f2f5] active:bg-gray-200 hover:bg-white border border-transparent hover:border-blue-300 shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400/40 cursor-pointer"
       >
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-12 h-12 rounded-md overflow-hidden bg-white ring-1 ring-gray-200 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 px-3 py-2.5">
+          <div className="w-12 h-12 rounded-md overflow-hidden bg-white ring-1 ring-gray-200 flex items-center justify-center shrink-0 p-1">
             {imageSrc ? (
               <img
                 src={imageSrc}
@@ -1281,40 +1330,33 @@ const Header = () => {
             <div className="text-[12px] font-semibold text-gray-800 leading-snug line-clamp-2 uppercase group-hover:text-blue-700">
               {item.name || 'Unnamed'}
             </div>
-            <div className="mt-1 flex items-center gap-2">
-              {price !== undefined && price !== null && (
-                <span className="text-[12px] font-medium text-gray-700 group-hover:text-blue-700">
+            {price !== undefined && price !== null && (
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-[12px] font-bold text-blue-600">
                   {formatPrice(price)}
                 </span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
-      </Link>
+      </div>
     );
-  }, [setSearchDropdownVisible]);
+  }, [navigateToProduct]);
 
-  // ADD state (place with other useState declarations)
+  // Active suggestion index for keyboard navigation
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
 
-  // RESET active suggestion when list changes or dropdown closes
   useEffect(() => {
-    setActiveSuggestion((prev) => (prev === -1 ? prev : -1));
+    setActiveSuggestion(-1);
   }, [suggestions, searchDropdownVisible]);
 
-  // SELECT helper
+  // Select suggestion helper (used by keyboard navigation)
   const selectSuggestion = useCallback((index) => {
     if (index < 0 || index >= suggestions.length) return;
-    const item = suggestions[index];
-    const rawSlug = item.slug || item._id || item.id;
-    if (!rawSlug) return;
-    const cleanSlug = String(rawSlug).replace(/^\/+/, '');
-    const productHref = `/product/${encodeURIComponent(cleanSlug)}`;
-    setSearchDropdownVisible(false);
-    router.push(productHref);
-  }, [suggestions, router]);
+    navigateToProduct(suggestions[index]);
+  }, [suggestions, navigateToProduct]);
 
-  // DESKTOP key handling (keep existing handleKeyPress for mobile inputs)
+  // Desktop keyboard navigation
   const handleDesktopKeyDown = (e) => {
     if (!suggestions.length) {
       if (e.key === 'Enter') handleSearch();
@@ -1322,13 +1364,13 @@ const Header = () => {
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActiveSuggestion(p => (p + 1) % suggestions.length);
+      setActiveSuggestion((p) => (p + 1) % suggestions.length);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setActiveSuggestion(p => (p - 1 + suggestions.length) % suggestions.length);
+      setActiveSuggestion((p) => (p - 1 + suggestions.length) % suggestions.length);
     } else if (e.key === 'Enter') {
+      e.preventDefault();
       if (activeSuggestion >= 0) {
-        e.preventDefault();
         selectSuggestion(activeSuggestion);
       } else {
         handleSearch();
@@ -1338,11 +1380,9 @@ const Header = () => {
     }
   };
 
-  // DESKTOP specific renderer (keep existing renderSuggestionItem for mobile contexts)
+  // Desktop suggestion item renderer
   function renderDesktopSuggestionItem(item, idx) {
     const id = item._id || item.id || idx;
-    const rawSlug = item.slug || item._id || item.id || '';
-    const cleanSlug = String(rawSlug).replace(/^\/+/, '');
     const price = item.special_price ?? item.price;
     const isActive = idx === activeSuggestion;
     const imageSrc =
@@ -1350,21 +1390,31 @@ const Header = () => {
       (Array.isArray(item.images) && item.images.length > 0
         ? `/uploads/products/${item.images[0]}`
         : null);
-    const productHref = `/product/${encodeURIComponent(cleanSlug)}`;
 
     return (
-      <Link
+      <div
         key={id}
-        href={productHref}
         role="option"
         aria-selected={isActive}
+        tabIndex={0}
         onMouseEnter={() => setActiveSuggestion(idx)}
-        onClick={() => {
-          setSearchDropdownVisible(false);
+        onMouseDown={(e) => {
+          e.preventDefault();
         }}
-        className={`flex gap-4 px-4 py-3 cursor-pointer rounded-md transition-colors group bg-[#f2f2f2] hover:bg-[#e8e8e8]`}
+        onClick={() => {
+          navigateToProduct(item);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            navigateToProduct(item);
+          }
+        }}
+        className={`flex items-center gap-4 px-4 py-3 cursor-pointer rounded-lg transition-all group ${
+          isActive ? 'bg-[#e5ecf9] shadow-sm' : 'bg-[#f4f5f7] hover:bg-[#eaeef6]'
+        }`}
       >
-        <div className="w-[50px] h-[50px] rounded-md overflow-hidden bg-white flex items-center justify-center border border-gray-200 shrink-0">
+        <div className="w-[52px] h-[52px] rounded-lg overflow-hidden bg-white flex items-center justify-center border border-gray-200 shrink-0 p-1">
           {imageSrc ? (
             <img
               src={imageSrc}
@@ -1378,21 +1428,21 @@ const Header = () => {
         </div>
         <div className="flex-1 min-w-0">
           <div
-            className={`text-[14px] font-medium leading-snug line-clamp-2 ${isActive ? 'text-blue-700' : 'text-gray-800 group-hover:text-gray-900'
-              }`}
+            className={`text-[13px] font-medium leading-snug line-clamp-2 uppercase ${
+              isActive ? 'text-blue-700 font-semibold' : 'text-gray-800 group-hover:text-blue-700'
+            }`}
           >
             {item.name || 'Unnamed'}
           </div>
-          {price && (
-            <div className="text-[14px] font-semibold text-blue-600 mt-1">
-              ₹{price.toLocaleString('en-IN')}
+          {price !== undefined && price !== null && (
+            <div className="text-[13px] font-bold text-blue-600 mt-1">
+              {formatPrice(price)}
             </div>
           )}
-
         </div>
-      </Link>
+      </div>
     );
-  };
+  }
   // ADD: mobile accordion open-state + helpers
   // FIX: replace wrong useState with real loader function + tracking map
   const [loadedCategoryIds, setLoadedCategoryIds] = useState({});
@@ -1714,13 +1764,7 @@ const Header = () => {
                     aria-expanded={searchDropdownVisible && searchContext === "mobileTop"}
                     autoComplete="off"
                     onFocus={() => {
-                      setSearchContext('mobileTop'); // ADDED
-                      if (searchInputRef.current) {
-                        const rect = searchInputRef.current.getBoundingClientRect();
-                        setSearchDropdownLeft(rect.left);
-                        setSearchDropdownTop(rect.bottom + window.scrollY);
-                        setSearchDropdownWidth(rect.width);
-                      }
+                      setSearchContext('mobileTop');
                       if (searchQuery.trim().length >= 1) fetchSuggestions(searchQuery);
                       setSearchDropdownVisible(true);
                     }}
@@ -1842,14 +1886,9 @@ const Header = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     ref={searchInputRef}
                     onFocus={() => {
-                      setSearchContext('desktop'); // ADDED
-                      if (searchInputRef.current) {
-                        const rect = searchInputRef.current.getBoundingClientRect();
-                        setSearchDropdownLeft(rect.left);
-                        setSearchDropdownTop(rect.bottom + window.scrollY);
-                        setSearchDropdownWidth(rect.width);
-                      }
-                      if (searchQuery.trim().length >= 2) fetchSuggestions(searchQuery);
+                      setSearchContext('desktop');
+                      updateDropdownPosition();
+                      if (searchQuery.trim().length >= 1) fetchSuggestions(searchQuery);
                       setSearchDropdownVisible(true);
                     }}
                     onKeyDown={handleDesktopKeyDown}  // correct usage
@@ -2989,7 +3028,7 @@ const Header = () => {
       {searchDropdownVisible && searchContext === 'desktop' && (
         <div
           ref={searchDropdownRef}
-          className="hidden sm:flex flex-col fixed z-[80] bg-white shadow-xl rounded-xl border border-gray-200 overflow-hidden"
+          className="hidden sm:flex flex-col fixed z-[999] bg-white shadow-2xl rounded-xl border border-gray-200 overflow-hidden"
           style={{
             top: `${searchDropdownTop}px`,
             left: `${searchDropdownLeft}px`,

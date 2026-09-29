@@ -1,22 +1,23 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ga4SpaPageView } from "@/utils/nextjs-event-tracking";
 
 function getPageUrl(pathname, search) {
   if (typeof window === "undefined") return "";
   const query = search ? `?${search}` : "";
-  return `${window.location.origin}${pathname}${query}`;
+  return `${window.location.origin}${pathname || ""}${query}`;
 }
 
 export default function Ga4SpaPageView() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const search = searchParams?.toString() || "";
+  const search = searchParams ? searchParams.toString() : "";
   const previousUrlRef = useRef(null);
 
   useEffect(() => {
+    if (!pathname) return;
     const pageLocation = getPageUrl(pathname, search);
 
     if (previousUrlRef.current === null) {
