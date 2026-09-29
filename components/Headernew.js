@@ -380,6 +380,31 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [placeholder, setPlaceholder] = useState("Search for");
   const [typedPreview, setTypedPreview] = useState("");
+
+  // Restore search query on mount so input text stays after clicking a product
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const saved = sessionStorage.getItem("bea_saved_search_query");
+        if (saved && typeof saved === "string") {
+          setSearchQuery(saved);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleSearchQueryChange = useCallback((val) => {
+    setSearchQuery(val);
+    try {
+      if (typeof window !== "undefined") {
+        if (val) {
+          sessionStorage.setItem("bea_saved_search_query", val);
+        } else {
+          sessionStorage.removeItem("bea_saved_search_query");
+        }
+      }
+    } catch (e) {}
+  }, []);
   const [words, setWords] = useState([]);
   const [categorieslist, setCategorieslist] = useState([]);
   const [brandsForSearch, setBrandsForSearch] = useState([]);
@@ -616,6 +641,7 @@ const Header = () => {
   const [searchDropdownTop, setSearchDropdownTop] = useState(0);
   const [searchDropdownWidth, setSearchDropdownWidth] = useState(0);
   const searchAbortRef = useRef(null);
+  const suggestionsCacheRef = useRef({});
   // Toggle mobile menu
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -738,6 +764,11 @@ const Header = () => {
   };
   const handleSearch = () => {
     if (!searchQuery.trim() && selectedCategory === "All Category") return;
+    try {
+      if (typeof window !== 'undefined' && searchQuery.trim()) {
+        sessionStorage.setItem('bea_saved_search_query', searchQuery.trim());
+      }
+    } catch (e) {}
     setSearchDropdownVisible(false);
     const params = new URLSearchParams();
     if (searchQuery.trim()) params.append("query", searchQuery.trim());
@@ -749,6 +780,11 @@ const Header = () => {
 
   const handleSearchBtnClick = () => {
     if (!searchQuery.trim() && selectedCategory === "All Category") return;
+    try {
+      if (typeof window !== 'undefined' && searchQuery.trim()) {
+        sessionStorage.setItem('bea_saved_search_query', searchQuery.trim());
+      }
+    } catch (e) {}
     setSearchDropdownVisible(false);
     const params = new URLSearchParams();
     if (searchQuery.trim()) params.append("query", searchQuery.trim());
@@ -825,10 +861,15 @@ const Header = () => {
     setSuggestions([]);
     setTypedPreview('');
     setSearchDropdownVisible(false);
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('bea_saved_search_query');
+      }
+    } catch (e) {}
     if (searchInputRef.current) searchInputRef.current.blur();
   }, []);
 
-  // Helper to fetch suggestions with request cancellation and local fallback
+  // Helper to fetch suggestions with request cancellation, instant cache, and local fallback
   const fetchSuggestions = useCallback(async (q) => {
     if (!q || q.trim().length < 1) {
       setSuggestions([]);
@@ -837,6 +878,14 @@ const Header = () => {
     }
 
     const trimmed = q.trim();
+    const cacheKey = trimmed.toLowerCase();
+
+    // Instant in-memory cache hit: show suggestions immediately without waiting for API
+    if (suggestionsCacheRef.current[cacheKey] && suggestionsCacheRef.current[cacheKey].length > 0) {
+      setSuggestions(suggestionsCacheRef.current[cacheKey]);
+      setSearchDropdownVisible(true);
+      updateDropdownPosition();
+    }
 
     if (searchAbortRef.current) {
       searchAbortRef.current.abort();
@@ -851,7 +900,9 @@ const Header = () => {
       if (res.ok) {
         const data = await res.json();
         const items = Array.isArray(data) ? data : (data?.results || []);
-        setSuggestions(items.slice(0, 12));
+        const sliced = items.slice(0, 12);
+        suggestionsCacheRef.current[cacheKey] = sliced;
+        setSuggestions(sliced);
         setSearchDropdownVisible(true);
         updateDropdownPosition();
         return;
@@ -867,15 +918,18 @@ const Header = () => {
         const filtered = filterAndRankProducts(sortedProducts, trimmed, 12, {
           brands: brandsForSearch,
         });
+        suggestionsCacheRef.current[cacheKey] = filtered;
         setSuggestions(filtered);
         setSearchDropdownVisible(filtered.length > 0);
         updateDropdownPosition();
-      } else {
+      } else if (!suggestionsCacheRef.current[cacheKey]) {
         setSuggestions([]);
       }
     } catch (err) {
       console.error('Local filter error', err);
-      setSuggestions([]);
+      if (!suggestionsCacheRef.current[cacheKey]) {
+        setSuggestions([]);
+      }
     }
   }, [sortedProducts, brandsForSearch, updateDropdownPosition]);
 
@@ -1277,6 +1331,13 @@ const Header = () => {
     const cleanSlug = String(rawSlug).replace(/^\/+/, '').trim();
     if (!cleanSlug) return;
 
+    // Persist current search query so it stays in search box on destination page
+    try {
+      if (typeof window !== 'undefined' && searchQuery) {
+        sessionStorage.setItem('bea_saved_search_query', searchQuery);
+      }
+    } catch (e) {}
+
     setSearchDropdownVisible(false);
     if (searchInputRef.current) {
       searchInputRef.current.blur();
@@ -1284,15 +1345,9 @@ const Header = () => {
 
     const targetUrl = `/product/${encodeURIComponent(cleanSlug)}`;
 
-    // If currently on a product page, soft client navigation can get trapped
-    // by pushState desync from variant selections or Next.js App Router cache.
-    // Force a fresh navigation using window.location.href.
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/product/')) {
-      window.location.href = targetUrl;
-    } else {
-      router.push(targetUrl);
-    }
-  }, [router]);
+    // Use smooth client router navigation to prevent header reloading
+    router.push(targetUrl);
+  }, [router, searchQuery]);
 
   // Mobile suggestion item renderer
   const renderSuggestionItem = useCallback((item, idx) => {
@@ -1753,7 +1808,7 @@ const Header = () => {
                     id="mobile-header-search"
                     name="q"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearchQueryChange(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder=" "
                     className="w-full h-full text-sm outline-none bg-transparent px-1 focus:text-[#111] placeholder-transparent"
@@ -1765,7 +1820,14 @@ const Header = () => {
                     autoComplete="off"
                     onFocus={() => {
                       setSearchContext('mobileTop');
-                      if (searchQuery.trim().length >= 1) fetchSuggestions(searchQuery);
+                      const trimmed = searchQuery.trim();
+                      if (trimmed.length >= 1) {
+                        const cached = suggestionsCacheRef.current[trimmed.toLowerCase()];
+                        if (cached && cached.length > 0) {
+                          setSuggestions(cached);
+                        }
+                        fetchSuggestions(trimmed);
+                      }
                       setSearchDropdownVisible(true);
                     }}
                   />
@@ -1883,12 +1945,19 @@ const Header = () => {
                     name="q"
                     id="desktop-header-search"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearchQueryChange(e.target.value)}
                     ref={searchInputRef}
                     onFocus={() => {
                       setSearchContext('desktop');
                       updateDropdownPosition();
-                      if (searchQuery.trim().length >= 1) fetchSuggestions(searchQuery);
+                      const trimmed = searchQuery.trim();
+                      if (trimmed.length >= 1) {
+                        const cached = suggestionsCacheRef.current[trimmed.toLowerCase()];
+                        if (cached && cached.length > 0) {
+                          setSuggestions(cached);
+                        }
+                        fetchSuggestions(trimmed);
+                      }
                       setSearchDropdownVisible(true);
                     }}
                     onKeyDown={handleDesktopKeyDown}  // correct usage
