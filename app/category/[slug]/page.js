@@ -1,5 +1,6 @@
 import CategoryPrimaryPage from "@/components/category/sample_cat";
 import { buildCanonicalUrl } from "@/components/CanonicalLink";
+import { notFound } from "next/navigation";
 import {
   getBaseUrl,
   fetchJson,
@@ -15,6 +16,12 @@ const getCategoryData = cache(async (slug) => {
   return fetchJson(`/api/categories/${slug}`);
 });
 
+function isParentCategory(category) {
+  if (!category) return false;
+  const parentId = String(category.parentid || "").trim();
+  return !parentId || parentId === "none" || parentId === "null" || parentId === "";
+}
+
 export async function generateMetadata({ params }) {
   const awaitedParams = await params;
   const slug = awaitedParams.slug;
@@ -22,15 +29,15 @@ export async function generateMetadata({ params }) {
 
   try {
     const data = await getCategoryData(slug);
+    const category = data?.main_category;
 
-    if (!data?.main_category) {
+    if (!category || !isParentCategory(category)) {
       return {
         title: "Category Not Found",
         description: "This category does not exist",
       };
     }
 
-    const category = data.main_category;
     const title =
       category.meta_title && category.meta_title !== "none"
         ? category.meta_title
@@ -83,6 +90,12 @@ export default async function Page({ params }) {
   }
 
   const category = data?.main_category || null;
+
+  // Disallow sub-categories from opening at 1-level /category/:slug.
+  // Only top-level parent categories (parentid === "none") are allowed here.
+  if (!category || !isParentCategory(category)) {
+    notFound();
+  }
   const path = `/category/${slug}`;
 
   const categorySchema = category

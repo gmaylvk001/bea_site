@@ -147,6 +147,7 @@ export default function ProductBreadcrumb({ product }) {
   const path = `/category/${categories
     .slice(0, index + 1)
     .map(cat => cat.category_slug || cat._id)
+    .filter(segment => segment && segment !== "undefined" && segment !== "null")
     .join("/")}`;
 
   return (

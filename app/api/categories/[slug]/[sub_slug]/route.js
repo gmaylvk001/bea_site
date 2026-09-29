@@ -9,14 +9,30 @@ import mongoose from "mongoose";
 
 export async function GET(req, { params }) {
   try {
+    const { slug, sub_slug } = await params;
+
+    // Immediately reject invalid or "undefined" / "null" slugs
+    if (
+      !slug || slug === "undefined" || slug === "null" ||
+      !sub_slug || sub_slug === "undefined" || sub_slug === "null"
+    ) {
+      return Response.json({ error: "Invalid category URL" }, { status: 404 });
+    }
+
     await dbConnect();
 
-    const {sub_slug} = await params;
-    
-    // Fetch category
-    const category = await ecom_category_info.findOne({ category_slug: sub_slug });
-    if (!category) {
+    // Fetch sub_category and parent category to validate hierarchy
+    const [category, parent] = await Promise.all([
+      ecom_category_info.findOne({ category_slug: sub_slug }),
+      ecom_category_info.findOne({ category_slug: slug }),
+    ]);
+
+    if (!category || !parent) {
       return Response.json({ error: "Category not found" }, { status: 404 });
+    }
+
+    if (String(category.parentid || "").trim() !== String(parent._id)) {
+      return Response.json({ error: "Category hierarchy mismatch" }, { status: 404 });
     }
     
     // Fetch products under this category

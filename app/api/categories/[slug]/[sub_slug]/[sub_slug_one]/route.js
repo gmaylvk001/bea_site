@@ -10,14 +10,34 @@ import mongoose from "mongoose";
 
 export async function GET(req, { params }) {
   try {
+    const { slug, sub_slug, sub_slug_one } = await params;
+
+    // Immediately reject invalid or "undefined" / "null" slugs
+    if (
+      !slug || slug === "undefined" || slug === "null" ||
+      !sub_slug || sub_slug === "undefined" || sub_slug === "null" ||
+      !sub_slug_one || sub_slug_one === "undefined" || sub_slug_one === "null"
+    ) {
+      return Response.json({ error: "Invalid category URL" }, { status: 404 });
+    }
+
     await dbConnect();
 
-    const {sub_slug,sub_slug_one} = await params;
-    
-    // Fetch category
-    const category = await ecom_category_info.findOne({ category_slug: sub_slug_one });
-    if (!category) {
+    // Fetch child, sub, and main categories to validate hierarchy
+    const [category, parent, main] = await Promise.all([
+      ecom_category_info.findOne({ category_slug: sub_slug_one }),
+      ecom_category_info.findOne({ category_slug: sub_slug }),
+      ecom_category_info.findOne({ category_slug: slug }),
+    ]);
+
+    if (!category || !parent || !main) {
       return Response.json({ error: "Category not found" }, { status: 404 });
+    }
+
+    const isChildOfSub = String(category.parentid || "").trim() === String(parent._id);
+    const isSubOfMain = String(parent.parentid || "").trim() === String(main._id);
+    if (!isChildOfSub || !isSubOfMain) {
+      return Response.json({ error: "Category hierarchy mismatch" }, { status: 404 });
     }
     
     // Fetch products under this category

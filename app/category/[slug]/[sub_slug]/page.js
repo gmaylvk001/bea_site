@@ -1,5 +1,6 @@
 import CategoryClient from "@/components/category/[slug]/[sub_slug]/page";
 import { buildCanonicalUrl } from "@/components/CanonicalLink";
+import { notFound } from "next/navigation";
 import {
   getBaseUrl,
   fetchJson,
@@ -12,6 +13,9 @@ import {
 import { cache } from "react";
 
 const getCategoryData = cache(async (categorySlug) => {
+  if (!categorySlug || categorySlug === "undefined" || categorySlug === "null") {
+    return null;
+  }
   return fetchJson(`/api/categories/${categorySlug}`);
 });
 
@@ -19,6 +23,17 @@ export async function generateMetadata({ params }) {
   const awaitedParams = await params;
   const { slug, sub_slug } = awaitedParams;
   const baseUrl = getBaseUrl();
+
+  if (
+    !slug || slug === "undefined" || slug === "null" ||
+    !sub_slug || sub_slug === "undefined" || sub_slug === "null"
+  ) {
+    return {
+      title: "Category Not Found",
+      description: "This category does not exist",
+      robots: { index: false, follow: false },
+    };
+  }
 
   try {
     const data = await getCategoryData(sub_slug);
@@ -73,6 +88,15 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const awaitedParams = await params;
   const { slug, sub_slug } = awaitedParams;
+
+  // Immediately reject any URL containing "undefined" or "null" segments
+  if (
+    !slug || slug === "undefined" || slug === "null" ||
+    !sub_slug || sub_slug === "undefined" || sub_slug === "null"
+  ) {
+    notFound();
+  }
+
   const baseUrl = getBaseUrl();
   const path = `/category/${slug}/${sub_slug}`;
 
@@ -89,6 +113,22 @@ export default async function Page({ params }) {
 
   const category = data?.main_category || null;
   const parent = parentData?.main_category || null;
+
+  // Both categories must exist in the database
+  if (!category || !parent) {
+    notFound();
+  }
+
+  // 1. Parent must be a top-level parent category
+  const parentParentId = String(parent.parentid || "").trim();
+  if (parentParentId && parentParentId !== "none" && parentParentId !== "null") {
+    notFound();
+  }
+
+  // 2. Sub-category must belong to parent category
+  if (String(category.parentid || "").trim() !== String(parent._id)) {
+    notFound();
+  }
 
   const categorySchema = category
     ? buildCollectionPageSchema({
