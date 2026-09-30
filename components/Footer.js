@@ -21,9 +21,27 @@ import {
   MapPin,
 } from "lucide-react";
 
-const Footer = () => {
-  const [categories, setCategories] = useState([]);
-  const [groupedCategories, setGroupedCategories] = useState({ main: [], subs: {} });
+const makeGrouped = (data) => {
+  const activeCategories = Array.isArray(data) ? data.filter(cat => cat.status === 'Active') : [];
+  const main = activeCategories.filter(cat => cat.parentid === 'none');
+  const subs = {};
+  activeCategories.forEach(cat => {
+    if (cat.parentid !== 'none') {
+      if (!subs[cat.parentid]) subs[cat.parentid] = [];
+      subs[cat.parentid].push(cat);
+    }
+  });
+  return { main, subs };
+};
+
+const Footer = ({ initialCategories = [] }) => {
+  const [categories, setCategories] = useState(() => initialCategories || []);
+  const [groupedCategories, setGroupedCategories] = useState(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      return makeGrouped(initialCategories);
+    }
+    return { main: [], subs: {} };
+  });
   const [stores, setStores] = useState([]);
   
   // Auth state
@@ -69,18 +87,7 @@ const Footer = () => {
       }
     };
 
-    const makeGrouped = (data) => {
-      const activeCategories = Array.isArray(data) ? data.filter(cat => cat.status === 'Active') : [];
-      const main = activeCategories.filter(cat => cat.parentid === 'none');
-      const subs = {};
-      activeCategories.forEach(cat => {
-        if (cat.parentid !== 'none') {
-          if (!subs[cat.parentid]) subs[cat.parentid] = [];
-          subs[cat.parentid].push(cat);
-        }
-      });
-      return { main, subs };
-    };
+
 
     const fetchCategories = async () => {
       const key = 'cache_footer_categories_v1';

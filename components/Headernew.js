@@ -191,7 +191,43 @@ const HEADER_ACTION_LABEL_CLASS =
 
 
 
-const Header = () => {
+const extractCategoryArray = (payload) => {
+  try {
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.data)) return payload.data;
+    if (payload && Array.isArray(payload.categories)) return payload.categories;
+  } catch { }
+  return [];
+};
+
+const ensureWordsNotEmpty = (names) => {
+  const cleaned = (names || []).filter(Boolean);
+  if (cleaned.length > 0) return cleaned;
+  return ['Mobiles', 'Laptops', 'Television', 'Air Conditioner', 'Refrigerator'];
+};
+
+const buildNestedCategories = (rawData) => {
+  const arr = extractCategoryArray(rawData);
+  const activeCategories = arr.filter(cat => cat.status === "Active");
+
+  const categoryMap = {};
+  activeCategories.forEach((cat) => {
+    categoryMap[cat._id] = { ...cat, subcategories: [] };
+  });
+
+  const nestedCategories = [];
+  activeCategories.forEach((cat) => {
+    if (cat.parentid === "none") {
+      nestedCategories.push(categoryMap[cat._id]);
+    } else if (categoryMap[cat.parentid]) {
+      categoryMap[cat.parentid].subcategories.push(categoryMap[cat._id]);
+    }
+  });
+
+  return nestedCategories;
+};
+
+const Header = ({ initialCategories = [] }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [category, setCategory] = useState('All Category');
@@ -405,8 +441,19 @@ const Header = () => {
       }
     } catch (e) {}
   }, []);
-  const [words, setWords] = useState([]);
-  const [categorieslist, setCategorieslist] = useState([]);
+  const [words, setWords] = useState(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      const arr = extractCategoryArray(initialCategories);
+      return ensureWordsNotEmpty(arr.map((cat) => cat.category_name));
+    }
+    return [];
+  });
+  const [categorieslist, setCategorieslist] = useState(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      return extractCategoryArray(initialCategories);
+    }
+    return [];
+  });
   const [brandsForSearch, setBrandsForSearch] = useState([]);
   const wordIndex = useRef(0);
   const charIndex = useRef(0);
@@ -451,20 +498,6 @@ const Header = () => {
     }
   };
 
-  // ADD: robust extractors + fallback words
-  const extractCategoryArray = (payload) => {
-    try {
-      if (Array.isArray(payload)) return payload;
-      if (payload && Array.isArray(payload.data)) return payload.data;
-      if (payload && Array.isArray(payload.categories)) return payload.categories;
-    } catch { }
-    return [];
-  };
-  const ensureWordsNotEmpty = (names) => {
-    const cleaned = (names || []).filter(Boolean);
-    if (cleaned.length > 0) return cleaned;
-    return ['Mobiles', 'Laptops', 'Television', 'Air Conditioner', 'Refrigerator'];
-  };
 
   useEffect(() => {
     const key = 'categories_raw_cache';
@@ -513,25 +546,7 @@ const Header = () => {
     let mounted = true;
 
     const buildNestedAndCache = (rawData) => {
-      // Keep only active categories
-      const activeCategories = Array.isArray(rawData) ? rawData.filter(cat => cat.status === "Active") : [];
-
-      const categoryMap = {};
-      activeCategories.forEach((cat) => {
-        // ensure subcategories array exists
-        categoryMap[cat._id] = { ...cat, subcategories: [] };
-      });
-
-      const nestedCategories = [];
-      activeCategories.forEach((cat) => {
-        if (cat.parentid === "none") {
-          // use the mapped object to ensure same reference
-          nestedCategories.push(categoryMap[cat._id]);
-        } else if (categoryMap[cat.parentid]) {
-          categoryMap[cat.parentid].subcategories.push(categoryMap[cat._id]);
-        }
-      });
-
+      const nestedCategories = buildNestedCategories(rawData);
       // cache nested structure
       saveCache(nestedKey, nestedCategories);
       return nestedCategories;
@@ -620,7 +635,12 @@ const Header = () => {
   const { headerdetails, updateHeaderdetails } = useHeaderdetails();
 
   const [offers, setOffers] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      return buildNestedCategories(initialCategories);
+    }
+    return [];
+  });
   const [products, setProducts] = useState([]);
   const [sortOption, setSortOption] = useState('');
   const [hoveredCategory, setHoveredCategory] = useState(null);

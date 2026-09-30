@@ -17,25 +17,80 @@ function activeCategoryCards(tree) {
   );
 }
 
-export default function CategoryPage() {
-  const [categoryData, setCategoryData] = useState({
-    main_category: null,
-    category: null,
-    brands: [],
-    filters: []
+export default function CategoryPage({
+  initialCategoryData = null,
+  initialProducts = [],
+  initialPagination = null,
+  initialSearchParams = null,
+} = {}) {
+  const [categoryData, setCategoryData] = useState(() => {
+    if (initialCategoryData) {
+      return {
+        ...initialCategoryData,
+        categoryTree: initialCategoryData.category,
+        allCategoryIds: initialCategoryData.allCategoryIds || [],
+      };
+    }
+    return {
+      main_category: null,
+      category: null,
+      brands: [],
+      filters: [],
+    };
   });
   
   //console.log(categoryData);
   const [showEndMessage, setShowEndMessage] = useState(false);
   // For filter group show more
     const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [selectedFilters, setSelectedFilters] = useState({
-    categories: [],
-    brands: [],
-    price: { min: 0, max: 100000 },
-    filters: []
+  const [products, setProducts] = useState(initialProducts || []);
+  const [priceRange, setPriceRange] = useState(() => {
+    if (initialCategoryData?.products?.length > 0) {
+      const prices = initialCategoryData.products
+        .map(p => Number(p.special_price) > 0 ? Number(p.special_price) : Number(p.price))
+        .filter(p => !isNaN(p) && p > 0);
+      const min = prices.length > 0 ? Math.min(...prices) : 0;
+      const max = prices.length > 0 ? Math.max(...prices) : 100000;
+      return [min === max ? Math.max(0, min - 100) : min, min === max ? max + 100 : max];
+    }
+    return [0, 100000];
   });
+  const [selectedFilters, setSelectedFilters] = useState(() => {
+    let min = 0;
+    let max = 100000;
+    if (initialCategoryData?.products?.length > 0) {
+      const prices = initialCategoryData.products
+        .map(p => Number(p.special_price) > 0 ? Number(p.special_price) : Number(p.price))
+        .filter(p => !isNaN(p) && p > 0);
+      min = prices.length > 0 ? Math.min(...prices) : 0;
+      max = prices.length > 0 ? Math.max(...prices) : 100000;
+      if (min === max) {
+        min = Math.max(0, min - 100);
+        max = max + 100;
+      }
+    }
+    const brands = initialSearchParams?.brands ? String(initialSearchParams.brands).split(",").filter(Boolean) : [];
+    const categories = (initialSearchParams?.categories || initialSearchParams?.categoryIds) ? String(initialSearchParams.categories || initialSearchParams.categoryIds).split(",").filter(Boolean) : [];
+    const filters = initialSearchParams?.filters ? String(initialSearchParams.filters).split(",").filter(Boolean) : [];
+    const urlMin = initialSearchParams?.minPrice !== undefined && !isNaN(initialSearchParams.minPrice) ? Number(initialSearchParams.minPrice) : min;
+    const urlMax = initialSearchParams?.maxPrice !== undefined && !isNaN(initialSearchParams.maxPrice) ? Number(initialSearchParams.maxPrice) : max;
+    return {
+      categories,
+      brands,
+      price: { min: urlMin, max: urlMax },
+      filters
+    };
+  });
+  const isPriceFilterAppliedRef = useRef(Boolean(initialSearchParams?.minPrice !== undefined || initialSearchParams?.maxPrice !== undefined));
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has("minPrice") || sp.has("maxPrice")) {
+        isPriceFilterAppliedRef.current = true;
+      }
+    }
+  }, []);
   
 const CUSTOM_FILTER_ORDER = [
   "Stock Status",
@@ -66,9 +121,25 @@ const CUSTOM_FILTER_ORDER = [
 ];
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSortPanelOpen, setIsSortPanelOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 100000]);
-  const [filterGroups, setFilterGroups] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [filterGroups, setFilterGroups] = useState(() => {
+    const groups = {};
+    (initialCategoryData?.filters || []).forEach(filter => {
+      const groupId = filter.filter_group_name;
+      if (groupId) {
+        if (!groups[groupId]) {
+          groups[groupId] = {
+            _id: groupId,
+            name: filter.filter_group_name,
+            slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
+            filters: []
+          };
+        }
+        groups[groupId].filters.push(filter);
+      }
+    });
+    return groups;
+  });
+  const [loading, setLoading] = useState(!initialProducts?.length);
   const { slug,sub_slug } = useParams();
   const [sortOption, setSortOption] = useState('');
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(true);
@@ -79,7 +150,17 @@ const CUSTOM_FILTER_ORDER = [
   const toggleFilters = () => setIsFiltersExpanded(!isFiltersExpanded);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedChildCategory, setSelectedChildCategory] = useState("");
-  const [childCategoryTree, setChildCategoryTree] = useState([]);
+  const [childCategoryTree, setChildCategoryTree] = useState(() => {
+    if (initialCategoryData?.category?.length > 0) {
+      return initialCategoryData.category.map(c => ({
+        _id: c._id,
+        category_name: c.category_name,
+        category_slug: c.category_slug,
+        allIds: [c._id, ...(c.subCategories || []).map(s => s._id)]
+      }));
+    }
+    return [];
+  });
  
    const selectedChildCategoryRef = useRef("");
 
@@ -122,15 +203,20 @@ const CUSTOM_FILTER_ORDER = [
   const router = useRouter(); // Added router
 
   // Pagination state
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false,
-    totalProducts: 0
+  const [pagination, setPagination] = useState(() => {
+    if (initialPagination) return initialPagination;
+    const count = initialProducts?.length || 0;
+    return {
+      currentPage: 1,
+      totalPages: Math.ceil(count / 24) || 1,
+      hasNext: count > 24,
+      hasPrev: false,
+      totalProducts: count
+    };
   });
   const itemsPerPage = 24;
   const isFirstLoadDone = useRef(false);
+  const hasLoadedInitial = useRef(Boolean(initialCategoryData && initialProducts?.length));
 
 
 
@@ -149,6 +235,11 @@ useEffect(() => {
   // Fetch initial data
   useEffect(() => {
     if (sub_slug) {
+      const hasUrlParams = typeof window !== "undefined" && window.location.search.length > 1;
+      if (hasLoadedInitial.current && !hasUrlParams) {
+        hasLoadedInitial.current = false;
+        return;
+      }
       fetchInitialData();
     }
   }, [sub_slug]);
@@ -198,6 +289,7 @@ const scroll = (direction) => {
     }
     // Read query params from URL if present
     const urlParams = new URLSearchParams(window.location.search);
+    const urlPage = Math.max(1, parseInt(urlParams.get("page"), 10) || 1);
     const urlBrands = (urlParams.get("brands") || "").split(",").filter(Boolean);
     const urlFilters = (urlParams.get("filters") || "").split(",").filter(Boolean);
     const urlCategories = (urlParams.get("categories") || urlParams.get("categoryIds") || "").split(",").filter(Boolean);
@@ -231,6 +323,9 @@ const scroll = (direction) => {
     }
 
     setPriceRange([minPrice, maxPrice]);
+    if (urlMinPrice !== null || urlMaxPrice !== null) {
+      isPriceFilterAppliedRef.current = true;
+    }
     const activeMin = urlMinPrice !== null ? urlMinPrice : minPrice;
     const activeMax = urlMaxPrice !== null ? urlMaxPrice : maxPrice;
 
@@ -271,7 +366,7 @@ Object.keys(groups).forEach(key => {
 
       setFilterGroups(groups);
       if (categoryData.products?.length > 0) {
-      await fetchFilteredProducts(categoryData, 1, true, initialFilters, groups, urlSort);
+      await fetchFilteredProducts(categoryData, urlPage, true, initialFilters, groups, urlSort);
       }else{
         // Redirect to 404 if no products found
         router.push('/noproduct');
@@ -451,7 +546,13 @@ Object.keys(groups).forEach(key => {
       }
     };
 
-   const [brandMap, setBrandMap] = useState([]);
+   const [brandMap, setBrandMap] = useState(() => {
+     const map = {};
+     (initialCategoryData?.brands || []).forEach((b) => {
+       if (b._id) map[b._id] = b.brand_name;
+     });
+     return map;
+   });
   
   const fetchBrand = async () => {
     try {
@@ -504,6 +605,7 @@ Object.keys(groups).forEach(key => {
 
 
     const handlePriceChange = (values) => {
+    isPriceFilterAppliedRef.current = true;
     let min = Math.max(1, values[0]);     // clamp to >= 1
     let max = Math.max(1, values[1]);   // clamp to <= 100
   
@@ -597,7 +699,7 @@ Object.keys(groups).forEach(key => {
     );
   };
 
-  const updateUrlParams = useCallback((filtersObj, sortOpt) => {
+  const updateUrlParams = useCallback((filtersObj, sortOpt, pageNum = 1) => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams();
     if (filtersObj.brands?.length > 0) {
@@ -609,14 +711,19 @@ Object.keys(groups).forEach(key => {
     if (filtersObj.filters?.length > 0) {
       params.set("filters", filtersObj.filters.join(","));
     }
-    if (filtersObj.price?.min !== undefined && filtersObj.price?.min !== priceRange[0]) {
-      params.set("minPrice", filtersObj.price.min);
-    }
-    if (filtersObj.price?.max !== undefined && filtersObj.price?.max !== priceRange[1]) {
-      params.set("maxPrice", filtersObj.price.max);
+    if (isPriceFilterAppliedRef.current) {
+      if (filtersObj.price?.min !== undefined && filtersObj.price?.min !== priceRange[0]) {
+        params.set("minPrice", filtersObj.price.min);
+      }
+      if (filtersObj.price?.max !== undefined && filtersObj.price?.max !== priceRange[1]) {
+        params.set("maxPrice", filtersObj.price.max);
+      }
     }
     if (sortOpt) {
       params.set("sort", sortOpt);
+    }
+    if (pageNum > 1) {
+      params.set("page", pageNum);
     }
     const queryString = params.toString();
     const newUrl = window.location.pathname + (queryString ? `?${queryString}` : "");
@@ -635,6 +742,7 @@ useEffect(() => {
 }, [selectedFilters, selectedChildCategory, sortOption, categoryData.main_category, categoryData.category, fetchFilteredProducts, updateUrlParams]);
 
   const clearAllFilters = () => {
+    isPriceFilterAppliedRef.current = false;
     setSelectedFilters({
       categories: [],
       brands: [],
@@ -664,16 +772,46 @@ useEffect(() => {
     return a.filter_name.localeCompare(b.filter_name);
   };
 
-const handlePageChange = (page) => {
-  if (page >= 1 && page <= pagination.totalPages) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    setTimeout(() => {
-      fetchFilteredProducts(categoryData, page);
-    }, 50);
-  }
-};
+  const getPageUrl = (targetPage) => {
+    const params = new URLSearchParams();
+    if (selectedFilters.brands?.length > 0) {
+      params.set("brands", selectedFilters.brands.join(","));
+    }
+    if (selectedFilters.categories?.length > 0) {
+      params.set("categories", selectedFilters.categories.join(","));
+    }
+    if (selectedFilters.filters?.length > 0) {
+      params.set("filters", selectedFilters.filters.join(","));
+    }
+    if (isPriceFilterAppliedRef.current) {
+      if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== priceRange[0]) {
+        params.set("minPrice", selectedFilters.price.min);
+      }
+      if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== priceRange[1]) {
+        params.set("maxPrice", selectedFilters.price.max);
+      }
+    }
+    if (sortOption) {
+      params.set("sort", sortOption);
+    }
+    if (targetPage > 1) {
+      params.set("page", targetPage);
+    }
+    const queryString = params.toString();
+    const basePath = `/category/${slug}/${sub_slug}`;
+    return basePath + (queryString ? `?${queryString}` : "");
+  };
 
-  
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      updateUrlParams(selectedFilters, sortOption, page);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      setTimeout(() => {
+        fetchFilteredProducts(categoryData, page);
+      }, 50);
+    }
+  };
+
   const renderPagination = () => {
     if (pagination.totalPages <= 1) return null;
     
@@ -689,39 +827,68 @@ const handlePageChange = (page) => {
     }
     
     for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`px-3 py-1 rounded-md ${
-            pagination.currentPage === i
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
-          }`}
-        >
-          {i}
-        </button>
-      );
+      if (pagination.currentPage === i) {
+        pages.push(
+          <span
+            key={i}
+            aria-current="page"
+            className="px-3 py-1 rounded-md bg-blue-600 text-white font-medium select-none cursor-default"
+          >
+            {i}
+          </span>
+        );
+      } else {
+        pages.push(
+          <Link
+            key={i}
+            href={getPageUrl(i)}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(i);
+            }}
+            className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100"
+          >
+            {i}
+          </Link>
+        );
+      }
     }
     
     return (
       <div className="flex justify-center items-center mt-8 space-x-2">
-        <button
-          onClick={() => handlePageChange(pagination.currentPage - 1)}
-          disabled={!hasPrev}
-          className={`p-2 rounded-md ${!hasPrev ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          <ChevronLeft size={16} />
-        </button>
+        {!hasPrev ? (
+          <span
+            aria-disabled="true"
+            className="p-2 rounded-md bg-gray-200 text-gray-400 cursor-not-allowed select-none inline-flex items-center justify-center"
+          >
+            <ChevronLeft size={16} />
+          </span>
+        ) : (
+          <Link
+            href={getPageUrl(pagination.currentPage - 1)}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(pagination.currentPage - 1);
+            }}
+            aria-label="Previous page"
+            className="p-2 rounded-md bg-white text-gray-700 hover:bg-gray-100 inline-flex items-center justify-center"
+          >
+            <ChevronLeft size={16} />
+          </Link>
+        )}
         
         {startPage > 1 && (
           <>
-            <button
-              onClick={() => handlePageChange(1)}
+            <Link
+              href={getPageUrl(1)}
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(1);
+              }}
               className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100"
             >
               1
-            </button>
+            </Link>
             {startPage > 2 && <span className="px-2">...</span>}
           </>
         )}
@@ -731,22 +898,39 @@ const handlePageChange = (page) => {
         {endPage < pagination.totalPages && (
           <>
             {endPage < pagination.totalPages - 1 && <span className="px-2">...</span>}
-            <button
-              onClick={() => handlePageChange(pagination.totalPages)}
+            <Link
+              href={getPageUrl(pagination.totalPages)}
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(pagination.totalPages);
+              }}
               className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100"
             >
               {pagination.totalPages}
-            </button>
+            </Link>
           </>
         )}
         
-        <button
-          onClick={() => handlePageChange(pagination.currentPage + 1)}
-          disabled={!hasNext}
-          className={`p-2 rounded-md ${!hasNext ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          <ChevronRight size={16} />
-        </button>
+        {!hasNext ? (
+          <span
+            aria-disabled="true"
+            className="p-2 rounded-md bg-gray-200 text-gray-400 cursor-not-allowed select-none inline-flex items-center justify-center"
+          >
+            <ChevronRight size={16} />
+          </span>
+        ) : (
+          <Link
+            href={getPageUrl(pagination.currentPage + 1)}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(pagination.currentPage + 1);
+            }}
+            aria-label="Next page"
+            className="p-2 rounded-md bg-white text-gray-700 hover:bg-gray-100 inline-flex items-center justify-center"
+          >
+            <ChevronRight size={16} />
+          </Link>
+        )}
       </div>
     );
   };
@@ -1136,10 +1320,13 @@ const handlePageChange = (page) => {
                               <span className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center">
                                 ₹{selectedFilters.price.min} - ₹{selectedFilters.price.max}
                                 <button 
-                                  onClick={() => setSelectedFilters(prev => ({
-                                    ...prev,
-                                    price: { min: priceRange[0], max: priceRange[1] }
-                                  }))}
+                                  onClick={() => {
+                                    isPriceFilterAppliedRef.current = false;
+                                    setSelectedFilters(prev => ({
+                                      ...prev,
+                                      price: { min: priceRange[0], max: priceRange[1] }
+                                    }));
+                                  }}
                                   className="ml-1 text-gray-500 hover:text-gray-700"
                                 >
                                   ×
@@ -1462,10 +1649,13 @@ const handlePageChange = (page) => {
                                           <span className="bg-gray-100 px-2 py-1 rounded text-sm flex items-center">
                                             ₹{selectedFilters.price.min} - ₹{selectedFilters.price.max}
                                             <button 
-                                              onClick={() => setSelectedFilters(prev => ({
-                                                ...prev,
-                                                price: { min: priceRange[0], max: priceRange[1] }
-                                              }))}
+                                              onClick={() => {
+                                                isPriceFilterAppliedRef.current = false;
+                                                setSelectedFilters(prev => ({
+                                                  ...prev,
+                                                  price: { min: priceRange[0], max: priceRange[1] }
+                                                }));
+                                              }}
                                               className="ml-1 text-gray-500 hover:text-gray-700"
                                             >
                                               ×

@@ -1,11 +1,12 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import { Suspense } from "react";
+import { Suspense, cache } from "react";
 import "./globals.css";
 import ClientLayout from "@/app/ClientLayout";
 import Script from "next/script";
 import HomeOnlyScripts from "@/app/HomeOnlyScripts";
 import VisitorTracker from "@/components/VisitorTracker";
 import Ga4SpaPageView from "@/components/Ga4SpaPageView";
+import { fetchJson } from "@/lib/schema";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -44,7 +45,18 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+const getInitialCategories = cache(async () => {
+  try {
+    const data = await fetchJson("/api/categories/get");
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("Failed to load initial categories for layout:", err);
+    return [];
+  }
+});
+
+export default async function RootLayout({ children }) {
+  const initialCategories = await getInitialCategories();
   return (
     <html lang="en">
        <head>
@@ -125,7 +137,7 @@ export default function RootLayout({ children }) {
 
 
 
-        <ClientLayout>{children}</ClientLayout>
+        <ClientLayout initialCategories={initialCategories}>{children}</ClientLayout>
         <HomeOnlyScripts/>
         <Suspense fallback={null}>
           <Ga4SpaPageView />

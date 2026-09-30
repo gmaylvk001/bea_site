@@ -77,14 +77,24 @@ export async function generateMetadata({ params }) {
   }
 }
 
-export default async function Page({ params }) {
+export default async function Page({ params, searchParams }) {
   const awaitedParams = await params;
+  const awaitedSearchParams = await searchParams;
   const slug = awaitedParams.slug;
+  const pageNum = Math.max(1, Number(awaitedSearchParams?.page) || 1);
   const baseUrl = getBaseUrl();
 
   let data = null;
+  let bannerData = null;
+  let flashData = null;
+  let mainData = null;
   try {
-    data = await getCategoryData(slug);
+    [data, bannerData, flashData, mainData] = await Promise.all([
+      getCategoryData(slug),
+      fetchJson(`/api/main-cat-banner?categorySlug=${slug}`),
+      fetchJson(`/api/fetchflashcat?categorySlug=${slug}`),
+      fetchJson(`/api/main-tird-sec/${slug}`),
+    ]);
   } catch (error) {
     console.error("Category schema fetch error:", error);
   }
@@ -114,6 +124,27 @@ export default async function Page({ params }) {
       ])
     : null;
 
+  const initialCategoryData = data ? JSON.parse(JSON.stringify(data)) : null;
+  const startIndex = (pageNum - 1) * 12;
+  const initialProducts = data?.products
+    ? JSON.parse(JSON.stringify(data.products.slice(startIndex, startIndex + 12)))
+    : [];
+  const totalPages = data?.products ? Math.ceil(data.products.length / 12) || 1 : 1;
+  const initialPagination = data?.products
+    ? {
+        currentPage: pageNum,
+        totalPages,
+        hasNext: pageNum < totalPages,
+        hasPrev: pageNum > 1,
+        totalProducts: data.products.length,
+      }
+    : null;
+  const initialContentFlags = {
+    hasBannerContent: Boolean(bannerData?.banners?.length),
+    hasFlashContent: Boolean(flashData?.banners?.length),
+    hasCategoryMainContent: Boolean(mainData?.data?.length),
+  };
+
   return (
     <>
       {categorySchema && (
@@ -128,7 +159,13 @@ export default async function Page({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       )}
-      <CategoryPrimaryPage />
+      <CategoryPrimaryPage
+        initialCategoryData={initialCategoryData}
+        initialProducts={initialProducts}
+        initialPagination={initialPagination}
+        initialContentFlags={initialContentFlags}
+        slug={slug}
+      />
     </>
   );
 }

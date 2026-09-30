@@ -85,9 +85,11 @@ export async function generateMetadata({ params }) {
   }
 }
 
-export default async function Page({ params }) {
+export default async function Page({ params, searchParams }) {
   const awaitedParams = await params;
+  const awaitedSearchParams = await searchParams;
   const { slug, sub_slug } = awaitedParams;
+  const pageNum = Math.max(1, Number(awaitedSearchParams?.page) || 1);
 
   // Immediately reject any URL containing "undefined" or "null" segments
   if (
@@ -158,6 +160,21 @@ export default async function Page({ params }) {
     ? buildBreadcrumbSchema(baseUrl, breadcrumbItems)
     : null;
 
+  const initialCategoryData = data ? JSON.parse(JSON.stringify(data)) : null;
+  const startIndex = (pageNum - 1) * 24;
+  const initialProducts = data?.products
+    ? JSON.parse(JSON.stringify(data.products.slice(startIndex, startIndex + 24)))
+    : [];
+  const initialPagination = data?.products
+    ? {
+        currentPage: pageNum,
+        totalPages: Math.ceil(data.products.length / 24) || 1,
+        hasNext: data.products.length > startIndex + 24,
+        hasPrev: pageNum > 1,
+        totalProducts: data.products.length,
+      }
+    : null;
+
   return (
     <>
       {categorySchema && (
@@ -172,7 +189,12 @@ export default async function Page({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       )}
-      <CategoryClient />
+      <CategoryClient
+        initialCategoryData={initialCategoryData}
+        initialProducts={initialProducts}
+        initialPagination={initialPagination}
+        initialSearchParams={awaitedSearchParams}
+      />
     </>
   );
 }

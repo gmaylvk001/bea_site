@@ -14,7 +14,7 @@ import { VisitorIntentProvider } from "@/context/VisitorIntentContext";
 import SmartLeadPopupHost from "@/components/smartLead/SmartLeadPopupHost";
 import WhatsAppFloat from "@/app/WhatsappFloat";
 
-export default function ClientLayout({ children }) {
+export default function ClientLayout({ children, initialCategories = [] }) {
   const pathname = usePathname();
 
   return (
@@ -25,9 +25,9 @@ export default function ClientLayout({ children }) {
             <AuthProvider>
               <SmartLeadConfigProvider>
                 <VisitorIntentProvider>
-                  {!pathname?.startsWith("/admin") && <CustomHeader />}
+                  {!pathname?.startsWith("/admin") && <CustomHeader initialCategories={initialCategories} />}
                   <main className="relative">{children}</main>
-                  {!pathname?.startsWith("/admin") && <CustomFooter />}
+                  {!pathname?.startsWith("/admin") && <CustomFooter initialCategories={initialCategories} />}
                   <GlobalModals />
                   <SmartLeadPopupHost />
                   <WhatsAppFloat />

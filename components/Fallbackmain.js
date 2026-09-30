@@ -22,18 +22,51 @@ function activeCategoryCards(tree) {
 }
 
 export default function CategoryPage(params) {
-  const [categoryData, setCategoryData] = useState({
-    category: null,
-    brands: [],
-    filters: [],
-    main_category: null
+  const initialData = params?.initialData || null;
+  const initialProducts = params?.initialProducts || [];
+  const initialPagination = params?.initialPagination || null;
+
+  const [categoryData, setCategoryData] = useState(() => {
+    if (initialData) {
+      return {
+        ...initialData,
+        categoryTree: initialData.category,
+        allCategoryIds: initialData.allCategoryIds || []
+      };
+    }
+    return {
+      category: null,
+      brands: [],
+      filters: [],
+      main_category: null
+    };
   });
-const [categoryTree, setCategoryTree] = useState([]);
-const [selectedCategory, setSelectedCategory] = useState("");
-const [selectedSubCategory, setSelectedSubCategory] = useState("");
+  const [categoryTree, setCategoryTree] = useState(() => {
+    if (initialData?.category?.length > 0) {
+      return initialData.category.map(c => ({
+        _id: c._id,
+        category_name: c.category_name,
+        category_slug: c.category_slug,
+        subCategories: (c.subCategories || []).map(sub => ({
+          _id: sub._id,
+          category_name: sub.category_name,
+          category_slug: sub.category_slug,
+          subCategories: (sub.subCategories || []).map(grand => ({
+            _id: grand._id,
+            category_name: grand.category_name,
+            category_slug: grand.category_slug,
+            subCategories: []
+          }))
+        }))
+      }));
+    }
+    return [];
+  });
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
 
   const [showEndMessage, setShowEndMessage] = useState(false);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(initialProducts || []);
    const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
     categories: [],
@@ -43,9 +76,40 @@ const [selectedSubCategory, setSelectedSubCategory] = useState("");
   });
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSortPanelOpen, setIsSortPanelOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 100000]);
-  const [filterGroups, setFilterGroups] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [priceRange, setPriceRange] = useState(() => {
+    if (initialData?.products?.length > 0) {
+      const prices = initialData.products
+        .map(p => Number(p.special_price) > 0 ? Number(p.special_price) : Number(p.price))
+        .filter(p => !isNaN(p) && p > 0);
+      const min = prices.length > 0 ? Math.min(...prices) : 0;
+      const max = prices.length > 0 ? Math.max(...prices) : 100000;
+      return [min === max ? Math.max(0, min - 100) : min, min === max ? max + 100 : max];
+    }
+    return [0, 100000];
+  });
+  const [filterGroups, setFilterGroups] = useState(() => {
+    const groups = {};
+    (initialData?.filters || []).forEach(filter => {
+      const groupId = filter.filter_group_id || filter.filter_group_name;
+      if (groupId) {
+        if (!groups[groupId]) {
+          groups[groupId] = {
+            _id: groupId,
+            name: filter.filter_group_name || 'Unnamed Group',
+            slug: (filter.filter_group_name || 'unnamed').toLowerCase().replace(/\s+/g, '-'),
+            filters: []
+          };
+        }
+        groups[groupId].filters.push({
+          _id: filter._id,
+          filter_name: filter.filter_name,
+          count: filter.count || 0
+        });
+      }
+    });
+    return groups;
+  });
+  const [loading, setLoading] = useState(!initialProducts?.length);
   const { slug,sub_slug } = useParams();
   //const { slug } = useParams();
   const [sortOption, setSortOption] = useState('');
@@ -89,16 +153,20 @@ const [selectedSubCategory, setSelectedSubCategory] = useState("");
 };
 
   const [nofound, setNofound] = useState(false);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(Boolean(initialData));
   const [currentCategoryBannerIndex, setCurrentCategoryBannerIndex] = useState(0);
   
   // Pagination state
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false,
-    totalProducts: 0
+  const [pagination, setPagination] = useState(() => {
+    if (initialPagination) return initialPagination;
+    const count = initialProducts?.length || 0;
+    return {
+      currentPage: 1,
+      totalPages: Math.ceil(count / 24) || 1,
+      hasNext: count > 24,
+      hasPrev: false,
+      totalProducts: count
+    };
   });
   const itemsPerPage = 24;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -135,9 +203,16 @@ const [selectedSubCategory, setSelectedSubCategory] = useState("");
   }, [filterGroups]);
 
 
+  const hasLoadedInitial = useRef(Boolean(params?.initialData && params?.initialProducts?.length));
+
   // Fetch initial data
   useEffect(() => {
     if (slug) {
+      const hasUrlParams = typeof window !== "undefined" && window.location.search.length > 1;
+      if (hasLoadedInitial.current && !hasUrlParams) {
+        hasLoadedInitial.current = false;
+        return;
+      }
       fetchInitialData();
     }
   }, [slug]);
@@ -272,7 +347,9 @@ setCategoryTree(directChildren);
       setFilterGroups({});
     }
 
-    await fetchFilteredProducts(categoryData, 1, true);
+    const urlParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const urlPage = Math.max(1, parseInt(urlParams.get("page"), 10) || 1);
+    await fetchFilteredProducts(categoryData, urlPage, true);
     
   } catch (error) {
     console.error('💥 Error in fetchInitialData:', error);
@@ -282,7 +359,15 @@ setCategoryTree(directChildren);
     setInitialLoadComplete(true);
   }
 };
-  const [brandMap, setBrandMap] = useState([]);
+  const [brandMap, setBrandMap] = useState(() => {
+    const map = {};
+    if (initialData?.brands?.length) {
+      initialData.brands.forEach((b) => {
+        if (b._id && b.brand_name) map[b._id] = b.brand_name;
+      });
+    }
+    return map;
+  });
  
   const fetchBrand = async () => {
     try {
@@ -654,14 +739,42 @@ useEffect(() => {
       setSelectedSubCategory(""); 
   };
 
-const handlePageChange = (page) => {
-  if (page >= 1 && page <= pagination.totalPages) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    setTimeout(() => {
-      fetchFilteredProducts(categoryData, page);
-    }, 50);
-  }
-};
+  const getPageUrl = (targetPage) => {
+    const params = new URLSearchParams();
+    if (selectedFilters.brands?.length > 0) {
+      params.set("brands", selectedFilters.brands.join(","));
+    }
+    if (selectedFilters.categories?.length > 0) {
+      params.set("categories", selectedFilters.categories.join(","));
+    }
+    if (selectedFilters.filters?.length > 0) {
+      params.set("filters", selectedFilters.filters.join(","));
+    }
+    if (sortOption) {
+      params.set("sort", sortOption);
+    }
+    if (targetPage > 1) {
+      params.set("page", targetPage);
+    }
+    const queryString = params.toString();
+    const basePath = typeof window !== "undefined" && window.location.pathname
+      ? window.location.pathname
+      : (sub_slug ? `/category/${slug}/${sub_slug}` : `/category/${slug}`);
+    return basePath + (queryString ? `?${queryString}` : "");
+  };
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      if (typeof window !== "undefined") {
+        const url = getPageUrl(page);
+        window.history.replaceState(null, "", url);
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      setTimeout(() => {
+        fetchFilteredProducts(categoryData, page);
+      }, 50);
+    }
+  };
 
   const renderPagination = () => {
     if (pagination.totalPages <= 1) return null;
@@ -678,39 +791,68 @@ const handlePageChange = (page) => {
     }
     
     for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`px-3 py-1 rounded-md ${
-            pagination.currentPage === i
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
-          }`}
-        >
-          {i}
-        </button>
-      );
+      if (pagination.currentPage === i) {
+        pages.push(
+          <span
+            key={i}
+            aria-current="page"
+            className="px-3 py-1 rounded-md bg-blue-600 text-white font-medium select-none cursor-default"
+          >
+            {i}
+          </span>
+        );
+      } else {
+        pages.push(
+          <Link
+            key={i}
+            href={getPageUrl(i)}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(i);
+            }}
+            className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100"
+          >
+            {i}
+          </Link>
+        );
+      }
     }
     
     return (
       <div className="flex justify-center items-center mt-8 space-x-2">
-        <button
-          onClick={() => handlePageChange(pagination.currentPage - 1)}
-          disabled={!hasPrev}
-          className={`p-2 rounded-md ${!hasPrev ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          <ChevronLeft size={16} />
-        </button>
+        {!hasPrev ? (
+          <span
+            aria-disabled="true"
+            className="p-2 rounded-md bg-gray-200 text-gray-400 cursor-not-allowed select-none inline-flex items-center justify-center"
+          >
+            <ChevronLeft size={16} />
+          </span>
+        ) : (
+          <Link
+            href={getPageUrl(pagination.currentPage - 1)}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(pagination.currentPage - 1);
+            }}
+            aria-label="Previous page"
+            className="p-2 rounded-md bg-white text-gray-700 hover:bg-gray-100 inline-flex items-center justify-center"
+          >
+            <ChevronLeft size={16} />
+          </Link>
+        )}
         
         {startPage > 1 && (
           <>
-            <button
-              onClick={() => handlePageChange(1)}
+            <Link
+              href={getPageUrl(1)}
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(1);
+              }}
               className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100"
             >
               1
-            </button>
+            </Link>
             {startPage > 2 && <span className="px-2">...</span>}
           </>
         )}
@@ -720,22 +862,39 @@ const handlePageChange = (page) => {
         {endPage < pagination.totalPages && (
           <>
             {endPage < pagination.totalPages - 1 && <span className="px-2">...</span>}
-            <button
-              onClick={() => handlePageChange(pagination.totalPages)}
+            <Link
+              href={getPageUrl(pagination.totalPages)}
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(pagination.totalPages);
+              }}
               className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-100"
             >
               {pagination.totalPages}
-            </button>
+            </Link>
           </>
         )}
         
-        <button
-          onClick={() => handlePageChange(pagination.currentPage + 1)}
-          disabled={!hasNext}
-          className={`p-2 rounded-md ${!hasNext ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-        >
-          <ChevronRight size={16} />
-        </button>
+        {!hasNext ? (
+          <span
+            aria-disabled="true"
+            className="p-2 rounded-md bg-gray-200 text-gray-400 cursor-not-allowed select-none inline-flex items-center justify-center"
+          >
+            <ChevronRight size={16} />
+          </span>
+        ) : (
+          <Link
+            href={getPageUrl(pagination.currentPage + 1)}
+            onClick={(e) => {
+              e.preventDefault();
+              handlePageChange(pagination.currentPage + 1);
+            }}
+            aria-label="Next page"
+            className="p-2 rounded-md bg-white text-gray-700 hover:bg-gray-100 inline-flex items-center justify-center"
+          >
+            <ChevronRight size={16} />
+          </Link>
+        )}
       </div>
     );
   };
@@ -912,7 +1071,7 @@ const handlePageChange = (page) => {
     {activeCategoryCards(categoryData.categoryTree).map((subcategory) => (
            <Link
              key={subcategory._id}
-             href={`/category/${slug}/${sub_slug}/${subcategory.category_slug}`}
+             href={`/category/${slug}/${subcategory.category_slug}`}
              className="flex flex-row items-center flex-shrink-0 w-[320px] h-[264px] border border-gray-200 rounded-xl bg-white hover:-translate-y-1 transition-all duration-300 hover:shadow-lg hover:bg-gray-50"
              style={{ scrollSnapAlign: "start" }}
            >
