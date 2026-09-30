@@ -68,11 +68,26 @@ export default function CategoryPage(params) {
   const [showEndMessage, setShowEndMessage] = useState(false);
   const [products, setProducts] = useState(initialProducts || []);
    const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState({
-    categories: [],
-    brands: [],
-    price: { min: 0, max: 100000 },
-    filters: []
+  const [selectedFilters, setSelectedFilters] = useState(() => {
+    let min = 0;
+    let max = 100000;
+    if (initialData?.products?.length > 0) {
+      const prices = initialData.products
+        .map(p => Number(p.special_price) > 0 ? Number(p.special_price) : Number(p.price))
+        .filter(p => !isNaN(p) && p > 0);
+      min = prices.length > 0 ? Math.min(...prices) : 0;
+      max = prices.length > 0 ? Math.max(...prices) : 100000;
+      if (min === max) {
+        min = Math.max(0, min - 100);
+        max = max + 100;
+      }
+    }
+    return {
+      categories: [],
+      brands: [],
+      price: { min, max },
+      filters: []
+    };
   });
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [isSortPanelOpen, setIsSortPanelOpen] = useState(false);
@@ -649,19 +664,26 @@ const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, init
   };
 
   const STEP = 100;
-  const MIN = priceRange[0];
-  const MAX = priceRange[1];
+  const MIN = priceRange[0] ?? 0;
+  const MAX = Math.max(MIN + STEP, priceRange[1] ?? 100000);
 
-  // slider local state
+  // slider local state clamped to [MIN, MAX]
   const [values, setValues] = useState([
-    selectedFilters.price.min,
-    selectedFilters.price.max,
+    Math.max(MIN, Math.min(MAX, selectedFilters.price?.min ?? MIN)),
+    Math.min(MAX, Math.max(MIN, selectedFilters.price?.max ?? MAX)),
   ]);
 
   // sync with external filters (e.g. reset button)
   useEffect(() => {
-    setValues([selectedFilters.price.min, selectedFilters.price.max]);
-  }, [selectedFilters.price.min, selectedFilters.price.max]);
+    const minVal = Math.max(MIN, Math.min(MAX, selectedFilters.price?.min ?? MIN));
+    const maxVal = Math.min(MAX, Math.max(MIN, selectedFilters.price?.max ?? MAX));
+    setValues([minVal, maxVal]);
+  }, [selectedFilters.price?.min, selectedFilters.price?.max, MIN, MAX]);
+
+  const safeValues = [
+    Math.max(MIN, Math.min(MAX, values[0] ?? MIN)),
+    Math.min(MAX, Math.max(MIN, values[1] ?? MAX)),
+  ];
 
 
   const CategoryTree = ({ 
@@ -1378,7 +1400,7 @@ useEffect(() => {
                     <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
               
                     <ReactRange
-                      values={values}
+                      values={safeValues}
                       step={STEP}
                       min={MIN}
                       max={MAX}
@@ -1748,7 +1770,7 @@ const children = node?.subCategories || [];
                   <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
             
                   <ReactRange
-                    values={values}
+                    values={safeValues}
                     step={STEP}
                     min={MIN}
                     max={MAX}

@@ -490,19 +490,26 @@ const getSortedProducts = () => {
   };
 
   const STEP = 100;
-  const MIN = priceRange[0];
-  const MAX = priceRange[1];
+  const MIN = priceRange[0] ?? 0;
+  const MAX = Math.max(MIN + STEP, priceRange[1] ?? 100000);
 
   // slider local state
   const [values, setValues] = useState([
-    selectedFilters.price.min,
-    selectedFilters.price.max,
+    Math.max(MIN, Math.min(MAX, selectedFilters.price?.min ?? MIN)),
+    Math.min(MAX, Math.max(MIN, selectedFilters.price?.max ?? MAX)),
   ]);
 
   // sync with external filters (e.g. reset button)
   useEffect(() => {
-    setValues([selectedFilters.price.min, selectedFilters.price.max]);
-  }, [selectedFilters.price.min, selectedFilters.price.max]);
+    const minVal = Math.max(MIN, Math.min(MAX, selectedFilters.price?.min ?? MIN));
+    const maxVal = Math.min(MAX, Math.max(MIN, selectedFilters.price?.max ?? MAX));
+    setValues([minVal, maxVal]);
+  }, [selectedFilters.price?.min, selectedFilters.price?.max, MIN, MAX]);
+
+  const safeValues = [
+    Math.max(MIN, Math.min(MAX, values[0] ?? MIN)),
+    Math.min(MAX, Math.max(MIN, values[1] ?? MAX)),
+  ];
 
 
   const CategoryTree = ({ 
@@ -1237,7 +1244,7 @@ const getSortedProducts = () => {
                     <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
               
                     <ReactRange
-                      values={values}
+                      values={safeValues}
                       step={STEP}
                       min={MIN}
                       max={MAX}
@@ -1497,7 +1504,7 @@ const getSortedProducts = () => {
                   <h3 className="text-base font-semibold mb-4 text-gray-700">Price Range</h3>
             
                   <ReactRange
-                    values={values}
+                    values={safeValues}
                     step={STEP}
                     min={MIN}
                     max={MAX}
