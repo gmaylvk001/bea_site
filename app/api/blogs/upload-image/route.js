@@ -26,15 +26,46 @@ export async function POST(req) {
       return NextResponse.json({ success: false, error: "No image file received" }, { status: 400 });
     }
 
+    const buffer = Buffer.from(await file.arrayBuffer());
     const ext = path.extname(file.name) || ".jpg";
     const safeName = file.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9._-]/g, "");
-    const fileName = `blog_content_${Date.now()}_${safeName || `image${ext}`}`;
     const dir = path.join(process.cwd(), "public/uploads/blogs");
-
     await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, fileName), Buffer.from(await file.arrayBuffer()));
 
-    const location = `/uploads/blogs/${fileName}`;
+    let fileName = `blog_content_${Date.now()}_${safeName || `image${ext}`}`;
+    let location = `/uploads/blogs/${fileName}`;
+
+    // Determine if this request is already executing directly on www.bharathelectronics.in
+    const host = req.headers.get("host") || "";
+    const isAlreadyProd = host.includes("bharathelectronics.in") && !host.includes("estore.");
+    const isReplication = formData.get("isReplication") === "true";
+
+    // If running in development/staging/estore, replicate to production server to guarantee HTTP 200 on www
+    if (!isAlreadyProd && !isReplication) {
+      try {
+        const prodFormData = new FormData();
+        prodFormData.append("file", new Blob([buffer]), file.name);
+        prodFormData.append("isReplication", "true");
+
+        const prodRes = await fetch("https://www.bharathelectronics.in/api/blogs/upload-image", {
+          method: "POST",
+          body: prodFormData,
+        });
+
+        if (prodRes.ok) {
+          const prodData = await prodRes.json();
+          if (prodData?.location) {
+            location = prodData.location;
+            fileName = path.basename(prodData.location);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not replicate blog image to production server:", err.message);
+      }
+    }
+
+    // Always ensure local copy exists with the matching filename
+    await writeFile(path.join(dir, fileName), buffer);
 
     // Return both standard JSON and Jodit uploader compatible response
     return NextResponse.json({

@@ -9,10 +9,29 @@ async function saveFile(file, prefix) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
   const ext = path.extname(file.name);
-  const fileName = `${prefix}_${Date.now()}${ext}`;
+  let fileName = `${prefix}_${Date.now()}${ext}`;
   const dir = path.join(process.cwd(), "public/uploads/blogs");
 
   await mkdir(dir, { recursive: true });
+
+  try {
+    const prodFormData = new FormData();
+    prodFormData.append("file", new Blob([buffer]), file.name);
+    prodFormData.append("isReplication", "true");
+    const prodRes = await fetch("https://www.bharathelectronics.in/api/blogs/upload-image", {
+      method: "POST",
+      body: prodFormData,
+    });
+    if (prodRes.ok) {
+      const prodData = await prodRes.json();
+      if (prodData?.location) {
+        fileName = path.basename(prodData.location);
+      }
+    }
+  } catch (e) {
+    console.warn("Could not replicate featured image to production:", e.message);
+  }
+
   await writeFile(path.join(dir, fileName), buffer);
   return `/uploads/blogs/${fileName}`;
 }

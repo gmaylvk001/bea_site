@@ -10,11 +10,30 @@ async function saveFile(file, folder) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const ext = path.extname(file.name) || ".jpg";
-    const fileName = `${folder}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}${ext}`;
+    let fileName = `${folder}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}${ext}`;
     const dir = path.join(process.cwd(), `public/uploads/blogs`);
 
     // Make sure the directory exists
     await mkdir(dir, { recursive: true });
+
+    // Replicate to production if possible
+    try {
+      const prodFormData = new FormData();
+      prodFormData.append("file", new Blob([buffer]), file.name);
+      prodFormData.append("isReplication", "true");
+      const prodRes = await fetch("https://www.bharathelectronics.in/api/blogs/upload-image", {
+        method: "POST",
+        body: prodFormData,
+      });
+      if (prodRes.ok) {
+        const prodData = await prodRes.json();
+        if (prodData?.location) {
+          fileName = path.basename(prodData.location);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not replicate featured image to production:", e.message);
+    }
 
     const filePath = path.join(dir, fileName);
     await writeFile(filePath, buffer);
