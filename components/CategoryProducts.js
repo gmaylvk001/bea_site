@@ -16,6 +16,71 @@ import "../styles/slick-custom.css";
 import 'swiper/css';
 import 'swiper/css/navigation';
 import "swiper/css/pagination";
+
+// =========================================================================
+// Diwali Festive Frame Decorations (Corners & Center Diyas - Uniform Size)
+// =========================================================================
+const DIWALI_ITEM_SIZE = "w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-24 lg:h-24";
+
+const DiwaliCornerCracker = ({ corner }) => {
+  const configs = {
+    tl: {
+      position: "-top-3 -left-3 sm:-top-4 sm:-left-4 md:-top-5 md:-left-5 lg:-top-6 lg:-left-6",
+      src: "/uploads/leftcorner.png",
+      alt: "Diwali Top-Left Cracker",
+    },
+    tr: {
+      position: "-top-3 -right-3 sm:-top-4 sm:-right-4 md:-top-5 md:-right-5 lg:-top-6 lg:-right-6",
+      src: "/uploads/rightcorner.png",
+      alt: "Diwali Top-Right Cracker",
+    },
+    bl: {
+      position: "-bottom-3 -left-3 sm:-bottom-4 sm:-left-4 md:-bottom-5 md:-left-5 lg:-bottom-6 lg:-left-6",
+      src: "/uploads/bottomleft.png",
+      alt: "Diwali Bottom-Left Cracker",
+    },
+    br: {
+      position: "-bottom-3 -right-3 sm:-bottom-4 sm:-right-4 md:-bottom-5 md:-right-5 lg:-bottom-6 lg:-right-6",
+      src: "/uploads/bottomrightCorner.png",
+      alt: "Diwali Bottom-Right Cracker",
+    },
+  };
+
+  const cfg = configs[corner];
+  if (!cfg) return null;
+
+  return (
+    <div
+      className={`absolute ${cfg.position} ${DIWALI_ITEM_SIZE} z-30 pointer-events-none select-none flex items-center justify-center`}
+      aria-hidden="true"
+    >
+      <img
+        src={cfg.src}
+        alt={cfg.alt}
+        className="w-full h-full object-contain drop-shadow-md"
+        loading="eager"
+      />
+    </div>
+  );
+};
+
+const DiwaliCenterDecoration = ({ position }) => {
+  const isTop = position === "top";
+  return (
+    <div
+      className={`absolute ${isTop ? "-top-6 sm:-top-8 md:-top-9.5 lg:-top-10" : "-bottom-2.5 sm:-bottom-3.5 md:-bottom-5"} left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none flex items-center justify-center`}
+      aria-hidden="true"
+    >
+      <img
+        src={isTop ? "/uploads/centertop.png" : "/uploads/centerbottom.png"}
+        alt={isTop ? "Diwali Center Top Diya" : "Diwali Center Bottom Diya"}
+        className={`${isTop ? "h-12 sm:h-14 md:h-16 max-w-[170px] sm:max-w-[200px] md:max-w-[220px]" : "h-14 sm:h-16 md:h-20 max-w-[210px] sm:max-w-[240px] md:max-w-[260px]"} w-auto object-contain drop-shadow-md`}
+        loading="eager"
+      />
+    </div>
+  );
+};
+
 const CategoryProducts = () => {
   const [categoryProducts, setCategoryProducts] = useState([]);
   const [brandMap, setBrandMap] = useState({});
@@ -379,7 +444,14 @@ const getBannerRedirectUrls = (urls) => {
 
 
                     {/* Category Products Section */}
-                    <div className={`bg-white flex flex-col md:flex-row mb-8 max-w-7xl mx-auto ${alignment === "right" ? "md:flex-row-reverse" : ""}`} >
+                    <div className={`relative bg-white flex flex-col md:flex-row mb-8 max-w-7xl mx-auto ${alignment === "right" ? "md:flex-row-reverse" : ""}`} >
+                      {/* Diwali Cracker Corner & Center Decorations from /uploads/diwaliFireFram.png */}
+                      <DiwaliCornerCracker corner="tl" />
+                      <DiwaliCornerCracker corner="tr" />
+                      <DiwaliCornerCracker corner="bl" />
+                      <DiwaliCornerCracker corner="br" />
+                      <DiwaliCenterDecoration position="top" />
+                      <DiwaliCenterDecoration position="bottom" />
                       {/* Category Banner */}
                       <div className="flex-shrink-0 relative w-full md:w-[350px] h-48 sm:h-64 md:h-auto">
                         <div style={styleObj} className={`absolute inset-0 bg-cover bg-center    ${alignment === "right" ? "md:rounded-tr-lg md:rounded-br-lg" : "md:rounded-tl-lg md:rounded-bl-lg" }`}/>
