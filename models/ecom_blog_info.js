@@ -11,6 +11,7 @@ const BlogSchema = new mongoose.Schema({
   meta_title:       { type: String, default: "" },
   meta_description: { type: String, default: "" },
   meta_keyword:     { type: String, default: "" },
+  schema:           { type: String, default: "" },
   createdAt:   { type: Date, default: Date.now },
   updatedAt:   { type: Date, default: Date.now },
 });

@@ -19,10 +19,10 @@ export default function BlogLeadPopup({ blogTitle = "" }) {
     const hasSubmitted = sessionStorage.getItem("blog_lead_submitted");
     if (hasSubmitted) return;
 
-    // Small delay for smooth entry after initial render
+    // Show popup after 30 seconds of opening the blog
     const timer = setTimeout(() => {
       setIsOpen(true);
-    }, 700);
+    }, 30000);
 
     return () => clearTimeout(timer);
   }, []);

@@ -69,7 +69,7 @@ export async function POST(req) {
     const contentType = req.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
-      const { name, slug: customSlug, description, category, status, video, meta_title, meta_description, meta_keyword } = await req.json();
+      const { name, slug: customSlug, description, category, status, video, meta_title, meta_description, meta_keyword, schema } = await req.json();
 
       if (!name || !name.trim()) {
         return NextResponse.json(
@@ -97,6 +97,7 @@ export async function POST(req) {
         meta_title: meta_title || "",
         meta_description: meta_description || "",
         meta_keyword: meta_keyword || "",
+        schema: schema || "",
       });
 
       await newBlog.save();
@@ -119,6 +120,7 @@ export async function POST(req) {
       const meta_title       = formData.get("meta_title") || "";
       const meta_description = formData.get("meta_description") || "";
       const meta_keyword     = formData.get("meta_keyword") || "";
+      const schema           = formData.get("schema") || "";
 
       if (!name || !String(name).trim()) {
         return NextResponse.json(
@@ -164,6 +166,7 @@ export async function POST(req) {
         meta_title: String(meta_title),
         meta_description: String(meta_description),
         meta_keyword: String(meta_keyword),
+        schema: String(schema),
       });
 
       await newBlog.save();

@@ -93,6 +93,7 @@ export async function PUT(req) {
     const meta_title       = formData.get("meta_title") || "";
     const meta_description = formData.get("meta_description") || "";
     const meta_keyword     = formData.get("meta_keyword") || "";
+    const schema           = formData.get("schema") || "";
 
     // Validate
     if (!id) {
@@ -159,6 +160,7 @@ export async function PUT(req) {
         meta_title,
         meta_description,
         meta_keyword,
+        schema: String(schema || ""),
         updatedAt: new Date(),
       },
       { new: true }

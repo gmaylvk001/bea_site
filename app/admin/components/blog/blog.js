@@ -32,6 +32,7 @@ export default function BlogComponent() {
     meta_title: "",
     meta_description: "",
     meta_keyword: "",
+    schema: "",
   });
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState(new Set());
@@ -70,6 +71,7 @@ export default function BlogComponent() {
     meta_title: "",
     meta_description: "",
     meta_keyword: "",
+    schema: "",
   });
   const [editSelectedCategories, setEditSelectedCategories] = useState(new Set());
   const [isEditSlugManuallyEdited, setIsEditSlugManuallyEdited] = useState(false);
@@ -318,6 +320,7 @@ export default function BlogComponent() {
       meta_title: blog.meta_title || "",
       meta_description: blog.meta_description || "",
       meta_keyword: blog.meta_keyword || "",
+      schema: blog.schema || "",
     });
     setIsEditSlugManuallyEdited(Boolean(blog.blog_slug));
     
@@ -433,6 +436,7 @@ export default function BlogComponent() {
     formData.append("meta_title", editBlogData.meta_title || "");
     formData.append("meta_description", editBlogData.meta_description || "");
     formData.append("meta_keyword", editBlogData.meta_keyword || "");
+    formData.append("schema", editBlogData.schema || "");
     
     if (editBlogData.image) {
       formData.append("image", editBlogData.image);
@@ -497,6 +501,7 @@ export default function BlogComponent() {
     formData.append("meta_title", blogData.meta_title || "");
     formData.append("meta_description", blogData.meta_description || "");
     formData.append("meta_keyword", blogData.meta_keyword || "");
+    formData.append("schema", blogData.schema || "");
     
     if (blogData.image) {
       formData.append("image", blogData.image);
@@ -531,6 +536,7 @@ export default function BlogComponent() {
           meta_title: "",
           meta_description: "",
           meta_keyword: "",
+          schema: "",
         });
         setIsSlugManuallyEdited(false);
         setSelectedCategories(new Set());
@@ -756,6 +762,7 @@ export default function BlogComponent() {
                     meta_title: "",
                     meta_description: "",
                     meta_keyword: "",
+                    schema: "",
                   });
                   setIsSlugManuallyEdited(false);
                   setIsModalOpen(true);
@@ -979,6 +986,18 @@ export default function BlogComponent() {
                     placeholder="Meta keywords, comma separated"
                   />
                 </div>
+                <div>
+                  <label htmlFor="schema" className="block mb-1 text-sm font-semibold text-gray-700">Blog Schema</label>
+                  <textarea
+                    name="schema"
+                    value={blogData.schema}
+                    onChange={handleInputChange}
+                    id="schema"
+                    rows={4}
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400 font-mono text-xs"
+                    placeholder="Enter custom JSON-LD schema or leave empty for default schema"
+                  />
+                </div>
 
                 <div>
                   <label className="block mb-1 text-sm font-semibold text-gray-700">Blog Description</label>
@@ -1191,6 +1210,18 @@ export default function BlogComponent() {
                     id="edit_meta_keyword"
                     className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400"
                     placeholder="Meta keywords, comma separated"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit_schema" className="block mb-1 text-sm font-semibold text-gray-700">Blog Schema</label>
+                  <textarea
+                    name="schema"
+                    value={editBlogData.schema}
+                    onChange={handleEditInputChange}
+                    id="edit_schema"
+                    rows={4}
+                    className="w-full rounded-md border p-2 focus:ring-2 focus:ring-red-400 font-mono text-xs"
+                    placeholder="Enter custom JSON-LD schema or leave empty for default schema"
                   />
                 </div>
 

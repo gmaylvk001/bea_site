@@ -125,7 +125,28 @@ export default async function BlogPost({ params }) {
 
   const otherBlogs = await getOtherBlogs(blog._id);
   const hasVideo = blog.video && blog.video.trim() !== "";
-  const blogSchema = buildBlogPostingSchema(baseUrl, blog);
+
+  const customSchemaText = blog.schema && typeof blog.schema === "string" ? blog.schema.trim() : "";
+  let renderedBlogSchema = "";
+
+  if (customSchemaText) {
+    const cleaned = customSchemaText
+      .replace(/<script\b[^>]*>/gi, "")
+      .replace(/<\/script>/gi, "")
+      .trim();
+
+    try {
+      renderedBlogSchema = JSON.stringify(JSON.parse(cleaned));
+    } catch {
+      renderedBlogSchema = cleaned;
+    }
+  } else {
+    const defaultSchema = buildBlogPostingSchema(baseUrl, blog);
+    if (defaultSchema) {
+      renderedBlogSchema = JSON.stringify(defaultSchema);
+    }
+  }
+
   const breadcrumbSchema = buildBreadcrumbSchema(baseUrl, [
     { name: "Blog", path: "/blog" },
     { name: blog.blog_name, path: `/blog/${blog.blog_slug}` },
@@ -151,10 +172,10 @@ export default async function BlogPost({ params }) {
         .blog-article-body th, .blog-article-body td { border: 1px solid #e5e7eb; padding: 0.6rem 0.75rem; text-align: left; }
         .blog-article-body iframe, .blog-article-body video { max-width: 100%; margin: 1.5rem 0; }
       `}</style>
-      {blogSchema && (
+      {renderedBlogSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
+          dangerouslySetInnerHTML={{ __html: renderedBlogSchema }}
         />
       )}
       {breadcrumbSchema && (
