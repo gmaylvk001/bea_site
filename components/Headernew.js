@@ -1,7 +1,7 @@
 // 'use client';
 import Link from "next/link";
 import Image from 'next/image';
-import { FiSearch, FiMapPin, FiHeart, FiShoppingCart, FiUser, FiMenu, FiX, FiPhoneCall, FiMessageSquare, FiChevronRight, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiSearch, FiMapPin, FiHeart, FiShoppingCart, FiUser, FiMenu, FiX, FiPhoneCall, FiMessageSquare, FiChevronRight, FiEye, FiEyeOff, FiBookOpen } from "react-icons/fi";
 import { FaBars, FaShoppingBag, FaUserShield, FaSearch } from "react-icons/fa";
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
@@ -2034,6 +2034,11 @@ const Header = ({ initialCategories = [] }) => {
                 <span className={`text-[10px] ${HEADER_ACTION_LABEL_CLASS}`}>Store</span>
               </Link>
 
+              <Link href="/blog" className={`${HEADER_ACTION_LINK_CLASS} hidden sm:flex min-w-[52px]`}>
+                <FiBookOpen size={18} className={HEADER_ACTION_ICON_CLASS} />
+                <span className={`text-[10px] ${HEADER_ACTION_LABEL_CLASS}`}>Blog</span>
+              </Link>
+
               <Link href="/wishlist" className={`${HEADER_ACTION_LINK_CLASS} flex min-w-[52px] relative`}>
                 <div className="relative">
                   <FiHeart size={18} className={HEADER_ACTION_ICON_CLASS} />
@@ -2109,7 +2114,7 @@ const Header = ({ initialCategories = [] }) => {
                 )}
               </div>
               {/* Quick links moved from top bar (mobile) */}
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="mt-3 grid grid-cols-4 gap-2">
                 <Link
                   href="/feedback"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -2133,6 +2138,14 @@ const Header = ({ initialCategories = [] }) => {
                 >
                   <FiMapPin size={18} />
                   <span className="text-[11px] font-medium">Store</span>
+                </Link>
+                <Link
+                  href="/blog"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex flex-col items-center justify-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-3 text-customBlue"
+                >
+                  <FiBookOpen size={18} />
+                  <span className="text-[11px] font-medium">Blog</span>
                 </Link>
               </div>
               {/* Open Box Sale - Mobile */}

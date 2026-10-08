@@ -184,7 +184,7 @@ export default async function BlogPost({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       )}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1360px] mx-auto px-3 sm:px-4 lg:px-6">
 
         {/* Breadcrumb */}
         <nav className="mb-6 text-sm text-gray-500 flex items-center gap-2">
@@ -195,7 +195,7 @@ export default async function BlogPost({ params }) {
           <span className="text-gray-800 font-medium line-clamp-1">{blog.blog_name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-10 xl:gap-14 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] gap-6 lg:gap-8 items-start">
         <div>
 
         {/* Category badge */}
@@ -305,14 +305,14 @@ export default async function BlogPost({ params }) {
         {otherBlogs.length > 0 && (
           <aside className="lg:sticky lg:top-28">
             <h2 className="text-base font-bold text-gray-900 mb-5">Other Blogs</h2>
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               {otherBlogs.map((item) => (
                 <Link
                   key={item._id.toString()}
                   href={`/blog/${item.blog_slug}`}
-                  className="flex gap-3 items-start group"
+                  className="flex gap-2.5 items-start group"
                 >
-                  <div className="w-[88px] h-[58px] flex-shrink-0 rounded overflow-hidden bg-gray-100">
+                  <div className="w-[72px] h-[48px] flex-shrink-0 rounded overflow-hidden bg-gray-100">
                     {item.image ? (
                       <img
                         src={item.image}
@@ -320,10 +320,10 @@ export default async function BlogPost({ params }) {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full bg-blue-50 flex items-center justify-center text-lg">📰</div>
+                      <div className="w-full h-full bg-blue-50 flex items-center justify-center text-base">📰</div>
                     )}
                   </div>
-                  <h3 className="text-[13px] font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors line-clamp-3">
+                  <h3 className="text-xs font-semibold text-gray-900 leading-snug group-hover:text-blue-700 transition-colors line-clamp-3">
                     {item.blog_name}
                   </h3>
                 </Link>
