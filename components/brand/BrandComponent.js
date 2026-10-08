@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -54,6 +54,7 @@ export default function BrandPage() {
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [filterGroups, setFilterGroups] = useState({});
   const [loading, setLoading] = useState(true);
+  const [isFiltering, setIsFiltering] = useState(false);
   const { slug } = useParams();
   const router = useRouter();
   const [sortOption, setSortOption] = useState('');
@@ -331,6 +332,7 @@ export default function BrandPage() {
       toast.error('Error fetching products'+error);
     } finally {
       setLoading(false);
+      if (!initialLoad) setIsFiltering(false);
     }
   }, [selectedFilters, sortOption]);
   
