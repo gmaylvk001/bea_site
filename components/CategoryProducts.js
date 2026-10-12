@@ -514,15 +514,20 @@ const getBannerRedirectUrls = (urls) => {
                           )}
 
                           {/* Category Links Section — fully dynamic from /api/categories/hierarchy */}
-                          <div className={`relative z-10 flex flex-wrap items-center gap-2 mb-3 text-sm font-medium ${ alignment === "right" ? "justify-start" : "justify-end" }`} >
-                            <Link href={showallLink} className="px-3 py-1 text-blue-600 hover:underline">
+                          <div
+                            className={`relative z-10 flex items-center gap-2 mb-3 text-sm font-medium overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap justify-start ${
+                              alignment === "right" ? "md:justify-start" : "md:justify-end"
+                            }`}
+                            style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}
+                          >
+                            <Link href={showallLink} className="px-3 py-1 text-blue-600 hover:underline whitespace-nowrap flex-shrink-0">
                               Show All
                             </Link>
                             {dynamicChildren.map((child) => (
                               <Link
                                 key={child._id}
                                 href={`${showallLink}/${child.category_slug}`}
-                                className="px-3 py-1 text-gray-500 hover:text-blue-600 transition hover:underline"
+                                className="px-3 py-1 text-gray-500 hover:text-blue-600 transition hover:underline whitespace-nowrap flex-shrink-0"
                               >
                                 {child.category_name}
                               </Link>
