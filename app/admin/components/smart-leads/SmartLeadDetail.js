@@ -90,9 +90,11 @@ export default function SmartLeadDetail({ leadId }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const [leadRes, usersRes] = await Promise.all([
-        fetch(`/api/admin/smart-leads/${leadId}`),
-        fetch("/api/users/get"),
+        fetch(`/api/admin/smart-leads/${leadId}`, { headers }),
+        fetch("/api/users/get", { headers }),
       ]);
       const leadData = await leadRes.json();
       const users = await usersRes.json();
