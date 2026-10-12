@@ -372,24 +372,35 @@ function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center px-4" style={{ background: "rgba(0,0,0,0.55)" }}>
-      <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-sm relative px-5 py-3 md:py-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.55)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative px-5 py-4 max-h-[90vh] overflow-y-auto">
 
         {/* Close */}
-        <button type="button" onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10" aria-label="Close">
-          <FaTimes size={15} aria-hidden="true" />
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 z-10 p-1"
+          aria-label="Close"
+        >
+          <FaTimes size={16} aria-hidden="true" />
         </button>
 
        {/* Box Image - small */}
-        <div className="hidden md:flex justify-center mb-1 md:mb-2">
-          <img src="/uploads/openBoxPopUp.png" alt="Open Box Products" className="w-9 h-9 md:w-12 md:h-12 object-contain" />
+        <div className="flex justify-center mb-1 md:mb-2">
+          <img src="/uploads/openBoxPopUp.png" alt="Open Box Products" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
         </div>
 
         {/* Title */}
         <h3 className="text-center text-[15px] md:text-[16px] font-bold text-gray-900 mb-2">Open Box Product</h3>
 
         {/* Stock Badge */}
-        <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1 md:py-1.5 mb-2 md:mb-3">
+        <div className="flex items-center justify-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1 md:py-1.5 mb-2 md:mb-3">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
             <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -408,29 +419,28 @@ function OpenBoxPopup({ onClose, productName, productSlug, stockQuantity }) {
         </p>
 
         {/* 3 Feature Icons */}
-{/* 3 Feature Icons */}
-<div className="hidden md:grid grid-cols-3 gap-2 mb-2 md:mb-3">
-  <div className="flex flex-col items-center gap-1">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-    </svg>
-    <span className="text-[10px] text-gray-600 font-medium text-center leading-tight">Store Pickup<br/>Recommended</span>
-  </div>
-  <div className="flex flex-col items-center gap-1">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-      <line x1="12" y1="22.08" x2="12" y2="12"/>
-    </svg>
-    <span className="text-[10px] text-gray-600 font-medium text-center leading-tight">Limited Stock<br/>Available</span>
-  </div>
-  <div className="flex flex-col items-center gap-1">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-    <span className="text-[10px] text-gray-600 font-medium text-center leading-tight">Quality Checked<br/>by BEA Team</span>
-  </div>
-</div>
+        <div className="grid grid-cols-3 gap-2 mb-2 md:mb-3">
+          <div className="flex flex-col items-center gap-1">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            </svg>
+            <span className="text-[10px] text-gray-600 font-medium text-center leading-tight">Store Pickup<br/>Recommended</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+            <span className="text-[10px] text-gray-600 font-medium text-center leading-tight">Limited Stock<br/>Available</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span className="text-[10px] text-gray-600 font-medium text-center leading-tight">Quality Checked<br/>by BEA Team</span>
+          </div>
+        </div>
 
         {/* Info Note */}
         <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5 mb-3">

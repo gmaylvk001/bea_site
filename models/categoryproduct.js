@@ -24,6 +24,9 @@ bannerRedirectUrl: [{ type: String }],
     categoryImage: { type: String },
     categoryRedirectUrl: { type: String },
 
+    productBgDesktop: { type: String },
+    productBgMobile: { type: String },
+
     /* categoryImage: [{ type: String }],
 categoryRedirectUrl: [{ type: String }], */
 

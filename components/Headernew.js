@@ -227,11 +227,33 @@ const buildNestedCategories = (rawData) => {
   return nestedCategories;
 };
 
+const getCategoryIconUrl = (cat) => {
+  const raw = cat?.icon_url || cat?.image || cat?.navImage;
+  if (!raw || typeof raw !== "string") return null;
+  const clean = raw.trim();
+  if (!clean) return null;
+  if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
+  if (clean.startsWith("/uploads/")) return clean;
+  if (clean.startsWith("uploads/")) return `/${clean}`;
+  return `/uploads/categories/${clean}`;
+};
+
+const DEFAULT_MOBILE_SUBCATEGORIES = [
+  { _id: 'mobiles', category_name: 'Mobiles', category_slug: 'mobiles', parentSlug: 'electronics' },
+  { _id: 'tv', category_name: 'Television', category_slug: 'television', parentSlug: 'electronics' },
+  { _id: 'fridge', category_name: 'Refrigerator', category_slug: 'refrigerator', parentSlug: 'home-appliances' },
+  { _id: 'washer', category_name: 'Washing Machine', category_slug: 'washing-machine', parentSlug: 'home-appliances' },
+  { _id: 'ac', category_name: 'Air Conditioner', category_slug: 'air-conditioner', parentSlug: 'home-appliances' },
+  { _id: 'laptops', category_name: 'Laptops', category_slug: 'laptops', parentSlug: 'electronics' },
+  { _id: 'appliances', category_name: 'Appliances', category_slug: 'small-appliances', parentSlug: 'appliances' },
+];
+
 const Header = ({ initialCategories = [] }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [category, setCategory] = useState('All Category');
   const [activeSubCategory, setActiveSubCategory] = useState(null);
+  const [selectedSubCat, setSelectedSubCat] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { wishlistCount } = useWishlist();
   const { cartCount, updateCartCount } = useCart();
@@ -1538,6 +1560,161 @@ const Header = ({ initialCategories = [] }) => {
     return Array.from(map.values());
   }, [categories, hoveredCategory]);
 
+  // SUB-CATEGORIES FOR MOBILE & TABLET STRIP (Level 1 sub-categories only: not parent, not child)
+  const mobileSubCategories = useMemo(() => {
+    // 1. Try from nested `categories` first
+    if (Array.isArray(categories) && categories.length > 0) {
+      const subs = [];
+      categories.forEach((parent) => {
+        const parentSlug = parent.category_slug || '';
+        if (Array.isArray(parent.subcategories) && parent.subcategories.length > 0) {
+          parent.subcategories.forEach((sub) => {
+            if (sub && (sub.status === "Active" || !sub.status)) {
+              subs.push({
+                ...sub,
+                parentSlug: parentSlug || sub.parentSlug || '',
+              });
+            }
+          });
+        }
+      });
+      if (subs.length > 0) {
+        return subs.sort((a, b) => Number(a.position || 0) - Number(b.position || 0));
+      }
+    }
+
+    // 2. Fallback to flat list (categorieslist or initialCategories)
+    const rawList = extractCategoryArray(categorieslist.length > 0 ? categorieslist : initialCategories);
+    if (rawList.length > 0) {
+      const activeList = rawList.filter((c) => c && (c.status === "Active" || !c.status));
+      // Top-level parents (parentid is "none" or empty)
+      const parentMap = new Map();
+      activeList.forEach((c) => {
+        if (!c.parentid || c.parentid === "none" || c.parentid === "") {
+          parentMap.set(String(c._id), c);
+        }
+      });
+
+      // Direct children of top-level parents only (not parents themselves, not grandchildren/child categories)
+      const subs = activeList
+        .filter((c) => {
+          const pid = c.parentid ? String(c.parentid) : "";
+          return pid && pid !== "none" && parentMap.has(pid);
+        })
+        .map((sub) => {
+          const parent = parentMap.get(String(sub.parentid));
+          return {
+            ...sub,
+            parentSlug: parent?.category_slug || '',
+          };
+        });
+
+      if (subs.length > 0) {
+        return subs.sort((a, b) => Number(a.position || 0) - Number(b.position || 0));
+      }
+    }
+
+    return DEFAULT_MOBILE_SUBCATEGORIES;
+  }, [categories, categorieslist, initialCategories]);
+
+  // Renders the subcategory strip with dynamic uploaded icons and indicator
+  const renderSubCategoryStrip = () => {
+    const list = mobileSubCategories && mobileSubCategories.length > 0
+      ? mobileSubCategories
+      : DEFAULT_MOBILE_SUBCATEGORIES;
+
+    if (!list || list.length === 0) return null;
+
+    return (
+      <div className="w-full max-w-full bg-white border-b border-gray-100 pt-2 pb-1 overflow-x-auto scrollbar-hide">
+        <div className="flex items-start gap-2.5 sm:gap-4 px-2 min-w-max">
+          {list.map((cat, idx) => {
+            const iconUrl = getCategoryIconUrl(cat);
+            const parentSlug = cat.parentSlug || '';
+            const catSlug = cat.category_slug || '';
+            const href = parentSlug ? `/category/${parentSlug}/${catSlug}` : `/category/${catSlug}`;
+
+            const isItemActive =
+              (pathname && catSlug && (pathname.includes(`/${catSlug}`) || pathname === href)) ||
+              (selectedSubCat === (cat._id || catSlug)) ||
+              (!selectedSubCat && idx === 0 && (pathname === "/" || !pathname));
+
+            return (
+              <Link
+                key={cat._id || idx}
+                href={href}
+                onClick={() => setSelectedSubCat(cat._id || catSlug)}
+                className="flex flex-col items-center flex-shrink-0 cursor-pointer group"
+                style={{ width: "64px" }}
+              >
+                {/* Icon Container with light blue highlight when active */}
+                <div
+                  className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
+                    isItemActive
+                      ? "bg-[#E8F0FE]"
+                      : "bg-transparent group-hover:bg-gray-50"
+                  }`}
+                >
+                  {iconUrl ? (
+                    <img
+                      src={iconUrl}
+                      alt={cat.category_name || "Category"}
+                      className="w-7 h-7 object-contain"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fallback = e.currentTarget.parentElement?.querySelector(".fallback-cat-icon");
+                        if (fallback) fallback.style.display = "flex";
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className="fallback-cat-icon w-7 h-7 items-center justify-center text-gray-600"
+                    style={{ display: iconUrl ? "none" : "flex" }}
+                  >
+                    <svg
+                      className="w-6 h-6 text-gray-600"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Label Text */}
+                <span
+                  className={`text-[11px] leading-tight text-center mt-1 truncate max-w-[62px] block ${
+                    isItemActive
+                      ? "font-semibold text-black"
+                      : "font-normal text-gray-700"
+                  }`}
+                  title={cat.category_name}
+                >
+                  {cat.category_name}
+                </span>
+
+                {/* Blue Indicator Underline Bar */}
+                <div
+                  className={`h-0.5 rounded-full mt-1 transition-all ${
+                    isItemActive ? "w-6 bg-[#2453D3]" : "w-6 bg-transparent"
+                  }`}
+                />
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   // Ensures the subcategories for a category are present by rebuilding from cache/API if needed
   const ensureSubcategories = useCallback(async (categoryId) => {
     if (!categoryId) return;
@@ -1807,8 +1984,20 @@ const Header = ({ initialCategories = [] }) => {
                 {/* Category select */}
                 <select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="h-full text-[10px] bg-white border-r border-gray-300 outline-none flex-shrink-0 min-w-[72px] max-w-[78px] w-auto"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedCategory(val);
+                    if (val && val !== "All Category") {
+                      const matchedCat = categories.find(
+                        (c) => c.category_name === val || c.category_slug === val
+                      );
+                      const targetSlug =
+                        matchedCat?.category_slug ||
+                        val.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+                      router.push(`/category/${targetSlug}`);
+                    }
+                  }}
+                  className="h-full text-[11px] bg-white border-r border-gray-300 outline-none flex-shrink-0 min-w-[96px] max-w-[104px] pl-1.5 pr-0.5 text-gray-800"
                   aria-label="Search category"
                   id="mobile-search-category"
                 >
@@ -1816,11 +2005,8 @@ const Header = ({ initialCategories = [] }) => {
                   {categories.map((cat) => (
                     <option key={cat._id} value={cat.category_name} title={cat.category_name}>
                       {cat.category_name}
-
                     </option>
-
                   ))}
-
                 </select>
                 <div className="flex-1 relative h-full flex items-center">
                   <input
@@ -1915,6 +2101,14 @@ const Header = ({ initialCategories = [] }) => {
               </div>
             </div>
           )}
+
+          {/* MOBILE SUB-CATEGORY STRIP (Directly after mobile search input) */}
+          {!isMobileMenuOpen && (
+            <div className="sm:hidden">
+              {renderSubCategoryStrip()}
+            </div>
+          )}
+
           {/* DESKTOP ROW (unchanged original content) */}
           <div className="hidden sm:flex justify-between items-center gap-3">
             {/* Logo (Hidden on mobile) */}
@@ -2079,6 +2273,13 @@ const Header = ({ initialCategories = [] }) => {
               </div>
             </div>
           </div>
+
+          {/* TABLET SUB-CATEGORY STRIP (Directly after tablet search input in header row, hidden on desktop and mobile) */}
+          {!isMobileMenuOpen && (
+            <div className="hidden sm:block lg:hidden">
+              {renderSubCategoryStrip()}
+            </div>
+          )}
           {/* Mobile Menu (Hidden on desktop) */}
           {isMobileMenuOpen && (
             <div className="sm:hidden bg-white fixed inset-0 z-50 p-4 pt-3 rounded-lg shadow-lg overflow-y-auto transition-all duration-300"

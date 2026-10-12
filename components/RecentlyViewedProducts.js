@@ -261,14 +261,16 @@ const RecentlyViewedProducts = () => {
 
                       {/* Product Info */}
                       <div className="flex-1 min-w-0 flex flex-col justify-between p-2.5">
-                         <h4 className="text-[10px] text-gray-500 mb-1 uppercase leading-none">
-                            <Link
-                              href={`/brand/${product.brand.toLowerCase().replace(/\s+/g, "-")}`}
-                              className="hover:text-blue-600"
-                            >
-                              {product.brand}
-                            </Link>
-                          </h4>
+                         {product.brand && (
+                           <h4 className="text-[10px] text-gray-500 mb-1 uppercase leading-none">
+                              <Link
+                                href={`/brand/${String(product.brand).toLowerCase().replace(/\s+/g, "-")}`}
+                                className="hover:text-blue-600"
+                              >
+                                {product.brand}
+                              </Link>
+                            </h4>
+                         )}
 
                         {/* Title truncate */}
                         <Link
@@ -284,19 +286,17 @@ const RecentlyViewedProducts = () => {
                         {/* Price */}
                         <div className="flex items-center gap-1 mb-1">
                           <span className="text-[13px] font-semibold text-red-600">
-                            ₹ {(
+                            ₹ {Number(
                               product.special_price && product.special_price > 0 && product.special_price != '0'  && product.special_price != 0 && product.special_price < product.price
                                 ? product.special_price
-                                : product.price
+                                : (product.price || 0)
                             ).toLocaleString()}
                           </span>
     
-    
-                          {product.special_price > 0 && product.special_price != '0'  && product.special_price != 0 &&   product.special_price &&
-                            product.special_price < product.price &&
-                            (
+                          {product.special_price > 0 && product.special_price != '0'  && product.special_price != 0 && product.special_price &&
+                            product.special_price < product.price && (
                               <span className="text-[10px] text-gray-500 line-through">
-                                ₹ {product.price.toLocaleString()}
+                                ₹ {Number(product.price || 0).toLocaleString()}
                               </span>
                           )}
                         </div>

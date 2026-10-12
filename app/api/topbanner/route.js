@@ -36,6 +36,7 @@ export async function POST(req) {
     const formData = await req.formData();
 
     const file = formData.get("banner_image");
+    const mobileFile = formData.get("mobile_banner_image");
     const redirect_url = formData.get("redirect_url");
     const status = formData.get("status") || "Active";
 
@@ -63,6 +64,15 @@ export async function POST(req) {
       );
     }
 
+    let mobileFilePath = "";
+    if (mobileFile && mobileFile.size > 0 && typeof mobileFile !== "string") {
+      try {
+        mobileFilePath = await saveFile(mobileFile);
+      } catch (err) {
+        console.error("Mobile banner save error:", err);
+      }
+    }
+
     // 👇 find max order (1-based)
     const lastBanner = await TopBanner.findOne().sort({ order: -1 });
     const newOrder =
@@ -70,6 +80,7 @@ export async function POST(req) {
 
     const newBanner = new TopBanner({
       banner_image: filePath,
+      mobile_banner_image: mobileFilePath,
       redirect_url,
       status,
       order: newOrder,
@@ -87,7 +98,7 @@ export async function POST(req) {
   }
 }
 
-// ✅ PUT update banner (unchanged except we don't touch order)
+// ✅ PUT update banner
 export async function PUT(req) {
   try {
     await dbConnect();
@@ -118,7 +129,7 @@ export async function PUT(req) {
     if (status !== null) updateData.status = status;
 
     const file = formData.get("banner_image");
-    if (file && file.size > 0) {
+    if (file && file.size > 0 && typeof file !== "string") {
       try {
         const filePath = await saveFile(file);
         updateData.banner_image = filePath;
@@ -139,6 +150,42 @@ export async function PUT(req) {
           { status: 400 }
         );
       }
+    }
+
+    const mobileFile = formData.get("mobile_banner_image");
+    if (mobileFile && mobileFile.size > 0 && typeof mobileFile !== "string") {
+      try {
+        const mobileFilePath = await saveFile(mobileFile);
+        updateData.mobile_banner_image = mobileFilePath;
+
+        if (existingBanner.mobile_banner_image) {
+          const oldMobilePath = path.join(
+            process.cwd(),
+            "public",
+            existingBanner.mobile_banner_image
+          );
+          if (fs.existsSync(oldMobilePath)) {
+            fs.unlinkSync(oldMobilePath);
+          }
+        }
+      } catch (err) {
+        return NextResponse.json(
+          { success: false, message: err.message },
+          { status: 400 }
+        );
+      }
+    } else if (formData.get("remove_mobile_banner") === "true") {
+      if (existingBanner.mobile_banner_image) {
+        const oldMobilePath = path.join(
+          process.cwd(),
+          "public",
+          existingBanner.mobile_banner_image
+        );
+        if (fs.existsSync(oldMobilePath)) {
+          fs.unlinkSync(oldMobilePath);
+        }
+      }
+      updateData.mobile_banner_image = "";
     }
 
     const updatedBanner = await TopBanner.findByIdAndUpdate(id, updateData, {
@@ -186,7 +233,7 @@ export async function PATCH(req) {
   }
 }
 
-// ✅ DELETE banner (unchanged)
+// ✅ DELETE banner
 export async function DELETE(req) {
   try {
     await dbConnect();
@@ -211,6 +258,13 @@ export async function DELETE(req) {
       const filePath = path.join(process.cwd(), "public", banner.banner_image);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
+      }
+    }
+
+    if (banner.mobile_banner_image) {
+      const mobilePath = path.join(process.cwd(), "public", banner.mobile_banner_image);
+      if (fs.existsSync(mobilePath)) {
+        fs.unlinkSync(mobilePath);
       }
     }
 

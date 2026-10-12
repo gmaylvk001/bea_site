@@ -8,6 +8,7 @@ export default function TopBannerPage() {
   const [banners, setBanners] = useState([]);
   const [newBanner, setNewBanner] = useState({
     banner_image: null,
+    mobile_banner_image: null,
     redirect_url: "",
     status: "Active",
   });
@@ -32,6 +33,7 @@ export default function TopBannerPage() {
             redirect_url: banner.redirect_url || "",
             status: banner.status || "Active",
             banner_image: null,
+            mobile_banner_image: null,
             hasChanges: false,
             error: "", // ✅ per-banner error state
           };
@@ -53,7 +55,7 @@ export default function TopBannerPage() {
     setImageError("");
 
     if (!newBanner.banner_image) {
-      setImageError("Please choose an image.");
+      setImageError("Please choose a desktop banner image.");
       return;
     }
     if (!newBanner.redirect_url) {
@@ -63,6 +65,9 @@ export default function TopBannerPage() {
 
     const formData = new FormData();
     formData.append("banner_image", newBanner.banner_image);
+    if (newBanner.mobile_banner_image) {
+      formData.append("mobile_banner_image", newBanner.mobile_banner_image);
+    }
     formData.append("redirect_url", newBanner.redirect_url);
     formData.append("status", newBanner.status);
 
@@ -74,11 +79,11 @@ export default function TopBannerPage() {
 
       const data = await res.json();
       if (data.success) {
-        setNewBanner({ banner_image: null, redirect_url: "", status: "Active" });
+        setNewBanner({ banner_image: null, mobile_banner_image: null, redirect_url: "", status: "Active" });
         setShowAddForm(false);
         fetchBanners();
       } else {
-        if (data.message.includes("1920x550")) {
+        if (data.message && data.message.includes("1920x550")) {
           setImageError(data.message);
         } else {
           setError(data.message || "Something went wrong.");
@@ -99,6 +104,10 @@ export default function TopBannerPage() {
 
     if (field === "banner_image") {
       formData.append("banner_image", value);
+    } else if (field === "mobile_banner_image") {
+      formData.append("mobile_banner_image", value);
+    } else if (field === "remove_mobile_banner") {
+      formData.append("remove_mobile_banner", "true");
     } else if (field === "redirect_url") {
       formData.append("redirect_url", value);
     } else if (field === "status") {
@@ -118,14 +127,14 @@ export default function TopBannerPage() {
           ...prev,
           [id]: {
             ...prev[id],
-            [field]: field === "banner_image" ? null : value,
+            [field]: field.includes("image") ? null : value,
             hasChanges: false,
             error: "", // ✅ clear error
           },
         }));
         fetchBanners();
       } else {
-        if (data.message.includes("1920x550")) {
+        if (data.message && data.message.includes("1920x550")) {
           // ✅ show per-banner error
           setEditingStates((prev) => ({
             ...prev,
@@ -244,61 +253,89 @@ export default function TopBannerPage() {
               + Add New Banner
             </button>
           ) : (
-            <div className="border p-4 rounded-lg space-y-3">
-              <h3 className="font-medium text-lg">Add New Banner</h3>
+            <div className="border p-4 rounded-lg space-y-4 bg-gray-50/50">
+              <h3 className="font-semibold text-lg text-gray-800">Add New Banner</h3>
 
-              <div>
-                <p className="text-gray-500 text-sm mb-2">
-                Topbanner size: <span className="font-semibold">2000 × 667 px</span>
-                </p>
-                <input
-                  type="file" 
-                  accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
-                  onChange={(e) =>
-                    setNewBanner({ ...newBanner, banner_image: e.target.files[0] })
-                  }
-                  className="border px-2 py-1 rounded w-full"
-                />
-                {imageError && <p className="text-red-500 text-sm mt-1">{imageError}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Desktop Banner Image */}
+                <div className="border p-3 rounded-lg bg-white shadow-sm">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Desktop Banner Image *
+                  </label>
+                  <p className="text-gray-500 text-xs mb-2">
+                    Suitable Size: <span className="font-semibold text-blue-600">2000 × 667 px</span>
+                  </p>
+                  <input
+                    type="file" 
+                    accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
+                    onChange={(e) =>
+                      setNewBanner({ ...newBanner, banner_image: e.target.files[0] })
+                    }
+                    className="border px-2 py-1.5 rounded w-full text-sm"
+                  />
+                  {imageError && <p className="text-red-500 text-sm mt-1">{imageError}</p>}
+                </div>
+
+                {/* Mobile Banner Image */}
+                <div className="border p-3 rounded-lg bg-white shadow-sm">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Mobile Banner Image <span className="text-gray-400 font-normal">(Optional)</span>
+                  </label>
+                  <p className="text-gray-500 text-xs mb-2">
+                    Suitable Size: <span className="font-semibold text-blue-600">800 × 800 px</span> (If empty, desktop banner will be used)
+                  </p>
+                  <input
+                    type="file" 
+                    accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
+                    onChange={(e) =>
+                      setNewBanner({ ...newBanner, mobile_banner_image: e.target.files[0] })
+                    }
+                    className="border px-2 py-1.5 rounded w-full text-sm"
+                  />
+                </div>
               </div>
 
               <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Redirect URL *</label>
                 <input
                   type="text"
-                  placeholder="Redirect URL"
+                  placeholder="e.g. /category/refrigerators or https://..."
                   value={newBanner.redirect_url}
                   onChange={(e) =>
                     setNewBanner({ ...newBanner, redirect_url: e.target.value })
                   }
-                  className="border px-2 py-1 rounded w-full"
+                  className="border px-3 py-1.5 rounded w-full text-sm"
                 />
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
               </div>
 
-              <select
-                value={newBanner.status}
-                onChange={(e) =>
-                  setNewBanner({ ...newBanner, status: e.target.value })
-                }
-                className="border px-2 py-1 rounded w-full"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                <select
+                  value={newBanner.status}
+                  onChange={(e) =>
+                    setNewBanner({ ...newBanner, status: e.target.value })
+                  }
+                  className="border px-3 py-1.5 rounded w-full text-sm"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-2">
                 <button
                   onClick={handleSave}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded text-sm font-medium transition"
                 >
-                  Save
+                  Save Banner
                 </button>
                 <button
                   onClick={() => {
-                    setNewBanner({ banner_image: null, redirect_url: "", status: "Active" });
+                    setNewBanner({ banner_image: null, mobile_banner_image: null, redirect_url: "", status: "Active" });
                     setShowAddForm(false);
                   }}
-                  className="bg-gray-500 text-white px-4 py-2 rounded"
+                  className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm transition"
                 >
                   Cancel
                 </button>
@@ -323,23 +360,58 @@ export default function TopBannerPage() {
                         ref={dragProvided.innerRef}
                         {...dragProvided.draggableProps}
                         {...dragProvided.dragHandleProps}
-                        className="flex flex-col md:flex-row items-center gap-4 border p-4 rounded-lg"
+                        className="flex flex-col lg:flex-row items-center gap-4 border p-4 rounded-lg bg-white hover:shadow-sm transition"
                       >
-                        <img
-                          src={banner.banner_image}
-                          alt="banner"
-                          className="w-48 h-20 object-cover rounded"
-                        />
+                        {/* Previews */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          {/* Desktop Preview */}
+                          <div className="flex flex-col items-center">
+                            <img
+                              src={banner.banner_image}
+                              alt="desktop banner"
+                              className="w-36 h-16 object-cover rounded border"
+                            />
+                            <span className="text-[10px] text-gray-500 mt-1">Desktop (2000×667)</span>
+                          </div>
+
+                          {/* Mobile Preview */}
+                          <div className="flex flex-col items-center">
+                            {banner.mobile_banner_image ? (
+                              <div className="relative group">
+                                <img
+                                  src={banner.mobile_banner_image}
+                                  alt="mobile banner"
+                                  className="w-16 h-16 object-cover rounded border"
+                                />
+                                <button
+                                  type="button"
+                                  title="Remove mobile banner"
+                                  onClick={() => handleUpdate(banner._id, "remove_mobile_banner", true)}
+                                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] hover:bg-red-600 shadow"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="w-16 h-16 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center bg-gray-50 text-[10px] text-gray-400 text-center px-1 leading-tight">
+                                <span>📱 Uses</span>
+                                <span>Desktop</span>
+                              </div>
+                            )}
+                            <span className="text-[10px] text-gray-500 mt-1">Mobile (800×800)</span>
+                          </div>
+                        </div>
 
                         {/* URL */}
-                        <div className="flex flex-col md:flex-row gap-2 items-center flex-grow">
+                        <div className="flex flex-col sm:flex-row gap-2 items-center flex-grow w-full lg:w-auto">
                           <input
                             type="text"
                             value={editingStates[banner._id]?.redirect_url || ""}
                             onChange={(e) =>
                               handleInputChange(banner._id, "redirect_url", e.target.value)
                             }
-                            className="border px-2 py-1 rounded flex-grow"
+                            className="border px-2 py-1 rounded flex-grow text-sm w-full"
+                            placeholder="Redirect URL"
                           />
                           <button
                             onClick={() =>
@@ -350,24 +422,25 @@ export default function TopBannerPage() {
                               )
                             }
                             disabled={!editingStates[banner._id]?.hasChanges}
-                            className={`p-2 rounded ${
+                            className={`p-2 rounded text-sm ${
                               editingStates[banner._id]?.hasChanges
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-300 text-gray-500"
+                                ? "bg-blue-500 text-white hover:bg-blue-600"
+                                : "bg-gray-200 text-gray-400"
                             }`}
+                            title="Save URL"
                           >
                             ✔
                           </button>
                         </div>
 
                         {/* Status */}
-                        <div className="flex flex-col md:flex-row gap-2 items-center">
+                        <div className="flex gap-2 items-center shrink-0">
                           <select
                             value={editingStates[banner._id]?.status || "Active"}
                             onChange={(e) =>
                               handleInputChange(banner._id, "status", e.target.value)
                             }
-                            className="border px-2 py-1 rounded"
+                            className="border px-2 py-1 rounded text-sm"
                           >
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
@@ -381,19 +454,21 @@ export default function TopBannerPage() {
                               )
                             }
                             disabled={!editingStates[banner._id]?.hasChanges}
-                            className={`p-2 rounded ${
+                            className={`p-2 rounded text-sm ${
                               editingStates[banner._id]?.hasChanges
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-300 text-gray-500"
+                                ? "bg-blue-500 text-white hover:bg-blue-600"
+                                : "bg-gray-200 text-gray-400"
                             }`}
+                            title="Save Status"
                           >
                             ✔
                           </button>
                         </div>
 
-                        {/* Update Image */}
-                        <div className="flex flex-col md:flex-row gap-2 items-center">
-                          <div className="flex flex-col">
+                        {/* Update Desktop Image */}
+                        <div className="flex flex-col gap-1 shrink-0">
+                          <label className="text-[10px] text-gray-500 font-medium">Change Desktop (2000×667)</label>
+                          <div className="flex gap-1 items-center">
                             <input
                               type="file"
                               accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
@@ -406,38 +481,78 @@ export default function TopBannerPage() {
                                   );
                                 }
                               }}
-                              className="border rounded w-40 text-sm px-2 py-1"
+                              className="border rounded w-36 text-xs px-1 py-1"
                             />
-                            {editingStates[banner._id]?.error && (
-                              <p className="text-red-500 text-sm mt-1">
-                                {editingStates[banner._id].error}
-                              </p>
-                            )}
-                          </div>
-
-                          <button
-                            onClick={() =>
-                              handleUpdate(
-                                banner._id,
-                                "banner_image",
+                            <button
+                              onClick={() =>
+                                handleUpdate(
+                                  banner._id,
+                                  "banner_image",
+                                  editingStates[banner._id]?.banner_image
+                                )
+                              }
+                              disabled={!editingStates[banner._id]?.banner_image}
+                              className={`p-1.5 rounded text-sm ${
                                 editingStates[banner._id]?.banner_image
-                              )
-                            }
-                            disabled={!editingStates[banner._id]?.banner_image}
-                            className={`p-2 rounded ${
-                              editingStates[banner._id]?.banner_image
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-300 text-gray-500"
-                            }`}
-                          >
-                            ✔
-                          </button>
+                                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                                  : "bg-gray-200 text-gray-400"
+                              }`}
+                              title="Save Desktop Image"
+                            >
+                              ✔
+                            </button>
+                          </div>
+                          {editingStates[banner._id]?.error && (
+                            <p className="text-red-500 text-xs">
+                              {editingStates[banner._id].error}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Update Mobile Image */}
+                        <div className="flex flex-col gap-1 shrink-0">
+                          <label className="text-[10px] text-gray-500 font-medium">Change Mobile (800×800)</label>
+                          <div className="flex gap-1 items-center">
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
+                              onChange={(e) => {
+                                if (e.target.files[0]) {
+                                  handleInputChange(
+                                    banner._id,
+                                    "mobile_banner_image",
+                                    e.target.files[0]
+                                  );
+                                }
+                              }}
+                              className="border rounded w-36 text-xs px-1 py-1"
+                            />
+                            <button
+                              onClick={() =>
+                                handleUpdate(
+                                  banner._id,
+                                  "mobile_banner_image",
+                                  editingStates[banner._id]?.mobile_banner_image
+                                )
+                              }
+                              disabled={!editingStates[banner._id]?.mobile_banner_image}
+                              className={`p-1.5 rounded text-sm ${
+                                editingStates[banner._id]?.mobile_banner_image
+                                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                                  : "bg-gray-200 text-gray-400"
+                              }`}
+                              title="Save Mobile Image"
+                            >
+                              ✔
+                            </button>
+                          </div>
                         </div>
 
                         {/* Delete */}
                         <button
                           onClick={() => openDeleteModal(banner)}
-                          className="bg-red-500 text-white p-2 rounded"
+                          className="bg-red-500 hover:bg-red-600 text-white p-2 rounded text-sm transition shrink-0"
+                          title="Delete Banner"
                         >
                           🗑
                         </button>

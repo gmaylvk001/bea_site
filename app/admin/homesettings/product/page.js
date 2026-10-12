@@ -230,6 +230,10 @@ export default function AllCategoriesPage() {
             })),
             categoryImage: null,
             categoryRedirectUrl: item.categoryRedirectUrl || "",
+            productBgDesktop: null,
+            productBgMobile: null,
+            removeProductBgDesktop: false,
+            removeProductBgMobile: false,
           };
 
           initialSelectedProducts[item.subcategoryId] = item.products.map(
@@ -455,6 +459,30 @@ const handleDeleteImage = async (subcategoryId, type, index, imageUrl) => {
         fd.append("categoryImage", sanitizedCategory);
       }
 
+      if (data.productBgDesktop instanceof File) {
+        const sanitizedDesktop = new File(
+          [data.productBgDesktop],
+          data.productBgDesktop.name.replace(/\s+/g, "_"),
+          { type: data.productBgDesktop.type },
+        );
+        fd.append("productBgDesktop", sanitizedDesktop);
+      }
+      if (data.removeProductBgDesktop) {
+        fd.append("removeProductBgDesktop", "true");
+      }
+
+      if (data.productBgMobile instanceof File) {
+        const sanitizedMobile = new File(
+          [data.productBgMobile],
+          data.productBgMobile.name.replace(/\s+/g, "_"),
+          { type: data.productBgMobile.type },
+        );
+        fd.append("productBgMobile", sanitizedMobile);
+      }
+      if (data.removeProductBgMobile) {
+        fd.append("removeProductBgMobile", "true");
+      }
+
       /* const images = Array.isArray(data.categoryImage)
   ? data.categoryImage
   : data.categoryImage
@@ -512,6 +540,18 @@ images.forEach((img, index) => {
             },
           }));
         }
+
+        // Reset file selections and remove flags
+        setFormData((prev) => ({
+          ...prev,
+          [subcategoryId]: {
+            ...prev[subcategoryId],
+            productBgDesktop: null,
+            productBgMobile: null,
+            removeProductBgDesktop: false,
+            removeProductBgMobile: false,
+          },
+        }));
       } else {
         showStatusModal("Error saving", "error");
       }
@@ -856,6 +896,97 @@ images.forEach((img, index) => {
                   e.target.value,
                 )
               }
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+
+        {/* Products Background Images (Desktop & Mobile) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="border p-3 rounded bg-gray-50">
+            <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
+              <span className="font-semibold">Products Desktop Background Image (930 * 450)</span>
+              {formData[subcat._id]?.productBgDesktop instanceof File ? (
+                <img
+                  src={URL.createObjectURL(formData[subcat._id].productBgDesktop)}
+                  alt="Desktop Background Preview"
+                  className="w-full h-32 rounded object-contain"
+                />
+              ) : existingData?.productBgDesktop && !formData[subcat._id]?.removeProductBgDesktop ? (
+                <div className="relative">
+                  <img
+                    src={existingData.productBgDesktop}
+                    alt="Desktop Background Preview"
+                    className="w-full h-32 rounded object-contain"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleInputChange(subcat._id, "removeProductBgDesktop", true);
+                      handleInputChange(subcat._id, "productBgDesktop", null);
+                    }}
+                    className="absolute top-1 right-1 bg-red-600 text-white px-2 py-0.5 text-xs rounded hover:bg-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : null}
+            </label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
+              onChange={(e) => {
+                handleInputChange(
+                  subcat._id,
+                  "productBgDesktop",
+                  e.target.files[0],
+                );
+                handleInputChange(subcat._id, "removeProductBgDesktop", false);
+              }}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+
+          <div className="border p-3 rounded bg-gray-50">
+            <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
+              <span className="font-semibold">Products Mobile Background Image (450 * 450)</span>
+              {formData[subcat._id]?.productBgMobile instanceof File ? (
+                <img
+                  src={URL.createObjectURL(formData[subcat._id].productBgMobile)}
+                  alt="Mobile Background Preview"
+                  className="w-full h-32 rounded object-contain"
+                />
+              ) : existingData?.productBgMobile && !formData[subcat._id]?.removeProductBgMobile ? (
+                <div className="relative">
+                  <img
+                    src={existingData.productBgMobile}
+                    alt="Mobile Background Preview"
+                    className="w-full h-32 rounded object-contain"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleInputChange(subcat._id, "removeProductBgMobile", true);
+                      handleInputChange(subcat._id, "productBgMobile", null);
+                    }}
+                    className="absolute top-1 right-1 bg-red-600 text-white px-2 py-0.5 text-xs rounded hover:bg-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : null}
+            </label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
+              onChange={(e) => {
+                handleInputChange(
+                  subcat._id,
+                  "productBgMobile",
+                  e.target.files[0],
+                );
+                handleInputChange(subcat._id, "removeProductBgMobile", false);
+              }}
               className="w-full p-2 border rounded"
             />
           </div>
@@ -1378,6 +1509,97 @@ images.forEach((img, index) => {
                                   e.target.value,
                                 )
                               }
+                              className="w-full p-2 border rounded"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Products Background Images (Desktop & Mobile) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="border p-3 rounded bg-gray-50">
+                            <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
+                              <span className="font-semibold">Products Desktop Background Image (930 * 450)</span>
+                              {formData[subcat._id]?.productBgDesktop instanceof File ? (
+                                <img
+                                  src={URL.createObjectURL(formData[subcat._id].productBgDesktop)}
+                                  alt="Desktop Background Preview"
+                                  className="w-full h-32 rounded object-contain"
+                                />
+                              ) : existingData?.productBgDesktop && !formData[subcat._id]?.removeProductBgDesktop ? (
+                                <div className="relative">
+                                  <img
+                                    src={existingData.productBgDesktop}
+                                    alt="Desktop Background Preview"
+                                    className="w-full h-32 rounded object-contain"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleInputChange(subcat._id, "removeProductBgDesktop", true);
+                                      handleInputChange(subcat._id, "productBgDesktop", null);
+                                    }}
+                                    className="absolute top-1 right-1 bg-red-600 text-white px-2 py-0.5 text-xs rounded hover:bg-red-700"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ) : null}
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
+                              onChange={(e) => {
+                                handleInputChange(
+                                  subcat._id,
+                                  "productBgDesktop",
+                                  e.target.files[0],
+                                );
+                                handleInputChange(subcat._id, "removeProductBgDesktop", false);
+                              }}
+                              className="w-full p-2 border rounded"
+                            />
+                          </div>
+
+                          <div className="border p-3 rounded bg-gray-50">
+                            <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
+                              <span className="font-semibold">Products Mobile Background Image (450 * 450)</span>
+                              {formData[subcat._id]?.productBgMobile instanceof File ? (
+                                <img
+                                  src={URL.createObjectURL(formData[subcat._id].productBgMobile)}
+                                  alt="Mobile Background Preview"
+                                  className="w-full h-32 rounded object-contain"
+                                />
+                              ) : existingData?.productBgMobile && !formData[subcat._id]?.removeProductBgMobile ? (
+                                <div className="relative">
+                                  <img
+                                    src={existingData.productBgMobile}
+                                    alt="Mobile Background Preview"
+                                    className="w-full h-32 rounded object-contain"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleInputChange(subcat._id, "removeProductBgMobile", true);
+                                      handleInputChange(subcat._id, "productBgMobile", null);
+                                    }}
+                                    className="absolute top-1 right-1 bg-red-600 text-white px-2 py-0.5 text-xs rounded hover:bg-red-700"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ) : null}
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
+                              onChange={(e) => {
+                                handleInputChange(
+                                  subcat._id,
+                                  "productBgMobile",
+                                  e.target.files[0],
+                                );
+                                handleInputChange(subcat._id, "removeProductBgMobile", false);
+                              }}
                               className="w-full p-2 border rounded"
                             />
                           </div>

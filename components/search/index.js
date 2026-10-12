@@ -5,11 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaSortAmountDown, FaSlidersH, FaShareAlt } from "react-icons/fa";
 import { ChevronDown, ChevronUp } from "react-feather";
 import Addtocart from "@/components/AddToCart";
 import ProductCard from "@/components/ProductCard";
-import { FaShareAlt } from "react-icons/fa";
 
 
 const safeArray = (v) => (Array.isArray(v) ? v : []);
@@ -68,6 +67,33 @@ export default function SearchPage() {
   });
 
   const [page, setPage] = useState(urlPage);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [isSortPanelOpen, setIsSortPanelOpen] = useState(false);
+  const [sortOption, setSortOption] = useState("");
+
+  const getSortedProducts = () => {
+    const list = [...products];
+    switch (sortOption) {
+      case "price-low-high":
+        return list.sort((a, b) => {
+          const priceA = Number(a.special_price) > 0 ? Number(a.special_price) : Number(a.price);
+          const priceB = Number(b.special_price) > 0 ? Number(b.special_price) : Number(b.price);
+          return priceA - priceB;
+        });
+      case "price-high-low":
+        return list.sort((a, b) => {
+          const priceA = Number(a.special_price) > 0 ? Number(a.special_price) : Number(a.price);
+          const priceB = Number(b.special_price) > 0 ? Number(b.special_price) : Number(b.price);
+          return priceB - priceA;
+        });
+      case "name-a-z":
+        return list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      case "name-z-a":
+        return list.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
+      default:
+        return list;
+    }
+  };
 
   // if URL changes (outside this component), keep local state in sync
   useEffect(() => {
@@ -507,6 +533,140 @@ useEffect(() => {
     );
   };
 
+  const renderFilterSections = () => (
+    <div className="space-y-4">
+      {/* Categories Section with Hierarchy */}
+      <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+        <div className="flex items-center justify-between pb-2">
+          <h3 className="text-base font-semibold text-gray-700">Categories</h3>
+          <button 
+            onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)} 
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <ChevronDown className={`transform transition-transform ${isCategoriesExpanded ? 'rotate-180' : ''}`} size={18} />
+          </button>
+        </div>
+        
+        {isCategoriesExpanded && (
+          <CategoryTree
+            categories={categoryData.categories}
+            selectedCategories={selectedCategories}
+            selectedSubcategories={selectedSubcategories}
+            onFilterChange={handleCategoryFilterChange}
+          />
+        )}
+      </div>
+
+      {/* Price */}
+      <div className="bg-white p-4 rounded shadow-sm border mb-3">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-base font-semibold text-gray-700">Price</h3>
+          <button onClick={clearPriceChip} className="text-sm text-gray-500">Reset</button>
+        </div>
+
+        <div className="mt-2">
+          <input
+            type="range"
+            min={priceRange[0]}
+            max={priceRange[1]}
+            value={values[1]}
+            onChange={(e) => setValues([priceRange[0], Number(e.target.value)])}
+            className="w-full"
+          />
+          <div className="flex justify-between text-sm text-gray-600 mt-2">
+            <span>₹{values[0]}</span>
+            <span>₹{values[1]}</span>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => {
+                applyPrice(values[0], values[1]);
+                setIsFilterPanelOpen(false);
+              }}
+              className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Brands */}
+      <div className="bg-white p-4 rounded shadow-sm border mb-3">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-base font-semibold text-gray-700">Brands</h3>
+          <button onClick={() => setBrandsExpanded((s) => !s)} className="text-gray-500">
+            {brandsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+        </div>
+
+        {brandsExpanded && (
+          <ul className="max-h-48 overflow-y-auto pr-2">
+            {searchBrands.map((b) => (
+              <li key={b.id} className="flex items-center py-1">
+                <label className="flex items-center gap-2 w-full cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input
+                    type="checkbox"
+                    checked={selectedBrands.includes(b.id)}
+                    onChange={() => toggleBrand(b.id)}
+                  />
+                  <span className="text-sm text-gray-700">
+                    {b.name} <span className="text-xs text-gray-400">({b.count})</span>
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Product Filters */}
+      {Object.keys(filterGroups).length > 0 && (
+        <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
+          <h3 className="text-base font-semibold text-gray-700 mb-2">Product Filters</h3>
+          <div className="space-y-4">
+            {Object.values(filterGroups).map((g) => (
+              <div key={g._id} className="border-b last:border-0 pb-2">
+                <button
+                  onClick={() => setExpandedGroups((prev) => ({ ...prev, [g._id]: !prev[g._id] }))}
+                  className="flex justify-between w-full items-center text-sm font-medium text-gray-700"
+                >
+                  <span>{g.name}</span>
+                  <ChevronDown className={expandedGroups[g._id] ? "transform rotate-180" : ""} />
+                </button>
+
+                {expandedGroups[g._id] && (
+                  <ul className="mt-2 max-h-48 overflow-y-auto">
+                    {g.filters.map((f) => {
+                      const cnt =
+                        (filterSummaryRaw.find((x) => String(x.filterId) === String(f._id)) || {})
+                          .count || 0;
+                      return (
+                        <li key={f._id} className="py-1">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedFilters.includes(String(f._id))}
+                              onChange={() => toggleProductFilter(String(f._id))}
+                            />
+                            <span className="text-sm text-gray-700">
+                              {f.filter_name}{" "}
+                              {cnt ? <span className="text-xs text-gray-400">({cnt})</span> : null}
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="container mx-auto px-4 py-4">
       <div className="max-w-7xl mx-auto">
@@ -567,116 +727,171 @@ useEffect(() => {
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Sidebar */}
-          <div className="w-full md:w-[260px] shrink-0 space-y-4">
-            {/* Categories */}
-{/* Categories Section with Hierarchy */}
-  <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
-    <div className="flex items-center justify-between pb-2">
-      <h3 className="text-base font-semibold text-gray-700">Categories</h3>
-      <button 
-        onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)} 
-        className="text-gray-500 hover:text-gray-700"
-      >
-        <ChevronDown className={`transform transition-transform ${isCategoriesExpanded ? 'rotate-180' : ''}`} size={18} />
-      </button>
-    </div>
-    
-    {isCategoriesExpanded && (
-      <CategoryTree
-        categories={categoryData.categories}
-        selectedCategories={selectedCategories}
-        selectedSubcategories={selectedSubcategories}
-        onFilterChange={handleCategoryFilterChange}
-      />
-    )}
-  </div>
-            {/* Price */}
-            <div className="bg-white p-4 rounded shadow-sm border">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-semibold text-gray-700">Price</h3>
-                <button onClick={clearPriceChip} className="text-sm text-gray-500">Reset</button>
+        {/* Mobile Sort + Filter Buttons (Like Child Category Page) */}
+        <div className="flex border-b border-gray-300 bg-gray-100 sticky top-0 z-30 md:hidden mb-3">
+          <button
+            className="flex items-center justify-center gap-2 py-4 flex-1 text-sm font-medium text-gray-800 border-r border-gray-300 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+            onClick={() => setIsSortPanelOpen(true)}
+          >
+            <FaSortAmountDown className="text-gray-500 text-xs" />
+            SORT
+          </button>
+          
+          <button
+            className="flex items-center justify-center gap-2 py-4 flex-1 text-sm font-medium text-gray-800 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+            onClick={() => setIsFilterPanelOpen(true)}
+          >
+            <FaSlidersH className="text-gray-500 text-xs" />
+            FILTER
+          </button>
+        </div>
+
+        {/* Mobile Sort Modal */}
+        {isSortPanelOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50 md:hidden">
+            <div className="bg-white w-full rounded-t-2xl p-5 shadow-2xl">
+              <div className="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 className="text-lg font-semibold text-gray-800">Sort By</h2>
+                <button
+                  onClick={() => setIsSortPanelOpen(false)}
+                  className="text-gray-500 hover:text-gray-700 text-lg font-bold p-1"
+                >
+                  ✕
+                </button>
               </div>
 
-              <div className="mt-2">
-                <input type="range" min={priceRange[0]} max={priceRange[1]} value={values[1]} onChange={(e) => setValues([priceRange[0], Number(e.target.value)])} className="w-full" />
-                <div className="flex justify-between text-sm text-gray-600 mt-2">
-                  <span>₹{values[0]}</span>
-                  <span>₹{values[1]}</span>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <button onClick={() => applyPrice(values[0], values[1])} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Apply</button>
-                </div>
-              </div>
-            </div>
-
-            {/* Brands */}
-            <div className="bg-white p-4 rounded shadow-sm border">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-semibold text-gray-700">Brands</h3>
-                <button onClick={() => setBrandsExpanded((s) => !s)} className="text-gray-500">{brandsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
-              </div>
-
-              {brandsExpanded && (
-                <ul className="max-h-48 overflow-y-auto pr-2">
-                  {searchBrands.map((b) => (
-                    <li key={b.id} className="flex items-center py-1">
-                      <label className="flex items-center gap-2 w-full cursor-pointer hover:bg-gray-50 p-1 rounded">
-                        <input type="checkbox" checked={selectedBrands.includes(b.id)} onChange={() => toggleBrand(b.id)} />
-                        <span className="text-sm text-gray-700">{b.name} <span className="text-xs text-gray-400">({b.count})</span></span>
-                      </label>
-                    </li>
-                  ))}
+              <div className="space-y-4">
+                <ul className="divide-y divide-gray-200 text-sm">
+                  <li
+                    className={`py-3 cursor-pointer ${
+                      sortOption === "" ? "text-blue-600 font-semibold" : "text-gray-700"
+                    }`}
+                    onClick={() => {
+                      setSortOption("");
+                      setIsSortPanelOpen(false);
+                    }}
+                  >
+                    Featured
+                  </li>
+                  <li
+                    className={`py-3 cursor-pointer ${
+                      sortOption === "price-low-high" ? "text-blue-600 font-semibold" : "text-gray-700"
+                    }`}
+                    onClick={() => {
+                      setSortOption("price-low-high");
+                      setIsSortPanelOpen(false);
+                    }}
+                  >
+                    Price: Low to High
+                  </li>
+                  <li
+                    className={`py-3 cursor-pointer ${
+                      sortOption === "price-high-low" ? "text-blue-600 font-semibold" : "text-gray-700"
+                    }`}
+                    onClick={() => {
+                      setSortOption("price-high-low");
+                      setIsSortPanelOpen(false);
+                    }}
+                  >
+                    Price: High to Low
+                  </li>
+                  <li
+                    className={`py-3 cursor-pointer ${
+                      sortOption === "name-a-z" ? "text-blue-600 font-semibold" : "text-gray-700"
+                    }`}
+                    onClick={() => {
+                      setSortOption("name-a-z");
+                      setIsSortPanelOpen(false);
+                    }}
+                  >
+                    Name: A-Z
+                  </li>
+                  <li
+                    className={`py-3 cursor-pointer ${
+                      sortOption === "name-z-a" ? "text-blue-600 font-semibold" : "text-gray-700"
+                    }`}
+                    onClick={() => {
+                      setSortOption("name-z-a");
+                      setIsSortPanelOpen(false);
+                    }}
+                  >
+                    Name: Z-A
+                  </li>
                 </ul>
-              )}
-            </div>
-
-            {/* Product Filters */}
-            {Object.keys(filterGroups).length > 0 && (
-              <div className="bg-white p-4 rounded-lg shadow-sm border mb-3">
-                <h3 className="text-base font-semibold text-gray-700 mb-2">Product Filters</h3>
-                <div className="space-y-4">
-                  {Object.values(filterGroups).map((g) => (
-                    <div key={g._id} className="border-b last:border-0 pb-2">
-                      <button onClick={() => setExpandedGroups((prev) => ({ ...prev, [g._id]: !prev[g._id] }))} className="flex justify-between w-full items-center text-sm font-medium text-gray-700">
-                        <span>{g.name}</span>
-                        <ChevronDown className={expandedGroups[g._id] ? "transform rotate-180" : ""} />
-                      </button>
-
-                      {expandedGroups[g._id] && (
-                        <ul className="mt-2 max-h-48 overflow-y-auto">
-                          {g.filters.map((f) => {
-                            const cnt = (filterSummaryRaw.find((x) => String(x.filterId) === String(f._id)) || {}).count || 0;
-                            return (
-                              <li key={f._id} className="py-1">
-                                <label className="flex items-center gap-2">
-                                  <input type="checkbox" checked={selectedFilters.includes(String(f._id))} onChange={() => toggleProductFilter(String(f._id))} />
-                                  <span className="text-sm text-gray-700">{f.filter_name} {cnt ? <span className="text-xs text-gray-400">({cnt})</span> : null}</span>
-                                </label>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
-                </div>
               </div>
-            )}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Filter Drawer */}
+        {isFilterPanelOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
+            <div className="fixed left-0 top-0 w-4/5 max-w-sm h-full bg-white shadow-2xl flex flex-col">
+              {/* Header */}
+              <div className="flex justify-between items-center p-4 border-b flex-shrink-0 bg-white">
+                <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
+                <button
+                  onClick={() => setIsFilterPanelOpen(false)}
+                  className="text-gray-500 hover:text-gray-700 text-lg font-bold p-1"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {renderFilterSections()}
+              </div>
+
+              {/* Footer button */}
+              <div className="p-4 border-t flex-shrink-0 bg-white">
+                <button
+                  onClick={() => setIsFilterPanelOpen(false)}
+                  className="w-full bg-blue-600 text-white py-2.5 rounded-md font-medium"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Sidebar (Desktop only) */}
+          <div className="hidden md:block w-full md:w-[260px] shrink-0 space-y-4">
+            {renderFilterSections()}
           </div>
 
           {/* Products */}
           <div className="flex-1">
             <div className="flex justify-between items-center mb-3">
-              <div className="text-gray-600">{(pagination?.total ?? products.length)} result{(pagination?.total ?? products.length) !== 1 ? "s" : ""} found</div>
+              <div className="text-gray-600">
+                {(pagination?.total ?? products.length)} result
+                {(pagination?.total ?? products.length) !== 1 ? "s" : ""} found
+              </div>
+              <div className="hidden md:flex items-center gap-2">
+                <span className="text-sm text-gray-600">Sort by:</span>
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="px-3 py-1.5 border rounded-md text-sm bg-white shadow-sm focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Featured</option>
+                  <option value="price-low-high">Price: Low to High</option>
+                  <option value="price-high-low">Price: High to Low</option>
+                  <option value="name-a-z">Name: A-Z</option>
+                  <option value="name-z-a">Name: Z-A</option>
+                </select>
+              </div>
             </div>
 
             {loading ? (
-          <div className="flex justify-center items-center h-64"><FaSpinner className="animate-spin text-4xl text-blue-500" /></div>
+              <div className="flex justify-center items-center h-64">
+                <FaSpinner className="animate-spin text-4xl text-blue-500" />
+              </div>
             ) : products.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {products.map((p) => (
+                {getSortedProducts().map((p) => (
                   <div key={p._id} className="group relative bg-white rounded-lg border hover:border-blue-200 transition-all shadow-sm hover:shadow-md flex flex-col h-full">
                     <div className="relative aspect-square bg-white">
                       <Link href={`/product/${p.slug}`} className="block mb-2">

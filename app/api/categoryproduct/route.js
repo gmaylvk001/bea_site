@@ -79,6 +79,10 @@ while (formData.get(`bannerImage[${bi}]`)) {
 const categoryImage = await saveFile(formData.get("categoryImage"));
 const categoryRedirectUrl = formData.get("categoryRedirectUrl") || "";
 
+// PRODUCTS BACKGROUND IMAGES (DESKTOP & MOBILE)
+const productBgDesktop = await saveFile(formData.get("productBgDesktop"));
+const productBgMobile = await saveFile(formData.get("productBgMobile"));
+
 
     const saved = await CategoryProduct.findOneAndUpdate(
   { subcategoryId },
@@ -94,6 +98,8 @@ const categoryRedirectUrl = formData.get("categoryRedirectUrl") || "";
     bannerRedirectUrl,
     categoryImage,
     categoryRedirectUrl,
+    productBgDesktop,
+    productBgMobile,
   },
   { upsert: true, new: true }
 );
@@ -249,6 +255,29 @@ const categoryRedirectUrl = formData.get("categoryRedirectUrl") || "";
     const categoryRedirectUrl =
       formData.get("categoryRedirectUrl") ?? existingRecord.categoryRedirectUrl ?? "";
 
+    // PRODUCTS BACKGROUND IMAGES (DESKTOP & MOBILE)
+    const removeProductBgDesktop = formData.get("removeProductBgDesktop") === "true";
+    const productBgDesktopFile = formData.get("productBgDesktop");
+    let productBgDesktop;
+    if (removeProductBgDesktop) {
+      productBgDesktop = null;
+    } else if (productBgDesktopFile) {
+      productBgDesktop = await saveFile(productBgDesktopFile);
+    } else {
+      productBgDesktop = existingRecord.productBgDesktop || null;
+    }
+
+    const removeProductBgMobile = formData.get("removeProductBgMobile") === "true";
+    const productBgMobileFile = formData.get("productBgMobile");
+    let productBgMobile;
+    if (removeProductBgMobile) {
+      productBgMobile = null;
+    } else if (productBgMobileFile) {
+      productBgMobile = await saveFile(productBgMobileFile);
+    } else {
+      productBgMobile = existingRecord.productBgMobile || null;
+    }
+
     const updated = await CategoryProduct.findOneAndUpdate(
       { subcategoryId },
       {
@@ -262,6 +291,8 @@ const categoryRedirectUrl = formData.get("categoryRedirectUrl") || "";
         bannerRedirectUrl: finalBannerUrls,
         categoryImage,
         categoryRedirectUrl,
+        productBgDesktop,
+        productBgMobile,
       },
       { new: true }
     );

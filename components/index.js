@@ -182,6 +182,7 @@ export default function HomeComponent() {
                     buttonLink: banner.redirect_url || "/shop",
                     bgImageUrl: banner.banner_image,
                     bannerImageUrl: banner.banner_image,
+                    mobileBgImageUrl: banner.mobile_banner_image || "",
                     redirectUrl: banner.redirect_url,
                   }));
                 setBannerData({ banner: { items: bannerItems } });
@@ -197,6 +198,7 @@ export default function HomeComponent() {
                           buttonLink: b.redirect_url || "/shop",
                           bgImageUrl: b.banner_image,
                           bannerImageUrl: b.banner_image,
+                          mobileBgImageUrl: b.mobile_banner_image || "",
                           redirectUrl: b.redirect_url,
                         }));
                       setBannerData({ banner: { items: fallbackItems } });
@@ -1405,7 +1407,7 @@ export default function HomeComponent() {
                 {bannerData.banner.items.map((banner, bannerIndex) => (
                   <motion.div
                     key={banner.id}
-                    className="relative w-full aspect-[2000/667] max-h-auto"
+                    className={`relative w-full ${banner.mobileBgImageUrl ? 'aspect-square md:aspect-[2000/667]' : 'aspect-[2000/667]'} max-h-auto`}
                     variants={itemVariants}
                   >
                     <div
@@ -1435,12 +1437,21 @@ export default function HomeComponent() {
                         }
                       }}
                     >
+                      {/* Desktop image (shown on desktop, and on mobile if no mobileBgImageUrl) */}
                       <img
                         src={banner.bgImageUrl}
                         alt={banner?.alt || banner?.title || "Homepage banner"}
-                        className="absolute inset-0 w-full h-full object-fill"
+                        className={`absolute inset-0 w-full h-full object-fill ${banner.mobileBgImageUrl ? 'hidden md:block' : 'block'}`}
                         style={{ objectPosition: "center 30%" }}
                       />
+                      {/* Mobile image (shown on mobile when mobileBgImageUrl is provided) */}
+                      {banner.mobileBgImageUrl && (
+                        <img
+                          src={banner.mobileBgImageUrl}
+                          alt={banner?.alt || banner?.title || "Homepage mobile banner"}
+                          className="block md:hidden absolute inset-0 w-full h-full object-fill"
+                        />
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -1474,15 +1485,37 @@ export default function HomeComponent() {
             </div>
           ) : (
             <motion.div
-              className="p-4 md:p-6 relative aspect-[2000/667] max-h-auto"
+              className={`relative w-full ${bannerData.banner.items[0]?.mobileBgImageUrl ? 'aspect-square md:aspect-[2000/667]' : 'aspect-[2000/667]'} max-h-auto`}
               variants={itemVariants}
             >
-              <div className="absolute inset-0 flex justify-center items-center bg-white">
+              <div
+                className="absolute inset-0 overflow-hidden cursor-pointer"
+                role="link"
+                tabIndex={0}
+                aria-label={bannerData.banner.items[0]?.alt || bannerData.banner.items[0]?.title || bannerData.banner.items[0]?.redirectUrl || "Banner"}
+                onClick={() => {
+                  const href = bannerData.banner.items[0]?.redirectUrl;
+                  if (!href) return;
+                  if (href.startsWith("/")) {
+                    router.push(href);
+                  } else {
+                    window.location.href = href;
+                  }
+                }}
+              >
                 <img
                   src={bannerData.banner.items[0].bgImageUrl}
                   alt={bannerData.banner.items[0]?.alt || bannerData.banner.items[0]?.title || "Homepage banner"}
-                  className="absolute inset-0 w-full h-full object-fill"
+                  className={`absolute inset-0 w-full h-full object-fill ${bannerData.banner.items[0]?.mobileBgImageUrl ? 'hidden md:block' : 'block'}`}
+                  style={{ objectPosition: "center 30%" }}
                 />
+                {bannerData.banner.items[0]?.mobileBgImageUrl && (
+                  <img
+                    src={bannerData.banner.items[0].mobileBgImageUrl}
+                    alt={bannerData.banner.items[0]?.alt || bannerData.banner.items[0]?.title || "Homepage mobile banner"}
+                    className="block md:hidden absolute inset-0 w-full h-full object-fill"
+                  />
+                )}
               </div>
             </motion.div>
           )

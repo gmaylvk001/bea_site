@@ -324,6 +324,8 @@ const getBannerRedirectUrls = (urls) => {
                 const dynamicChildren = (childrenByParentId[catId] || [])?.slice(0, 7);
                 const sanitizedCategoryImage = getSanitizedImage(categoryProduct.categoryImage);
                 const sanitizedBackgroundImage = getSanitizedImage(categoryStyle.backgroundImage);
+                const sanitizedProductBgDesktop = getSanitizedImage(categoryProduct.productBgDesktop);
+                const sanitizedProductBgMobile = getSanitizedImage(categoryProduct.productBgMobile);
                 const finalBgUrl = sanitizedCategoryImage || sanitizedBackgroundImage || "/default-image.jpg"; 
                 const styleObj = { backgroundImage: `url("${finalBgUrl}")` };
                 const visibleDesktopCount = 5;
@@ -489,8 +491,30 @@ const getBannerRedirectUrls = (urls) => {
                               borderRight: alignment === "left" ? `4px solid ${categoryProduct.borderColor || categoryStyle.borderColor}` : "0px",
                             }}
                           >
+                          {/* Products Background Image - Desktop */}
+                          {(sanitizedProductBgDesktop || sanitizedProductBgMobile) && (
+                            <div
+                              className={`hidden md:block absolute inset-0 bg-cover bg-center pointer-events-none ${
+                                alignment === "right" ? "md:rounded-tl-lg md:rounded-bl-lg" : "md:rounded-tr-lg md:rounded-br-lg"
+                              }`}
+                              style={{
+                                backgroundImage: `url("${sanitizedProductBgDesktop || sanitizedProductBgMobile}")`,
+                              }}
+                            />
+                          )}
+
+                          {/* Products Background Image - Mobile */}
+                          {(sanitizedProductBgMobile || sanitizedProductBgDesktop) && (
+                            <div
+                              className="block md:hidden absolute inset-0 bg-cover bg-center pointer-events-none rounded-b-lg"
+                              style={{
+                                backgroundImage: `url("${sanitizedProductBgMobile || sanitizedProductBgDesktop}")`,
+                              }}
+                            />
+                          )}
+
                           {/* Category Links Section — fully dynamic from /api/categories/hierarchy */}
-                          <div className={`flex flex-wrap items-center gap-2 mb-3 text-sm font-medium ${ alignment === "right" ? "justify-start" : "justify-end" }`} >
+                          <div className={`relative z-10 flex flex-wrap items-center gap-2 mb-3 text-sm font-medium ${ alignment === "right" ? "justify-start" : "justify-end" }`} >
                             <Link href={showallLink} className="px-3 py-1 text-blue-600 hover:underline">
                               Show All
                             </Link>
@@ -525,7 +549,7 @@ const getBannerRedirectUrls = (urls) => {
                           {/* Scrollable Products */}
                               <div
                                 ref={(el) => (categoryScrollRefs.current[categoryProduct._id] = el)}
-                                className={`flex overflow-x-auto scrollbar-hide scroll-smooth gap-4 py-3 px-4 ${fewProducts ? "justify-center" : "justify-start"}`}
+                                className={`relative z-10 flex overflow-x-auto scrollbar-hide scroll-smooth gap-4 py-3 px-4 ${fewProducts ? "justify-center" : "justify-start"}`}
                                 style={{ WebkitOverflowScrolling: "touch" }}
                               >
                                 {/* {products.slice(0, 15).map((product) => ( */}
@@ -563,11 +587,13 @@ const getBannerRedirectUrls = (urls) => {
  
                                        {/* Info */}
                                        <div className="p-2 flex flex-col h-full">
-                                         <h4 className="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase">
-                                           <Link href={`/brand/${brandMap[product.brand]?.toLowerCase().replace(/\s+/g, "-") || ""}`} className="hover:text-blue-600">
-                                             {brandMap[product.brand] || ""}
-                                           </Link>
-                                         </h4>
+                                         {brandMap[product.brand] && (
+                                           <h4 className="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase">
+                                             <Link href={`/brand/${String(brandMap[product.brand]).toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-blue-600">
+                                               {brandMap[product.brand]}
+                                             </Link>
+                                           </h4>
+                                         )}
                                          
                                         <Link
                                           href={`/product/${product.slug}`}
