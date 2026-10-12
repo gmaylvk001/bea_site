@@ -1619,31 +1619,48 @@ const Header = ({ initialCategories = [] }) => {
 
   // Renders the subcategory strip with dynamic uploaded icons and indicator
   const renderSubCategoryStrip = () => {
-    const list = mobileSubCategories && mobileSubCategories.length > 0
+    const rawList = mobileSubCategories && mobileSubCategories.length > 0
       ? mobileSubCategories
       : DEFAULT_MOBILE_SUBCATEGORIES;
 
-    if (!list || list.length === 0) return null;
+    if (!rawList || rawList.length === 0) return null;
+
+    const homeItem = {
+      _id: 'home',
+      isHome: true,
+      category_name: 'Home',
+      category_slug: '',
+      href: '/',
+    };
+    const list = [homeItem, ...rawList];
+
+    const isHomeActive = pathname === "/" || !pathname || (selectedSubCat === "home" && pathname === "/");
 
     return (
       <div className="w-full max-w-full bg-white border-b border-gray-100 pt-2 pb-1 overflow-x-auto scrollbar-hide">
         <div className="flex items-start gap-2.5 sm:gap-4 px-2 min-w-max">
           {list.map((cat, idx) => {
-            const iconUrl = getCategoryIconUrl(cat);
+            const iconUrl = cat.isHome ? null : getCategoryIconUrl(cat);
             const parentSlug = cat.parentSlug || '';
             const catSlug = cat.category_slug || '';
-            const href = parentSlug ? `/category/${parentSlug}/${catSlug}` : `/category/${catSlug}`;
+            const href = cat.isHome
+              ? '/'
+              : (parentSlug ? `/category/${parentSlug}/${catSlug}` : `/category/${catSlug}`);
 
-            const isItemActive =
-              (pathname && catSlug && (pathname.includes(`/${catSlug}`) || pathname === href)) ||
-              (selectedSubCat === (cat._id || catSlug)) ||
-              (!selectedSubCat && idx === 0 && (pathname === "/" || !pathname));
+            const isItemActive = cat.isHome
+              ? isHomeActive
+              : (
+                  pathname !== "/" && (
+                    (pathname && catSlug && (pathname.includes(`/${catSlug}`) || pathname === href)) ||
+                    (selectedSubCat === (cat._id || catSlug))
+                  )
+                );
 
             return (
               <Link
                 key={cat._id || idx}
                 href={href}
-                onClick={() => setSelectedSubCat(cat._id || catSlug)}
+                onClick={() => setSelectedSubCat(cat.isHome ? 'home' : (cat._id || catSlug))}
                 className="flex flex-col items-center flex-shrink-0 cursor-pointer group"
                 style={{ width: "64px" }}
               >
@@ -1655,7 +1672,22 @@ const Header = ({ initialCategories = [] }) => {
                       : "bg-transparent group-hover:bg-gray-50"
                   }`}
                 >
-                  {iconUrl ? (
+                  {cat.isHome ? (
+                    <svg
+                      className={`w-6 h-6 transition-colors ${
+                        isItemActive ? "text-[#2453D3]" : "text-gray-600 group-hover:text-gray-900"
+                      }`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                  ) : iconUrl ? (
                     <img
                       src={iconUrl}
                       alt={cat.category_name || "Category"}
@@ -1668,25 +1700,27 @@ const Header = ({ initialCategories = [] }) => {
                       }}
                     />
                   ) : null}
-                  <div
-                    className="fallback-cat-icon w-7 h-7 items-center justify-center text-gray-600"
-                    style={{ display: iconUrl ? "none" : "flex" }}
-                  >
-                    <svg
-                      className="w-6 h-6 text-gray-600"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                  {!cat.isHome && (
+                    <div
+                      className="fallback-cat-icon w-7 h-7 items-center justify-center text-gray-600"
+                      style={{ display: iconUrl ? "none" : "flex" }}
                     >
-                      <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                      <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                      <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                      <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                    </svg>
-                  </div>
+                      <svg
+                        className="w-6 h-6 text-gray-600"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                        <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                        <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
 
                 {/* Label Text */}

@@ -1516,21 +1516,34 @@ images.forEach((img, index) => {
 
                         {/* Products Background Images (Desktop & Mobile) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="border p-3 rounded bg-gray-50">
+                          {/* Desktop Background Image */}
+                          <div className="border p-3.5 rounded-lg bg-gray-50 shadow-sm">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-semibold text-sm text-gray-800">
+                                🖥️ Products Desktop Background Image
+                              </span>
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold border border-blue-200">
+                                930 × 450 px • Ratio 2:1
+                              </span>
+                            </div>
+                            <p className="text-gray-500 text-xs mb-2 leading-relaxed">
+                              Best Size: <strong className="text-blue-700">930 × 450 px</strong> (Aspect Ratio <strong className="text-blue-700">2:1</strong> / Landscape) <br/>
+                              Fits completely in the background without cropping or stretching.
+                            </p>
+
                             <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
-                              <span className="font-semibold">Products Desktop Background Image (930 * 450)</span>
                               {formData[subcat._id]?.productBgDesktop instanceof File ? (
                                 <img
                                   src={URL.createObjectURL(formData[subcat._id].productBgDesktop)}
                                   alt="Desktop Background Preview"
-                                  className="w-full h-32 rounded object-contain"
+                                  className="w-full h-32 rounded object-contain border bg-white"
                                 />
                               ) : existingData?.productBgDesktop && !formData[subcat._id]?.removeProductBgDesktop ? (
                                 <div className="relative">
                                   <img
                                     src={existingData.productBgDesktop}
                                     alt="Desktop Background Preview"
-                                    className="w-full h-32 rounded object-contain"
+                                    className="w-full h-32 rounded object-contain border bg-white"
                                   />
                                   <button
                                     type="button"
@@ -1538,7 +1551,7 @@ images.forEach((img, index) => {
                                       handleInputChange(subcat._id, "removeProductBgDesktop", true);
                                       handleInputChange(subcat._id, "productBgDesktop", null);
                                     }}
-                                    className="absolute top-1 right-1 bg-red-600 text-white px-2 py-0.5 text-xs rounded hover:bg-red-700"
+                                    className="absolute top-1 right-1 bg-red-600 text-white px-2 py-0.5 text-xs rounded hover:bg-red-700 shadow"
                                   >
                                     Remove
                                   </button>
@@ -1556,25 +1569,38 @@ images.forEach((img, index) => {
                                 );
                                 handleInputChange(subcat._id, "removeProductBgDesktop", false);
                               }}
-                              className="w-full p-2 border rounded"
+                              className="w-full p-2 border rounded bg-white text-sm"
                             />
                           </div>
 
-                          <div className="border p-3 rounded bg-gray-50">
+                          {/* Mobile Background Image */}
+                          <div className="border p-3.5 rounded-lg bg-gray-50 shadow-sm">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-semibold text-sm text-gray-800">
+                                📱 Products Mobile Background Image
+                              </span>
+                              <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded font-semibold border border-indigo-200">
+                                450 × 450 px • Ratio 1:1
+                              </span>
+                            </div>
+                            <p className="text-gray-500 text-xs mb-2 leading-relaxed">
+                              Best Size: <strong className="text-indigo-700">450 × 450 px</strong> (Aspect Ratio <strong className="text-indigo-700">1:1</strong> / Square) <br/>
+                              Fits completely in the background without cropping or stretching.
+                            </p>
+
                             <label className="block text-sm font-medium mb-2 flex flex-col gap-2">
-                              <span className="font-semibold">Products Mobile Background Image (450 * 450)</span>
                               {formData[subcat._id]?.productBgMobile instanceof File ? (
                                 <img
                                   src={URL.createObjectURL(formData[subcat._id].productBgMobile)}
                                   alt="Mobile Background Preview"
-                                  className="w-full h-32 rounded object-contain"
+                                  className="w-full h-32 rounded object-contain border bg-white"
                                 />
                               ) : existingData?.productBgMobile && !formData[subcat._id]?.removeProductBgMobile ? (
                                 <div className="relative">
                                   <img
                                     src={existingData.productBgMobile}
                                     alt="Mobile Background Preview"
-                                    className="w-full h-32 rounded object-contain"
+                                    className="w-full h-32 rounded object-contain border bg-white"
                                   />
                                   <button
                                     type="button"
@@ -1582,7 +1608,7 @@ images.forEach((img, index) => {
                                       handleInputChange(subcat._id, "removeProductBgMobile", true);
                                       handleInputChange(subcat._id, "productBgMobile", null);
                                     }}
-                                    className="absolute top-1 right-1 bg-red-600 text-white px-2 py-0.5 text-xs rounded hover:bg-red-700"
+                                    className="absolute top-1 right-1 bg-red-600 text-white px-2 py-0.5 text-xs rounded hover:bg-red-700 shadow"
                                   >
                                     Remove
                                   </button>
@@ -1600,7 +1626,7 @@ images.forEach((img, index) => {
                                 );
                                 handleInputChange(subcat._id, "removeProductBgMobile", false);
                               }}
-                              className="w-full p-2 border rounded"
+                              className="w-full p-2 border rounded bg-white text-sm"
                             />
                           </div>
                         </div>

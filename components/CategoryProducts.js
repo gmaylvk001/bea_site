@@ -494,7 +494,7 @@ const getBannerRedirectUrls = (urls) => {
                           {/* Products Background Image - Desktop */}
                           {(sanitizedProductBgDesktop || sanitizedProductBgMobile) && (
                             <div
-                              className={`hidden md:block absolute inset-0 bg-cover bg-center pointer-events-none ${
+                              className={`hidden md:block absolute inset-0 bg-contain bg-center bg-no-repeat pointer-events-none ${
                                 alignment === "right" ? "md:rounded-tl-lg md:rounded-bl-lg" : "md:rounded-tr-lg md:rounded-br-lg"
                               }`}
                               style={{
@@ -506,7 +506,7 @@ const getBannerRedirectUrls = (urls) => {
                           {/* Products Background Image - Mobile */}
                           {(sanitizedProductBgMobile || sanitizedProductBgDesktop) && (
                             <div
-                              className="block md:hidden absolute inset-0 bg-cover bg-center pointer-events-none rounded-b-lg"
+                              className="block md:hidden absolute inset-0 bg-contain bg-center bg-no-repeat pointer-events-none rounded-b-lg"
                               style={{
                                 backgroundImage: `url("${sanitizedProductBgMobile || sanitizedProductBgDesktop}")`,
                               }}

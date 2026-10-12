@@ -5,7 +5,22 @@ import fs from "fs";
 import path from "path";
 import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
 
-// ✅ Save File Function (JPG/PNG/WebP/AVIF)
+// ✅ Validate Only WebP and AVIF formats
+function validateBannerFile(file, label = "Banner image") {
+  if (!file || typeof file === "string" || !file.name) return;
+  const ext = path.extname(file.name || "").toLowerCase();
+  const mime = String(file.type || "").toLowerCase();
+  const isAllowed =
+    ext === ".webp" ||
+    ext === ".avif" ||
+    mime.includes("webp") ||
+    mime.includes("avif");
+  if (!isAllowed) {
+    throw new Error(`${label}: Only WebP and AVIF formats are allowed.`);
+  }
+}
+
+// ✅ Save File Function
 async function saveFile(file) {
   try {
     return await saveHomeSettingImage(file, { folder: "topbanner" });
@@ -43,6 +58,18 @@ export async function POST(req) {
     if (!file || file.size === 0) {
       return NextResponse.json(
         { success: false, message: "No file uploaded" },
+        { status: 400 }
+      );
+    }
+
+    try {
+      validateBannerFile(file, "Desktop banner");
+      if (mobileFile && mobileFile.size > 0 && typeof mobileFile !== "string") {
+        validateBannerFile(mobileFile, "Mobile banner");
+      }
+    } catch (valErr) {
+      return NextResponse.json(
+        { success: false, message: valErr.message },
         { status: 400 }
       );
     }
@@ -129,6 +156,22 @@ export async function PUT(req) {
     if (status !== null) updateData.status = status;
 
     const file = formData.get("banner_image");
+    const mobileFile = formData.get("mobile_banner_image");
+
+    try {
+      if (file && file.size > 0 && typeof file !== "string") {
+        validateBannerFile(file, "Desktop banner");
+      }
+      if (mobileFile && mobileFile.size > 0 && typeof mobileFile !== "string") {
+        validateBannerFile(mobileFile, "Mobile banner");
+      }
+    } catch (valErr) {
+      return NextResponse.json(
+        { success: false, message: valErr.message },
+        { status: 400 }
+      );
+    }
+
     if (file && file.size > 0 && typeof file !== "string") {
       try {
         const filePath = await saveFile(file);
@@ -152,7 +195,6 @@ export async function PUT(req) {
       }
     }
 
-    const mobileFile = formData.get("mobile_banner_image");
     if (mobileFile && mobileFile.size > 0 && typeof mobileFile !== "string") {
       try {
         const mobileFilePath = await saveFile(mobileFile);

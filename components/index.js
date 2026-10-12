@@ -1381,151 +1381,190 @@ export default function HomeComponent() {
               );
           case 'topbanner':
           case 'top_banner':
-          case 'top banner':
-  return (
-    <motion.section 
-      id="topbanner"
-      ref={refs.banner}
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="home-section-full relative overflow-visible pt-0 m-0 mb-0 z-10"
-    >
-      <div className="relative overflow-hidden">
-        {isBannerLoading ? (
-          <div className="p-6 flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-          </div>
-        ) : bannerData.banner.items.length > 0 ? (
-          bannerData.banner.items.length > 1 ? (
-            <div className="relative group">
-              <Slider
-                ref={topBannerSliderRef}
-                {...topBannerSettings}
-                className="relative topbanner-slider"
+          case 'top banner': {
+            const topBannerItems = bannerData?.banner?.items || [];
+            const hasAnyMobileBanner =
+              topBannerItems.length > 0 &&
+              topBannerItems.some(
+                (b) => Boolean(b.mobileBgImageUrl && typeof b.mobileBgImageUrl === "string" && b.mobileBgImageUrl.trim())
+              );
+
+            return (
+              <motion.section 
+                id="topbanner"
+                ref={refs.banner}
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+                className="home-section-full relative overflow-visible pt-0 m-0 mb-0 z-10"
               >
-                {bannerData.banner.items.map((banner, bannerIndex) => (
-                  <motion.div
-                    key={banner.id}
-                    className={`relative w-full ${banner.mobileBgImageUrl ? 'aspect-square md:aspect-[2000/667]' : 'aspect-[2000/667]'} max-h-auto`}
-                    variants={itemVariants}
-                  >
-                    <div
-                      className="absolute inset-0 overflow-hidden cursor-pointer"
-                      role="link"
-                      tabIndex={0}
-                      aria-label={banner?.alt || banner?.title || banner?.redirectUrl || "Banner"}
-                      onClick={() => {
-                        const href = banner?.redirectUrl;
-                        if (!href) return;
-                        if (href.startsWith("/")) {
-                          router.push(href);
-                        } else {
-                          window.location.href = href;
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        const href = banner?.redirectUrl;
-                        if (!href) return;
-                        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
-                          e.preventDefault();
-                          if (href.startsWith("/")) {
-                            router.push(href);
-                          } else {
-                            window.location.href = href;
-                          }
-                        }
-                      }}
-                    >
-                      {/* Desktop image (shown on desktop, and on mobile if no mobileBgImageUrl) */}
-                      <img
-                        src={banner.bgImageUrl}
-                        alt={banner?.alt || banner?.title || "Homepage banner"}
-                        className={`absolute inset-0 w-full h-full object-fill ${banner.mobileBgImageUrl ? 'hidden md:block' : 'block'}`}
-                        style={{ objectPosition: "center 30%" }}
-                      />
-                      {/* Mobile image (shown on mobile when mobileBgImageUrl is provided) */}
-                      {banner.mobileBgImageUrl && (
-                        <img
-                          src={banner.mobileBgImageUrl}
-                          alt={banner?.alt || banner?.title || "Homepage mobile banner"}
-                          className="block md:hidden absolute inset-0 w-full h-full object-fill"
-                        />
-                      )}
+                <div className="relative overflow-hidden">
+                  {isBannerLoading ? (
+                    <div className="p-6 flex justify-center items-center h-64">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
                     </div>
-                  </motion.div>
-                ))}
-              </Slider>
+                  ) : topBannerItems.length > 0 ? (
+                    topBannerItems.length > 1 ? (
+                      <div className="relative group">
+                        <Slider
+                          ref={topBannerSliderRef}
+                          {...topBannerSettings}
+                          className="relative topbanner-slider"
+                        >
+                          {topBannerItems.map((banner, bannerIndex) => {
+                            const hasMobile = Boolean(
+                              banner.mobileBgImageUrl &&
+                              typeof banner.mobileBgImageUrl === "string" &&
+                              banner.mobileBgImageUrl.trim()
+                            );
 
-              {/* Left Arrow Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  topBannerSliderRef.current?.slickPrev();
-                }}
-                className="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md hover:shadow-xl border border-gray-100 backdrop-blur-sm flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 opacity-85 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                aria-label="Previous banner"
-              >
-                <FiChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800" />
-              </button>
+                            return (
+                              <motion.div
+                                key={banner.id}
+                                className="topbanner-slide-item relative w-full aspect-square md:aspect-[2000/667] max-h-auto bg-white"
+                                variants={itemVariants}
+                              >
+                                <div
+                                  className="absolute inset-0 overflow-hidden cursor-pointer flex items-center justify-center bg-white"
+                                  role="link"
+                                  tabIndex={0}
+                                  aria-label={banner?.alt || banner?.title || banner?.redirectUrl || "Banner"}
+                                  onClick={() => {
+                                    const href = banner?.redirectUrl;
+                                    if (!href) return;
+                                    if (href.startsWith("/")) {
+                                      router.push(href);
+                                    } else {
+                                      window.location.href = href;
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    const href = banner?.redirectUrl;
+                                    if (!href) return;
+                                    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+                                      e.preventDefault();
+                                      if (href.startsWith("/")) {
+                                        router.push(href);
+                                      } else {
+                                        window.location.href = href;
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <picture className="absolute inset-0 w-full h-full flex items-center justify-center bg-white">
+                                    {hasMobile ? (
+                                      <source
+                                        media="(max-width: 767px)"
+                                        srcSet={banner.mobileBgImageUrl}
+                                      />
+                                    ) : null}
+                                    <img
+                                      src={banner.bgImageUrl}
+                                      alt={banner?.alt || banner?.title || "Homepage banner"}
+                                      className={`w-full h-full ${hasMobile ? 'object-cover' : 'object-contain md:object-cover'}`}
+                                      style={{ objectPosition: "center center" }}
+                                    />
+                                  </picture>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </Slider>
 
-              {/* Right Arrow Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  topBannerSliderRef.current?.slickNext();
-                }}
-                className="absolute right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md hover:shadow-xl border border-gray-100 backdrop-blur-sm flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 opacity-85 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                aria-label="Next banner"
-              >
-                <FiChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800" />
-              </button>
-            </div>
-          ) : (
-            <motion.div
-              className={`relative w-full ${bannerData.banner.items[0]?.mobileBgImageUrl ? 'aspect-square md:aspect-[2000/667]' : 'aspect-[2000/667]'} max-h-auto`}
-              variants={itemVariants}
-            >
-              <div
-                className="absolute inset-0 overflow-hidden cursor-pointer"
-                role="link"
-                tabIndex={0}
-                aria-label={bannerData.banner.items[0]?.alt || bannerData.banner.items[0]?.title || bannerData.banner.items[0]?.redirectUrl || "Banner"}
-                onClick={() => {
-                  const href = bannerData.banner.items[0]?.redirectUrl;
-                  if (!href) return;
-                  if (href.startsWith("/")) {
-                    router.push(href);
-                  } else {
-                    window.location.href = href;
-                  }
-                }}
-              >
-                <img
-                  src={bannerData.banner.items[0].bgImageUrl}
-                  alt={bannerData.banner.items[0]?.alt || bannerData.banner.items[0]?.title || "Homepage banner"}
-                  className={`absolute inset-0 w-full h-full object-fill ${bannerData.banner.items[0]?.mobileBgImageUrl ? 'hidden md:block' : 'block'}`}
-                  style={{ objectPosition: "center 30%" }}
-                />
-                {bannerData.banner.items[0]?.mobileBgImageUrl && (
-                  <img
-                    src={bannerData.banner.items[0].mobileBgImageUrl}
-                    alt={bannerData.banner.items[0]?.alt || bannerData.banner.items[0]?.title || "Homepage mobile banner"}
-                    className="block md:hidden absolute inset-0 w-full h-full object-fill"
-                  />
-                )}
-              </div>
-            </motion.div>
-          )
-        ) : (
-          <div></div>
-        )}
-      </div>
-      {/* {renderBannerCategoryNav()} */}
-    </motion.section>
-  )
+                        {/* Left Arrow Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            topBannerSliderRef.current?.slickPrev();
+                          }}
+                          className="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md hover:shadow-xl border border-gray-100 backdrop-blur-sm flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 opacity-85 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                          aria-label="Previous banner"
+                        >
+                          <FiChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800" />
+                        </button>
+
+                        {/* Right Arrow Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            topBannerSliderRef.current?.slickNext();
+                          }}
+                          className="absolute right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md hover:shadow-xl border border-gray-100 backdrop-blur-sm flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 opacity-85 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                          aria-label="Next banner"
+                        >
+                          <FiChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800" />
+                        </button>
+                      </div>
+                    ) : (
+                      (() => {
+                        const banner = topBannerItems[0];
+                        const hasMobile = Boolean(
+                          banner?.mobileBgImageUrl &&
+                          typeof banner.mobileBgImageUrl === "string" &&
+                          banner.mobileBgImageUrl.trim()
+                        );
+
+                        return (
+                          <motion.div
+                            className="topbanner-slide-item relative w-full aspect-square md:aspect-[2000/667] max-h-auto bg-white"
+                            variants={itemVariants}
+                          >
+                            <div
+                              className="absolute inset-0 overflow-hidden cursor-pointer flex items-center justify-center bg-white"
+                              role="link"
+                              tabIndex={0}
+                              aria-label={banner?.alt || banner?.title || banner?.redirectUrl || "Banner"}
+                              onClick={() => {
+                                const href = banner?.redirectUrl;
+                                if (!href) return;
+                                if (href.startsWith("/")) {
+                                  router.push(href);
+                                } else {
+                                  window.location.href = href;
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                const href = banner?.redirectUrl;
+                                if (!href) return;
+                                if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+                                  e.preventDefault();
+                                  if (href.startsWith("/")) {
+                                    router.push(href);
+                                  } else {
+                                    window.location.href = href;
+                                  }
+                                }
+                              }}
+                            >
+                              <picture className="absolute inset-0 w-full h-full flex items-center justify-center bg-white">
+                                {hasMobile ? (
+                                  <source
+                                    media="(max-width: 767px)"
+                                    srcSet={banner.mobileBgImageUrl}
+                                  />
+                                ) : null}
+                                <img
+                                  src={banner.bgImageUrl}
+                                  alt={banner?.alt || banner?.title || "Homepage banner"}
+                                  className={`w-full h-full ${hasMobile ? 'object-cover' : 'object-contain md:object-cover'}`}
+                                  style={{ objectPosition: "center center" }}
+                                />
+                              </picture>
+                            </div>
+                          </motion.div>
+                        );
+                      })()
+                    )
+                  ) : (
+                    <div></div>
+                  )}
+                </div>
+                {/* {renderBannerCategoryNav()} */}
+              </motion.section>
+            );
+          }
           case 'singlebanner':
             return (
               <motion.section
