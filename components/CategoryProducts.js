@@ -447,13 +447,15 @@ const getBannerRedirectUrls = (urls) => {
 
                     {/* Category Products Section */}
                     <div className={`relative bg-white flex flex-col md:flex-row mb-8 max-w-7xl mx-auto ${alignment === "right" ? "md:flex-row-reverse" : ""}`} >
-                      {/* Diwali Cracker Corner & Center Decorations from /uploads/diwaliFireFram.png */}
+                      {/* Diwali Cracker Corner & Center Decorations (4 corners, 1 top center, 1 bottom center) */}
+                      {/*
                       <DiwaliCornerCracker corner="tl" />
                       <DiwaliCornerCracker corner="tr" />
                       <DiwaliCornerCracker corner="bl" />
                       <DiwaliCornerCracker corner="br" />
                       <DiwaliCenterDecoration position="top" />
                       <DiwaliCenterDecoration position="bottom" />
+                      */}
                       {/* Category Banner */}
                       <div className="flex-shrink-0 relative w-full md:w-[350px] h-48 sm:h-64 md:h-auto">
                         <div style={styleObj} className={`absolute inset-0 bg-cover bg-center    ${alignment === "right" ? "md:rounded-tr-lg md:rounded-br-lg" : "md:rounded-tl-lg md:rounded-bl-lg" }`}/>
