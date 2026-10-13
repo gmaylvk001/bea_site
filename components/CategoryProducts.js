@@ -483,7 +483,7 @@ const getBannerRedirectUrls = (urls) => {
                         </div>
 
                         {/* Products Scroll */}
-                        <div className="w-full md:w-[calc(100%-350px)]">
+                        <div className="w-full md:w-[calc(100%-350px)] flex flex-col">
                           <div
                             className={`relative flex-1 py-2 border overflow-visible ${ alignment === "right" ? "pr-3 pl-2" : "pl-3 pr-2" }`}
                             style={{  borderTop: `4px solid ${categoryProduct.borderColor || categoryStyle.borderColor}`, borderBottom: `4px solid ${categoryProduct.borderColor || categoryStyle.borderColor}`,
@@ -494,7 +494,7 @@ const getBannerRedirectUrls = (urls) => {
                           {/* Products Background Image - Desktop */}
                           {(sanitizedProductBgDesktop || sanitizedProductBgMobile) && (
                             <div
-                              className={`hidden md:block absolute inset-0 bg-contain bg-center bg-no-repeat pointer-events-none ${
+                              className={`hidden md:block absolute inset-0 bg-[length:100%_100%] bg-center bg-no-repeat pointer-events-none ${
                                 alignment === "right" ? "md:rounded-tl-lg md:rounded-bl-lg" : "md:rounded-tr-lg md:rounded-br-lg"
                               }`}
                               style={{
@@ -506,7 +506,7 @@ const getBannerRedirectUrls = (urls) => {
                           {/* Products Background Image - Mobile */}
                           {(sanitizedProductBgMobile || sanitizedProductBgDesktop) && (
                             <div
-                              className="block md:hidden absolute inset-0 bg-contain bg-center bg-no-repeat pointer-events-none rounded-b-lg"
+                              className="block md:hidden absolute inset-0 bg-[length:100%_100%] bg-center bg-no-repeat pointer-events-none rounded-b-lg"
                               style={{
                                 backgroundImage: `url("${sanitizedProductBgMobile || sanitizedProductBgDesktop}")`,
                               }}
