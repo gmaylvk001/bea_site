@@ -26,7 +26,7 @@ export default function ClientLayout({ children, initialCategories = [] }) {
               <SmartLeadConfigProvider>
                 <VisitorIntentProvider>
                   {!pathname?.startsWith("/admin") && <CustomHeader initialCategories={initialCategories} />}
-                  <main className="relative">{children}</main>
+                  <main className="relative overflow-x-clip">{children}</main>
                   {!pathname?.startsWith("/admin") && <CustomFooter initialCategories={initialCategories} />}
                   <GlobalModals />
                   <SmartLeadPopupHost />

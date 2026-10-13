@@ -1279,7 +1279,7 @@ export default function HomeComponent() {
           case 'features':
               return (
               <section className="home-section pt-7" id="features">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-6 gap-x-3 sm:gap-6 lg:gap-8 text-center px-2 sm:px-0">
                 {features.map((feature, index) => (
                   <div
                     key={index}
@@ -1295,7 +1295,7 @@ export default function HomeComponent() {
                   >
                     {/* Image instead of Icon */}
                     <div
-                      className="mb-4 img-flip"
+                      className="mb-2 sm:mb-4 img-flip"
                       style={{
                         transition: "transform 0.5s",
                         transformStyle: "preserve-3d",
@@ -1304,17 +1304,17 @@ export default function HomeComponent() {
                       <img
                         src={feature.image}
                         alt={feature.title}
-                        className="w-16 h-16 object-contain"
+                        className="w-12 h-12 sm:w-16 sm:h-16 object-contain"
                       />
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:transition-colors duration-300">
+                    <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 group-hover:transition-colors duration-300">
                       {feature.title}
                     </h3>
 
                     {/* Description */}
-                    <p className="text-gray-600 text-sm leading-relaxed max-w-[250px] group-hover:transition-colors duration-300">
+                    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed max-w-[250px] group-hover:transition-colors duration-300">
                       {feature.description}
                     </p>
                   </div>

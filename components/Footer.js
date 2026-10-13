@@ -630,83 +630,83 @@ const Footer = ({ initialCategories = [] }) => {
           <div className="py-3 bg-gray-50">
             <div className="container mx-auto px-4 lg:max-w-[1400px] lg:px-2 min-[1440px]:max-w-[1600px] min-[1440px]:px-1 min-[2560px]:max-w-[2200px] min-[2560px]:px-1 min-[3840px]:max-w-[3200px] min-[3840px]:px-0">
 
-              <div className="w-full lg:w-12/12 mx-auto bg-white rounded-2xl shadow-xl px-6 py-4">
+              <div className="w-full lg:w-12/12 mx-auto bg-white rounded-2xl shadow-xl px-3 sm:px-6 py-4">
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-6 gap-y-5 gap-x-4 sm:gap-4">
 
                   {/* Item 1 */}
-                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
-                    <IoShieldCheckmark className="text-3xl text-blue-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3 px-1 sm:px-4 lg:px-6 lg:border-r border-gray-200 min-w-0">
+                    <IoShieldCheckmark className="text-2xl sm:text-3xl text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-[#041b4d] text-xs sm:text-sm lg:whitespace-nowrap leading-tight sm:leading-normal">
                         100% Original Products
                       </h4>
-                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                      <p className="text-[11px] sm:text-xs text-gray-500 lg:whitespace-nowrap leading-tight mt-0.5 sm:mt-0">
                         Authorized Brand Partner
                       </p>
                     </div>
                   </div>
 
                   {/* Item 2 */}
-                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
-                    <IoShieldCheckmark className="text-3xl text-blue-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3 px-1 sm:px-4 lg:px-6 lg:border-r border-gray-200 min-w-0">
+                    <IoShieldCheckmark className="text-2xl sm:text-3xl text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-[#041b4d] text-xs sm:text-sm lg:whitespace-nowrap leading-tight sm:leading-normal">
                         2 Year Warranty
                       </h4>
-                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                      <p className="text-[11px] sm:text-xs text-gray-500 lg:whitespace-nowrap leading-tight mt-0.5 sm:mt-0">
                         On Select Products
                       </p>
                     </div>
                   </div>
 
                   {/* Item 3 */}
-                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
-                    <TbTruckDelivery className="text-3xl text-blue-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3 px-1 sm:px-4 lg:px-6 lg:border-r border-gray-200 min-w-0">
+                    <TbTruckDelivery className="text-2xl sm:text-3xl text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-[#041b4d] text-xs sm:text-sm lg:whitespace-nowrap leading-tight sm:leading-normal">
                         Fast Delivery
                       </h4>
-                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                      <p className="text-[11px] sm:text-xs text-gray-500 lg:whitespace-nowrap leading-tight mt-0.5 sm:mt-0">
                         Across Tamil Nadu
                       </p>
                     </div>
                   </div>
 
                   {/* Item 4 */}
-                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
-                    <IoReload className="text-3xl text-blue-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3 px-1 sm:px-4 lg:px-6 lg:border-r border-gray-200 min-w-0">
+                    <IoReload className="text-2xl sm:text-3xl text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-[#041b4d] text-xs sm:text-sm lg:whitespace-nowrap leading-tight sm:leading-normal">
                         Easy Returns
                       </h4>
-                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                      <p className="text-[11px] sm:text-xs text-gray-500 lg:whitespace-nowrap leading-tight mt-0.5 sm:mt-0">
                         Hassle Free
                       </p>
                     </div>
                   </div>
 
                   {/* Item 5 */}
-                  <div className="flex items-center gap-3 px-6 lg:border-r border-gray-200">
-                    <IoStorefront className="text-3xl text-blue-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3 px-1 sm:px-4 lg:px-6 lg:border-r border-gray-200 min-w-0">
+                    <IoStorefront className="text-2xl sm:text-3xl text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-[#041b4d] text-xs sm:text-sm lg:whitespace-nowrap leading-tight sm:leading-normal">
                         Best Prices
                       </h4>
-                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                      <p className="text-[11px] sm:text-xs text-gray-500 lg:whitespace-nowrap leading-tight mt-0.5 sm:mt-0">
                         Top Brands
                       </p>
                     </div>
                   </div>
 
                   {/* Item 6 */}
-                  <div className="flex items-center gap-3 px-6">
-                    <IoCardOutline className="text-3xl text-blue-600 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-[#041b4d] text-sm whitespace-nowrap">
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3 px-1 sm:px-4 lg:px-6 min-w-0">
+                    <IoCardOutline className="text-2xl sm:text-3xl text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-[#041b4d] text-xs sm:text-sm lg:whitespace-nowrap leading-tight sm:leading-normal">
                         No Cost EMI
                       </h4>
-                      <p className="text-xs text-gray-500 whitespace-nowrap">
+                      <p className="text-[11px] sm:text-xs text-gray-500 lg:whitespace-nowrap leading-tight mt-0.5 sm:mt-0">
                         Easy EMI
                       </p>
                     </div>

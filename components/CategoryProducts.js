@@ -25,22 +25,22 @@ const DIWALI_ITEM_SIZE = "w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-24 lg:h
 const DiwaliCornerCracker = ({ corner }) => {
   const configs = {
     tl: {
-      position: "-top-3 -left-3 sm:-top-4 sm:-left-4 md:-top-5 md:-left-5 lg:-top-6 lg:-left-6",
+      position: "-top-3 left-0 sm:-top-4 sm:-left-4 md:-top-5 md:-left-5 lg:-top-6 lg:-left-6",
       src: "/uploads/leftcorner.png",
       alt: "Diwali Top-Left Cracker",
     },
     tr: {
-      position: "-top-3 -right-3 sm:-top-4 sm:-right-4 md:-top-5 md:-right-5 lg:-top-6 lg:-right-6",
+      position: "-top-3 right-0 sm:-top-4 sm:-right-4 md:-top-5 md:-right-5 lg:-top-6 lg:-right-6",
       src: "/uploads/rightcorner.png",
       alt: "Diwali Top-Right Cracker",
     },
     bl: {
-      position: "-bottom-3 -left-3 sm:-bottom-4 sm:-left-4 md:-bottom-5 md:-left-5 lg:-bottom-6 lg:-left-6",
+      position: "-bottom-3 left-0 sm:-bottom-4 sm:-left-4 md:-bottom-5 md:-left-5 lg:-bottom-6 lg:-left-6",
       src: "/uploads/bottomleft.png",
       alt: "Diwali Bottom-Left Cracker",
     },
     br: {
-      position: "-bottom-3 -right-3 sm:-bottom-4 sm:-right-4 md:-bottom-5 md:-right-5 lg:-bottom-6 lg:-right-6",
+      position: "-bottom-3 right-0 sm:-bottom-4 sm:-right-4 md:-bottom-5 md:-right-5 lg:-bottom-6 lg:-right-6",
       src: "/uploads/bottomrightCorner.png",
       alt: "Diwali Bottom-Right Cracker",
     },

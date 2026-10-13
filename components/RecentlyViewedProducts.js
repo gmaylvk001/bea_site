@@ -201,7 +201,7 @@ const RecentlyViewedProducts = () => {
             type="button"
             onClick={prev}
             disabled={startIndex === 0}
-            className="absolute -left-3 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center hover:bg-blue-600 hover:text-white transition disabled:opacity-40"
+            className="absolute left-0 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center hover:bg-blue-600 hover:text-white transition disabled:opacity-40"
             aria-label="Previous recently viewed products"
           >
             <ChevronLeft size={16} aria-hidden="true" />
@@ -210,7 +210,7 @@ const RecentlyViewedProducts = () => {
             type="button"
             onClick={next}
             disabled={startIndex + visibleCount >= recentProducts.length}
-            className="absolute -right-3 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center hover:bg-blue-600 hover:text-white transition disabled:opacity-40"
+            className="absolute right-0 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center hover:bg-blue-600 hover:text-white transition disabled:opacity-40"
             aria-label="Next recently viewed products"
           >
             <ChevronRight size={16} aria-hidden="true" />

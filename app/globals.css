@@ -40,6 +40,7 @@
   }
 }
 
+html,
 body {
   /* color: var(--foreground);
   background: var(--background); */
@@ -47,6 +48,7 @@ body {
   background-color: white;
   /* font-family: Quicksand,sans-serif; */
   overflow-x: hidden;
+  max-width: 100vw;
   font-family: "Quicksand", sans-serif;
 }
 
