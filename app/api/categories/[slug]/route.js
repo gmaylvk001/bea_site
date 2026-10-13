@@ -129,9 +129,13 @@ export async function GET(request, { params }) {
       }));
     }
 
-    // Fetch category-level filters
+    // Fetch category-level filters (checking all category and subcategory IDs)
+    const categoryIdStrings = (allCategoryIds || [main_category._id]).map((id) => id.toString());
     const categoryFilters = await CategoryFilter.find({
-      category_id: main_category._id,
+      $or: [
+        { category_id: { $in: categoryIdStrings } },
+        { category_id: { $in: allCategoryIds } },
+      ],
     }).lean();
 
     const filterIds = [
