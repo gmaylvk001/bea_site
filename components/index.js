@@ -1421,7 +1421,7 @@ export default function HomeComponent() {
                             return (
                               <motion.div
                                 key={banner.id}
-                                className="topbanner-slide-item relative w-full aspect-square md:aspect-[2000/667] max-h-auto bg-white"
+                                className="topbanner-slide-item relative w-full aspect-[2000/667] max-h-auto bg-white"
                                 variants={itemVariants}
                               >
                                 <div
@@ -1452,16 +1452,17 @@ export default function HomeComponent() {
                                   }}
                                 >
                                   <picture className="absolute inset-0 w-full h-full flex items-center justify-center bg-white">
-                                    {hasMobile ? (
+                                    {/* Mobile size banner display option commented out - desktop banner shown across all displays */}
+                                    {/* {hasMobile ? (
                                       <source
                                         media="(max-width: 767px)"
                                         srcSet={banner.mobileBgImageUrl}
                                       />
-                                    ) : null}
+                                    ) : null} */}
                                     <img
                                       src={banner.bgImageUrl}
                                       alt={banner?.alt || banner?.title || "Homepage banner"}
-                                      className={`w-full h-full ${hasMobile ? 'object-cover' : 'object-contain md:object-cover'}`}
+                                      className="w-full h-full object-cover"
                                       style={{ objectPosition: "center center" }}
                                     />
                                   </picture>
@@ -1508,7 +1509,7 @@ export default function HomeComponent() {
 
                         return (
                           <motion.div
-                            className="topbanner-slide-item relative w-full aspect-square md:aspect-[2000/667] max-h-auto bg-white"
+                            className="topbanner-slide-item relative w-full aspect-[2000/667] max-h-auto bg-white"
                             variants={itemVariants}
                           >
                             <div
@@ -1539,16 +1540,17 @@ export default function HomeComponent() {
                               }}
                             >
                               <picture className="absolute inset-0 w-full h-full flex items-center justify-center bg-white">
-                                {hasMobile ? (
+                                {/* Mobile size banner display option commented out - desktop banner shown across all displays */}
+                                {/* {hasMobile ? (
                                   <source
                                     media="(max-width: 767px)"
                                     srcSet={banner.mobileBgImageUrl}
                                   />
-                                ) : null}
+                                ) : null} */}
                                 <img
                                   src={banner.bgImageUrl}
                                   alt={banner?.alt || banner?.title || "Homepage banner"}
-                                  className={`w-full h-full ${hasMobile ? 'object-cover' : 'object-contain md:object-cover'}`}
+                                  className="w-full h-full object-cover"
                                   style={{ objectPosition: "center center" }}
                                 />
                               </picture>
