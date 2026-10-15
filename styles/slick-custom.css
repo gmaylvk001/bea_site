@@ -75,7 +75,7 @@
   }
 }
 
-/* Ensure mobile top banner slide height and aspect ratio is fixed and responsive */
+/* Ensure mobile top banner slide height and aspect ratio is responsive */
 .topbanner-slider .slick-slide > div {
   width: 100%;
   height: 100%;
@@ -83,15 +83,23 @@
 
 .topbanner-slide-item {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 2000 / 667;
 }
 
 @media (max-width: 767px) {
   .topbanner-slider .slick-slide > div {
     height: 100% !important;
   }
+  /* Mobile 1:1 aspect ratio commented out - keep desktop banner ratio on all screens */
+  /*
   .topbanner-slide-item {
     aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+  */
+  .topbanner-slide-item {
+    aspect-ratio: 2000 / 667 !important;
     width: 100% !important;
     height: auto !important;
   }
@@ -102,5 +110,24 @@
     aspect-ratio: 2000 / 667 !important;
     width: 100% !important;
     height: auto !important;
+  }
+}
+
+@media (max-width: 1279px) {
+  .topbanner-slide-item--has-mobile {
+    aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .topbanner-slide-item--desktop-only {
+    aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .topbanner-slide-item--desktop-only img {
+    object-fit: contain;
+    object-position: center;
   }
 }
