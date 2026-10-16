@@ -230,7 +230,7 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
       const { products, pagination: paginationData, filters: returnedFilters } = data;
       setProducts(products || []);
 
-      if (returnedFilters) {
+      if (returnedFilters && (!filterGroupsRef.current || Object.keys(filterGroupsRef.current).length === 0)) {
         const groups = {};
         returnedFilters.forEach(filter => {
           const groupId = filter.filter_group_name;
@@ -248,19 +248,20 @@ export default function CategoryBrandComponent({ categorySlug, brandSlug }) {
         });
         setFilterGroups(groups);
         filterGroupsRef.current = groups;
+      }
 
-        // Keep groups with selected filters expanded
-        if (currentFilters.filters && currentFilters.filters.length > 0) {
-          setExpandedFilters(prev => {
-            const updated = { ...prev };
-            Object.values(groups).forEach(group => {
-              if (group.filters.some(f => currentFilters.filters.includes(f._id))) {
-                updated[group._id] = true;
-              }
-            });
-            return updated;
+      // Keep groups with selected filters expanded
+      if (currentFilters.filters && currentFilters.filters.length > 0) {
+        setExpandedFilters(prev => {
+          const updated = { ...prev };
+          const activeGroups = filterGroupsRef.current || {};
+          Object.values(activeGroups).forEach(group => {
+            if (group.filters && group.filters.some(f => currentFilters.filters.includes(f._id))) {
+              updated[group._id] = true;
+            }
           });
-        }
+          return updated;
+        });
       }
 
       if ((!products || products.length === 0) && pageNum === 1) {

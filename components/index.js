@@ -1452,13 +1452,12 @@ export default function HomeComponent() {
                                   }}
                                 >
                                   <picture className="absolute inset-0 w-full h-full flex items-center justify-center bg-white">
-                                    {/* Mobile size banner display option commented out - desktop banner shown across all displays */}
-                                    {/* {hasMobile ? (
+                                    {hasMobile ? (
                                       <source
-                                        media="(max-width: 1279px)"
+                                        media="(max-width: 767px)"
                                         srcSet={banner.mobileBgImageUrl}
                                       />
-                                    ) : null} */}
+                                    ) : null}
                                     <img
                                       src={banner.bgImageUrl}
                                       alt={banner?.alt || banner?.title || "Homepage banner"}
@@ -1540,13 +1539,12 @@ export default function HomeComponent() {
                               }}
                             >
                               <picture className="absolute inset-0 w-full h-full flex items-center justify-center bg-white">
-                                {/* Mobile size banner display option commented out - desktop banner shown across all displays */}
-                                {/* {hasMobile ? (
+                                {hasMobile ? (
                                   <source
-                                    media="(max-width: 1279px)"
+                                    media="(max-width: 767px)"
                                     srcSet={banner.mobileBgImageUrl}
                                   />
-                                ) : null} */}
+                                ) : null}
                                 <img
                                   src={banner.bgImageUrl}
                                   alt={banner?.alt || banner?.title || "Homepage banner"}

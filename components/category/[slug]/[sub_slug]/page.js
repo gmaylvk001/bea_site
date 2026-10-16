@@ -139,6 +139,12 @@ const CUSTOM_FILTER_ORDER = [
     });
     return groups;
   });
+  const filterGroupsRef = useRef(filterGroups);
+  useEffect(() => {
+    if (filterGroups && Object.keys(filterGroups).length > 0) {
+      filterGroupsRef.current = filterGroups;
+    }
+  }, [filterGroups]);
   const [loading, setLoading] = useState(!initialProducts?.length);
   const { slug,sub_slug } = useParams();
   const [sortOption, setSortOption] = useState('');
@@ -365,6 +371,7 @@ Object.keys(groups).forEach(key => {
 });
 
       setFilterGroups(groups);
+      filterGroupsRef.current = groups;
       if (categoryData.products?.length > 0) {
       await fetchFilteredProducts(categoryData, urlPage, true, initialFilters, groups, urlSort);
       }else{
@@ -417,7 +424,7 @@ Object.keys(groups).forEach(key => {
         query.set('filters', currentFilters.filters.join(','));
         // Group filter IDs by their filter group name
         // This enables AND-between-groups, OR-within-group logic in the API
-        const groupsToUse = groupsOverride || filterGroups || {};
+        const groupsToUse = groupsOverride || filterGroupsRef.current || filterGroups || {};
         const filtersByGroup = {};
         currentFilters.filters.forEach(filterId => {
           for (const group of Object.values(groupsToUse)) {
@@ -452,24 +459,25 @@ Object.keys(groups).forEach(key => {
       brands: filteredBrands,
       }));
       }
-       if (filteredFilters) {
-      const groups = {};
-      filteredFilters.forEach(filter => {
-        const groupId = filter.filter_group_name;
-        if (groupId) {
-          if (!groups[groupId]) {
-            groups[groupId] = {
-              _id: groupId,
-              name: filter.filter_group_name,
-              slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
-              filters: []
-            };
-          }
-          groups[groupId].filters.push(filter);
-        }
-      });
-      setFilterGroups(groups);
-    }  
+      if (filteredFilters && (!filterGroupsRef.current || Object.keys(filterGroupsRef.current).length === 0)) {
+       const groups = {};
+       filteredFilters.forEach(filter => {
+         const groupId = filter.filter_group_name;
+         if (groupId) {
+           if (!groups[groupId]) {
+             groups[groupId] = {
+               _id: groupId,
+               name: filter.filter_group_name,
+               slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
+               filters: []
+             };
+           }
+           groups[groupId].filters.push(filter);
+         }
+       });
+       setFilterGroups(groups);
+       filterGroupsRef.current = groups;
+     }  
       // Update pagination state
       setPagination({
         currentPage: paginationData.currentPage,
