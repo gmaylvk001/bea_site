@@ -38,7 +38,12 @@ const cartItemSchema = new mongoose.Schema({
       price: Number,
     },
   ],
-
+  isCombo: { type: Boolean, default: false },
+  comboId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ComboProduct',
+    default: null,
+  },
 }, { _id: false });
 
 const cartSchema = new mongoose.Schema({

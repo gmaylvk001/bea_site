@@ -1,6 +1,7 @@
 import dbConnect from "@/lib/db";
 import EcomOrderInfo from "@/models/ecom_order_info";
 import Product from "@/models/product";
+import ComboProduct from "@/models/ComboProduct";
 import mongoose from 'mongoose';
 import Coupon from '@/models/ecom_offer_info';
 import Usedcoupon from '@/models/ecom_coupon_track_info';
@@ -44,6 +45,26 @@ export async function POST(req) {
     // Validate required fields
     if (!user_id || !email_address || !order_phonenumber || !order_item?.length || !order_amount) {
       return Response.json({ success: false, message: "Missing required fields" }, { status: 400 });
+    }
+
+    // Validate that no combo products in the order are expired
+    const now = new Date();
+    for (const item of order_item) {
+      if (item.productId) {
+        const product = await Product.findById(item.productId);
+        if (!product) {
+          const combo = await ComboProduct.findById(item.productId);
+          if (combo) {
+            const isOfferEnded = combo.status !== "Active" || now > new Date(combo.offer_end) || now < new Date(combo.offer_start);
+            if (isOfferEnded) {
+              return Response.json(
+                { success: false, message: `Combo offer "${combo.name}" has expired and cannot be purchased.` },
+                { status: 400 }
+              );
+            }
+          }
+        }
+      }
     }
 
     const resolvedGstBusinessName = gst_business_name || gst_name || null;
@@ -121,6 +142,12 @@ export async function POST(req) {
           if (product && product.quantity > 0) {
             product.quantity = product.quantity - item.quantity;
             await product.save();
+          } else if (!product) {
+            const combo = await ComboProduct.findById(item.productId);
+            if (combo && combo.quantity > 0) {
+              combo.quantity = Math.max(0, combo.quantity - item.quantity);
+              await combo.save();
+            }
           }
         }
       }

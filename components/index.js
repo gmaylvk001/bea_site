@@ -1421,7 +1421,7 @@ export default function HomeComponent() {
                             return (
                               <motion.div
                                 key={banner.id}
-                                className="topbanner-slide-item relative w-full aspect-[2000/667] max-h-auto bg-white"
+                                className={`topbanner-slide-item relative w-full aspect-[2000/667] max-h-auto bg-white${hasMobile ? " topbanner-slide-item--has-mobile" : " topbanner-slide-item--desktop-only"}`}
                                 variants={itemVariants}
                               >
                                 <div
@@ -1455,7 +1455,7 @@ export default function HomeComponent() {
                                     {/* Mobile size banner display option commented out - desktop banner shown across all displays */}
                                     {/* {hasMobile ? (
                                       <source
-                                        media="(max-width: 767px)"
+                                        media="(max-width: 1279px)"
                                         srcSet={banner.mobileBgImageUrl}
                                       />
                                     ) : null} */}
@@ -1509,7 +1509,7 @@ export default function HomeComponent() {
 
                         return (
                           <motion.div
-                            className="topbanner-slide-item relative w-full aspect-[2000/667] max-h-auto bg-white"
+                            className={`topbanner-slide-item relative w-full aspect-[2000/667] max-h-auto bg-white${hasMobile ? " topbanner-slide-item--has-mobile" : " topbanner-slide-item--desktop-only"}`}
                             variants={itemVariants}
                           >
                             <div
@@ -1543,7 +1543,7 @@ export default function HomeComponent() {
                                 {/* Mobile size banner display option commented out - desktop banner shown across all displays */}
                                 {/* {hasMobile ? (
                                   <source
-                                    media="(max-width: 767px)"
+                                    media="(max-width: 1279px)"
                                     srcSet={banner.mobileBgImageUrl}
                                   />
                                 ) : null} */}

@@ -112,3 +112,22 @@
     height: auto !important;
   }
 }
+
+@media (max-width: 1279px) {
+  .topbanner-slide-item--has-mobile {
+    aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .topbanner-slide-item--desktop-only {
+    aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .topbanner-slide-item--desktop-only img {
+    object-fit: contain;
+    object-position: center;
+  }
+}

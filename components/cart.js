@@ -22,6 +22,18 @@ const slugify = (str) => {
     .trim();
 };
 
+const getItemImage = (item) => {
+  if (item?.fullImage) return item.fullImage;
+  if (!item?.image) return "/no-image.jpg";
+  if (item.image.startsWith("http") || item.image.startsWith("/")) return item.image;
+  return `/uploads/products/${item.image}`;
+};
+
+const getItemLink = (item) => {
+  if (item?.isCombo) return `/combo-offers#combo-${item.productId}`;
+  return `/product/${slugify(item?.name || "")}`;
+};
+
 const features = [
   { icon: "🚗", title: "Free Shipping", description: "Free shipping all over the US" },
   { icon: "🔒", title: "100% Satisfaction", description: "Guaranteed satisfaction with every order" },
@@ -1250,10 +1262,18 @@ const calculateSubtotal = () => {
     ga4ViewCart({ items, value: calculateTotal() });
   }, [loading, cartData]);
 
+  const hasExpiredItems = (cartData?.items || []).some(
+    (item) => item?.isCombo && (item?.isExpired || item?.isOfferEnded)
+  );
+
   const proceedToCheckout = () => {
-  
-  if (!cartData) return;
-  console.log("DEBUG appliedCoupon at checkout click:", appliedCoupon);
+    if (!cartData) return;
+    if (hasExpiredItems) {
+      setErrorMessage("One or more combo offers in your cart have expired. Please remove them to proceed with checkout.");
+      setShowErrorModal(true);
+      return;
+    }
+    console.log("DEBUG appliedCoupon at checkout click:", appliedCoupon);
 
   // Calculate totals
 
@@ -1292,8 +1312,9 @@ const calculateSubtotal = () => {
         discount: item.discount || 0,
 
         image: item.image,
-         warrantyData: item.warrantyData || null,
-
+        fullImage: item.fullImage || (item.isCombo ? (item.image?.startsWith('/') ? item.image : `/uploads/combos/${item.image}`) : null),
+        isCombo: Boolean(item.isCombo),
+        warrantyData: item.warrantyData || null,
       }))
 
     },
@@ -1542,26 +1563,35 @@ return (
                    <div key={item.productId}>
 
               {/* ── DESKTOP VIEW (lg+) ── */}
-              <div className="hidden lg:block border border-[#e5e7eb] rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+              <div className={`hidden lg:block border rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] ${
+                item.isCombo && item.isExpired ? "border-red-300 bg-red-50/20" : "border-[#e5e7eb]"
+              }`}>
                 <div className="grid grid-cols-1 lg:grid-cols-[140px_1fr_220px] gap-6 items-start">
 
                   {/* Image */}
                   <div className="w-40 h-40 flex items-center justify-center border rounded-md overflow-hidden mx-auto sm:mx-0">
-                    <Link href={`/product/${slugify(item.name)}`}>
-                      <Image
-                        src={`/uploads/products/${item.image}`}
+                    <Link href={getItemLink(item)}>
+                      <img
+                        src={getItemImage(item)}
                         alt={item.name}
-                        width={160}
-                        height={220}
-                        className="object-contain w-full h-full"
+                        className="object-contain w-full h-full max-h-[160px]"
                       />
                     </Link>
                   </div>
 
                   {/* Info */}
                   <div className="flex flex-col gap-1 min-w-0">
-                    <h3 className="text-[12px] text-gray-500 mb-1">{item.item_code}</h3>
-                    <Link href={`/product/${slugify(item.name)}`}>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[12px] text-gray-500 mb-1">{item.item_code}</h3>
+                      {item.isCombo && (
+                        <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full mb-1 ${
+                          item.isExpired ? "bg-red-100 text-red-700" : "bg-purple-100 text-purple-700"
+                        }`}>
+                          {item.isExpired ? "Offer Expired" : "Combo Offer"}
+                        </span>
+                      )}
+                    </div>
+                    <Link href={getItemLink(item)}>
                       <p className="text-[20px] font-semibold text-[#0f3cc9] leading-6 mb-2">
                         {item.name}
                       </p>
@@ -1618,18 +1648,21 @@ return (
     + ₹{item.warrantyData.price?.toLocaleString("en-IN")} (Warranty)
   </p>
 )}
-                    <div className="border rounded-md overflow-hidden flex items-center mr-8 h-[40px] w-[120px]">
+                    <div className={`border rounded-md overflow-hidden flex items-center mr-8 h-[40px] w-[120px] ${
+                      item.isCombo && item.isExpired ? "opacity-40 cursor-not-allowed bg-gray-100" : ""
+                    }`}>
                       <button
                         className="w-10 h-full text-lg disabled:opacity-40"
                         onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
-                        disabled={item.quantity <= 1}
+                        disabled={item.isExpired || item.quantity <= 1}
                       >
                         −
                       </button>
                       <span className="w-9 text-center text-sm font-medium">{item.quantity}</span>
                       <button
-                        className="w-10 h-full text-lg"
+                        className="w-10 h-full text-lg disabled:opacity-40"
                         onClick={() => updateQuantity(item.productId, item.quantity + 1, item.original_quantity)}
+                        disabled={item.isExpired}
                       >
                         +
                       </button>
@@ -1644,19 +1677,31 @@ return (
 
                   {/* Row 2 - Wishlist & Remove + Delivery */}
                   <div className="col-span-full mt-4 flex items-start justify-between">
-                    <div className="flex gap-3 mt-4">
-                 <button
-  className="border border-[#d7def8] text-[#0f3cc9] px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap flex items-center gap-1.5"
-  onClick={() => moveToWishlist(item.productId)}
->
-  ♡ Move to Wishlist
-</button>
-                      <button
-                        onClick={() => confirmRemoveItem(item.productId)}
-                        className="border border-[#d7def8] text-[#0f3cc9] px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
-                      >
-                        🗑 Remove
-                      </button>
+                    <div>
+                      {item.isCombo && item.isExpired && (
+                        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800 max-w-lg">
+                          <p className="font-bold text-sm text-red-700 mb-0.5">Combo offer has ended</p>
+                          <p className="text-red-600 leading-relaxed">
+                            One or more combo offers in your cart have expired and are no longer available for purchase. Please remove the expired combo from your cart to proceed with checkout.
+                          </p>
+                        </div>
+                      )}
+                      <div className="flex gap-3">
+                        {!item?.isCombo && (
+                          <button
+                            className="border border-[#d7def8] text-[#0f3cc9] px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap flex items-center gap-1.5"
+                            onClick={() => moveToWishlist(item.productId)}
+                          >
+                            ♡ Move to Wishlist
+                          </button>
+                        )}
+                        <button
+                          onClick={() => confirmRemoveItem(item.productId)}
+                          className="border border-[#d7def8] text-[#0f3cc9] px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
+                        >
+                          🗑 Remove
+                        </button>
+                      </div>
                     </div>
     {itemIndex === 0 && <div className="bg-[#f6f8fc] border rounded-lg p-3 w-[380px]">
   <p className="font-medium text-sm mb-3 flex items-center gap-1.5">
@@ -1706,16 +1751,16 @@ return (
               {/* ── END DESKTOP CARD ── */}
 
               {/* ── MOBILE / TABLET VIEW (< lg) ── */}
-              <div className="lg:hidden border border-[#e5e7eb] rounded-xl bg-white overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+              <div className={`lg:hidden border rounded-xl bg-white overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)] ${
+                item.isCombo && item.isExpired ? "border-red-300 bg-red-50/20" : "border-[#e5e7eb]"
+              }`}>
 
                 {/* 1. Image */}
                 <div className="flex justify-center items-center bg-gray-50 py-5 border-b border-gray-100">
-                  <Link href={`/product/${slugify(item.name)}`}>
-                    <Image
-                      src={`/uploads/products/${item.image}`}
+                  <Link href={getItemLink(item)}>
+                    <img
+                      src={getItemImage(item)}
                       alt={item.name}
-                      width={160}
-                      height={160}
                       className="object-contain w-[140px] h-[140px]"
                     />
                   </Link>
@@ -1723,12 +1768,22 @@ return (
 
                 {/* 2. Name + Specs */}
                 <div className="px-4 pt-4 pb-2">
-                  <p className="text-[11px] text-gray-400 mb-1">{item.item_code}</p>
-                  <Link href={`/product/${slugify(item.name)}`}>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[11px] text-gray-400 mb-1">{item.item_code}</p>
+                    {item.isCombo && (
+                      <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full mb-1 ${
+                        item.isExpired ? "bg-red-100 text-red-700" : "bg-purple-100 text-purple-700"
+                      }`}>
+                        {item.isExpired ? "Offer Expired" : "Combo"}
+                      </span>
+                    )}
+                  </div>
+                  <Link href={getItemLink(item)}>
                     <p className="text-[16px] font-semibold text-[#0f3cc9] leading-snug mb-2">
                       {item.name}
                     </p>
                   </Link>
+
                   {item.specs?.length > 0 && (
                     <ul className="flex flex-col gap-1 mt-1">
                       {item.specs.slice(0, 3).map((spec, i) => {
@@ -1783,36 +1838,51 @@ return (
                 </div>
 
                 {/* 4. Quantity + Wishlist + Remove */}
-                <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between gap-3">
-                  <div className="border rounded-md overflow-hidden flex items-center h-[36px]">
-                    <button
-                      className="w-9 h-full text-lg text-gray-600 disabled:opacity-40"
-                      onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
-                      disabled={item.quantity <= 1}
-                    >
-                      −
-                    </button>
-                    <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                    <button
-                      className="w-9 h-full text-lg text-gray-600"
-                      onClick={() => updateQuantity(item.productId, item.quantity + 1, item.original_quantity)}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                  <button
-  className="border border-[#d7def8] text-[#0f3cc9] px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap flex items-center gap-1.5"
-  onClick={() => moveToWishlist(item.productId)}
->
-  ♡ Wishlist
-</button>
-                    <button
-                      onClick={() => confirmRemoveItem(item.productId)}
-                      className="border border-[#d7def8] text-[#0f3cc9] px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
-                    >
-                      🗑 Remove
-                    </button>
+                <div className="px-4 py-3 border-t border-gray-100 flex flex-col gap-2.5">
+                  {item.isCombo && item.isExpired && (
+                    <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800">
+                      <p className="font-bold text-xs text-red-700 mb-0.5">Combo offer has ended</p>
+                      <p className="text-red-600 leading-relaxed text-[11px]">
+                        One or more combo offers in your cart have expired and are no longer available for purchase. Please remove the expired combo from your cart to proceed with checkout.
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className={`border rounded-md overflow-hidden flex items-center h-[36px] ${
+                      item.isCombo && item.isExpired ? "opacity-40 cursor-not-allowed bg-gray-100" : ""
+                    }`}>
+                      <button
+                        className="w-9 h-full text-lg text-gray-600 disabled:opacity-40"
+                        onClick={() => updateQuantity(item.productId, item.quantity - 1, null)}
+                        disabled={item.isExpired || item.quantity <= 1}
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                      <button
+                        className="w-9 h-full text-lg text-gray-600 disabled:opacity-40"
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1, item.original_quantity)}
+                        disabled={item.isExpired}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      {!item?.isCombo && (
+                        <button
+                          className="border border-[#d7def8] text-[#0f3cc9] px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap flex items-center gap-1.5"
+                          onClick={() => moveToWishlist(item.productId)}
+                        >
+                          ♡ Wishlist
+                        </button>
+                      )}
+                      <button
+                        onClick={() => confirmRemoveItem(item.productId)}
+                        className="border border-[#d7def8] text-[#0f3cc9] px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap"
+                      >
+                        🗑 Remove
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1994,11 +2064,19 @@ return (
 
             <button
               onClick={proceedToCheckout}
-              className="w-full py-3 rounded-md text-white font-semibold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all"
-              style={{ backgroundColor: "#2453D3" }}
+              disabled={hasExpiredItems}
+              className={`w-full py-3 rounded-md text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                hasExpiredItems ? "cursor-not-allowed opacity-60" : "hover:brightness-110"
+              }`}
+              style={{ backgroundColor: hasExpiredItems ? "#9ca3af" : "#2453D3" }}
             >
-              <MdLock className="text-[16px]" /> Proceed Securely
+              <MdLock className="text-[16px]" /> {hasExpiredItems ? "Remove Expired Items to Proceed" : "Proceed Securely"}
             </button>
+            {hasExpiredItems && (
+              <p className="text-xs text-red-600 font-semibold text-center mt-2">
+                ⚠️ Your cart contains expired combo offers. Please remove them to proceed.
+              </p>
+            )}
 
             {/* Trust badges */}
 <div className="grid grid-cols-4 gap-2 pt-2 text-center">
@@ -2152,11 +2230,19 @@ return (
 
             <button
               onClick={proceedToCheckout}
-              className="w-full py-3 rounded-md text-white font-semibold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all"
-              style={{ backgroundColor: "#2453D3" }}
+              disabled={hasExpiredItems}
+              className={`w-full py-3 rounded-md text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                hasExpiredItems ? "cursor-not-allowed opacity-60" : "hover:brightness-110"
+              }`}
+              style={{ backgroundColor: hasExpiredItems ? "#9ca3af" : "#2453D3" }}
             >
-             <MdLock className="text-[16px]" /> Proceed Securely
+             <MdLock className="text-[16px]" /> {hasExpiredItems ? "Remove Expired Items to Proceed" : "Proceed Securely"}
             </button>
+            {hasExpiredItems && (
+              <p className="text-xs text-red-600 font-semibold text-center mt-2">
+                ⚠️ Your cart contains expired combo offers. Please remove them to proceed.
+              </p>
+            )}
 
            {/* Trust badges */}
 <div className="grid grid-cols-4 gap-2 pt-2 text-center">
