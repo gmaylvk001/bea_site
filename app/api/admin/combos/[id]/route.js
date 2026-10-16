@@ -119,15 +119,20 @@ export async function PUT(req, { params }) {
       );
     }
 
-    // SERVER-SIDE CALCULATION of individual MRP and individual Selling Price
-    const targetProductIds = Array.isArray(products) && products.length > 0 ? products : existing.products;
-    const calculation = await calculateComboTotals(targetProductIds);
-    if (calculation.error) {
-      return NextResponse.json({ success: false, error: calculation.error }, { status: 400 });
+    // SERVER-SIDE CALCULATION of individual MRP and individual Selling Price (if products updated)
+    if (Array.isArray(products) && products.length > 0) {
+      const calculation = await calculateComboTotals(products);
+      if (calculation.error) {
+        return NextResponse.json({ success: false, error: calculation.error }, { status: 400 });
+      }
+      existing.products = calculation.products.map((p) => p._id);
+      existing.combined_mrp = calculation.combined_mrp;
+      existing.combined_selling_price = calculation.combined_selling_price;
+      existing.combo_mrp = Number(combo_mrp) > 0 ? Number(combo_mrp) : calculation.combined_mrp;
+    } else if (combo_mrp !== undefined) {
+      existing.combo_mrp = Number(combo_mrp) > 0 ? Number(combo_mrp) : existing.combo_mrp;
     }
 
-    const numericComboMrp =
-      Number(combo_mrp) > 0 ? Number(combo_mrp) : calculation.combined_mrp;
     const numericComboPrice =
       combo_price !== undefined ? Number(combo_price) : existing.combo_price;
     if (isNaN(numericComboPrice) || numericComboPrice < 0) {
@@ -152,15 +157,16 @@ export async function PUT(req, { params }) {
     // Combine images
     const finalImages = [...(Array.isArray(existingImages) ? existingImages : []), ...uploadedImages];
     const finalBanner =
-      uploadedBanner || (existingBanner !== undefined ? existingBanner : existing.banner_image);
+      uploadedBanner ||
+      (existingBanner !== undefined
+        ? existingBanner
+        : comboData.banner_image !== undefined
+        ? comboData.banner_image
+        : existing.banner_image);
 
     existing.name = name ? name.trim() : existing.name;
     existing.slug = slug;
     existing.description = description !== undefined ? description : existing.description;
-    existing.products = calculation.products.map((p) => p._id);
-    existing.combined_mrp = calculation.combined_mrp;
-    existing.combined_selling_price = calculation.combined_selling_price;
-    existing.combo_mrp = numericComboMrp;
     existing.combo_price = numericComboPrice;
     if (quantity !== undefined && quantity !== null && quantity !== "") {
       const parsedQty = Number(quantity);

@@ -59,6 +59,7 @@ export default function ComboManagement() {
   const [existingImages, setExistingImages] = useState([]);
   const [bannerFile, setBannerFile] = useState(null);
   const [existingBanner, setExistingBanner] = useState("");
+  const bannerFileInputRef = useRef(null);
 
   // Tab 2 selection
   const [selectedComboForContent, setSelectedComboForContent] = useState(null);
@@ -70,9 +71,14 @@ export default function ComboManagement() {
       const res = await fetch(`/api/admin/combos?t=${Date.now()}`);
       const data = await res.json();
       if (data.success) {
-        setCombos(data.combos || []);
-        if (data.combos?.length > 0 && !selectedComboForContent) {
-          setSelectedComboForContent(data.combos[0]);
+        const fetchedCombos = data.combos || [];
+        setCombos(fetchedCombos);
+        if (fetchedCombos.length > 0) {
+          setSelectedComboForContent((prev) => {
+            if (!prev) return fetchedCombos[0];
+            const updated = fetchedCombos.find((c) => String(c._id) === String(prev._id));
+            return updated || fetchedCombos[0];
+          });
         }
       } else {
         setMessage({ type: "error", text: data.error || "Failed to load combos" });
@@ -307,7 +313,10 @@ export default function ComboManagement() {
           text: editingId ? "Combo updated successfully!" : "Combo created successfully!",
         });
         setIsModalOpen(false);
-        fetchCombos();
+        if (!editingId && result.combo) {
+          setSelectedComboForContent(result.combo);
+        }
+        await fetchCombos();
       } else {
         setMessage({ type: "error", text: result.error || "Failed to save combo." });
       }
@@ -352,6 +361,7 @@ export default function ComboManagement() {
 
       const dataPayload = {
         banner_image: selectedComboForContent.banner_image || "",
+        existingBanner: selectedComboForContent.banner_image || "",
         page_content: cleanContent,
       };
 
@@ -370,7 +380,13 @@ export default function ComboManagement() {
       if (data.success) {
         setMessage({ type: "success", text: "Offer page settings saved successfully!" });
         setBannerFile(null);
-        fetchCombos();
+        if (bannerFileInputRef.current) {
+          bannerFileInputRef.current.value = "";
+        }
+        if (data.combo) {
+          setSelectedComboForContent(data.combo);
+        }
+        await fetchCombos();
       } else {
         setMessage({ type: "error", text: data.error || "Failed to save page settings." });
       }
@@ -616,6 +632,20 @@ export default function ComboManagement() {
                         <td className="py-4 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
+                              onClick={() => {
+                                setSelectedComboForContent(combo);
+                                setBannerFile(null);
+                                if (bannerFileInputRef.current) {
+                                  bannerFileInputRef.current.value = "";
+                                }
+                                setActiveTab("page_settings");
+                              }}
+                              className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition"
+                              title="Customize Banner & Content (Tab 2)"
+                            >
+                              <Icon icon="mdi:image-edit-outline" className="text-lg" />
+                            </button>
+                            <button
                               onClick={() => handleOpenEdit(combo)}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition"
                               title="Edit Combo"
@@ -661,9 +691,12 @@ export default function ComboManagement() {
               <select
                 value={selectedComboForContent?._id || ""}
                 onChange={(e) => {
-                  const found = combos.find((c) => c._id === e.target.value);
+                  const found = combos.find((c) => String(c._id) === String(e.target.value));
                   setSelectedComboForContent(found || null);
                   setBannerFile(null);
+                  if (bannerFileInputRef.current) {
+                    bannerFileInputRef.current.value = "";
+                  }
                 }}
                 className="w-full sm:w-80 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
               >
@@ -708,6 +741,7 @@ export default function ComboManagement() {
 
                     <div className="flex-1">
                       <input
+                        ref={bannerFileInputRef}
                         type="file"
                         accept="image/*"
                         onChange={(e) => {
@@ -722,7 +756,10 @@ export default function ComboManagement() {
                           type="button"
                           onClick={() => {
                             setBannerFile(null);
-                            setSelectedComboForContent({ ...selectedComboForContent, banner_image: "" });
+                            if (bannerFileInputRef.current) {
+                              bannerFileInputRef.current.value = "";
+                            }
+                            setSelectedComboForContent((prev) => ({ ...prev, banner_image: "" }));
                           }}
                           className="mt-3 text-xs text-red-600 hover:underline flex items-center gap-1"
                         >
@@ -743,6 +780,7 @@ export default function ComboManagement() {
                     This formatted content will display directly below the banner on the frontend page.
                   </p>
                   <TinyEditor
+                    key={selectedComboForContent?._id || "combo-editor"}
                     value={
                       typeof selectedComboForContent.page_content === "string"
                         ? selectedComboForContent.page_content
@@ -750,10 +788,10 @@ export default function ComboManagement() {
                     }
                     onChange={(e) => {
                       const content = typeof e === "string" ? e : e?.target?.value || "";
-                      setSelectedComboForContent({
-                        ...selectedComboForContent,
+                      setSelectedComboForContent((prev) => ({
+                        ...prev,
                         page_content: content,
-                      });
+                      }));
                     }}
                     placeholder="Enter attractive offer highlights, promotional terms, or announcements..."
                     fullToolbar={true}

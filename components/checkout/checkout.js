@@ -1001,7 +1001,6 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           } catch (e) { console.error('Loyalty award failed:', e); }
         }
 
-        /* TEMPORARILY COMMENTED OUT FOR TESTING (SAP DATA API & ORDER EMAILS)
         // SAP sync — send order data to SAP
         try {
           await fetch('/api/send-order-detail-to-sap', {
@@ -1065,7 +1064,6 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         } catch (e) {
           console.error("Email sending failed:", e);
         }
-        */
 
         toast.success('Order placed successfully!');
         updateCartCount(0);

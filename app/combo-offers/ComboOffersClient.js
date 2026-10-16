@@ -267,9 +267,18 @@ function ComboCard({ combo }) {
       {combo.banner_image && (
         <div className="w-full max-h-[380px] overflow-hidden bg-gray-900 flex items-center justify-center border-b">
           <img
-            src={combo.banner_image}
+            src={
+              combo.banner_image.startsWith("http") || combo.banner_image.startsWith("/")
+                ? combo.banner_image
+                : `/uploads/combos/${combo.banner_image}`
+            }
             alt={`${combo.name} Banner`}
             className="w-full h-auto max-h-[380px] object-cover"
+            onError={(e) => {
+              if (combo.banner_image && !e.currentTarget.src.includes("/uploads/combos/")) {
+                e.currentTarget.src = `/uploads/combos/${combo.banner_image}`;
+              }
+            }}
           />
         </div>
       )}
