@@ -26,6 +26,21 @@ const RAZORPAY_EMI_TEST_CARD = '5241 8100 0000 0000';
 const BEA_CONTACT_PHONE = '9842344323';
 const BEA_CONTACT_EMAIL = 'customercare@bharathelectronics.in';
 
+const getItemImage = (item) => {
+  if (item?.fullImage) return item.fullImage;
+  const raw = item?.image || item?.images?.[0] || "";
+  if (!raw) return "/no-image.jpg";
+  if (raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("/")) {
+    return raw;
+  }
+  if (raw.startsWith("combos/")) return `/uploads/${raw}`;
+  if (raw.startsWith("products/")) return `/uploads/${raw}`;
+  if (item?.isCombo) {
+    return `/uploads/combos/${raw}`;
+  }
+  return `/uploads/products/${raw}`;
+};
+
 const FloatInput = ({ label, name, type = 'text', required, readOnly, value, onChange, onBlur, error, inputMode, maxLength, showLock, hint }) => (
   <div>
     <div className="relative">
@@ -986,6 +1001,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           } catch (e) { console.error('Loyalty award failed:', e); }
         }
 
+        /* TEMPORARILY COMMENTED OUT FOR TESTING (SAP DATA API & ORDER EMAILS)
         // SAP sync — send order data to SAP
         try {
           await fetch('/api/send-order-detail-to-sap', {
@@ -1049,6 +1065,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         } catch (e) {
           console.error("Email sending failed:", e);
         }
+        */
 
         toast.success('Order placed successfully!');
         updateCartCount(0);
@@ -1518,8 +1535,15 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                   <div key={`oi-${item.productId}`} className="flex items-start gap-3">
                     <div className="relative w-14 h-14 flex-shrink-0 border border-gray-200 rounded-lg overflow-hidden bg-white p-1.5">
                       <img
-                        src={`/uploads/products/${item.image || item.images?.[0]}`}
+                        src={getItemImage(item)}
                         alt={item.name}
+                        onError={(e) => {
+                          if (item?.isCombo && item?.image && !e.currentTarget.src.includes("/uploads/combos/")) {
+                            e.currentTarget.src = `/uploads/combos/${item.image}`;
+                          } else {
+                            e.currentTarget.src = "/no-image.jpg";
+                          }
+                        }}
                         className="w-full h-full object-contain"
                       />
                       <div className="absolute -top-1 -right-1 bg-gray-700 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">

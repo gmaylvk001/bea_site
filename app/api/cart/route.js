@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import Cart from "@/models/ecom_cart_info";
 import Product from "@/models/product";
+import ComboProduct from "@/models/ComboProduct";
 import jwt from "jsonwebtoken";
 
 /** Utils **/
@@ -73,9 +74,46 @@ export async function POST(req) {
       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
     }
 
-    const product = await Product.findById(productId);
+    let isComboItem = false;
+    let comboDoc = null;
+    let product = await Product.findById(productId);
+
     if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      comboDoc = await ComboProduct.findById(productId);
+      if (comboDoc) {
+        isComboItem = true;
+      } else {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      }
+    }
+
+    if (isComboItem && comboDoc) {
+      // Validate combo status and offer lifecycle dates on server!
+      if (comboDoc.status !== "Active") {
+        return NextResponse.json(
+          { error: "This combo offer is currently unavailable." },
+          { status: 400 }
+        );
+      }
+      const now = new Date();
+      if (now < new Date(comboDoc.offer_start)) {
+        return NextResponse.json(
+          { error: "This combo offer has not started yet." },
+          { status: 400 }
+        );
+      }
+      if (now > new Date(comboDoc.offer_end)) {
+        return NextResponse.json(
+          { error: "This combo offer has expired." },
+          { status: 400 }
+        );
+      }
+      if (comboDoc.quantity <= 0) {
+        return NextResponse.json(
+          { error: "This combo offer is out of stock." },
+          { status: 400 }
+        );
+      }
     }
 
     // choose key
@@ -91,33 +129,49 @@ export async function POST(req) {
       (item) => item.productId.toString() === productId
     );
 
-    // const original_prod_quantity = product.data.quantity;
-
     if (existingItemIndex >= 0) {
       cart.items[existingItemIndex].quantity += quantity;
 
-      if(original_prod_quantity && original_prod_quantity < cart.items[existingItemIndex].quantity ) {
+      const availableQty = isComboItem ? comboDoc.quantity : (original_prod_quantity || product.quantity);
+      if (availableQty && availableQty < cart.items[existingItemIndex].quantity) {
         return NextResponse.json(
-          { error: "Requested quantity exceeds available stock."},
+          { error: "Requested quantity exceeds available stock." },
           { status: 409 }
         );
       }
       cart.items[existingItemIndex].warranty = selectedWarranty;
       cart.items[existingItemIndex].extendedWarranty = selectedExtendedWarranty;
-       cart.items[existingItemIndex].warrantyData = warrantyData;
+      cart.items[existingItemIndex].warrantyData = warrantyData;
     } else {
-      cart.items.push({
-        item_code: product.item_code,
-        productId,
-        quantity,
-        price: product.special_price ?? product.price,
-        name: product.name,
-        image: product.images[0],
-        warranty: selectedWarranty,
-        extendedWarranty: selectedExtendedWarranty,
-        warrantyData: warrantyData,
-        actual_price: product.special_price ?? product.price,
-      });
+      if (isComboItem && comboDoc) {
+        cart.items.push({
+          item_code: comboDoc.slug,
+          productId: comboDoc._id,
+          quantity,
+          price: comboDoc.combo_price,
+          name: comboDoc.name,
+          image: comboDoc.images?.[0] || "",
+          warranty: 0,
+          extendedWarranty: 0,
+          warrantyData: null,
+          actual_price: comboDoc.combo_mrp || comboDoc.combined_mrp || comboDoc.combo_price,
+          isCombo: true,
+          comboId: comboDoc._id,
+        });
+      } else {
+        cart.items.push({
+          item_code: product.item_code,
+          productId,
+          quantity,
+          price: product.special_price ?? product.price,
+          name: product.name,
+          image: product.images[0],
+          warranty: selectedWarranty,
+          extendedWarranty: selectedExtendedWarranty,
+          warrantyData: warrantyData,
+          actual_price: product.special_price ?? product.price,
+        });
+      }
     }
 
     // totals
@@ -182,7 +236,62 @@ export async function GET(req) {
      
       const items = await Promise.all(
       cart.items.map(async (item) => {
-       // console.log(item);
+        if (!item.productId || item.isCombo) {
+          // Check if this item is a combo product
+          const comboId = item.comboId || (item.productId?._id ? item.productId._id : item.productId);
+          const combo = await ComboProduct.findById(comboId).lean();
+          if (combo) {
+            const now = new Date();
+            const isOfferEnded =
+              combo.status !== "Active" ||
+              now > new Date(combo.offer_end) ||
+              now < new Date(combo.offer_start);
+            const isOutOfStock = Number(combo.quantity) <= 0;
+            const img = combo.images?.[0] || "";
+            const formattedImg = img.startsWith("/uploads/") ? img.replace(/^\/uploads\/(products\/|combos\/)?/, "") : img;
+            return {
+              original_quantity: isOfferEnded ? 0 : (combo.quantity ?? 10),
+              item_code: combo.slug,
+              productId: combo._id,
+              name: combo.name,
+              price: item.price ?? combo.combo_price,
+              image: img || formattedImg,
+              fullImage: img,
+              quantity: item.quantity,
+              warranty: 0,
+              extendedWarranty: 0,
+              warrantyData: null,
+              actual_price: combo.combo_mrp || combo.combined_mrp || combo.combo_price,
+              specs: [`${combo.products?.length || 0} Products Combo`],
+              isCombo: true,
+              isExpired: isOfferEnded,
+              isOfferEnded: isOfferEnded,
+              isOutOfStock: isOutOfStock,
+              stock_status: isOfferEnded ? "Offer Expired" : (isOutOfStock ? "Out of Stock" : "In Stock"),
+              offer_start: combo.offer_start,
+              offer_end: combo.offer_end,
+            };
+          }
+          return {
+            original_quantity: 0,
+            item_code: item.item_code || "",
+            productId: item.productId,
+            name: item.name || "Product",
+            price: item.price || 0,
+            image: item.image || "",
+            quantity: item.quantity,
+            warranty: 0,
+            extendedWarranty: 0,
+            warrantyData: null,
+            actual_price: item.actual_price || item.price || 0,
+            specs: [],
+            isCombo: item.isCombo || false,
+            isExpired: item.isCombo ? true : false,
+            isOfferEnded: item.isCombo ? true : false,
+            stock_status: item.isCombo ? "Offer Expired" : "Unavailable",
+          };
+        }
+
         const original_quantity = await getQuantity(item.productId.item_code);
         return {
           original_quantity,
@@ -190,19 +299,17 @@ export async function GET(req) {
           productId: item.productId._id,
           name: item.productId.name,
           price: item.price,
-          image: item.productId.images[0],
+          image: item.productId.images?.[0] || item.image || "",
           quantity: item.quantity,
           warranty: item.warranty || 0,
           extendedWarranty: item.extendedWarranty || 0,
           warrantyData: item.warrantyData || null,
           actual_price: item.productId.price,
           specs: item.productId.key_specifications?.slice(0, 3) || [], 
+          isCombo: item.isCombo || false,
         };
       })
     );
-    // console.log(items);
-
-
 
     return NextResponse.json(
       {
@@ -222,20 +329,23 @@ export async function GET(req) {
   }
 }
 
-
-
 async function getQuantity(item_code) {
+  if (!item_code) return null;
   const product = await Product.findOne({ item_code }).lean();
-  return product?.quantity ?? null;
+  if (product) return product.quantity ?? null;
+  const combo = await ComboProduct.findOne({ slug: item_code }).lean();
+  if (combo) {
+    const now = new Date();
+    const isOfferEnded = combo.status !== "Active" || now > new Date(combo.offer_end) || now < new Date(combo.offer_start);
+    if (isOfferEnded) return 0;
+    return combo.quantity ?? null;
+  }
+  return null;
 }
-
-
-
 
 /** PUT - Update Quantity **/
 export async function PUT(req) {
   try {
-
     let guestId = null;
     let cart = null;
 
@@ -259,9 +369,6 @@ export async function PUT(req) {
       cart = await Cart.findOne({ guestId });
     }
 
-    
-
-    //const cart = await Cart.findOne({ userId });
     if (!cart) {
       return NextResponse.json({ error: "Cart not found" }, { status: 404 });
     }
@@ -274,6 +381,19 @@ export async function PUT(req) {
       return NextResponse.json({ error: "Product not in cart" }, { status: 404 });
     }
 
+    // Check if combo item has expired
+    if (cart.items[itemIndex].isCombo) {
+      const comboId = cart.items[itemIndex].comboId || cart.items[itemIndex].productId;
+      const combo = await ComboProduct.findById(comboId).lean();
+      const now = new Date();
+      if (!combo || combo.status !== "Active" || now > new Date(combo.offer_end) || now < new Date(combo.offer_start)) {
+        return NextResponse.json(
+          { error: "This combo offer has expired and can no longer be updated or purchased." },
+          { status: 400 }
+        );
+      }
+    }
+
     cart.items[itemIndex].quantity = quantity;
     const item_code = cart.items[itemIndex].item_code;
     const original_quantity = await getQuantity(item_code);
@@ -284,13 +404,14 @@ export async function PUT(req) {
 
     await cart.save();
     const items = cart.items.map((item) => ({
-      productId: item.productId._id,
+      productId: item.productId?._id || item.productId,
       name: item.name,
       price: item.price,
-      image: item.productId.images,
+      image: item.image,
       quantity: item.quantity,
-      item_code: item.productId.item_code,
-      original_quantity: item.original_quantity ?? null, // dynamically attach
+      item_code: item.item_code,
+      original_quantity: item.original_quantity ?? null,
+      isCombo: item.isCombo || false,
     }));
 
 
