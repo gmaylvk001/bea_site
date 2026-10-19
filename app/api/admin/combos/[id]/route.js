@@ -15,7 +15,7 @@ export async function GET(req, { params }) {
     const { id } = await params;
 
     const combo = await ComboProduct.findById(id)
-      .populate("products", "name price special_price images item_code quantity stock_status model_number")
+      .populate("products", "name price special_price images item_code quantity stock_status model_number slug")
       .lean();
 
     if (!combo) {

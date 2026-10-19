@@ -13,7 +13,7 @@ export async function GET(req) {
     if (ids) {
       const idArray = ids.split(",").filter((id) => /^[0-9a-fA-F]{24}$/.test(id.trim()));
       const products = await Product.find({ _id: { $in: idArray } })
-        .select("_id name item_code price special_price quantity stock_status images")
+        .select("_id name item_code price special_price quantity stock_status images slug")
         .lean();
       return NextResponse.json({ success: true, products });
     }
@@ -28,7 +28,7 @@ export async function GET(req) {
     }
 
     const products = await Product.find(filter)
-      .select("_id name item_code price special_price quantity stock_status images")
+      .select("_id name item_code price special_price quantity stock_status images slug")
       .limit(50)
       .lean();
 

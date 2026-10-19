@@ -10,7 +10,7 @@ export async function GET() {
     const now = new Date();
 
     const combos = await ComboProduct.find({ status: "Active" })
-      .populate("products", "name price special_price images item_code quantity stock_status brand model_number")
+      .populate("products", "name price special_price images item_code quantity stock_status brand model_number slug")
       .lean();
 
     // Map each combo with its server-computed status

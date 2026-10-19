@@ -265,7 +265,7 @@ function ComboCard({ combo }) {
     >
       {/* Top Banner Image (if configured in Tab 2) */}
       {combo.banner_image && (
-        <div className="w-full max-h-[380px] overflow-hidden bg-gray-900 flex items-center justify-center border-b">
+        <div className="w-full max-h-[700px] lg:max-h-[850px] overflow-hidden bg-gray-900 flex items-center justify-center border-b">
           <img
             src={
               combo.banner_image.startsWith("http") || combo.banner_image.startsWith("/")
@@ -273,7 +273,7 @@ function ComboCard({ combo }) {
                 : `/uploads/combos/${combo.banner_image}`
             }
             alt={`${combo.name} Banner`}
-            className="w-full h-auto max-h-[380px] object-cover"
+            className="w-full h-auto max-h-[700px] lg:max-h-[850px] object-contain"
             onError={(e) => {
               if (combo.banner_image && !e.currentTarget.src.includes("/uploads/combos/")) {
                 e.currentTarget.src = `/uploads/combos/${combo.banner_image}`;
@@ -287,7 +287,7 @@ function ComboCard({ combo }) {
       {combo.page_content && (
         <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-blue-50/70 p-5 md:p-6 border-b border-blue-100">
           <div
-            className="prose prose-sm max-w-none text-gray-800 leading-relaxed"
+            className="combo-rich-content prose prose-sm max-w-none text-gray-800 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: combo.page_content }}
           />
         </div>
@@ -373,7 +373,14 @@ function ComboCard({ combo }) {
             </h2>
 
             {combo.description && (
-              <p className="text-sm text-gray-600 mb-4 leading-relaxed">{combo.description}</p>
+              /<\/?[a-z][\s\S]*>/i.test(combo.description) ? (
+                <div
+                  className="combo-rich-content text-sm mb-4 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: combo.description }}
+                />
+              ) : (
+                <p className="text-sm text-gray-600 mb-4 leading-relaxed">{combo.description}</p>
+              )
             )}
 
             {/* Combined Totals vs Combo Price Comparison Box */}
@@ -549,44 +556,54 @@ function ComboCard({ combo }) {
 
         {/* Included products responsive grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {(combo.products || []).map((product, pIdx) => (
-            <div
-              key={product._id || pIdx}
-              className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col justify-between hover:shadow-md transition group"
-            >
-              <div>
-                <div className="w-full h-28 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center p-2 mb-2">
-                  <img
-                    src={
-                      product.images?.[0]
-                        ? product.images[0].startsWith("http") || product.images[0].startsWith("/")
-                          ? product.images[0]
-                          : `/uploads/products/${product.images[0]}`
-                        : "/no-image.jpg"
-                    }
-                    alt={product.name}
-                    className="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-200"
-                    onError={(e) => {
-                      e.target.src = "/no-image.jpg";
-                    }}
-                  />
+          {(combo.products || []).map((product, pIdx) => {
+            const productSlug =
+              product.slug ||
+              product.product_slug ||
+              product["product-slug"] ||
+              product["prduct-slug"];
+            const productUrl = `/product/${productSlug}`;
+            return (
+              <Link
+                key={product._id || pIdx}
+                href={productUrl}
+                className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col justify-between hover:shadow-md hover:border-blue-400 transition group cursor-pointer block"
+                title={`View ${product.name}`}
+              >
+                <div>
+                  <div className="w-full h-28 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center p-2 mb-2">
+                    <img
+                      src={
+                        product.images?.[0]
+                          ? product.images[0].startsWith("http") || product.images[0].startsWith("/")
+                            ? product.images[0]
+                            : `/uploads/products/${product.images[0]}`
+                          : "/no-image.jpg"
+                      }
+                      alt={product.name}
+                      className="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-200"
+                      onError={(e) => {
+                        e.target.src = "/no-image.jpg";
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug mb-1 group-hover:text-blue-600 transition-colors">
+                    {product.name}
+                  </p>
+                  {product.model_number && (
+                    <p className="text-[10px] text-gray-400 truncate mb-1">Model: {product.model_number}</p>
+                  )}
                 </div>
-                <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug mb-1">
-                  {product.name}
-                </p>
-                {product.model_number && (
-                  <p className="text-[10px] text-gray-400 truncate mb-1">Model: {product.model_number}</p>
-                )}
-              </div>
 
-              <div className="pt-2 border-t border-gray-100 text-xs">
-                <span className="text-gray-400 block text-[10px]">Regular Price:</span>
-                <span className="font-bold text-gray-900">
-                  ₹{(product.special_price > 0 ? product.special_price : product.price || 0).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          ))}
+                <div className="pt-2 border-t border-gray-100 text-xs">
+                  <span className="text-gray-400 block text-[10px]">Regular Price:</span>
+                  <span className="font-bold text-gray-900">
+                    ₹{(product.special_price > 0 ? product.special_price : product.price || 0).toLocaleString()}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

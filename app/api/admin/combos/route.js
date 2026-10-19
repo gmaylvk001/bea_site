@@ -13,7 +13,7 @@ export async function GET() {
   try {
     await connectDB();
     const combos = await ComboProduct.find({})
-      .populate("products", "name price special_price images item_code quantity stock_status")
+      .populate("products", "name price special_price images item_code quantity stock_status slug")
       .sort({ createdAt: -1 })
       .lean();
 
