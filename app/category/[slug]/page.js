@@ -164,6 +164,7 @@ export default async function Page({ params, searchParams }) {
         initialProducts={initialProducts}
         initialPagination={initialPagination}
         initialContentFlags={initialContentFlags}
+        initialSearchParams={awaitedSearchParams}
         slug={slug}
       />
     </>

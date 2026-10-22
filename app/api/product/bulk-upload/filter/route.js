@@ -56,6 +56,10 @@ export async function POST(req) {
         let addedCount      = 0;
         let existCount      = 0;
 
+        // Phase 1: Validate all rows and collect valid entries
+        // Group by product_id + filter_group_id so we can handle multiple filter values per group
+        const validEntries = []; // { product, filterGroup, existingFilter, rowIndex }
+
         for(let [index, row] of rows.entries()) {
         
             const item_code                         = row.item_code.toString().trim();
@@ -64,6 +68,14 @@ export async function POST(req) {
             let products = await Product.findOne({
                 item_code: item_code.trim(),
             });
+
+            if (!products) {
+                errors.push({
+                    row: index + 2,
+                    error: `Product not found: ${item_code}`,
+                });
+                continue;
+            }
 
             if(filter_group_name == "size") {
                 let cat_id_str  = products.sub_category?.trim() || products.category?.trim();
@@ -106,18 +118,8 @@ export async function POST(req) {
                 continue;
             }
 
-            /* const normalizedGroupName = filter_group_name.trim().toLowerCase();
-
-            const filterGroup = await FilterGroup.findOne({
-                filtergroup_name: new RegExp(`^${normalizedGroupName}$`, 'i'),
-            }); */
-
             const normalizedGroupName = filter_group_name.trim();
             const safeRegex = new RegExp(`^${escapeRegex(normalizedGroupName)}$`, 'i');
-
-           /*  const filterGroup = await FilterGroup.findOne({
-                filtergroup_name: safeRegex,
-            }); */
 
             const groupSlug = filter_group_name
             .trim()
@@ -161,50 +163,49 @@ if (!existingFilter) {
     continue;
 }
 
+            // Collect valid entry for Phase 2
+            validEntries.push({
+                product: products,
+                filterGroup: filterGroup,
+                existingFilter: existingFilter,
+                rowIndex: index,
+            });
 
-            // let products = await Product.findOne({
-            //     item_code: item_code.trim(),
-            // });
+        }
 
-          if (products) {
-   /*  const existFilterVal = await ProductFilter.findOne({
-        product_id: products._id,
-        filter_id: existingFilter._id,
-    });
+        // Phase 2: Group valid entries by product_id + filter_group_id
+        // Only keep the LAST filter value per product+group (one value per group per product)
+        const groupedMap = new Map(); // key: "productId_filterGroupId" -> { product, filterGroup, filterId }
 
-    if (!existFilterVal) {
-        await ProductFilter.create({
-            filter_id: existingFilter._id,
-            product_id: products._id,
-        });
-        addedCount++;
-    } else {
-        existCount++;
-    } */
+        for (const entry of validEntries) {
+            const key = `${entry.product._id.toString()}_${entry.filterGroup._id.toString()}`;
+            groupedMap.set(key, {
+                product: entry.product,
+                filterGroup: entry.filterGroup,
+                filterId: entry.existingFilter._id,
+            });
+        }
 
-       // get all filters in same group
-const groupFilters = await Filter.find({
-    filter_group: filterGroup._id,
-}).select('_id');
+        // Phase 3: For each product+group combo, delete old filters in that group and insert the new one
+        for (const [key, group] of groupedMap) {
+            // Get all filter IDs in this filter group
+            const groupFilters = await Filter.find({
+                filter_group: group.filterGroup._id,
+            }).select('_id');
+            const groupFilterIds = groupFilters.map(f => f._id);
 
-const groupFilterIds = groupFilters.map(f => f._id);
+            // Delete old filters from this group for this product
+            await ProductFilter.deleteMany({
+                product_id: group.product._id,
+                filter_id: { $in: groupFilterIds },
+            });
 
-// delete old filter from same group
-await ProductFilter.deleteMany({
-    product_id: products._id,
-    filter_id: { $in: groupFilterIds },
-});
-
-// insert only latest ஒன்று
-await ProductFilter.create({
-    product_id: products._id,
-    filter_id: existingFilter._id,
-});
-
-addedCount++;
-}
-
-
+            // Insert the single new filter value for this product+group
+            await ProductFilter.create({
+                product_id: group.product._id,
+                filter_id: group.filterId,
+            });
+            addedCount++;
         }
 
         return NextResponse.json(

@@ -30,13 +30,21 @@ export default function CategoryPage(params) {
   // For filter group show more
     const [showAllFilterGroups, setShowAllFilterGroups] = useState(false);
    const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState({
-    categories: [],
-    brands: [],
-    price: { min: 0, max: 100000 },
-    filters: []
+  const initialSearchParams = params?.initialSearchParams || null;
+  const [selectedFilters, setSelectedFilters] = useState(() => {
+    const brands = initialSearchParams?.brands ? String(initialSearchParams.brands).split(",").filter(Boolean) : [];
+    const categories = (initialSearchParams?.categories || initialSearchParams?.categoryIds) ? String(initialSearchParams.categories || initialSearchParams.categoryIds).split(",").filter(Boolean) : [];
+    const filters = initialSearchParams?.filters ? String(initialSearchParams.filters).split(",").filter(Boolean) : [];
+    const urlMin = initialSearchParams?.minPrice !== undefined && !isNaN(initialSearchParams.minPrice) ? Number(initialSearchParams.minPrice) : 0;
+    const urlMax = initialSearchParams?.maxPrice !== undefined && !isNaN(initialSearchParams.maxPrice) ? Number(initialSearchParams.maxPrice) : 100000;
+    return {
+      categories,
+      brands,
+      price: { min: urlMin, max: urlMax },
+      filters
+    };
   });
-  const isPriceFilterAppliedRef = useRef(false);
+  const isPriceFilterAppliedRef = useRef(Boolean(initialSearchParams?.minPrice !== undefined || initialSearchParams?.maxPrice !== undefined));
 
   useEffect(() => {
     if (typeof window !== "undefined") {

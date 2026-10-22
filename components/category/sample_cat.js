@@ -22,6 +22,7 @@ export default function CategoryPrimaryPage({
   initialProducts = [],
   initialPagination = null,
   initialContentFlags = null,
+  initialSearchParams = null,
   slug: propSlug,
   ...restParams
 } = {}) {
@@ -839,7 +840,13 @@ console.log("slug:", slug);
         
         {showFallback ? (
           // Show fallback component when all three have no content
-          <CategoryPage initialData={initialCategoryData} initialProducts={initialProducts} />
+          <CategoryPage
+            initialData={initialCategoryData}
+            initialProducts={initialProducts}
+            initialPagination={initialPagination}
+            initialSearchParams={initialSearchParams}
+            slug={slug}
+          />
         ) : (
           // Show the original three components
           <>
