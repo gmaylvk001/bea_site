@@ -351,9 +351,39 @@ const fetchInitialData = async () => {
       }
 
       const res = await fetch(`/api/product/filter/main-cat?${query}`);
-      const { products, pagination: paginationData } = await res.json();
+      const data = await res.json();
+      const { products, pagination: paginationData } = data;
+      const filteredBrands = data.brands || [];
+      const filteredFilters = data.filters || [];
 
       setProducts(products);
+
+      if (filteredBrands.length > 0) {
+        setCategoryData(prev => ({ ...prev, brands: filteredBrands }));
+      } else {
+        setCategoryData(prev => ({ ...prev, brands: [] }));
+      }
+
+      if (filteredFilters && filteredFilters.length > 0) {
+        const groups = {};
+        filteredFilters.forEach(filter => {
+          const groupId = filter.filter_group_name;
+          if (groupId) {
+            if (!groups[groupId]) {
+              groups[groupId] = {
+                _id: groupId,
+                name: filter.filter_group_name,
+                slug: filter.filter_group_name.toLowerCase().replace(/\s+/g, '-'),
+                filters: []
+              };
+            }
+            groups[groupId].filters.push(filter);
+          }
+        });
+        setFilterGroups(groups);
+      } else if (!currentFilters.filters || currentFilters.filters.length === 0) {
+        setFilterGroups({});
+      }
       
       // Update pagination state
       setPagination({

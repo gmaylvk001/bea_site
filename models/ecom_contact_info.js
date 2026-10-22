@@ -25,6 +25,10 @@ const ContactSchema = new mongoose.Schema(
       type: String, 
       required: true 
     },
+    category: {
+      type: String,
+      default: "",
+    },
     status: {
       type: String,
       enum: ["active", "inactive"],
@@ -34,4 +38,9 @@ const ContactSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default  mongoose.models.ecom_contactx_infos || mongoose.model("ecom_contactx_infos", ContactSchema);
+if (mongoose.models && mongoose.models.ecom_contactx_infos) {
+  delete mongoose.models.ecom_contactx_infos;
+}
+
+export default mongoose.models.ecom_contactx_infos || mongoose.model("ecom_contactx_infos", ContactSchema);
+

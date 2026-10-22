@@ -238,6 +238,8 @@ const brandBaseQuery = {
       sub_category: { $in: objectIdCategoryIds },
       status: "Active",
       quantity: { $gt: 0 },
+      ...(query._id ? { _id: query._id } : {}),
+      ...(query.$or ? { $or: query.$or } : {}),
     };
 
     const allProductsForBrand = await Product.find(brandBaseQuery, { brand: 1 }).lean();
@@ -331,7 +333,12 @@ const brandBaseQuery = {
       }
     });
 
-    const filterIdList = filterAgg.map(f => f._id);
+    const filterIdList = [
+      ...new Set([
+        ...filterAgg.map(f => f._id.toString()),
+        ...Object.keys(filterAggMap)
+      ])
+    ];
     const filterDocs = await Filter.find({ _id: { $in: filterIdList } })
       .populate({ path: "filter_group", select: "filtergroup_name", model: FilterGroup })
       .lean();

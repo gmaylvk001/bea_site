@@ -564,7 +564,7 @@ const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, init
       }
 
   
-      if (filteredFilters && (!filterGroupsRef.current || Object.keys(filterGroupsRef.current).length === 0)) {
+      if (filteredFilters && filteredFilters.length > 0) {
         const groups = {};
         filteredFilters.forEach(filter => {
           const groupId = filter.filter_group_name;
@@ -581,7 +581,21 @@ const fetchFilteredProducts = useCallback(async (categoryData, pageNum = 1, init
           }
         });
         setFilterGroups(groups);
-        filterGroupsRef.current = groups;
+
+        // Keep groups with selected filters expanded
+        if (currentFilters.filters && currentFilters.filters.length > 0) {
+          setExpandedFilters(prev => {
+            const updated = { ...prev };
+            Object.values(groups).forEach(group => {
+              if (group.filters && group.filters.some(f => currentFilters.filters.includes(f._id))) {
+                updated[group._id] = true;
+              }
+            });
+            return updated;
+          });
+        }
+      } else if (!currentFilters.filters || currentFilters.filters.length === 0) {
+        setFilterGroups({});
       }
 
     

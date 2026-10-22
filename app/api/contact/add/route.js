@@ -9,7 +9,7 @@ export async function POST(request) {
     await dbConnect(); // Ensure DB connection
 
     const body = await request.json();
-    const { name, email_address, mobile_number, message, city, status, _hp } = body;
+    const { name, email_address, mobile_number, message, city, category, status, _hp } = body;
 
     // Honeypot check — bots fill this hidden field, humans don't
     if (_hp) {
@@ -41,6 +41,7 @@ export async function POST(request) {
       mobile_number: digitsPhone,
       message: message.trim(),
       city: resolvedCity,
+      category: (category && category.trim()) || "",
       status: finalStatus === "inactive" ? "inactive" : "active",
     });
 

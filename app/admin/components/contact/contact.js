@@ -114,7 +114,9 @@ export default function ContactComponent() {
     const matchesSearch = searchTerm === "" || 
       (contact.email_address && contact.email_address.toLowerCase().includes(searchLower)) ||
       (contact.name && contact.name.toLowerCase().includes(searchLower)) ||
-      (contact.mobile_number && contact.mobile_number.toLowerCase().includes(searchLower));
+      (contact.mobile_number && contact.mobile_number.toLowerCase().includes(searchLower)) ||
+      (contact.city && contact.city.toLowerCase().includes(searchLower)) ||
+      (contact.category && contact.category.toLowerCase().includes(searchLower));
     
     // Apply status filter
     const matchesStatus = statusFilter === "All" || contact.status === statusFilter;
@@ -179,6 +181,10 @@ export default function ContactComponent() {
 
     "Mobile Number": item.mobile_number || "",
 
+    City: item.city || "",
+
+    Category: item.category || "",
+
     Message: item.message || "",
   }));
 
@@ -189,6 +195,8 @@ export default function ContactComponent() {
       "Name",
       "Email",
       "Mobile Number",
+      "City",
+      "Category",
       "Message",
     ],
   });
@@ -320,6 +328,8 @@ export default function ContactComponent() {
                     <th className="p-2">Name</th>
                      <th className="p-2">Email</th>
                     <th className="p-2">Mobile Number</th>
+                    <th className="p-2">City</th>
+                    <th className="p-2">Category</th>
                     <th className="p-2">Message</th>
                     {/* <th className="p-2">Status</th> */}
                     {/* <th className="p-2">Created At</th>
@@ -334,6 +344,8 @@ export default function ContactComponent() {
                       <td className="p-2">{contact.name || '-'}</td>
                       <td className="p-2">{contact.email_address || '-'}</td>
                       <td className="p-2">{contact.mobile_number || '-'}</td>
+                      <td className="p-2">{contact.city || '-'}</td>
+                      <td className="p-2">{contact.category || '-'}</td>
                       <td className="p-2">{contact.message || '-'}</td>
                       {/* <td className="p-2">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
