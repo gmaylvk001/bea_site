@@ -1,7 +1,7 @@
 import dbConnect from "@/lib/db";
 import ecom_category_info from "@/models/ecom_category_info";
 import Product from "@/models/product";
-import ProductFilter from "@/models/ecom_productfilter_info";
+import CategoryFilter from "@/models/ecom_categoryfilters_infos";
 import Brand from "@/models/ecom_brand_info"; 
 import Filter from "@/models/ecom_filter_infos";
 import FilterGroup from "@/models/ecom_filter_group_infos";
@@ -81,8 +81,9 @@ export async function GET(req, { params }) {
            }
     
     // Extract product IDs for filtering
-    const productIds = products.map(product => product._id);
-    const productFilters = await ProductFilter.find({ product_id: { $in: productIds } });
+    const categoryFilters = await CategoryFilter.find({
+      category_id: category._id.toString(),
+    }).lean();
 
     //  // Count products per brand
     // const brandCountMap = products.reduce((acc, product) => {
@@ -100,8 +101,11 @@ export async function GET(req, { params }) {
     // }));
     
     // Extract unique filter IDs
-    const filterIds = [...new Set(productFilters.map(pf => pf.filter_id))];
-    const filters = await Filter.find({ _id: { $in: filterIds } }).populate({
+    const filterIds = [...new Set(categoryFilters.map((categoryFilter) => categoryFilter.filter_id))];
+    const filters = await Filter.find({
+      _id: { $in: filterIds },
+      status: { $ne: "Inactive" },
+    }).populate({
             path: 'filter_group',
             select: 'filtergroup_name -_id',
             model: FilterGroup

@@ -7,10 +7,6 @@ import FilterGroup from "@/models/ecom_filter_group_infos";
 import CategoryFilter from "@/models/ecom_categoryfilters_infos";
 import mongoose from "mongoose";
 
-// In-memory cache per category slug
-const slugCache = new Map();
-const SLUG_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes cache
-
 function buildTreeInMemory(allCategories, parentId) {
   const parentIdStrs = new Set([String(parentId)]);
   if (parentId && typeof parentId === "object") {
@@ -41,14 +37,6 @@ function getAllCategoryIds(categories) {
 export async function GET(request, { params }) {
   try {
     const { slug } = await params;
-    const { searchParams } = new URL(request.url || "http://localhost/api/categories");
-    const forceRefresh = searchParams.get("refresh") === "true";
-
-    // Serve cached category data if valid
-    const cachedEntry = slugCache.get(slug);
-    if (!forceRefresh && cachedEntry && (Date.now() - cachedEntry.timestamp < SLUG_CACHE_TTL_MS)) {
-      return Response.json(cachedEntry.data);
-    }
 
     await dbConnect();
 
@@ -102,7 +90,6 @@ export async function GET(request, { params }) {
         brands: [],
         filters: [],
       };
-      slugCache.set(slug, { data: emptyResult, timestamp: Date.now() });
       return Response.json(emptyResult);
     }
 
@@ -129,20 +116,19 @@ export async function GET(request, { params }) {
       }));
     }
 
-    // Fetch category-level filters (checking all category and subcategory IDs)
-    const categoryIdStrings = (allCategoryIds || [main_category._id]).map((id) => id.toString());
+    // A category displays only filters explicitly assigned to that category.
     const categoryFilters = await CategoryFilter.find({
-      $or: [
-        { category_id: { $in: categoryIdStrings } },
-        { category_id: { $in: allCategoryIds } },
-      ],
+      category_id: main_category._id.toString(),
     }).lean();
 
     const filterIds = [
       ...new Set(categoryFilters.map((cf) => cf.filter_id)),
     ];
 
-    const filters = await Filter.find({ _id: { $in: filterIds } })
+    const filters = await Filter.find({
+      _id: { $in: filterIds },
+      status: { $ne: "Inactive" },
+    })
       .populate({
         path: "filter_group",
         select: "filtergroup_name -_id",
@@ -165,9 +151,6 @@ export async function GET(request, { params }) {
       filters: formattedFilters,
     };
 
-    // Cache the response
-    slugCache.set(slug, { data: finalResponse, timestamp: Date.now() });
-
     return Response.json(finalResponse);
 
   } catch (error) {
@@ -178,4 +161,3 @@ export async function GET(request, { params }) {
     );
   }
 }
-

@@ -88,8 +88,8 @@ export async function GET(req, { params }) {
     
     // ✅ Fetch category-level filters (new logic)
     const categoryFilters = await CategoryFilter.find({
-      category_id: category._id,
-    });
+      category_id: category._id.toString(),
+    }).lean();
 
     const filterIds = [
       ...new Set(categoryFilters.map((cf) => cf.filter_id)),
@@ -116,7 +116,10 @@ export async function GET(req, { params }) {
 
     // Extract unique filter IDs
     const filterIds = [...new Set(productFilters.map(pf => pf.filter_id))]; */ 
-    const filters = await Filter.find({ _id: { $in: filterIds } }).populate({
+    const filters = await Filter.find({
+      _id: { $in: filterIds },
+      status: { $ne: "Inactive" },
+    }).populate({
             path: 'filter_group',
             select: 'filtergroup_name -_id',
             model: FilterGroup
