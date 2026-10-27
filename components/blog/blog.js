@@ -143,13 +143,13 @@ function Skeleton({ className }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function BlogComponent() {
+export default function BlogComponent({ initialBlogs = [] }) {
 
   const { openLiveDemoModal } = useModal();
 
-  const [blogs, setBlogs] = useState([]);
+  const [blogs, setBlogs] = useState(initialBlogs);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialBlogs || initialBlogs.length === 0);
 
   const [error, setError] = useState(null);
 
@@ -163,9 +163,15 @@ export default function BlogComponent() {
 
 
 
-  // ── Fetch all active blogs once ──────────────────────────────────────────
+  // ── Fetch all active blogs if not provided via SSR ──────────────────────
 
   useEffect(() => {
+
+    if (initialBlogs && initialBlogs.length > 0) {
+      setBlogs(initialBlogs);
+      setLoading(false);
+      return;
+    }
 
     async function fetchBlogs() {
 
@@ -195,7 +201,7 @@ export default function BlogComponent() {
 
     fetchBlogs();
 
-  }, []);
+  }, [initialBlogs]);
 
 
 

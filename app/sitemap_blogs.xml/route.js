@@ -8,6 +8,9 @@ import {
   parseFromTo,
 } from "@/lib/sitemap";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request) {
   try {
     const baseUrl = getBaseUrl();
@@ -19,7 +22,11 @@ export async function GET(request) {
     };
 
     const total = await Blog.countDocuments(filter);
-    const { skip, limit } = parseFromTo(request.nextUrl.searchParams, total);
+    const searchParams = request.nextUrl.searchParams;
+    const hasPagination = searchParams.has("from") || searchParams.has("to");
+    const { skip, limit } = hasPagination
+      ? parseFromTo(searchParams, total)
+      : { skip: 0, limit: total };
 
     const blogs = await Blog.find(filter, {
       blog_slug: 1,

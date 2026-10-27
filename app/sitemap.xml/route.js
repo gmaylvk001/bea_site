@@ -12,6 +12,9 @@ import {
   getBrandSitemapEntries,
 } from "@/lib/sitemap";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 async function countActive(Model, filter) {
   return Model.countDocuments(filter);
 }
@@ -85,10 +88,19 @@ export async function GET() {
       );
     }
 
-    for (const { from, to } of chunkRanges(blogCount)) {
-      entries.push(
-        sitemapEntry(`${baseUrl}/sitemap_blogs.xml?from=${from}&to=${to}`, now)
-      );
+    if (blogCount > 0) {
+      if (blogCount <= SITEMAP_CHUNK_SIZE) {
+        entries.push(sitemapEntry(`${baseUrl}/sitemap_blogs.xml`, now));
+      } else {
+        for (const { from, to } of chunkRanges(blogCount)) {
+          entries.push(
+            sitemapEntry(
+              `${baseUrl}/sitemap_blogs.xml?from=${from}&to=${to}`,
+              now
+            )
+          );
+        }
+      }
     }
 
     for (const { from, to } of chunkRanges(productCount)) {
