@@ -102,6 +102,7 @@ const pageStyles = String.raw`
       justify-content: flex-end;
       flex-wrap: wrap;
       gap: 6px;
+      margin-left: auto;
     }
 
     .dwo-nav-links a {
@@ -295,6 +296,7 @@ const pageStyles = String.raw`
       font-size: clamp(30px, 4vw, 46px);
       line-height: 1.1;
       color: var(--bea-blue-dark);
+      font-weight: 800;
     }
 
     .dwo-section-heading p {
@@ -371,12 +373,20 @@ const pageStyles = String.raw`
 
     .product-
 
+    .dwo-product-body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      padding: 18px;
+    }
+
     .dwo-product-body h3 {
       font-size: 15px;
       line-height: 1.4;
-      margin: 0;
+      margin: 8px 0 18px;
       min-height: 42px;
-      color: #193a6e;
+      color: var(--bea-blue);
+      font-weight: 700;
     }
 
     .dwo-whatsapp-btn {
@@ -493,6 +503,154 @@ const pageStyles = String.raw`
     .dwo-form-group input::placeholder,
     .dwo-form-group textarea::placeholder {
       color: #9aa8ba;
+    }
+
+    .dwo-category-picker {
+      position: relative;
+    }
+
+    .dwo-category-picker-control {
+      width: 100%;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 12px 8px 14px;
+      border: 1px solid #cfd7e3;
+      border-radius: 12px;
+      background: #fbfcfe;
+      color: #17365f;
+      cursor: pointer;
+    }
+
+    .dwo-category-picker-control:focus-within {
+      outline: 3px solid rgba(33, 70, 165, .16);
+      border-color: var(--bea-blue);
+    }
+
+    .dwo-category-picker-value {
+      display: flex;
+      flex: 1;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .dwo-category-picker-value.is-placeholder span {
+      color: #9aa8ba;
+    }
+
+    .dwo-category-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px 5px 10px;
+      border-radius: 999px;
+      background: #eaf0ff;
+      color: #173b72;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .dwo-category-chip-remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--bea-blue);
+      font-size: 17px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .dwo-category-chip-remove:hover,
+    .dwo-category-chip-remove:focus-visible {
+      background: #d5e1ff;
+      outline: none;
+    }
+
+    .dwo-category-picker-toggle {
+      display: inline-flex;
+      flex: 0 0 32px;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 36px;
+      padding: 0;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .dwo-category-picker-toggle:focus-visible {
+      outline: 2px solid rgba(33, 70, 165, .35);
+    }
+
+    .dwo-category-picker-caret {
+      flex: 0 0 auto;
+      color: var(--bea-blue);
+    }
+
+    .dwo-category-picker-options {
+      display: block;
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      left: 0;
+      z-index: 20;
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 6px;
+      border: 1px solid #cfd7e3;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(24, 52, 101, .16);
+    }
+
+    .dwo-category-picker-options[hidden] {
+      display: none;
+    }
+
+    .dwo-category-picker-option {
+      display: block;
+      width: 100%;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 8px;
+      background: #fff;
+      color: #17365f;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .dwo-category-picker-option:hover,
+    .dwo-category-picker-option[aria-pressed="true"] {
+      background: #eef3ff;
+      color: var(--bea-blue);
+    }
+
+    .dwo-category-picker-option:disabled {
+      color: #9aa8ba;
+      cursor: not-allowed;
+    }
+
+    .dwo-category-picker-option:disabled:hover {
+      background: #fff;
+    }
+
+    .dwo-category-picker-status {
+      margin: 4px 2px 0;
+      color: #b42318;
+      font-size: 13px;
     }
 
     .dwo-phone-input-shell {
@@ -664,7 +822,7 @@ const pageStyles = String.raw`
     }
 
     .dwo-faq-item[open] summary::after {
-      content: "\\2212";
+      content: "×";
     }
 
     .dwo-faq-answer {
@@ -696,6 +854,7 @@ const pageStyles = String.raw`
     .dwo-visit-card h2 {
       margin: 0 0 10px;
       color: var(--bea-blue-dark);
+      font-weight: 800;
     }
 
     .dwo-visit-card p {
@@ -725,24 +884,12 @@ const pageStyles = String.raw`
       color: white;
       border-color: var(--bea-blue);
     }
-    .dwo-footer {
-      background: #0c234d;
-      color: rgba(255, 255, 255, .82);
-      padding: 24px 20px;
-      text-align: center;
-      font-size: 13px;
-    }
-    .dwo-footer a {
+    #bea-diwali-knockout-sale .dwo-action-row a:first-child {
       color: #fff;
-      font-weight: 600;
     }
 
-    .dwo-footer-links {
-      margin-top: 8px;
-      display: flex;
-      gap: 14px;
-      justify-content: center;
-      flex-wrap: wrap;
+    #bea-diwali-knockout-sale h2 {
+      font-weight: 800;
     }
 
     @media (max-width: 575px) {
@@ -1272,6 +1419,7 @@ const pageStyles = String.raw`
         display: none;
         flex: 0 0 100%;
         width: 100%;
+        margin-left: 0;
         flex-direction: column;
         align-items: stretch;
         gap: 7px;
@@ -1320,7 +1468,6 @@ const pageMarkup = String.raw`<noscript><iframe height="0" src="https://www.goog
 <div class="dwo-offer-strip">🪔 BEA Diwali Knockout Sale | Knockout Deals | Easy EMIs | Limited Period Offers</div>
 <div class="dwo-nav-wrap">
 <nav aria-label="Offer categories" class="dwo-nav">
-<a aria-label="BEA Home" class="dwo-brand" href="#dwo-top"><img alt="BEA - Always One Step Ahead" height="48" src="logo.png" width="auto"/></a>
 <button aria-controls="dwo-mobileMenu" aria-expanded="false" aria-label="Toggle navigation" class="dwo-nav-toggle" id="dwo-mobileMenuToggle" type="button"><span></span><span></span><span></span></button>
 <div class="dwo-nav-links" id="dwo-mobileMenu"><a href="#dwo-deal-category-bar">Knockout Deals</a><a class="dwo-enquire-link" href="#dwo-enquiry">Enquire Now</a><a href="#dwo-faq">FAQs</a><a href="https://www.bharathelectronics.in/location" rel="noopener" target="_blank">Showrooms</a></div>
 </nav>
@@ -1728,8 +1875,27 @@ const pageMarkup = String.raw`<noscript><iframe height="0" src="https://www.goog
 <input autocomplete="address-level2" id="dwo-enquiryCity" placeholder="E.g., Gandhipuram, Coimbatore" required="" type="text"/>
 </div>
 <div class="dwo-form-group full">
-<label for="dwo-category">Product You Are Looking For</label>
-<select id="dwo-category" multiple="">
+<label for="dwo-categoryToggle">Product You Are Looking For</label>
+<div class="dwo-category-picker" id="dwo-categoryPicker">
+<div class="dwo-category-picker-control" id="dwo-categoryPickerControl">
+<div aria-live="polite" class="dwo-category-picker-value is-placeholder" id="dwo-categorySelection"><span>Select categories...</span></div>
+<button aria-controls="dwo-categoryOptions" aria-expanded="false" aria-haspopup="listbox" aria-label="Choose product categories" class="dwo-category-picker-toggle" id="dwo-categoryToggle" type="button">
+<span aria-hidden="true" class="dwo-category-picker-caret">⌄</span>
+</button>
+</div>
+<div class="dwo-category-picker-options" hidden="" id="dwo-categoryOptions" role="listbox" aria-label="Product categories" aria-multiselectable="true">
+<button aria-pressed="false" class="dwo-category-picker-option" data-value="Smart TV" role="option" type="button">Smart TV</button>
+<button aria-pressed="false" class="dwo-category-picker-option" data-value="Refrigerator" role="option" type="button">Refrigerator</button>
+<button aria-pressed="false" class="dwo-category-picker-option" data-value="Washing Machine" role="option" type="button">Washing Machine</button>
+<button aria-pressed="false" class="dwo-category-picker-option" data-value="Air Conditioner" role="option" type="button">Air Conditioner</button>
+<button aria-pressed="false" class="dwo-category-picker-option" data-value="Phones" role="option" type="button">Mobiles &amp; Smartphones</button>
+<button aria-pressed="false" class="dwo-category-picker-option" data-value="Laptops" role="option" type="button">Laptops</button>
+<button aria-pressed="false" class="dwo-category-picker-option" data-value="Kitchen Appliances" role="option" type="button">Kitchen Appliances</button>
+<button aria-pressed="false" class="dwo-category-picker-option" data-value="Home Appliances" role="option" type="button">Home Appliances</button>
+<button aria-pressed="false" class="dwo-category-picker-option" data-value="Gadgets" role="option" type="button">Gadgets</button>
+</div>
+<p aria-live="polite" class="dwo-category-picker-status" id="dwo-categoryPickerStatus"></p>
+<select aria-hidden="true" hidden="" id="dwo-category" multiple="" tabindex="-1">
 <option value="Smart TV">Smart TV</option>
 <option value="Refrigerator">Refrigerator</option>
 <option value="Washing Machine">Washing Machine</option>
@@ -1740,6 +1906,7 @@ const pageMarkup = String.raw`<noscript><iframe height="0" src="https://www.goog
 <option value="Home Appliances">Home Appliances</option>
 <option value="Gadgets">Gadgets</option>
 </select>
+</div>
 </div>
 <div class="dwo-form-group full">
 <label for="dwo-enquiryMessage">Message (Optional)</label>
@@ -1814,16 +1981,6 @@ const pageMarkup = String.raw`<noscript><iframe height="0" src="https://www.goog
 </div>
 </section>
 </main>
-<div class="dwo-footer">
-<div>© 2026 Bharath Electronics &amp; Appliances (BEA). All Rights Reserved.</div>
-<div>Diwali Knockout Sale offers valid till stocks last. T&amp;C Apply.</div>
-<div class="dwo-footer-links">
-<a href="https://www.bharathelectronics.in/" rel="noopener" target="_blank">Main Website</a>
-<a href="https://www.bharathelectronics.in/location" rel="noopener" target="_blank">Showrooms</a>
-<a href="https://www.bharathelectronics.in/contact" rel="noopener" target="_blank">Contact Us</a>
-</div>
-<div>Page By <a href="https://vleafy.com" rel="noopener" target="_blank">Vleafy</a></div>
-</div>
 `;
 
 export default function DiwaliKnockoutSale() {
@@ -1912,12 +2069,104 @@ export default function DiwaliKnockoutSale() {
     document.addEventListener("keydown", onEscape);
     window.addEventListener("resize", onResize);
 
-    // Multi-select enhancement, if Tom Select is available on the page.
-    let tomSelect = null;
     const categorySelect = root.querySelector("#dwo-category");
-    if (categorySelect && window.TomSelect && !categorySelect.tomselect) {
-      tomSelect = new window.TomSelect(categorySelect, { plugins: ["remove_button"], placeholder: "Select categories...", maxItems: null });
-    }
+    const categoryPicker = root.querySelector("#dwo-categoryPicker");
+    const categoryPickerControl = root.querySelector("#dwo-categoryPickerControl");
+    const categoryToggle = root.querySelector("#dwo-categoryToggle");
+    const categoryOptions = root.querySelector("#dwo-categoryOptions");
+    const categorySelection = root.querySelector("#dwo-categorySelection");
+    const categoryPickerStatus = root.querySelector("#dwo-categoryPickerStatus");
+    const categoryOptionButtons = [...(categoryOptions?.querySelectorAll(".dwo-category-picker-option") || [])];
+    const closeCategoryPicker = () => {
+      if (categoryOptions) categoryOptions.hidden = true;
+      categoryToggle?.setAttribute("aria-expanded", "false");
+    };
+    const syncCategoryPicker = () => {
+      const selectedOptions = [...(categorySelect?.selectedOptions || [])];
+      const selectedValues = new Set(selectedOptions.map((option) => option.value));
+      if (categorySelection) {
+        categorySelection.replaceChildren();
+        if (selectedOptions.length) {
+          selectedOptions.forEach((option) => {
+            const chip = document.createElement("span");
+            chip.className = "dwo-category-chip";
+            chip.append(document.createTextNode(
+              categoryOptionButtons.find((button) => button.dataset.value === option.value)?.textContent || option.textContent
+            ));
+
+            const removeButton = document.createElement("button");
+            removeButton.className = "dwo-category-chip-remove";
+            removeButton.type = "button";
+            removeButton.dataset.value = option.value;
+            removeButton.setAttribute("aria-label", `Remove ${option.textContent} category`);
+            removeButton.textContent = "×";
+            chip.append(removeButton);
+            categorySelection.append(chip);
+          });
+        } else {
+          const placeholder = document.createElement("span");
+          placeholder.textContent = "Select categories...";
+          categorySelection.append(placeholder);
+        }
+        categorySelection.classList.toggle("is-placeholder", selectedOptions.length === 0);
+      }
+      categoryOptionButtons.forEach((button) => {
+        const selected = selectedValues.has(button.dataset.value);
+        button.setAttribute("aria-pressed", String(selected));
+        button.setAttribute("aria-selected", String(selected));
+        button.disabled = !selected && selectedOptions.length >= 3;
+      });
+    };
+    const onCategoryToggle = () => {
+      if (!categoryOptions || !categoryToggle) return;
+      const isOpen = categoryOptions.hidden;
+      categoryOptions.hidden = !isOpen;
+      categoryToggle.setAttribute("aria-expanded", String(isOpen));
+      if (isOpen) categoryOptionButtons[0]?.focus();
+    };
+    const onCategoryOptionClick = (event) => {
+      const optionButton = event.target.closest(".dwo-category-picker-option");
+      if (!optionButton || optionButton.disabled || !categorySelect) return;
+      const selectedOption = [...categorySelect.options].find((option) => option.value === optionButton.dataset.value);
+      if (!selectedOption) return;
+      const isSelected = selectedOption.selected;
+      const selectedCount = [...categorySelect.selectedOptions].length;
+      if (!isSelected && selectedCount >= 3) {
+        if (categoryPickerStatus) categoryPickerStatus.textContent = "You can select up to 3 categories.";
+        return;
+      }
+      selectedOption.selected = !isSelected;
+      if (categoryPickerStatus) categoryPickerStatus.textContent = "";
+      syncCategoryPicker();
+    };
+    const onCategoryChipRemove = (event) => {
+      const removeButton = event.target.closest(".dwo-category-chip-remove");
+      if (!removeButton || !categorySelect) return;
+      event.stopPropagation();
+      const selectedOption = [...categorySelect.options].find((option) => option.value === removeButton.dataset.value);
+      if (!selectedOption) return;
+      selectedOption.selected = false;
+      if (categoryPickerStatus) categoryPickerStatus.textContent = "";
+      syncCategoryPicker();
+    };
+    const onCategoryPickerControlClick = (event) => {
+      if (!event.target.closest(".dwo-category-chip-remove")) onCategoryToggle();
+    };
+    const onOutsideCategoryPickerClick = (event) => {
+      if (categoryPicker && !categoryPicker.contains(event.target)) closeCategoryPicker();
+    };
+    const onCategoryPickerEscape = (event) => {
+      if (event.key === "Escape" && categoryOptions && !categoryOptions.hidden) {
+        closeCategoryPicker();
+        categoryToggle?.focus();
+      }
+    };
+    categoryPickerControl?.addEventListener("click", onCategoryPickerControlClick);
+    categorySelection?.addEventListener("click", onCategoryChipRemove);
+    categoryOptions?.addEventListener("click", onCategoryOptionClick);
+    document.addEventListener("click", onOutsideCategoryPickerClick);
+    document.addEventListener("keydown", onCategoryPickerEscape);
+    syncCategoryPicker();
 
     // Enquiry form retains the existing Google Apps Script endpoint and dataLayer event.
     const form = root.querySelector("#dwo-enquiryform");
@@ -1948,7 +2197,7 @@ export default function DiwaliKnockoutSale() {
       });
       const endpoint = "https://script.google.com/macros/s/AKfycbxiuTT8dQhuaqL1WURYHrMtCQqUummxiiA63W6iEB9mz23jze7GZvvfrNiiUczhJWfAMg/exec?" + params;
       try {
-        const response = await fetch("/api/contact/add", {
+        const response = await fetch("/api/offers-lead/add", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1971,7 +2220,9 @@ export default function DiwaliKnockoutSale() {
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({ event: "enquiry_form_success" });
         form?.reset();
-        if (categorySelect?.tomselect) categorySelect.tomselect.clear();
+        if (categoryPickerStatus) categoryPickerStatus.textContent = "";
+        syncCategoryPicker();
+        closeCategoryPicker();
       } catch (error) {
         console.error("Submission failed:", error);
         if (success) { success.classList.add("dwo-is-hidden"); success.hidden = true; }
@@ -1989,7 +2240,11 @@ export default function DiwaliKnockoutSale() {
       document.removeEventListener("keydown", onEscape);
       window.removeEventListener("resize", onResize);
       form?.removeEventListener("submit", onSubmit);
-      if (tomSelect) tomSelect.destroy();
+      categoryPickerControl?.removeEventListener("click", onCategoryPickerControlClick);
+      categorySelection?.removeEventListener("click", onCategoryChipRemove);
+      categoryOptions?.removeEventListener("click", onCategoryOptionClick);
+      document.removeEventListener("click", onOutsideCategoryPickerClick);
+      document.removeEventListener("keydown", onCategoryPickerEscape);
     };
   }, []);
 

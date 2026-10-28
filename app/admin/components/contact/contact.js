@@ -3,7 +3,11 @@ import { Icon } from '@iconify/react';
 import DateRangePicker from '@/components/DateRangePicker';
 import * as XLSX from 'xlsx';
 
-export default function ContactComponent() {
+export default function ContactComponent({
+  dataEndpoint = "/api/contact/get",
+  pageTitle = "Customer Contact Details",
+  exportName = "contacts",
+}) {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,7 +33,7 @@ export default function ContactComponent() {
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/contact/get");
+      const response = await fetch(dataEndpoint, { cache: "no-store" });
       const data = await response.json();
       if (data.success) {
         setContacts(data.data);
@@ -210,14 +214,14 @@ export default function ContactComponent() {
   // Download file
   XLSX.writeFile(
     workbook,
-    `contacts_export_${new Date().toISOString().slice(0, 10)}.xlsx`
+    `${exportName}_export_${new Date().toISOString().slice(0, 10)}.xlsx`
   );
 };
 
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-5 mt-5">
-        <h2 className="text-2xl font-bold">Customer Contact Details</h2>
+        <h2 className="text-2xl font-bold">{pageTitle}</h2>
       </div>
 
       {alertMessage && (
