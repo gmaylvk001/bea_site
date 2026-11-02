@@ -13,6 +13,7 @@ import Logout from "@/components/Logout";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCart } from '@/context/CartContext';
 import { sortCategories } from '../utils/categoryUtils';
+import fetchInFlightJson from "@/utils/fetchInFlightJson";
 
 export default function Header() {
   const scrollRef = useRef(null);
@@ -75,8 +76,7 @@ export default function Header() {
     const fetchCategories = async () => {
       if (!hasMounted) return;
       try {
-        const response = await fetch('/api/categories/get');
-        const data = await response.json();
+        const data = await fetchInFlightJson('/api/categories/get');
         const sortedData = sortCategories(data);
         const parentCategories = sortedData.filter(category => category.parentid === "none" && category.status === "Active");
         setCategories(parentCategories);
@@ -530,8 +530,8 @@ export default function Header() {
       ref={scrollRef}
       className={`px-2 ${
         categories.length > 9 
-          ? 'flex overflow-x-auto scroll-smooth scrollbar-hide gap-8'
-          : 'grid grid-cols-9 justify-center gap-8'
+          ? 'flex overflow-x-auto scroll-smooth scrollbar-hide gap-4'
+          : 'grid grid-cols-9 justify-center gap-4'
       }`}
     >
       {categories.map((category) => (

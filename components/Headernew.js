@@ -19,6 +19,7 @@ import { getProducts } from '@/lib/productApi';
 import { filterAndRankProducts } from '@/lib/searchMatch';
 
 // ADD: alphaSortString - case-insensitive, null-safe string comparator
+const sortByPositionOrAlpha = (a, b) => { const posA = typeof a?.position === 'number' ? a.position : 999; const posB = typeof b?.position === 'number' ? b.position : 999; if (posA !== posB) return posA - posB; return alphaSortString(a?.category_name, b?.category_name); };
 const alphaSortString = (a, b) => {
   const sa = (a ?? '').toString().trim();
   const sb = (b ?? '').toString().trim();
@@ -224,6 +225,12 @@ const buildNestedCategories = (rawData) => {
     }
   });
 
+  nestedCategories.sort(sortByPositionOrAlpha);
+  nestedCategories.forEach((parent) => {
+    if (Array.isArray(parent.subcategories)) {
+      parent.subcategories.sort(sortByPositionOrAlpha);
+    }
+  });
   return nestedCategories;
 };
 
@@ -571,7 +578,7 @@ const Header = ({ initialCategories = [] }) => {
       const nestedCategories = buildNestedCategories(rawData);
       // cache nested structure
       saveCache(nestedKey, nestedCategories);
-      return nestedCategories;
+  return nestedCategories;
     };
 
     const setupCategories = async () => {
@@ -595,7 +602,14 @@ const Header = ({ initialCategories = [] }) => {
 
           if (!mounted) return;
           const nested = buildNestedAndCache(raw);
-          setCategories(nested);
+          nested.sort(sortByPositionOrAlpha);
+      nested.forEach((parent) => {
+        if (Array.isArray(parent.subcategories)) {
+          parent.subcategories.sort(sortByPositionOrAlpha);
+        }
+      });
+
+      setCategories(nested);
         }
       } catch (err) {
         console.error("Failed to fetch or build categories:", err);
@@ -671,6 +685,7 @@ const Header = ({ initialCategories = [] }) => {
   const [dropdownCenterX, setDropdownCenterX] = useState(null);
   const [dropdownUseTranslate, setDropdownUseTranslate] = useState(false);
   const slideRefs = useRef({});
+  const catNavBarRef = useRef(null);
   const [suggestions, setSuggestions] = useState([]);
   // refs & state for search dropdown positioning
   const searchInputRef = useRef(null);
@@ -1234,6 +1249,13 @@ const Header = ({ initialCategories = [] }) => {
           }
         });
 
+        nestedCategories.sort(sortByPositionOrAlpha);
+        nestedCategories.forEach((parent) => {
+          if (Array.isArray(parent.subcategories)) {
+            parent.subcategories.sort(sortByPositionOrAlpha);
+          }
+        });
+
         setCategories(nestedCategories);
       } catch (err) {
         console.error("Failed to fetch categories", err);
@@ -1278,49 +1300,71 @@ const Header = ({ initialCategories = [] }) => {
     if (!cat) return;
     setHoveredCategory(cat);
     const sortedSubs = [...(cat.subcategories || [])]
-      .sort((a, b) => alphaSortString(a.category_name, b.category_name));
+      .sort(sortByPositionOrAlpha);
     setActiveSubCategory(null);
 
     const el = slideRefs.current[categoryId];
     if (!el) return;
 
     const rect = el.getBoundingClientRect();
-    // Using fixed positioning => use viewport coords (rect.left / rect.bottom)
-    setDropdownLeft(rect.left);
-    setDropdownTop(rect.bottom + 18);
-    setDropdownCenterX(rect.left + rect.width / 2);
+    const navBottom = catNavBarRef.current
+      ? catNavBarRef.current.getBoundingClientRect().bottom
+      : (rect.bottom + 8);
+    setDropdownTop(navBottom);
+
+    const screenWidth = window.innerWidth;
+    const estWidth = 850;
+    const parentCenter = rect.left + rect.width / 2;
+
+    let left = parentCenter - estWidth / 2;
+    if (left < 16) {
+      left = 16;
+    } else if (left + estWidth > screenWidth - 16) {
+      left = Math.max(16, screenWidth - estWidth - 16);
+    }
+
+    if (left > rect.left) left = Math.max(16, rect.left);
+    if (left + estWidth < rect.right) left = Math.min(screenWidth - estWidth - 16, rect.right - estWidth);
+
+    setDropdownLeft(left);
+    setDropdownCenterX(parentCenter);
   };
   // After dropdown mounts, measure and adjust so it never overflows screen or hides under arrows
   useLayoutEffect(() => {
     if (!hoveredCategory || !dropdownRef.current) return;
     const ddRect = dropdownRef.current.getBoundingClientRect();
     const screenWidth = window.innerWidth;
-    let left = dropdownLeft;
+    const ddWidth = ddRect.width || 850;
 
-    // Center dropdown based on parent center when available
-    if (dropdownCenterX != null && ddRect.width) {
-      left = dropdownCenterX - ddRect.width / 2;
-      // Clamp to viewport
-      if (left < 8) left = 8;
-      if (left + ddRect.width > screenWidth - 10) left = Math.max(10, screenWidth - ddRect.width - 10);
-    } else {
-      // If dropdown would overflow right edge, shift it left
-      if (left + ddRect.width > screenWidth - 10) {
-        left = Math.max(10, screenWidth - ddRect.width - 10);
+    const el = slideRefs.current[hoveredCategory._id];
+    const catRect = el ? el.getBoundingClientRect() : null;
+    const parentCenter = catRect ? (catRect.left + catRect.width / 2) : dropdownCenterX;
+
+    let left = dropdownLeft;
+    if (parentCenter != null) {
+      left = parentCenter - ddWidth / 2;
+
+      // Left clamp for start categories
+      if (left < 16) {
+        left = 16;
+      }
+      // Right clamp for end categories
+      else if (left + ddWidth > screenWidth - 16) {
+        left = Math.max(16, screenWidth - ddWidth - 16);
+      }
+
+      // Ensure the hovered parent category is covered
+      if (catRect) {
+        if (left > catRect.left) {
+          left = Math.max(16, catRect.left);
+        }
+        if (left + ddWidth < catRect.right) {
+          left = Math.min(screenWidth - ddWidth - 16, catRect.right - ddWidth);
+        }
       }
     }
 
-    // Ensure dropdown is at least after prev arrow
-    const prevBtn = document.querySelector(".custom-swiper-prev");
-    const prevRight = prevBtn?.getBoundingClientRect().right || 0;
-    if (left < prevRight + 8) left = prevRight + 8;
-
-    // Ensure dropdown doesn't go too far left
-    if (left < 8) left = 8;
-
-    // Only update if it actually changes (prevents render thrash)
     if (Math.round(left) !== Math.round(dropdownLeft)) setDropdownLeft(left);
-    // include dropdownLeft so we compare against current value
   }, [hoveredCategory, dropdownCenterX, dropdownLeft]);
   // cleanup hide timeout on unmount
   useEffect(() => {
@@ -1794,6 +1838,13 @@ const Header = ({ initialCategories = [] }) => {
       const nested = [];
       active.forEach((c) => {
         if (c.parentid === 'none' || !map[c.parentid]) nested.push(map[c._id]);
+      });
+
+      nested.sort(sortByPositionOrAlpha);
+      nested.forEach((parent) => {
+        if (Array.isArray(parent.subcategories)) {
+          parent.subcategories.sort(sortByPositionOrAlpha);
+        }
       });
 
       setCategories(nested);
@@ -2410,17 +2461,17 @@ const Header = ({ initialCategories = [] }) => {
           )}
           {/* Auth Modal and Forgot Password Modal moved to document.body portal below to prevent iOS sticky-header clipping */}
         </div>
-        <div className="hidden sm:flex relative p-2 mt-0 px-1 bg-[#2453D3] min-h-[64px] border-gray-200 shadow items-center">
+        <div ref={catNavBarRef} className="hidden sm:flex relative p-2 mt-0 px-1 bg-[#2453D3] min-h-[64px] border-gray-200 shadow items-center">
           <div className="w-full  relative">
             <div className="relative">
               <div className="flex justify-center overflow-x-auto scrollbar-hide">
-                <Swiper modules={[Navigation]} navigation={false} spaceBetween={20} slidesPerView="auto" watchOverflow={true} className="pl-10 pr-14">
+                <Swiper modules={[Navigation]} navigation={false} slidesPerView="auto" watchOverflow={true} spaceBetween={6} breakpoints={{ 1240: { spaceBetween: 6 }, 1536: { spaceBetween: 8 }, 1920: { spaceBetween: 10 }, 2560: { spaceBetween: 10 } }} className="pl-3 pr-5 2xl:pl-8 2xl:pr-10">
                   {categories.map((category) => (
                     <SwiperSlide key={category._id} className="!w-auto">
-                      <div ref={(el) => (slideRefs.current[category._id] = el)} onMouseEnter={() => handleMouseEnter(category._id)} onMouseLeave={() => startHide(120)} className="px-5 py-2 flex flex-col items-center text-center" >
+                      <div ref={(el) => (slideRefs.current[category._id] = el)} onMouseEnter={() => handleMouseEnter(category._id)} onMouseLeave={() => startHide(250)} className="px-2 xl:px-2.5 2xl:px-3.5 py-2 flex flex-col items-center text-center" >
                         <Link
                           href={`/category/${category.category_slug}`}
-                          className="text-sm text-base text-white hover:text-orange-500 whitespace-nowrap"
+                          className="text-[13px] xl:text-sm text-white hover:text-orange-500 whitespace-nowrap"
                           aria-label={`View ${category.category_name}`}
                         >
                           {category.category_name}
@@ -2429,26 +2480,24 @@ const Header = ({ initialCategories = [] }) => {
                       </div>
                     </SwiperSlide>
                   ))}
-                  <SwiperSlide className="!w-[140px] overflow-visible flex justify-center">
+                  <SwiperSlide className="!w-[115px] xl:!w-[125px] 2xl:!w-[140px] overflow-visible flex justify-center">
                     <Link
                       href="/open-box"
                       className="relative flex items-center justify-center h-[40px]"
                       aria-label="Open Box Products"
                       title="Open Box Products"
                     >
-                      <video
-                        src="/assets/open-box-video.mp4"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        preload="none"
-                        className="h-[110px] w-auto object-contain rounded pointer-events-none"
-                        aria-hidden="true"
+                      <Image
+                        src="/uploads/openboxsale.webp"
+                        alt="Open Box Products"
+                        width={150}
+                        height={125}
+                        className="h-[125px] w-auto object-contain hover:opacity-90 transition-opacity"
+                        unoptimized
                       />
                     </Link>
                   </SwiperSlide>
-                  <SwiperSlide className="!w-[140px] overflow-visible flex justify-center">
+                  <SwiperSlide className="!w-[115px] xl:!w-[125px] 2xl:!w-[140px] overflow-visible flex justify-center">
                     <Link
                       href="/loyalty"
                       className="relative flex items-center justify-center h-[40px]"
@@ -2475,8 +2524,8 @@ const Header = ({ initialCategories = [] }) => {
               className="fixed z-50 bg-white"
               style={{
                 top: `${dropdownTop}px`,
-                left: '50%',
-                transform: 'translateX(-50%)',
+                left: `${dropdownLeft}px`,
+
                 width: 'fit-content',
                 minWidth: '800px',
                 maxWidth: '96vw',
@@ -2486,8 +2535,18 @@ const Header = ({ initialCategories = [] }) => {
                 minHeight: '420px',
               }}
               onMouseEnter={cancelHide}
-              onMouseLeave={() => startHide(120)}
+              onMouseLeave={() => startHide(250)}
             >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-24px',
+                  left: 0,
+                  right: 0,
+                  height: '24px',
+                }}
+                onMouseEnter={cancelHide}
+              />
               <style>{`
       .dd-sidebar::-webkit-scrollbar { display: none; }
       .dd-sidebar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -2531,7 +2590,7 @@ const Header = ({ initialCategories = [] }) => {
 
                   <div className="dd-sidebar" style={{ flex: 1, overflowY: 'auto' }}>
                     {[...hoveredCategory.subcategories]
-                      .sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                      .sort(sortByPositionOrAlpha)
                       .map((sub) => {
                         const isActive = activeSubCategory?._id === sub._id;
                         return (
@@ -2637,7 +2696,7 @@ const Header = ({ initialCategories = [] }) => {
                   // Children if any; otherwise brand names for that subcategory (e.g. Audio)
                   const getSubListItems = (sub) => {
                     const children = Array.isArray(sub?.subcategories) && sub.subcategories.length > 0
-                      ? [...sub.subcategories].sort((a, b) => alphaSortString(a.category_name, b.category_name))
+                      ? [...sub.subcategories].sort(sortByPositionOrAlpha)
                       : [];
                     if (children.length > 0) {
                       return children.map((child) => ({
@@ -2897,69 +2956,18 @@ const Header = ({ initialCategories = [] }) => {
                               )}
                             </div>
                           </div>
-                        ) : activeSub ? (
-                          <div style={{ flex: 1, minHeight: 0 }}>
-                            <>
-                              <div style={{ marginBottom: '10px', paddingBottom: '8px', borderBottom: 'none' }}>
-                                <Link
-                                  href={`/category/${hoveredCategory.category_slug}/${activeSub.category_slug}`}
-                                  onClick={() => setHoveredCategory(null)}
-                                  style={{
-                                    fontSize: '13px', fontWeight: 700, color: '#2453D3',
-                                    textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.05em',
-                                  }}
-                                >
-                                  {activeSub.category_name}
-                                </Link>
-                              </div>
-                              {(() => {
-                                const activeItems = getSubListItems(activeSub);
-                                const otherSubs = [...hoveredCategory.subcategories]
-                                  .sort((a, b) => alphaSortString(a.category_name, b.category_name))
-                                  .filter((s) => s._id !== activeSub._id)
-                                  .slice(0, 3);
-                                return (
-                                  <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
-                                    {renderListColumn(activeItems, activeSub._id, {
-                                      showBorder: otherSubs.length > 0,
-                                      padLeft: false,
-                                    })}
-                                    {otherSubs.map((sub, idx) => {
-                                      const items = getSubListItems(sub);
-                                      return renderListColumn(items, sub._id, {
-                                        showBorder: idx < otherSubs.length - 1,
-                                        padLeft: true,
-                                        header: (
-                                          <Link
-                                            href={`/category/${hoveredCategory.category_slug}/${sub.category_slug}`}
-                                            onClick={() => setHoveredCategory(null)}
-                                            style={{
-                                              fontSize: '13px', fontWeight: 700, color: '#2453D3',
-                                              textDecoration: 'none', textTransform: 'uppercase',
-                                              letterSpacing: '0.04em', marginBottom: '8px',
-                                              paddingBottom: '6px', borderBottom: 'none',
-                                              whiteSpace: 'nowrap',
-                                            }}
-                                          >
-                                            {sub.category_name}
-                                          </Link>
-                                        ),
-                                      });
-                                    })}
-                                  </div>
-                                );
-                              })()}
-                            </>
-                          </div>
                         ) : (
                           <div style={{ flex: 1, minHeight: 0 }}>
-                            <>
-                              <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
-                                {[...hoveredCategory.subcategories]
-                                  .sort((a, b) => alphaSortString(a.category_name, b.category_name))
-                                  .slice(0, 4)
-                                  .map((sub, si, arr) => {
+                            {(() => {
+                              const columnsToRender = activeSub
+                                ? [activeSub, ...hoveredCategory.subcategories.filter((s) => s._id !== activeSub._id).sort(sortByPositionOrAlpha)].slice(0, 4)
+                                : [...hoveredCategory.subcategories].sort(sortByPositionOrAlpha).slice(0, 4);
+
+                              return (
+                                <div style={{ display: 'flex', gap: 0, alignItems: 'flex-start' }}>
+                                  {columnsToRender.map((sub, si, arr) => {
                                     const items = getSubListItems(sub);
+                                    const isSelected = activeSub?._id === sub._id;
                                     return renderListColumn(items, sub._id, {
                                       showBorder: si < arr.length - 1,
                                       padLeft: si > 0,
@@ -2969,7 +2977,8 @@ const Header = ({ initialCategories = [] }) => {
                                           onClick={() => setHoveredCategory(null)}
                                           style={{
                                             display: 'block', fontSize: '13px', fontWeight: 700,
-                                            color: '#1e3a8a', textDecoration: 'none',
+                                            color: isSelected ? '#2453D3' : '#1e3a8a',
+                                            textDecoration: 'none',
                                             textTransform: 'uppercase', letterSpacing: '0.04em',
                                             marginBottom: '8px', paddingBottom: '6px',
                                             borderBottom: 'none',
@@ -2981,8 +2990,9 @@ const Header = ({ initialCategories = [] }) => {
                                       ),
                                     });
                                   })}
-                              </div>
-                            </>
+                                </div>
+                              );
+                            })()}
                           </div>
                         )}
                         {renderBrands()}

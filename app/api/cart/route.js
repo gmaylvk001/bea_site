@@ -218,8 +218,14 @@ export async function GET(req) {
     else
     {
 
-      const guestId_use = req.headers.get("GuestCartId");
+      const guestId_use = req.headers.get("GuestCartId") || req.headers.get("guestCartId") || req.headers.get("guestcartid");
       guestId = guestId_use;
+      if (!guestId || guestId === "null" || guestId === "undefined" || (typeof guestId === "string" && guestId.trim() === "")) {
+        return NextResponse.json(
+          { message: "Cart is empty", cart: { items: [], totalItems: 0, totalPrice: 0 } },
+          { status: 200 }
+        );
+      }
       cart = await Cart.findOne({  guestId }).populate(
       "items.productId",
       "name price images item_code quantity"

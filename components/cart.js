@@ -895,19 +895,26 @@ let nextCartObj = { ...updatedCart.cart, items: finalItems };
       }
 
       // Re-fetch cart fresh from API to avoid stale data
-      const token3 = localStorage.getItem('token');
-      const freshRes = await fetch('/api/cart', {
-        headers: { 'Authorization': `Bearer ${token3}` },
-        method: 'GET'
-      });
-      if (freshRes.ok) {
-        const freshData = await freshRes.json();
-        const freshItems = freshData.cart.items.map(item => ({ ...item, discount: 0 }));
-        let freshFinal = freshItems;
-        if (appliedCoupon) {
-          freshFinal = applyDiscountToItems(appliedCoupon, freshItems);
+      try {
+        const token3 = localStorage.getItem('token');
+        const freshHeaders = token3
+          ? { 'Authorization': `Bearer ${token3}` }
+          : { 'guestCartId': localStorage.getItem('guestCartId') || '' };
+        const freshRes = await fetch('/api/cart', {
+          headers: freshHeaders,
+          method: 'GET'
+        });
+        if (freshRes.ok) {
+          const freshData = await freshRes.json();
+          const freshItems = freshData.cart.items.map(item => ({ ...item, discount: 0 }));
+          let freshFinal = freshItems;
+          if (appliedCoupon) {
+            freshFinal = applyDiscountToItems(appliedCoupon, freshItems);
+          }
+          nextCartObj = { ...freshData.cart, items: freshFinal };
         }
-        nextCartObj = { ...freshData.cart, items: freshFinal };
+      } catch (_) {
+        // If re-fetch fails, keep the optimistic nextCartObj from the DELETE response
       }
 
       setCartData(nextCartObj);
@@ -918,7 +925,8 @@ let nextCartObj = { ...updatedCart.cart, items: finalItems };
       // setTimeout(() => window.location.reload(), 500);
     } catch (err) {
       console.error('Remove item error:', err);
-      setError(err.message);
+      setErrorMessage(err.message || 'Failed to remove item. Please try again.');
+      setShowErrorModal(true);
     } finally {
       setShowConfirmModal(false);
       setProductToDelete(null);

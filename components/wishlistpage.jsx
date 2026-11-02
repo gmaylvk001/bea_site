@@ -724,7 +724,7 @@ function EmptyWishlist() {
       <span className="text-6xl mb-4">💔</span>
       <h2 className="text-xl font-bold text-blue-700 mb-2">Your wishlist is empty</h2>
       <p className="text-gray-500 text-sm mb-6">Save products you love and find them here anytime.</p>
-      <Link href="/products" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6 py-2.5 text-sm font-semibold transition-colors">
+      <Link href="/" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6 py-2.5 text-sm font-semibold transition-colors">
         Start Shopping
       </Link>
     </div>
