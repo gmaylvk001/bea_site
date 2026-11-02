@@ -740,12 +740,7 @@ images.forEach((img, index) => {
   // Renders the product settings form for any category node
   const renderCategoryForm = (subcat) => {
     const subcatProducts = products.filter(
-      (p) =>
-        p.sub_category_new
-          ?.toLowerCase()
-          .includes(subcat.md5_cat_name?.toLowerCase()) &&
-        p.status === "Active" &&
-        p.stock_status === "In Stock",
+      (p) => p.status === "Active" && p.stock_status === "In Stock"
     );
     const productOptions = subcatProducts.map((p) => ({
       value: p._id,
@@ -1290,15 +1285,9 @@ images.forEach((img, index) => {
                   const childMd5Names = children.map((c) =>
                     c.md5_cat_name?.toLowerCase(),
                   );
-                  const subcatProducts = products.filter((p) => {
-                    const pCat = p.sub_category_new?.toLowerCase();
-                    return (
-                      (pCat?.includes(subcat.md5_cat_name?.toLowerCase()) ||
-                        childMd5Names.some((md5) => pCat?.includes(md5))) &&
-                      p.status === "Active" &&
-                      p.stock_status === "In Stock"
-                    );
-                  });
+                  const subcatProducts = products.filter(
+                    (p) => p.status === "Active" && p.stock_status === "In Stock"
+                  );
 
                   const productOptions = subcatProducts.map((p) => ({
                     value: p._id,

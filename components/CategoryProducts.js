@@ -16,6 +16,7 @@ import "../styles/slick-custom.css";
 import 'swiper/css';
 import 'swiper/css/navigation';
 import "swiper/css/pagination";
+import fetchInFlightJson from "@/utils/fetchInFlightJson";
 
 // =========================================================================
 // Diwali Festive Frame Decorations (Corners & Center Diyas - Uniform Size)
@@ -81,9 +82,8 @@ const DiwaliCenterDecoration = ({ position }) => {
   );
 };
 
-const CategoryProducts = () => {
+const CategoryProducts = ({ brandMap = {} }) => {
   const [categoryProducts, setCategoryProducts] = useState([]);
-  const [brandMap, setBrandMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [navigating, setNavigating] = useState(false);
   const categoryScrollRefs = useRef({});
@@ -227,36 +227,23 @@ const getBannerRedirectUrls = (urls) => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
+    let isActive = true;
+
+    const fetchCategoryProducts = async () => {
       try {
-        const response = await fetch("/api/categoryproduct/settings");
-        const result = await response.json();
-        if (result.ok) setCategoryProducts(result.data);
-        /* if (result.ok) {
-          // Sort so priorityCategories appear first in declared order; others follow
-          const sorted = [...(result.data || [])].sort((a, b) => {
-            const slugA = a.subcategoryId?.category_slug || "";
-            const slugB = b.subcategoryId?.category_slug || "";
-            const idxA = priorityCategories.indexOf(slugA);
-            const idxB = priorityCategories.indexOf(slugB);
-            return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-          });
-          setCategoryProducts(sorted);
-        } */
+        const result = await fetchInFlightJson("/api/categoryproduct/settings");
+        if (isActive && result.ok) setCategoryProducts(result.data);
+      } catch (error) {
+        if (isActive) console.error("Error fetching category products:", error);
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    };
 
-        const brandResponse = await fetch("/api/brand");
-        const brandResult = await brandResponse.json();
-        if (!brandResult.error) {
-          const map = {};
-          brandResult.data.forEach((b) => { map[b._id] = b.brand_name; });
-          setBrandMap(map);
-        }
-
-        // Fetch active category hierarchy for dynamic subcategory links
-        const catRes = await fetch("/api/categories/hierarchy");
-        const catData = await catRes.json();
-        if (catData.success) {
+    const fetchCategoryHierarchy = async () => {
+      try {
+        const catData = await fetchInFlightJson("/api/categories/hierarchy");
+        if (isActive && catData.success) {
           const idMap = {};
           catData.categories.forEach(c => { idMap[c._id.toString()] = c; });
           setIdToCategory(idMap);
@@ -271,19 +258,49 @@ const getBannerRedirectUrls = (urls) => {
           setChildrenByParentId(childMap);
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
+        if (isActive) console.error("Error fetching category hierarchy:", error);
       }
     };
-    fetchData();
+
+    fetchCategoryProducts();
+    fetchCategoryHierarchy();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-      </div>
+      <section
+        className="category-products px-3 sm:px-6 pt-6"
+        aria-busy="true"
+        aria-label="Loading category products"
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-3 sm:mb-5">
+            <div className="h-7 w-48 rounded bg-gray-200 animate-pulse" />
+          </div>
+          <div className="relative flex flex-col md:flex-row mb-8">
+            <div className="h-48 sm:h-64 md:h-[340px] w-full md:w-[350px] flex-shrink-0 rounded-t-lg md:rounded-l-lg md:rounded-tr-none bg-gray-200 animate-pulse" />
+            <div className="min-w-0 flex-1 border-y-4 border-r-4 border-gray-200 p-3">
+              <div className="mb-3 flex justify-end gap-2">
+                <div className="h-7 w-16 rounded bg-gray-200 animate-pulse" />
+                <div className="h-7 w-20 rounded bg-gray-200 animate-pulse" />
+                <div className="h-7 w-16 rounded bg-gray-200 animate-pulse" />
+              </div>
+              <div className="flex gap-3 overflow-hidden">
+                {[0, 1, 2, 3].map((item) => (
+                  <div
+                    key={item}
+                    className="h-[250px] min-w-[145px] flex-1 rounded-lg bg-gray-200 animate-pulse"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     );
   }
 
@@ -307,7 +324,9 @@ const getBannerRedirectUrls = (urls) => {
             
               {categoryProducts.map((categoryProduct) => {
                 const category = categoryProduct.subcategoryId;
-                const products = categoryProduct.products || [];
+                const products = [...(categoryProduct.products || [])].sort(
+                  (a, b) => (Number(b.quantity) || 0) - (Number(a.quantity) || 0)
+                );
                 const alignment = categoryProduct.alignment || "left";
                 if (!category || products.length === 0) return null;
                 const categoryStyle = categoryStyles[category.category_slug] || {
@@ -362,9 +381,7 @@ const getBannerRedirectUrls = (urls) => {
             alt={categoryProduct.category_name || "Category Banner"}
             width={1200}
             height={400}
-            priority
             className="w-full h-auto rounded-lg shadow-md transition"
-            unoptimized
           />
         </Link>
       ) : (
@@ -429,9 +446,8 @@ const getBannerRedirectUrls = (urls) => {
       <Image src={img} alt={categoryProduct?.category_name || "Category Banner"}
       width={1200}
       height={400}
-      priority
       className="w-full h-auto rounded-lg"
-      unoptimized />
+      />
       </Link>
     </SwiperSlide>
   ))}
