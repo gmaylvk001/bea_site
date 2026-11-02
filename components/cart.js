@@ -41,7 +41,7 @@ const features = [
   { icon: "💬", title: "24/7 Support", description: "We're here to help anytime" },
 ];
 
-const ConfirmModal = ({ show, onClose, onConfirm }) => (
+const ConfirmModal = ({ show, onClose, onConfirm, isConfirming }) => (
   <AnimatePresence>
     {show && (
       <motion.div
@@ -60,16 +60,22 @@ const ConfirmModal = ({ show, onClose, onConfirm }) => (
           <p className="text-gray-500 mb-4">Are you sure you want to delete this item from your cart?</p>
           <div className="flex justify-center space-x-4">
             <button
-              className="px-4 py-2 bg-gray-200 rounded-lg text-gray-700 hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-200 rounded-lg text-gray-700 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-60"
               onClick={onClose}
+              disabled={isConfirming}
             >
               Cancel
             </button>
             <button
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70 inline-flex items-center justify-center gap-2 min-w-[120px]"
               onClick={onConfirm}
+              disabled={isConfirming}
+              aria-busy={isConfirming}
             >
-              Yes, Delete
+              {isConfirming && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />
+              )}
+              {isConfirming ? "Deleting..." : "Yes, Delete"}
             </button>
           </div>
         </motion.div>
@@ -283,6 +289,8 @@ const { updateWishlist } = useWishlist();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [isRemovingItem, setIsRemovingItem] = useState(false);
+  const removeRequestInFlightRef = useRef(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   
@@ -834,6 +842,10 @@ const updatedCart = await response.json();
   };
 
   const removeItem = async () => {
+    if (removeRequestInFlightRef.current || !productToDelete) return;
+
+    removeRequestInFlightRef.current = true;
+    setIsRemovingItem(true);
     try {
       let response = '';
       const token = localStorage.getItem('token');
@@ -894,29 +906,6 @@ let nextCartObj = { ...updatedCart.cart, items: finalItems };
         };
       }
 
-      // Re-fetch cart fresh from API to avoid stale data
-      try {
-        const token3 = localStorage.getItem('token');
-        const freshHeaders = token3
-          ? { 'Authorization': `Bearer ${token3}` }
-          : { 'guestCartId': localStorage.getItem('guestCartId') || '' };
-        const freshRes = await fetch('/api/cart', {
-          headers: freshHeaders,
-          method: 'GET'
-        });
-        if (freshRes.ok) {
-          const freshData = await freshRes.json();
-          const freshItems = freshData.cart.items.map(item => ({ ...item, discount: 0 }));
-          let freshFinal = freshItems;
-          if (appliedCoupon) {
-            freshFinal = applyDiscountToItems(appliedCoupon, freshItems);
-          }
-          nextCartObj = { ...freshData.cart, items: freshFinal };
-        }
-      } catch (_) {
-        // If re-fetch fails, keep the optimistic nextCartObj from the DELETE response
-      }
-
       setCartData(nextCartObj);
       updateCartCount(nextCartObj.totalItems);
       saveCartState(nextCartObj);
@@ -928,6 +917,8 @@ let nextCartObj = { ...updatedCart.cart, items: finalItems };
       setErrorMessage(err.message || 'Failed to remove item. Please try again.');
       setShowErrorModal(true);
     } finally {
+      removeRequestInFlightRef.current = false;
+      setIsRemovingItem(false);
       setShowConfirmModal(false);
       setProductToDelete(null);
     }
@@ -1538,10 +1529,12 @@ return (
     <ConfirmModal
       show={showConfirmModal}
       onClose={() => {
+        if (isRemovingItem) return;
         setShowConfirmModal(false);
         setProductToDelete(null);
       }}
       onConfirm={removeItem}
+      isConfirming={isRemovingItem}
     />
     <SuccessModal
       show={showSuccessModal}
