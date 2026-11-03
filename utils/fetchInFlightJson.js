@@ -1,6 +1,4 @@
-import { useRequest } from "react-request-hook";    
-
-      const inFlightRequests = new Map();
+const inFlightRequests = new Map();
 
 export default function fetchInFlightJson(url, options) {
   const existingRequest = inFlightRequests.get(url);
