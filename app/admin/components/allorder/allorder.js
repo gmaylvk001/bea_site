@@ -427,6 +427,7 @@ const OrdersTable = () => {
               >
                 <option value="">All</option>
                 <option value="online">Online</option>
+                <option value="emi">EMI</option>
                 <option value="cash">COD</option>
               </select>
             </div>
