@@ -15,6 +15,10 @@ const OrdersTable = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [showDeliveryDateModal, setShowDeliveryDateModal] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [orderToUpdate, setOrderToUpdate] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const itemsPerPage = 20;
   const router = useRouter();
   const [filtered, setFiltered] = useState([]);
@@ -42,7 +46,34 @@ useEffect(() => {
     endDate: null
   });
 
+  const sendStatusEmail = async (orderId, newStatus, selectedDeliveryDate) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch('/api/send-order-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        action: 'status_update',
+        status: newStatus,
+        orderId,
+        deliveryDate: selectedDeliveryDate,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to send order status email');
+    }
+  };
+
   const updateOrderStatus = async (order, newStatus) => {
+    if (newStatus === 'shipped' && order.order_status?.toLowerCase() === 'pending') {
+      setOrderToUpdate(order);
+      setShowDeliveryDateModal(true);
+      return;
+    }
+
     const previousStatus = order.order_status;
     setUpdatingOrderId(order._id);
 
@@ -65,6 +96,16 @@ useEffect(() => {
         )
       );
       toast.success('Order Status updated successfully');
+
+      if (newStatus === 'cancelled') {
+        try {
+            await sendStatusEmail(order._id, newStatus);
+            toast.success('Cancellation email sent successfully!');
+        } catch (error) {
+            console.error('Failed to send cancellation email:', error);
+            toast.error('Order cancelled, but the cancellation email failed to send');
+        }
+      }
     } catch (error) {
       console.error('Failed to update order status:', error);
       toast.error('Failed to update status');
@@ -77,6 +118,50 @@ useEffect(() => {
       );
     } finally {
       setUpdatingOrderId(null);
+    }
+  };
+
+  const confirmShippedStatus = async () => {
+    if (!deliveryDate || !orderToUpdate) {
+      toast.error('Please select a delivery date');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`/api/orders/${orderToUpdate._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'shipped', delivery_date: deliveryDate }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      setOrders(prev =>
+        prev.map(current =>
+          current._id === orderToUpdate._id
+            ? { ...current, order_status: 'shipped', delivery_date: deliveryDate }
+            : current
+        )
+      );
+
+      try {
+        await sendStatusEmail(orderToUpdate._id, 'shipped', deliveryDate);
+        toast.success('Order shipped and delivery email sent successfully!');
+      } catch (error) {
+        console.error('Failed to send delivery email:', error);
+        toast.error('Order shipped, but the delivery email failed to send');
+      }
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      toast.error('Failed to update order status');
+    } finally {
+      setIsProcessing(false);
+      setShowDeliveryDateModal(false);
+      setDeliveryDate('');
+      setOrderToUpdate(null);
     }
   };
 
@@ -397,6 +482,46 @@ useEffect(() => {
                 aria-label="Next page"
               >
                 »
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDeliveryDateModal && orderToUpdate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-96 rounded-lg bg-white p-6 shadow-lg">
+            <h3 className="mb-4 text-lg font-semibold">Set Delivery Date</h3>
+            <p className="mb-4 text-sm text-gray-600">
+              Order <b>{orderToUpdate.order_number}</b> for{" "}
+              <b>{orderToUpdate.order_username}</b>
+            </p>
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Expected Delivery Date:
+            </label>
+            <input
+              type="date"
+              value={deliveryDate}
+              onChange={event => setDeliveryDate(event.target.value)}
+              className="mb-4 w-full rounded-md border border-gray-300 p-2"
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeliveryDateModal(false);
+                  setDeliveryDate('');
+                  setOrderToUpdate(null);
+                }}
+                disabled={isProcessing}
+                className="rounded-md bg-gray-300 px-4 py-2 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmShippedStatus}
+                disabled={!deliveryDate || isProcessing}
+                className="rounded-md bg-red-600 px-4 py-2 text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+              >
+                {isProcessing ? 'Processing...' : 'Confirm & Send Email'}
               </button>
             </div>
           </div>

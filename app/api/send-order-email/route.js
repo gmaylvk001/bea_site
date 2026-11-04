@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+import dbConnect from "@/lib/db";
+import Order from "@/models/ecom_order_info";
+import User from "@/models/User";
 
 const EMAIL_AUTH =
   process.env.EYGR_EMAIL_AUTH ||
@@ -13,6 +18,20 @@ const ADMIN_CAMPAIGN_ID =
   "dd7b5f8d-5bf1-45a5-9116-fcb40f69ede6";
 
 const IMAGE_BASE = "https://www.bharathelectronics.in";
+const DEFAULT_STATUS_ADMIN_EMAILS = [
+  "arunkarthik@bharathelectronics.in",
+  "ecom@bharathelectronics.in",
+  "itadmin@bharathelectronics.in",
+  "telemarketing@bharathelectronics.in",
+  "sekarcorp@bharathelectronics.in",
+  "customercare@bharathelectronics.in",
+];
+const STATUS_CANCEL_CAMPAIGN_ID =
+  process.env.EYGR_CANCEL_CAMPAIGN_ID ||
+  "637cf8a5-db01-453d-9c47-cca3cac44d52";
+const STATUS_DELIVERY_CAMPAIGN_ID =
+  process.env.EYGR_DELIVERY_CAMPAIGN_ID ||
+  "e019b2bd-09e9-4369-8b04-1d80a0403bb9";
 
 const formatINR = (value) =>
   `Rs. ${Number(value || 0).toLocaleString("en-IN", {
@@ -122,6 +141,10 @@ async function sendEygrEmail(campaignId, email, params) {
 export async function POST(req) {
   try {
     const body = await req.json();
+    if (body.action === "status_update") {
+      return await sendOrderStatusEmail(req, body);
+    }
+
     const { orderDetails, customerEmail, adminEmails = [] } = body;
 
     if (!orderDetails || !customerEmail) {
@@ -241,4 +264,115 @@ export async function POST(req) {
       { status: 500 },
     );
   }
+}
+
+async function sendOrderStatusEmail(req, { status, orderId, deliveryDate }) {
+  const authorization = req.headers.get("authorization") || "";
+  const token = authorization.startsWith("Bearer ")
+    ? authorization.slice(7).trim()
+    : "";
+  if (!token) {
+    return NextResponse.json(
+      { success: false, error: "Admin authentication token required" },
+      { status: 401 },
+    );
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Invalid or expired admin authentication token" },
+      { status: 401 },
+    );
+  }
+
+  const userId = decoded?.userId || decoded?.id || decoded?._id;
+  if (!userId || !["cancelled", "shipped"].includes(status) ||
+      !mongoose.Types.ObjectId.isValid(orderId)) {
+    return NextResponse.json(
+      { success: false, error: "Valid admin authentication, status, and order ID are required" },
+      { status: 400 },
+    );
+  }
+
+  await dbConnect();
+  const admin = await User.findById(userId).select("user_type status").lean();
+  if (!admin || admin.user_type !== "admin" || admin.status === "Inactive") {
+    return NextResponse.json(
+      { success: false, error: "Active admin access required" },
+      { status: 403 },
+    );
+  }
+
+  const order = await Order.findById(orderId)
+    .select("email_address order_username order_number delivery_type order_status")
+    .lean();
+  if (!order || order.delivery_type !== "home" || order.order_status !== status) {
+    return NextResponse.json(
+      { success: false, error: "Home delivery order status was not found" },
+      { status: 404 },
+    );
+  }
+
+  const customerEmail = String(order.email_address || "").trim();
+  if (!customerEmail && status === "shipped") {
+    return NextResponse.json(
+      { success: false, error: "Customer email is missing for this order" },
+      { status: 400 },
+    );
+  }
+
+  let params;
+  if (status === "cancelled") {
+    params = [order.order_username || "Customer", order.order_number];
+  } else {
+    const date = new Date(deliveryDate);
+    if (!deliveryDate || Number.isNaN(date.getTime())) {
+      return NextResponse.json(
+        { success: false, error: "A valid delivery date is required" },
+        { status: 400 },
+      );
+    }
+    params = [
+      order.order_username || "Customer",
+      order.order_number,
+      date.toLocaleDateString("en-IN", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+    ];
+  }
+
+  const recipients = [
+    ...new Set([
+      customerEmail || "kbsiva1234@gmail.com",
+      ...DEFAULT_STATUS_ADMIN_EMAILS,
+    ]),
+  ];
+  const expectedCustomerRecipient =
+    customerEmail || (status === "cancelled" ? "kbsiva1234@gmail.com" : "");
+  const campaignId =
+    status === "cancelled"
+      ? STATUS_CANCEL_CAMPAIGN_ID
+      : STATUS_DELIVERY_CAMPAIGN_ID;
+  const results = [];
+  for (const email of recipients) {
+    results.push(await sendEygrEmail(campaignId, email, params));
+  }
+
+  const customerResult = results.find(
+    (result) => result.email === expectedCustomerRecipient,
+  );
+  if (!customerResult?.ok) {
+    return NextResponse.json(
+      { success: false, error: "Failed to send status email to the customer", results },
+      { status: 502 },
+    );
+  }
+
+  return NextResponse.json({ success: true, results });
 }

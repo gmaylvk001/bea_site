@@ -28,7 +28,6 @@ const OrdersTable = () => {
   const [showDeliveryDateModal, setShowDeliveryDateModal] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState("");
   const [orderToUpdate, setOrderToUpdate] = useState(null);
-  const [oldStatus, setOldStatus] = useState("");
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -199,39 +198,6 @@ const OrdersTable = () => {
     }
   };
 
-  // 📧 Send notification email to admin
-  const sendAdminNotificationEmail = async (order, oldStatus, newStatus) => {
-    try {
-      const res = await fetch("/api/order-send-mail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: "ecom@bharathelectroncis.in",
-          //cc: "siva96852@gmail.com",
-          subject: `Order ${order.order_number} Status Updated`,
-          text: `Order ${order.order_number} for ${order.order_username} has been updated from ${oldStatus} to ${newStatus}.`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #333;">Order Status Updated</h2>
-              <p><strong>Order Number:</strong> ${order.order_number}</p>
-              <p><strong>Customer Name:</strong> ${order.order_username}</p>
-              <p><strong>Status Changed:</strong> ${oldStatus} → ${newStatus}</p>
-              <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-              <br>
-              <p>This is an automated notification from the order management system.</p>
-            </div>
-          `
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to send admin notification");
-      return await res.json();
-    } catch (error) {
-      console.error("Error sending admin notification:", error);
-      throw error;
-    }
-  };
-
   // 📅 Handle date range change
   const handleDateChange = ({ startDate, endDate }) => {
     setDateFilter({ startDate, endDate });
@@ -268,7 +234,6 @@ const OrdersTable = () => {
       );
 
       await sendDeliveryEmailToUser(orderToUpdate, deliveryDate);
-      // await sendAdminNotificationEmail(orderToUpdate, oldStatus, "shipped");
 
       toast.success("Order shipped! Email sent to user and admin.");
     } catch (err) {
@@ -279,7 +244,6 @@ const OrdersTable = () => {
       setShowDeliveryDateModal(false);
       setDeliveryDate("");
       setOrderToUpdate(null);
-      setOldStatus("");
     }
   };
 
@@ -322,7 +286,6 @@ const OrdersTable = () => {
   //     await sendDeliveryEmailToUser(orderToUpdate, deliveryDate);
 
   //     // Send notification email to admin
-  //     await sendAdminNotificationEmail(orderToUpdate, oldStatus, "shipped");
 
   //     toast.success("Order shipped! Email sent to user and admin.");
 
@@ -333,7 +296,6 @@ const OrdersTable = () => {
   //     setShowDeliveryDateModal(false);
   //     setDeliveryDate("");
   //     setOrderToUpdate(null);
-  //     setOldStatus("");
   //   }
   // };
 
@@ -488,7 +450,6 @@ const OrdersTable = () => {
                             if (prevStatus.toLowerCase() === "pending" &&
                               newStatus.toLowerCase() === "shipped") {
                               setOrderToUpdate(o);
-                              setOldStatus(prevStatus);
                               setShowDeliveryDateModal(true);
                               e.target.value = prevStatus; // Reset dropdown until confirmed
                               console.log("hai");
@@ -525,12 +486,6 @@ const OrdersTable = () => {
                                 }
                               }
 
-                              // Send admin notification for any status change
-                              try {
-                                await sendAdminNotificationEmail(o, prevStatus, newStatus);
-                              } catch (error) {
-                                console.error("Admin notification failed:", error);
-                              }
                             } catch (err) {
                               toast.error("Failed to update status");
                               e.target.value = prevStatus;
@@ -648,7 +603,6 @@ const OrdersTable = () => {
                   setShowDeliveryDateModal(false);
                   setDeliveryDate("");
                   setOrderToUpdate(null);
-                  setOldStatus("");
                 }}
                 className="px-4 py-2 bg-gray-300 rounded-md"
               >
