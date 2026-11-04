@@ -34,7 +34,11 @@ const OrdersTable = () => {
     const fetchOrders = async () => {
       const res = await fetch("/api/allorders");
       const data = await res.json();
-      const filtered = data.filter(order => order.payment_status !== "payment_initialized");
+      const filtered = data.filter(
+        (order) =>
+          order.payment_status?.toLowerCase() !== "payment_initialized" &&
+          order.order_status?.toLowerCase() !== "payment_initialized"
+      );
       setOrders(filtered);
       setFiltered(filtered);
       setIsLoading(false);
@@ -428,7 +432,7 @@ const OrdersTable = () => {
                 <option value="">All</option>
                 <option value="online">Online</option>
                 <option value="emi">EMI</option>
-                <option value="cash">COD</option>
+                <option value="Cash on Delivery">COD</option>
               </select>
             </div>
 

@@ -2,7 +2,9 @@
 import { useRouter } from 'next/navigation'; // ← use this in App Router
 
 import { useEffect, useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
 import DateRangePicker from '@/components/DateRangePicker';
+import 'react-toastify/dist/ReactToastify.css';
 
 const OrdersTable = () => {
   const [orders, setOrders] = useState([]);
@@ -12,6 +14,7 @@ const OrdersTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const itemsPerPage = 20;
   const router = useRouter();
   const [filtered, setFiltered] = useState([]);
@@ -21,11 +24,10 @@ useEffect(() => {
     const res = await fetch('/api/allorders');
     const data = await res.json();
 
-    // 👇 Only include orders with delivery_type: 'home'
-       const homeOrders = data.filter(order => 
-     order.delivery_type === 'home' && 
-       order.order_status?.toLowerCase() !== 'payment_initialized'
-      );
+    const homeOrders = data.filter(order =>
+      order.delivery_type === 'home' &&
+      order.payment_status?.toLowerCase() !== 'payment_initialized'
+    );
 
     setOrders(homeOrders);
     setFiltered(homeOrders);
@@ -39,6 +41,44 @@ useEffect(() => {
     startDate: null,
     endDate: null
   });
+
+  const updateOrderStatus = async (order, newStatus) => {
+    const previousStatus = order.order_status;
+    setUpdatingOrderId(order._id);
+
+    try {
+      const res = await fetch(`/api/orders/${order._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      setOrders(prev =>
+        prev.map(current =>
+          current._id === order._id
+            ? { ...current, order_status: newStatus }
+            : current
+        )
+      );
+      toast.success('Order Status updated successfully');
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      toast.error('Failed to update status');
+      setOrders(prev =>
+        prev.map(current =>
+          current._id === order._id
+            ? { ...current, order_status: previousStatus }
+            : current
+        )
+      );
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
 
  useEffect(() => {
   const applyFilters = () => {
@@ -136,6 +176,7 @@ useEffect(() => {
 
   return (
      <div className="container mx-auto">
+      <ToastContainer position="top-right" autoClose={5000} />
       {/* Alert Message */}
       {/* {showAlert && (
         <div className="bg-green-500 text-white px-4 py-2 rounded-md mb-4 mt-5">
@@ -227,8 +268,8 @@ useEffect(() => {
     >
           <option value="">All Payment Methods</option>
           <option value="online">Online</option>
-          <option value="cash">COD</option>
-          {/* <option value="cod">COD</option> */}
+          <option value="emi">EMI</option>
+          <option value="Cash on Delivery">COD</option>
     </select>
   </div>
 
@@ -277,7 +318,19 @@ useEffect(() => {
         </button>
       </td>
       <td className="p-2 border">{o.order_number}</td>
-      <td className="p-2 border capitalize">{o.order_status}</td>
+      <td className="p-2 border">
+        <select
+          value={o.order_status}
+          onChange={e => updateOrderStatus(o, e.target.value)}
+          disabled={updatingOrderId === o._id}
+          className="border px-2 py-1 rounded-md text-sm disabled:opacity-50"
+          aria-label={`Update status for order ${o.order_number}`}
+        >
+          <option value="pending">Pending</option>
+          <option value="shipped">Shipped</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </td>
       <td className="p-2 border">{o.order_username}</td>
       <td className="p-2 border">₹{o.order_amount}</td>
       <td className="p-2 border">{new Date(o.createdAt).toLocaleDateString()}</td>
