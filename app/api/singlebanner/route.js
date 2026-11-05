@@ -4,6 +4,11 @@ import SingleBannerNew from "@/models/singlebanner";
 import fs from "fs";
 import path from "path";
 import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
+import {
+  getCachedSingleBanners,
+  homepageSectionTags,
+  invalidateHomepageSection,
+} from "@/lib/homepageSectionCache";
 
 // ✅ Save File Function with 1900x400 dimension validation
 async function saveFile(file) {
@@ -22,8 +27,7 @@ async function saveFile(file) {
 // ✅ GET all banners
 export async function GET() {
   try {
-    await dbConnect();
-    const banners = await SingleBannerNew.find({}).sort({ order: 1 });
+    const banners = await getCachedSingleBanners();
     return NextResponse.json({ success: true, banners });
   } catch (err) {
     return NextResponse.json(
@@ -79,6 +83,7 @@ export async function POST(req) {
     });
 
     await newBanner.save();
+    invalidateHomepageSection(homepageSectionTags.singleBanner);
 
     return NextResponse.json({ success: true, banner: newBanner });
   } catch (err) {
@@ -147,6 +152,7 @@ export async function PUT(req) {
     const updatedBanner = await SingleBannerNew.findByIdAndUpdate(id, updateData, {
       new: true,
     });
+    invalidateHomepageSection(homepageSectionTags.singleBanner);
 
     return NextResponse.json({ success: true, banner: updatedBanner });
   } catch (err) {
@@ -179,6 +185,7 @@ export async function PATCH(req) {
         },
       }))
     );
+    invalidateHomepageSection(homepageSectionTags.singleBanner);
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -218,6 +225,7 @@ export async function DELETE(req) {
     }
 
     await SingleBannerNew.findByIdAndDelete(id);
+    invalidateHomepageSection(homepageSectionTags.singleBanner);
     return NextResponse.json({ success: true, message: "Banner deleted" });
   } catch (err) {
     console.error("DELETE ERROR:", err);

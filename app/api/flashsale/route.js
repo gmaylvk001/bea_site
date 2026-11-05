@@ -4,6 +4,11 @@ import FlashSale from "@/models/flashsale";
 import fs from "fs";
 import path from "path";
 import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
+import {
+  getCachedFlashSales,
+  homepageSectionTags,
+  invalidateHomepageSection,
+} from "@/lib/homepageSectionCache";
 
 // Save File Function with Dimension Validation
 async function saveFile(file, width, height) {
@@ -22,8 +27,7 @@ async function saveFile(file, width, height) {
 // GET all flash sales
 export async function GET() {
   try {
-    await dbConnect();
-    const flashSales = await FlashSale.find({});
+    const flashSales = await getCachedFlashSales();
     return NextResponse.json({ success: true, flashSales });
   } catch (err) {
     return NextResponse.json(
@@ -81,6 +85,7 @@ export async function POST(req) {
     });
 
     await newFlashSale.save();
+    invalidateHomepageSection(homepageSectionTags.flashSale);
 
     return NextResponse.json({ success: true, flashSale: newFlashSale });
   } catch (err) {
@@ -178,6 +183,7 @@ if (redirect_url !== null) updateData.redirect_url = redirect_url;
     const updatedFlashSale = await FlashSale.findByIdAndUpdate(id, updateData, {
       new: true,
     });
+    invalidateHomepageSection(homepageSectionTags.flashSale);
 
     return NextResponse.json({ success: true, flashSale: updatedFlashSale });
   } catch (err) {
@@ -226,6 +232,7 @@ export async function DELETE(req) {
     }
 
     await FlashSale.findByIdAndDelete(id);
+    invalidateHomepageSection(homepageSectionTags.flashSale);
     return NextResponse.json({ success: true, message: "Flash Sale deleted" });
   } catch (err) {
     console.error("DELETE ERROR:", err);

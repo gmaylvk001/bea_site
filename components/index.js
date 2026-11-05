@@ -21,11 +21,17 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from "swiper/modules";
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import CategoryProducts from '@/components/CategoryProducts';
+import fetchInFlightJson from "@/utils/fetchInFlightJson";
 // import OurLocations from '@/components/OurLocations';
 import { ChevronRight } from "lucide-react";
 import 'swiper/css';
 import 'swiper/css/navigation';
-export default function HomeComponent() {
+
+export default function HomeComponent({
+  initialBannerItems = null,
+  initialHomepageSections = null,
+  initialHomeSectionOrder = null,
+}) {
     function slugify(text) {
       return text
         ?.toString()
@@ -44,21 +50,23 @@ export default function HomeComponent() {
     const scrollContainerRef = useRef(null);
     const containerRef = useRef(null);
     const topBannerSliderRef = useRef(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isBannerLoading, setIsBannerLoading] = useState(true);
-    const [isFlashSalesLoading, setIsFlashSalesLoading] = useState(true);
+    const topBannerRequestId = useRef(0);
+    const [isBannerLoading, setIsBannerLoading] = useState(initialBannerItems === null);
+    const [isFlashSalesLoading, setIsFlashSalesLoading] = useState(
+      initialHomepageSections?.flashSales == null
+    );
     const [navigating, setNavigating] = useState(false);
     const [bannerData, setBannerData] = useState({
-      banner: {
-        items: []
-      }
+      banner: { items: initialBannerItems || [] }
     });
     const router = useRouter();
     const [userData, setUserData] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [hasMounted, setHasMounted] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [flashSalesData, setFlashSalesData] = useState([]);
+    const [flashSalesData, setFlashSalesData] = useState(
+      initialHomepageSections?.flashSales ?? []
+    );
     const [brands, setBrands] = useState([]);
     const [isBrandsLoading, setIsBrandsLoading] = useState(true);
     const [scrollDirection, setScrollDirection] = useState('down');
@@ -70,10 +78,13 @@ export default function HomeComponent() {
     const [bannerMoreHref, setBannerMoreHref] = useState("/");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [authMode, setAuthMode] = useState('login');
-    const [categoryBanner, setCategoryBanner] = useState([]);
+    const [categoryBanner, setCategoryBanner] = useState(
+      initialHomepageSections?.categoryBanner ?? []
+    );
     const [sections, setSections] = useState([]);
-    const [homeSectionData, setHomeSectionData] = useState({ sections: [] });
-    const [isSectionLoading, setIsSectionLoading] = useState(false);
+    const [homeSectionData, setHomeSectionData] = useState({
+      sections: initialHomeSectionOrder ?? [],
+    });
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const categoryScrollRef = useRef(null);
     const [videos, setVideos] = useState([]);
@@ -111,15 +122,16 @@ export default function HomeComponent() {
         borderColor: "#69AEA2"
       }
     };
-    const fetchBrand = async () => {
+    const fetchBrand = async (isActive) => {
       try {
-        const response = await fetch("/api/brand");
-        const result = await response.json();
+        const result = await fetchInFlightJson("/api/brand");
+        if (!isActive()) return;
         if (result.error) {
           console.error(result.error);
         } else {
           const data = result.data;
-    
+          setBrands(data);
+
           // Store as map for quick access
           const map = {};
           data.forEach((b) => {
@@ -128,23 +140,32 @@ export default function HomeComponent() {
           setBrandMap(map);
         }
       } catch (error) {
-        console.error(error.message);
+        if (isActive()) console.error(error.message);
+      } finally {
+        if (isActive()) setIsBrandsLoading(false);
       }
     };
     useEffect(() => {
-      fetchBrand();
+      let isActive = true;
+      fetchBrand(() => isActive);
+      return () => {
+        isActive = false;
+      };
     }, []);
     useEffect(() => {
+      let isActive = true;
       const fetchVideos = async () => {
         try {
-          const res = await fetch("/api/videocard");
-          const data = await res.json();
-          if (data.success) setVideos(data.videoCards);
+          const data = await fetchInFlightJson("/api/videocard");
+          if (isActive && data.success) setVideos(data.videoCards);
         } catch (err) {
-          console.error("Error fetching videos:", err);
+          if (isActive) console.error("Error fetching videos:", err);
         }
       };
       fetchVideos();
+      return () => {
+        isActive = false;
+      };
     }, []);
     const scroll = (direction) => {
       if (scrollRef.current) {
@@ -164,134 +185,64 @@ export default function HomeComponent() {
       }
     };
     useEffect(() => {
-        const fetchHomeUnifiedData = async () => {
-          setIsBannerLoading(true);
+        let isActive = true;
+        const fetchFlashSalesData = async () => {
           setIsFlashSalesLoading(true);
-          setIsSectionLoading(true);
-          setIsBrandsLoading(true);
           try {
-            const response = await fetch("/api/home-data?refresh=true", { cache: "no-store" });
-            const data = await response.json();
-
-            if (data.success) {
-              if (data.banners?.length > 0) {
-                const bannerItems = data.banners
-                  .filter((banner) => !banner.status || banner.status.toLowerCase() === "active")
-                  .map((banner) => ({
-                    id: banner._id,
-                    buttonLink: banner.redirect_url || "/shop",
-                    bgImageUrl: banner.banner_image,
-                    bannerImageUrl: banner.banner_image,
-                    mobileBgImageUrl: banner.mobile_banner_image || "",
-                    redirectUrl: banner.redirect_url,
-                  }));
-                setBannerData({ banner: { items: bannerItems } });
-              } else {
-                fetch("/api/topbanner")
-                  .then((res) => res.json())
-                  .then((topData) => {
-                    if (topData.success && topData.banners?.length > 0) {
-                      const fallbackItems = topData.banners
-                        .filter((b) => !b.status || b.status.toLowerCase() === "active")
-                        .map((b) => ({
-                          id: b._id,
-                          buttonLink: b.redirect_url || "/shop",
-                          bgImageUrl: b.banner_image,
-                          bannerImageUrl: b.banner_image,
-                          mobileBgImageUrl: b.mobile_banner_image || "",
-                          redirectUrl: b.redirect_url,
-                        }));
-                      setBannerData({ banner: { items: fallbackItems } });
-                    }
-                  })
-                  .catch((err) => console.error("Error fallback fetching topbanner:", err));
-              }
-
-              const formatFlashSaleItem = (item) => {
-                const rawProductImg =
-                  item.banner_image ||
-                  item.bannerImage ||
-                  item.product_image ||
-                  item.productImage ||
-                  item.image ||
-                  "";
-                const rawBgImg =
-                  item.background_image ||
-                  item.backgroundImage ||
-                  item.bg_image ||
-                  item.bgImage ||
-                  "";
-                const normalizeUrl = (url) => {
-                  if (!url) return "";
-                  if (
-                    url.startsWith("http://") ||
-                    url.startsWith("https://") ||
-                    url.startsWith("/")
-                  ) {
-                    return url;
-                  }
-                  return `/${url}`;
-                };
-                return {
-                  id: item._id,
-                  title: item.title,
-                  productImage: normalizeUrl(rawProductImg),
-                  bgImage: normalizeUrl(rawBgImg),
-                  redirectUrl: item.redirect_url || item.redirectUrl || "/shop",
-                };
-              };
-
-              if (data.flashSales?.length > 0) {
-                const salesItems = data.flashSales
-                  .filter((item) => !item.status || item.status.toLowerCase() === "active")
-                  .map(formatFlashSaleItem);
-                setFlashSalesData(salesItems);
-              } else {
-                fetch("/api/flashsale")
-                  .then((res) => res.json())
-                  .then((fsData) => {
-                    if (fsData.success && fsData.flashSales?.length > 0) {
-                      const fallbackSales = fsData.flashSales
-                        .filter((item) => !item.status || item.status.toLowerCase() === "active")
-                        .map(formatFlashSaleItem);
-                      setFlashSalesData(fallbackSales);
-                    }
-                  })
-                  .catch((err) => console.error("Error fallback fetching flashsale:", err));
-              }
-
-              if (data.homeSections?.length > 0) {
-                const sectionItems = data.homeSections
-                  .filter((section) => section.status === "active")
-                  .map((section) => ({
-                    id: section._id,
-                    name: section.name,
-                    position: section.position,
-                  }));
-                setHomeSectionData({ sections: sectionItems });
-              }
-
-              if (data.brands?.length > 0) {
-                setBrands(data.brands);
-              }
-
-              if (data.videoCards?.length > 0) {
-                setVideos(data.videoCards);
-              }
+            const data = await fetchInFlightJson("/api/flashsale");
+            if (!isActive) return;
+            if (!data.success) {
+              throw new Error(data.message || "Failed to fetch flash sales");
             }
+            const formatFlashSaleItem = (item) => {
+              const rawProductImg =
+                item.banner_image ||
+                item.bannerImage ||
+                item.product_image ||
+                item.productImage ||
+                item.image ||
+                "";
+              const rawBgImg =
+                item.background_image ||
+                item.backgroundImage ||
+                item.bg_image ||
+                item.bgImage ||
+                "";
+              const normalizeUrl = (url) => {
+                if (!url) return "";
+                if (
+                  url.startsWith("http://") ||
+                  url.startsWith("https://") ||
+                  url.startsWith("/")
+                ) {
+                  return url;
+                }
+                return `/${url}`;
+              };
+              return {
+                id: item._id,
+                title: item.title,
+                productImage: normalizeUrl(rawProductImg),
+                bgImage: normalizeUrl(rawBgImg),
+                redirectUrl: item.redirect_url || item.redirectUrl || "/shop",
+              };
+            };
+            setFlashSalesData(
+              (data.flashSales || [])
+                .filter((item) => !item.status || item.status.toLowerCase() === "active")
+                .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                .map(formatFlashSaleItem)
+            );
           } catch (error) {
-            console.error("Error fetching home unified data:", error);
+            if (isActive) console.error("Error fetching flash sales:", error);
           } finally {
-            setIsBannerLoading(false);
-            setIsFlashSalesLoading(false);
-            setIsSectionLoading(false);
-            setIsBrandsLoading(false);
+            if (isActive) setIsFlashSalesLoading(false);
           }
         };
         const fetchCategories = async () => {
           try {
-            const response = await fetch("/api/categories/get");
-            const data    = await response.json();
+            const data = await fetchInFlightJson("/api/categories/get");
+            if (!isActive) return;
             setCategories(data);
 
             const rootCategories = data
@@ -349,8 +300,8 @@ export default function HomeComponent() {
         }; */}
         const fetchCategoryBanners = async () => {
           try {
-            const response = await fetch("/api/categorybanner"); 
-            const res = await response.json();
+            const res = await fetchInFlightJson("/api/categorybanner");
+            if (!isActive) return;
 
             if (res.success && res.categoryBanners && res.categoryBanners.banners) {
               const formatted = res.categoryBanners.banners
@@ -379,165 +330,95 @@ export default function HomeComponent() {
               console.log("formatted",formatted);
             }
           } catch (error) {
-            console.error("Error fetching category banners:", error);
+            if (isActive) console.error("Error fetching category banners:", error);
           }
         };
-        const fetchSingleBannerData = async () => {
-          setIsSingleBannerLoading(true);
-          try {
-            const response = await fetch("/api/singlebanner");
-            const data = await response.json();
-
-            if (data.success && data.banners?.length > 0) {
-              const singleBannerItems = data.banners
-                .filter((banner) => banner.status === "Active") // ✅ only Active
-                .map((banner) => ({
-                  id: banner._id,
-                redirect_url: banner.redirect_url || "/shop",
-                  bgImageUrl: banner.banner_image,
-                  singleBannerImageUrl: banner.banner_image,
-                }));
-
-              setSingleBannerData({
-                singlebanner: { items: singleBannerItems },
-              });
-            } else {
-              // if no data, fallback default
-              setSingleBannerData({
-                singlebanner: {
-                  items: [
-                    {
-                      id: 1,
-                      buttonLink: "/shop",
-                      bgImageUrl: "/images/singlebanner-img1.png",
-                      singleBannerImageUrl: "/images/singlebanner-product.png",
-                    },
-                  ],
-                },
-              });
-            }
-          } catch (error) {
-            console.error("Error fetching single banner data:", error);
-            setSingleBannerData({
-              singlebanner: {
-                items: [
-                  {
-                    id: 1,
-                    buttonLink: "/shop",
-                    bgImageUrl: "/images/singlebanner-img1.png",
-                    singleBannerImageUrl: "/images/singlebanner-product.png",
-                  },
-                ],
-              },
-            });
-          } finally {
-            setIsSingleBannerLoading(false);
-          }
-        };
-        const fetchSingleBannerDatatwo = async () => {
-          setIsSingleBannerLoading(true);
-          try {
-            const response = await fetch("/api/singlebanner-two");
-            const data = await response.json();
-
-            if (data.success && data.banners?.length > 0) {
-              const singleBannerItems = data.banners
-                .filter((banner) => banner.status === "Active")
-                .map((banner) => ({
-                  id: banner._id,
-                  redirect_url: banner.redirect_url || "/shop",
-                  bgImageUrl: banner.banner_image,
-                  singleBannerImageUrl: banner.banner_image,
-                }));
-
-              setSingleBannerData((prev) => ({
-                ...prev,
-                singlebannerTwo: { items: singleBannerItems },
-              }));
-            } else {
-              setSingleBannerData((prev) => ({
-                ...prev,
-                singlebannerTwo: {
-                  items: [
-                    {
-                      id: 1,
-                      redirect_url: "/shop",
-                      bgImageUrl: "/images/singlebanner-img1.png",
-                      singleBannerImageUrl: "/images/singlebanner-product.png",
-                    },
-                  ],
-                },
-              }));
-            }
-          } catch (error) {
-            console.error("Error fetching single banner-two data:", error);
-            setSingleBannerData((prev) => ({
-              ...prev,
-              singlebannerTwo: {
-                items: [
-                  {
-                    id: 1,
-                    redirect_url: "/shop",
-                    bgImageUrl: "/images/singlebanner-img1.png",
-                    singleBannerImageUrl: "/images/singlebanner-product.png",
-                  },
-                ],
-              },
-            }));
-          } finally {
-            setIsSingleBannerLoading(false);
-          }
-        };
-        fetchCategoryBanners();
-        fetchHomeUnifiedData();
+        if (initialHomepageSections?.categoryBanner == null) fetchCategoryBanners();
+        if (initialHomepageSections?.flashSales == null) fetchFlashSalesData();
         fetchCategories();
-        //fetchProducts();
-        fetchSingleBannerData();
-        fetchSingleBannerDatatwo();
-      }, []);
+        return () => {
+          isActive = false;
+        };
+      }, [initialHomepageSections]);
 
     useEffect(() => {
-      if (!isBannerLoading && !isSectionLoading) {
-        setIsLoading(false);
+      if (initialBannerItems !== null) {
+        setBannerData({ banner: { items: initialBannerItems } });
+        setIsBannerLoading(false);
+        return;
       }
-    }, [isBannerLoading, isSectionLoading]);
 
-    useEffect(() => {
-      const fallbackTimer = setTimeout(() => setIsLoading(false), 3000);
-      return () => clearTimeout(fallbackTimer);
-    }, []);
-    const fetchHomeSections = async () => {
-      setIsSectionLoading(true);
-      try {
-        const response = await fetch("/api/home-sections");
-        const data = await response.json();
+      let isActive = true;
+      const requestId = ++topBannerRequestId.current;
+      const fetchTopBannerFallback = async () => {
+        try {
+          const data = await fetchInFlightJson("/api/topbanner", { cache: "no-store" });
+          if (!isActive || requestId !== topBannerRequestId.current) return;
+          if (!data.success) {
+            throw new Error(data.message || "Failed to fetch top banners");
+          }
 
-        if (data.success && data.data?.length > 0) {
-          const sectionItems = data.data
-            .filter((section) => section.status === "active") // only active
-            .map((section) => ({
-              id: section._id,
-              name: section.name,
-              position: section.position,
+          const items = (data.banners || [])
+            .filter((banner) => !banner.status || banner.status.toLowerCase() === "active")
+            .map((banner) => ({
+              id: banner._id,
+              buttonLink: banner.redirect_url || "/shop",
+              bgImageUrl: banner.banner_image,
+              bannerImageUrl: banner.banner_image,
+              mobileBgImageUrl: banner.mobile_banner_image || "",
+              redirectUrl: banner.redirect_url,
             }));
-
-          setHomeSectionData({ sections: sectionItems });
-        } else {
-          setHomeSectionData({ sections: [] });
+          setBannerData({ banner: { items } });
+        } catch (error) {
+          if (isActive && requestId === topBannerRequestId.current) {
+            console.error("Error fetching Top Banner fallback:", error);
+          }
+        } finally {
+          if (isActive && requestId === topBannerRequestId.current) {
+            setIsBannerLoading(false);
+          }
         }
-      } catch (error) {
-        console.error("Error fetching home sections:", error);
-        setHomeSectionData({ sections: [] });
-      } finally {
-        setIsSectionLoading(false);
-      }
-    };
+      };
 
-    
-
+      setIsBannerLoading(true);
+      fetchTopBannerFallback();
+      return () => {
+        isActive = false;
+      };
+    }, [initialBannerItems]);
     useEffect(() => {
+      if (initialHomeSectionOrder !== null) return;
+      let isActive = true;
+      const fetchHomeSections = async () => {
+        try {
+          const data = await fetchInFlightJson("/api/home-sections");
+          if (!isActive) return;
+
+          if (data.success && data.data?.length > 0) {
+            const sectionItems = data.data
+              .filter((section) => section.status === "active")
+              .map((section) => ({
+                id: section._id,
+                name: section.name,
+                position: section.position,
+              }));
+            setHomeSectionData({ sections: sectionItems });
+          } else {
+            setHomeSectionData({ sections: [] });
+          }
+        } catch (error) {
+          if (isActive) {
+            console.error("Error fetching home sections:", error);
+            setHomeSectionData({ sections: [] });
+          }
+        }
+      };
+
       fetchHomeSections();
-    }, []);
+      return () => {
+        isActive = false;
+      };
+    }, [initialHomeSectionOrder]);
     useEffect(() => {
         setHasMounted(true);
     }, []);
@@ -562,92 +443,6 @@ export default function HomeComponent() {
         console.warn('Unable to read headerCategories from localStorage', lsErr);
       }
 
-      const fetchCategories = async () => {
-        try {
-          const response = await fetch('/api/categories/get');
-          if (!response.ok) {
-            throw new Error(`Network response was not ok (${response.status})`);
-          }
-          const data = await response.json();
-
-          if (!Array.isArray(data)) {
-            console.warn('Unexpected categories payload, expected array:', data);
-            return;
-          }
-
-          // Keep only top-level active categories for header
-          const parentCategories = data.filter(
-            (category) => category.parentid === "none" && category.status === "Active"
-          );
-
-          // Maintain existing UI state update
-          setCategories(parentCategories);
-
-          // Trim stored data to minimal fields
-          const trimmedForStorage = parentCategories.map((cat) => ({
-            _id: cat._id,
-            category_name: cat.category_name || cat.name || '',
-            slug: cat.category_slug || cat.slug || ''
-          }));
-
-          // Prepare JSON and measure size
-          const json = JSON.stringify(trimmedForStorage);
-          const maxBytes = 4.5 * 1024 * 1024; // 4.5 MB
-
-          try {
-            const sizeBytes = (typeof Blob !== 'undefined') ? new Blob([json]).size : json.length;
-
-            if (sizeBytes > maxBytes) {
-              console.warn(
-                `headerCategories JSON size ${Math.round(sizeBytes / 1024)}KB exceeds ${Math.round(maxBytes / 1024)}KB. ` +
-                'Skipping localStorage save and attempting sessionStorage fallback.'
-              );
-              try {
-                sessionStorage.setItem('headerCategories', json);
-              } catch (sessErr) {
-                console.warn('sessionStorage fallback also failed. Consider using IndexedDB/localforage for caching.', sessErr);
-                // TODO: fallback to IndexedDB/localforage (e.g., localForage) for larger datasets
-              }
-            } else {
-              // Try saving to localStorage
-              try {
-                localStorage.setItem('headerCategories', json);
-              } catch (storageErr) {
-                // Handle QuotaExceededError and other storage errors
-                const isQuotaError = storageErr && (
-                  storageErr.name === 'QuotaExceededError' ||
-                  storageErr.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-                  storageErr.code === 22 ||
-                  storageErr.code === 1014
-                );
-
-                if (isQuotaError) {
-                  console.warn('localStorage quota exceeded when saving headerCategories, attempting sessionStorage fallback.', storageErr);
-                  try {
-                    sessionStorage.setItem('headerCategories', json);
-                  } catch (sessErr) {
-                    console.warn('sessionStorage fallback failed as well. Consider IndexedDB/localforage caching.', sessErr);
-                    // TODO: fall back to IndexedDB/localforage
-                  }
-                } else {
-                  console.warn('Failed to save headerCategories to localStorage', storageErr);
-                }
-              }
-            }
-          } catch (measureErr) {
-            console.warn('Could not measure headerCategories size, attempting best-effort save to localStorage.', measureErr);
-            try {
-              localStorage.setItem('headerCategories', json);
-            } catch (err) {
-              console.warn('Saving headerCategories failed.', err);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching categories:", error);
-        }
-      };
-
-      fetchCategories();
       checkAuthStatus();
     }, [hasMounted]);
     const controls = useAnimation();
@@ -814,10 +609,6 @@ export default function HomeComponent() {
     }
     };
     const categoryRef = useRef(null);
-    const [singleBannerData, setSingleBannerData] = useState({
-      singlebanner: { items: [] }
-    });
-    const [isSingleBannerLoading, setIsSingleBannerLoading] = useState(false);
     const categoryScrollRefs = useRef({});
     const scrollLeft = (categoryId) => {
       if (categoryScrollRefs.current[categoryId]) {
@@ -913,14 +704,18 @@ export default function HomeComponent() {
       fetchOfferProducts();
     }, []);
     const [singleBannerNewData, setSingleBannerNewData] = useState({
-      singlebanner_new: { items: [] }
+      singlebanner_new: {
+        items: initialHomepageSections?.singleBanner ?? [],
+      },
     });
-    const [isSingleBannerNewLoading, setIsSingleBannerNewLoading] = useState(false);
-    const fetchSingleBannerNewData = async () => {
+    const [isSingleBannerNewLoading, setIsSingleBannerNewLoading] = useState(
+      initialHomepageSections?.singleBanner == null
+    );
+    const fetchSingleBannerNewData = async (isActive) => {
       setIsSingleBannerNewLoading(true);
       try {
-        const response = await fetch("/api/singlebanner");
-        const data = await response.json();
+        const data = await fetchInFlightJson("/api/singlebanner");
+        if (!isActive()) return;
 
         if (data.success && data.banners?.length > 0) {
           const bannerItems = data.banners
@@ -948,23 +743,32 @@ export default function HomeComponent() {
           });
         }
       } catch (error) {
-        console.error("Error fetching singlebanner_new:", error);
+        if (isActive()) console.error("Error fetching singlebanner_new:", error);
       } finally {
-        setIsSingleBannerNewLoading(false);
+        if (isActive()) setIsSingleBannerNewLoading(false);
       }
     };
     useEffect(() => {
-      fetchSingleBannerNewData();
-    }, []);
+      if (initialHomepageSections?.singleBanner != null) return;
+      let isActive = true;
+      fetchSingleBannerNewData(() => isActive);
+      return () => {
+        isActive = false;
+      };
+    }, [initialHomepageSections]);
     const [singleBannerTwoData, setSingleBannerTwoData] = useState({
-      singlebanner_two: { items: [] },
+      singlebanner_two: {
+        items: initialHomepageSections?.singleBannerTwo ?? [],
+      },
     });
-    const [isSingleBannerTwoLoading, setIsSingleBannerTwoLoading] = useState(false);
-    const fetchSingleBannerTwoData = async () => {
+    const [isSingleBannerTwoLoading, setIsSingleBannerTwoLoading] = useState(
+      initialHomepageSections?.singleBannerTwo == null
+    );
+    const fetchSingleBannerTwoData = async (isActive) => {
       setIsSingleBannerTwoLoading(true);
       try {
-        const response = await fetch("/api/singlebanner-two");
-        const data = await response.json();
+        const data = await fetchInFlightJson("/api/singlebanner-two");
+        if (!isActive()) return;
 
         if (data.success && data.banners?.length > 0) {
           const bannerItems = data.banners
@@ -992,14 +796,19 @@ export default function HomeComponent() {
           });
         }
       } catch (error) {
-        console.error("Error fetching singlebanner_two:", error);
+        if (isActive()) console.error("Error fetching singlebanner_two:", error);
       } finally {
-        setIsSingleBannerTwoLoading(false);
+        if (isActive()) setIsSingleBannerTwoLoading(false);
       }
     };
     useEffect(() => {
-      fetchSingleBannerTwoData();
-    }, []);
+      if (initialHomepageSections?.singleBannerTwo != null) return;
+      let isActive = true;
+      fetchSingleBannerTwoData(() => isActive);
+      return () => {
+        isActive = false;
+      };
+    }, [initialHomepageSections]);
     console.log(categoryBanner);
     const BANNER_NAV_LIMIT = 8;
 
@@ -1071,12 +880,13 @@ export default function HomeComponent() {
                     <div className="relative group overflow-hidden  shadow-sm hover:shadow-md transition-shadow">
 
                       {/* Image */}
-                      <img
+                      <Image
                         src={banner.imageUrl}
                         alt={banner.categoryname ? `${banner.categoryname} category banner` : `Promotional category banner ${index + 1}`}
                         className="w-full h-[300px] object-cover transform group-hover:scale-105 transition duration-500 ease-in-out"
                         width={400}
                         height={300}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         loading="lazy"
                       />
 
@@ -1117,7 +927,7 @@ export default function HomeComponent() {
           );
           case 'product':
             return (
-              <CategoryProducts/>
+              <CategoryProducts brandMap={brandMap} />
             );
           case 'flash_sales':
           case 'flashsale':
@@ -1132,7 +942,20 @@ export default function HomeComponent() {
   id="flash_sales"
   className="home-section py-8 relative"
 >
-  {flashSalesData.filter(item => item.bgImage || item.productImage).length > 0 && (
+  {isFlashSalesLoading ? (
+    <div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 px-4"
+      aria-busy="true"
+      aria-label="Loading Flash Sale"
+    >
+      {[0, 1, 2].map((item) => (
+        <div
+          key={item}
+          className="min-h-[250px] rounded-xl bg-gray-200 animate-pulse"
+        />
+      ))}
+    </div>
+  ) : flashSalesData.filter(item => item.bgImage || item.productImage).length > 0 && (
 
     <div className="relative">
 
@@ -1196,12 +1019,7 @@ export default function HomeComponent() {
           },
         }}
       >
-        {isFlashSalesLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 animate-spin"></div>
-          </div>
-        ) : (
-          flashSalesData
+        {flashSalesData
             .filter(item => item.bgImage || item.productImage)
             .map((item) => (
               <SwiperSlide key={item.id}>
@@ -1269,8 +1087,7 @@ export default function HomeComponent() {
                   </div>
                 </div>
               </SwiperSlide>
-            ))
-        )}
+            ))}
       </Swiper>
     </div>
   )}
@@ -1345,8 +1162,18 @@ export default function HomeComponent() {
                               </motion.div>
 
                               {isBrandsLoading ? (
-                                  <div className="flex justify-center items-center h-32">
-                                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+                                  <div
+                                      className="grid grid-cols-3 min-[481px]:grid-cols-4 md:grid-cols-6 lg:grid-cols-8"
+                                      aria-busy="true"
+                                      aria-label="Loading top brands"
+                                  >
+                                      {Array.from({ length: 8 }, (_, index) => (
+                                          <div key={index} className="px-1 py-1.5">
+                                              <div className="h-14 sm:h-16 flex items-center justify-center overflow-hidden px-3">
+                                                  <div className="h-[28px] sm:h-[38px] w-[100px] sm:w-[130px] rounded bg-gray-200 animate-pulse" />
+                                              </div>
+                                          </div>
+                                      ))}
                                   </div>
                               ) : (
                                   <motion.div variants={itemVariants}>
@@ -1393,14 +1220,14 @@ export default function HomeComponent() {
               <motion.section 
                 id="topbanner"
                 ref={refs.banner}
-                initial="hidden"
+                initial={false}
                 animate="visible"
                 variants={containerVariants}
                 className="home-section-full relative overflow-visible pt-0 m-0 mb-0 z-10"
               >
                 <div className="relative overflow-hidden">
                   {isBannerLoading ? (
-                    <div className="p-6 flex justify-center items-center h-64">
+                    <div className="p-6 flex justify-center items-center w-full aspect-[2000/667]">
                       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
                     </div>
                   ) : topBannerItems.length > 0 ? (
@@ -1463,6 +1290,8 @@ export default function HomeComponent() {
                                       alt={banner?.alt || banner?.title || "Homepage banner"}
                                       className="w-full h-full object-cover"
                                       style={{ objectPosition: "center center" }}
+                                      loading={bannerIndex === 0 ? "eager" : "lazy"}
+                                      fetchPriority={bannerIndex === 0 ? "high" : "auto"}
                                     />
                                   </picture>
                                 </div>
@@ -1550,6 +1379,8 @@ export default function HomeComponent() {
                                   alt={banner?.alt || banner?.title || "Homepage banner"}
                                   className="w-full h-full object-cover"
                                   style={{ objectPosition: "center center" }}
+                                  loading="eager"
+                                  fetchPriority="high"
                                 />
                               </picture>
                             </div>
@@ -1576,8 +1407,11 @@ export default function HomeComponent() {
               >
                 <div className="relative">
                   {isSingleBannerNewLoading ? (
-                    <div className="p-6 flex justify-center items-center h-64">
-                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+                    <div
+                      className="w-full aspect-[1900/400] bg-gray-200 animate-pulse"
+                      aria-busy="true"
+                      aria-label="Loading promotional banner"
+                    >
                     </div>
                   ) : singleBannerNewData.singlebanner_new.items.length > 0 ? (
                     singleBannerNewData.singlebanner_new.items.length > 1 ? (
@@ -1593,9 +1427,7 @@ export default function HomeComponent() {
                                 src={item.bgImageUrl}
                                 alt={item.alt || item.title || "Promotional banner"}
                                 fill
-                                quality={100}
                                 className="object-fill w-full h-full"
-                                priority
                               />
                             </Link>
                           </motion.div>
@@ -1610,7 +1442,6 @@ export default function HomeComponent() {
                             width={1900}
                             height={400}
                             className="w-full h-auto object-fill"
-                            priority
                           />
                         </Link>
                       </motion.div>
@@ -1669,10 +1500,7 @@ export default function HomeComponent() {
                                         src={item.bgImageUrl}
                                         alt={item.alt || item.title || "Promotional banner"}
                                         fill
-                                        quality={100}
                                         className="object-fill w-full h-full"
-                                        priority={rowIndex === 0 && colIndex === 0}
-                                        unoptimized
                                       />
                                     </Link>
                                   </motion.div>
@@ -1995,23 +1823,14 @@ return (
               </div>
             </div>
           )}
-            {isLoading && (
-              <div className="preloader fixed inset-0 z-[9999] flex justify-center items-center bg-white">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-                </div>
-            )}
             {/* main div start */}
             <h1 className="sr-only">Bharath Electronics &amp; Appliances – Shop Electronics &amp; Home Appliances Online</h1>
-            <div className={`relative transition-opacity duration-300 ${isLoading ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`} ref={containerRef} >
+            <div className="relative" ref={containerRef}>
                 {/* Banner Section start */}
                 <div className="home-container">
-                  {isSectionLoading ? (
-                      <div className="flex justify-center items-center h-64">
-                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-                      </div>
-                      ) : homeSectionData.sections.length > 0 ? (
+                  {homeSectionData.sections.length > 0 ? (
                       // Render sections in the order specified by homeSectionData
-                      homeSectionData.sections
+                      [...homeSectionData.sections]
                           .sort((a, b) => a.position - b.position)
                           .map(section => (
                               <div key={section.id}>
@@ -2024,6 +1843,7 @@ return (
                           {renderSection('topbanner')}
                           {renderSection('category_banner')}
                           {renderSection('flash_sales')}
+                          {renderSection('product')}
                           {renderSection('singlebanner')}
                           {renderSection('singlebanner-two')}
                           {renderSection('brands')}

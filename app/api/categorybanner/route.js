@@ -4,6 +4,11 @@ import CategoryBanner from "@/models/categorybanner";
 import fs from "fs";
 import path from "path";
 import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
+import {
+  getCachedCategoryBanner,
+  homepageSectionTags,
+  invalidateHomepageSection,
+} from "@/lib/homepageSectionCache";
 
 // ✅ Save File Function with Dimension Validation (801x704)
 async function saveFile(file) {
@@ -22,8 +27,7 @@ async function saveFile(file) {
 // ✅ GET category banners
 export async function GET() {
   try {
-    await dbConnect();
-    const categoryBanners = await CategoryBanner.findOne({});
+    const categoryBanners = await getCachedCategoryBanner();
     return NextResponse.json({ success: true, categoryBanners });
   } catch (err) {
     return NextResponse.json(
@@ -103,6 +107,7 @@ export async function POST(req) {
 
     existingBanner.updatedAt = new Date();
     await existingBanner.save();
+    invalidateHomepageSection(homepageSectionTags.categoryBanner);
 
     return NextResponse.json({ success: true, categoryBanners: existingBanner });
   } catch (err) {
@@ -138,6 +143,7 @@ export async function DELETE() {
     }
 
     await CategoryBanner.deleteOne({ _id: categoryBanner._id });
+    invalidateHomepageSection(homepageSectionTags.categoryBanner);
     
     return NextResponse.json({ success: true, message: "Category banner deleted" });
   } catch (err) {

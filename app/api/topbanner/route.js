@@ -4,6 +4,10 @@ import TopBanner from "@/models/topbanner";
 import fs from "fs";
 import path from "path";
 import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
+import {
+  getTopBannerRecords,
+  invalidateTopBannerCache,
+} from "@/lib/homepageTopBanner";
 
 // ✅ Validate Only WebP and AVIF formats
 function validateBannerFile(file, label = "Banner image") {
@@ -33,8 +37,7 @@ async function saveFile(file) {
 // ✅ GET all banners
 export async function GET() {
   try {
-    await dbConnect();
-    const banners = await TopBanner.find({}).sort({ order: 1 }); // 👈 sort by order
+    const banners = await getTopBannerRecords();
     return NextResponse.json({ success: true, banners });
   } catch (err) {
     return NextResponse.json(
@@ -114,6 +117,7 @@ export async function POST(req) {
     });
 
     await newBanner.save();
+    invalidateTopBannerCache();
 
     return NextResponse.json({ success: true, banner: newBanner });
   } catch (err) {
@@ -233,6 +237,7 @@ export async function PUT(req) {
     const updatedBanner = await TopBanner.findByIdAndUpdate(id, updateData, {
       new: true,
     });
+    invalidateTopBannerCache();
 
     return NextResponse.json({ success: true, banner: updatedBanner });
   } catch (err) {
@@ -265,6 +270,7 @@ export async function PATCH(req) {
         },
       }))
     );
+    invalidateTopBannerCache();
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -311,6 +317,7 @@ export async function DELETE(req) {
     }
 
     await TopBanner.findByIdAndDelete(id);
+    invalidateTopBannerCache();
     return NextResponse.json({ success: true, message: "Banner deleted" });
   } catch (err) {
     console.error("DELETE ERROR:", err);
