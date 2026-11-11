@@ -489,7 +489,7 @@ export async function DELETE(req) {
     } else {
       // Remove a specific item
       const existingItemIndex = cart.items.findIndex(
-        item => item.productId.toString() === productId
+        item => String(item.productId?._id || item.productId) === String(productId)
       );
 
       if (existingItemIndex === -1) {
