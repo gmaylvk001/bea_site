@@ -1,36 +1,85 @@
-# robots.txt for Bharath Electronics
-# https://www.bharathelectronics.in/
 
+# Bharath Electronics and Appliances (BEA)
+# Website: https://www.bharathelectronics.in/
+# Purpose: SEO, AEO, GEO and AI Search Visibility
+
+# 1. General Search Engine Crawlers
 User-agent: *
 
-# Allow all public pages
 Allow: /
 
-# Admin and internal APIs
-Disallow: /admin/
-Disallow: /api/
+Disallow: /admin
+Disallow: /api
+Disallow: /login
+Disallow: /register
+Disallow: /account
+Disallow: /profile
+Disallow: /address
+Disallow: /wishlist
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order
+Disallow: /orders
+Disallow: /search
 
-# Authentication and customer account pages
-Disallow: /login/
-Disallow: /register/
-Disallow: /account/
-Disallow: /profile/
-Disallow: /address/
+# 2. OpenAI ChatGPT Search
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /login
+Disallow: /register
+Disallow: /account
+Disallow: /profile
+Disallow: /address
+Disallow: /wishlist
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order
+Disallow: /orders
+Disallow: /search
 
-# Customer-specific pages
-Disallow: /wishlist/
+# 3. Perplexity Search
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /login
+Disallow: /register
+Disallow: /account
+Disallow: /profile
+Disallow: /address
+Disallow: /wishlist
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order
+Disallow: /orders
+Disallow: /search
 
-# Shopping and transaction pages
-Disallow: /cart/
-Disallow: /checkout/
-Disallow: /order/
-Disallow: /orders/
+# 4. Claude Search
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /login
+Disallow: /register
+Disallow: /account
+Disallow: /profile
+Disallow: /address
+Disallow: /wishlist
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order
+Disallow: /orders
+Disallow: /search
 
-# Internal search
-Disallow: /search/
-
-# Sitemap
-Sitemap: https://www.bharathelectronics.in/sitemap.xml
-
-User-agent: GPTBot 
+# 5. Block OpenAI Training Crawler
+User-agent: GPTBot
 Disallow: /
+
+# 6. Block Anthropic Training Crawler
+User-agent: ClaudeBot
+Disallow: /
+
+# 7. Sitemap
+Sitemap: https://www.bharathelectronics.in/sitemap.xml

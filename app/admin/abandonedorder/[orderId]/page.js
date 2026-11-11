@@ -234,6 +234,10 @@ const OrderDetails = () => {
                 </td>
                 <td className="p-2">{order.payment_method}</td>
               </tr>
+              <tr className="border-b">
+                <td className="p-2 font-semibold text-gray-700">Payment Status:</td>
+                <td className="p-2">{order.payment_status || "Not available"}</td>
+              </tr>
               {order.payment_method == "online" && (
               <tr className="border-b">
                 <td className="p-2 flex items-center gap-2 font-semibold text-gray-700">

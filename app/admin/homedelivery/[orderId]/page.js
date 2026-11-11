@@ -178,6 +178,10 @@ const OrderDetails = () => {
           <td className="p-2">{order.payment_method}</td>
         </tr>
         <tr className="border-b">
+          <td className="p-2 font-semibold text-gray-700">Payment Status:</td>
+          <td className="p-2">{order.payment_status || "Not available"}</td>
+        </tr>
+        <tr className="border-b">
           <td className="p-2 flex items-center gap-2 font-semibold text-gray-700">
             <MdDateRange className="bg-red-500 text-white p-1 rounded-md w-6 h-6" />
             Date: </td>
