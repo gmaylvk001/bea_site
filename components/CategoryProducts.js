@@ -324,9 +324,7 @@ const getBannerRedirectUrls = (urls) => {
             
               {categoryProducts.map((categoryProduct) => {
                 const category = categoryProduct.subcategoryId;
-                const products = [...(categoryProduct.products || [])].sort(
-                  (a, b) => (Number(b.quantity) || 0) - (Number(a.quantity) || 0)
-                );
+                const products = categoryProduct.products || [];
                 const alignment = categoryProduct.alignment || "left";
                 if (!category || products.length === 0) return null;
                 const categoryStyle = categoryStyles[category.category_slug] || {

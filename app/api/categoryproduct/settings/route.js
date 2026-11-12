@@ -117,15 +117,11 @@ export async function GET() {
         .lean(),
       Product.find({
         _id: { $in: allProductIds },
+        status: "Active",
         quantity: { $gt: 0 },
         stock_status: "In Stock",
-        special_price: { $gt: 2 },
-        $or: [
-          { model_number: { $exists: false } },
-          { model_number: { $exists: true, $ne: "" } }
-        ]
       })
-        .select("name slug images price special_price quantity stock_status brand")
+        .select("name slug images price special_price quantity stock_status brand model_number")
         .lean(),
     ]);
 
@@ -140,15 +136,14 @@ export async function GET() {
       productMap[p._id.toString()] = p;
     });
 
-    // 6️⃣ Build response sorted stock-wise (high stock to low stock)
+    // 6️⃣ Preserve the product order configured in the admin page
     const categoryProductsWithData = categoryProducts.map(cp => {
       const subcategory = subcategoryMap[cp.subcategoryId.toString()];
 
-      // Get products for this category and sort by quantity descending
+      // Resolve products in the same order as their IDs are stored on the category.
       const cpProducts = (cp.products || [])
         .map(id => productMap[id.toString()])
-        .filter(Boolean)
-        .sort((a, b) => (Number(b.quantity) || 0) - (Number(a.quantity) || 0));
+        .filter(Boolean);
 
       return {
         ...cp,

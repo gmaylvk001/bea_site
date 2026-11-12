@@ -740,7 +740,10 @@ images.forEach((img, index) => {
   // Renders the product settings form for any category node
   const renderCategoryForm = (subcat) => {
     const subcatProducts = products.filter(
-      (p) => p.status === "Active" && p.stock_status === "In Stock"
+      (p) =>
+        p.status === "Active" &&
+        p.stock_status === "In Stock" &&
+        Number(p.quantity) > 0
     );
     const productOptions = subcatProducts.map((p) => ({
       value: p._id,
@@ -1286,7 +1289,10 @@ images.forEach((img, index) => {
                     c.md5_cat_name?.toLowerCase(),
                   );
                   const subcatProducts = products.filter(
-                    (p) => p.status === "Active" && p.stock_status === "In Stock"
+                    (p) =>
+                      p.status === "Active" &&
+                      p.stock_status === "In Stock" &&
+                      Number(p.quantity) > 0
                   );
 
                   const productOptions = subcatProducts.map((p) => ({
