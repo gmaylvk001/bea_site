@@ -730,22 +730,22 @@ function EmptyWishlist() {
     </div>
   );
 }
-function LoginPrompt() {
+function LoginPrompt({ onLoginClick }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-20 max-w-sm mx-auto">
       <span className="text-6xl mb-4">🔐</span>
       <h2 className="text-xl font-bold text-gray-900 mb-2">Login to view your Wishlist</h2>
       <p className="text-gray-500 text-sm mb-6">Sign in to access your saved products across devices.</p>
-      <Link href="/login" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6 py-2.5 text-sm font-semibold transition-colors">
+      <button type="button" onClick={onLoginClick} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6 py-2.5 text-sm font-semibold transition-colors">
         Login / Sign Up
-      </Link>
+      </button>
     </div>
   );
 }
 function LoadingState() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
-      <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+      <div className="h-12 w-12 border-t-2 border-b-2 border-blue-600 rounded-full animate-spin" />
       <p className="text-sm text-gray-500">Loading your wishlist...</p>
     </div>
   );
@@ -784,6 +784,7 @@ export default function WishlistPage() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [brandMap, setBrandMap] = useState({});
   const { updateCartCount } = useCart();
+  const { openAuthModal } = useModal();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   const fetchWishlist = useCallback(async () => {
@@ -907,7 +908,7 @@ export default function WishlistPage() {
   if (!isLoggedIn) {
     return (
       <WishlistPageShell>
-        <LoginPrompt />
+        <LoginPrompt onLoginClick={() => openAuthModal()} />
       </WishlistPageShell>
     );
   }

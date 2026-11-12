@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-import path from "path";
-import { writeFile } from "fs/promises";
 import connectDB from "@/lib/db";
 import CategoryProduct from "@/models/categoryproduct";
+import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
+
+async function saveCategoryProductImage(file) {
+  if (!file || typeof file.arrayBuffer !== "function" || !file.size) return null;
+  return saveHomeSettingImage(file, { folder: "categoryproduct" });
+}
 
 export async function POST(req) {
   try {
@@ -17,17 +21,6 @@ export async function POST(req) {
     const alignment = formData.get("alignment") || "left";
     const status = formData.get("status") || "Active";
     const position = parseInt(formData.get("position") || "0", 10);
-
-    // ✅ Handle file uploads
-    async function saveFile(file) {
-      if (!file || typeof file === "string") return null;
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filename = `${Date.now()}-${file.name}`;
-      const filepath = path.join(process.cwd(), "public", "uploads", filename);
-      await writeFile(filepath, buffer);
-      return `/uploads/${filename}`;
-    }
 
     /* const bannerImage = await saveFile(formData.get("bannerImage"));
     const categoryImage = await saveFile(formData.get("categoryImage")); */
@@ -67,7 +60,7 @@ const bannerRedirectUrl = [];
 let bi = 0;
 while (formData.get(`bannerImage[${bi}]`)) {
   const file = formData.get(`bannerImage[${bi}]`);
-  const url = await saveFile(file);
+  const url = await saveCategoryProductImage(file);
   if (url) {
     bannerImage.push(url);
     bannerRedirectUrl.push(formData.get(`bannerRedirectUrl[${bi}]`) || "");
@@ -76,12 +69,12 @@ while (formData.get(`bannerImage[${bi}]`)) {
 }
 
 // SINGLE CATEGORY IMAGE
-const categoryImage = await saveFile(formData.get("categoryImage"));
+const categoryImage = await saveCategoryProductImage(formData.get("categoryImage"));
 const categoryRedirectUrl = formData.get("categoryRedirectUrl") || "";
 
 // PRODUCTS BACKGROUND IMAGES (DESKTOP & MOBILE)
-const productBgDesktop = await saveFile(formData.get("productBgDesktop"));
-const productBgMobile = await saveFile(formData.get("productBgMobile"));
+const productBgDesktop = await saveCategoryProductImage(formData.get("productBgDesktop"));
+const productBgMobile = await saveCategoryProductImage(formData.get("productBgMobile"));
 
 
     const saved = await CategoryProduct.findOneAndUpdate(
@@ -211,18 +204,6 @@ const productBgMobile = await saveFile(formData.get("productBgMobile"));
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // 🔥 FILE SAVE FUNCTION
-    async function saveFile(file) {
-      if (!file || typeof file === "string") return file;
-
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filename = Date.now() + "-" + file.name;
-      const filepath = path.join(process.cwd(), "public/uploads", filename);
-      await writeFile(filepath, buffer);
-      return `/uploads/${filename}`;
-    }
-
     // Existing images to keep (sent by frontend as JSON arrays)
     const keepBannerImages = JSON.parse(formData.get("keepBannerImages") || "[]");
     const keepBannerRedirectUrls = JSON.parse(formData.get("keepBannerRedirectUrls") || "[]");
@@ -234,7 +215,7 @@ const productBgMobile = await saveFile(formData.get("productBgMobile"));
     let i = 0;
     while (formData.get(`bannerImage[${i}]`)) {
       const file = formData.get(`bannerImage[${i}]`);
-      const url = await saveFile(file);
+      const url = await saveCategoryProductImage(file);
       if (url) {
         newBannerImages.push(url);
         newBannerUrls.push(formData.get(`bannerRedirectUrl[${i}]`) || "");
@@ -248,8 +229,8 @@ const productBgMobile = await saveFile(formData.get("productBgMobile"));
 
     // CATEGORY IMAGE — upload new file if provided, otherwise keep existing
     const categoryImageFile = formData.get("categoryImage");
-    const categoryImage = categoryImageFile
-      ? await saveFile(categoryImageFile)
+    const categoryImage = categoryImageFile?.size
+      ? await saveCategoryProductImage(categoryImageFile)
       : existingRecord.categoryImage || null;
 
     const categoryRedirectUrl =
@@ -261,8 +242,8 @@ const productBgMobile = await saveFile(formData.get("productBgMobile"));
     let productBgDesktop;
     if (removeProductBgDesktop) {
       productBgDesktop = null;
-    } else if (productBgDesktopFile) {
-      productBgDesktop = await saveFile(productBgDesktopFile);
+    } else if (productBgDesktopFile?.size) {
+      productBgDesktop = await saveCategoryProductImage(productBgDesktopFile);
     } else {
       productBgDesktop = existingRecord.productBgDesktop || null;
     }
@@ -272,8 +253,8 @@ const productBgMobile = await saveFile(formData.get("productBgMobile"));
     let productBgMobile;
     if (removeProductBgMobile) {
       productBgMobile = null;
-    } else if (productBgMobileFile) {
-      productBgMobile = await saveFile(productBgMobileFile);
+    } else if (productBgMobileFile?.size) {
+      productBgMobile = await saveCategoryProductImage(productBgMobileFile);
     } else {
       productBgMobile = existingRecord.productBgMobile || null;
     }
