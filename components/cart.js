@@ -12,12 +12,6 @@ import { useWishlist } from '@/context/WishlistContext';
 import ProductAddtoCart from "@/components/ProductAddtoCart";
 import { ga4ViewCart } from "@/utils/nextjs-event-tracking";
 
-const trucoCouponOffers = [
-  { code: "BEAO300", discount: 300, min: 5000, max: 10000 },
-  { code: "BEAO500", discount: 500, min: 10001, max: 75000 },
-  { code: "BEAO1000", discount: 1000, min: 75001, max: 100000 },
-];
-
 const slugify = (str) => {
   return str
     .toLowerCase()
@@ -308,7 +302,6 @@ const { updateWishlist } = useWishlist();
   const [couponError, setCouponError] = useState("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [couponSuccess, setCouponSuccess] = useState(""); // inline success text
-  const [showTrucoCoupons, setShowTrucoCoupons] = useState(false);
 
   const [completeYourPurchase, setCompleteYourPurchase] = useState([]);
    const completeScrollRef = useRef(null);
@@ -1494,50 +1487,23 @@ const calculateSubtotal = () => {
   const expiredActiveOfferCodes = Array.isArray(activeOfferCodes) ? activeOfferCodes.filter((c) => !isCouponValid(c)) : [];
   const hasAnyValidActiveOffer = validActiveOfferCodes.length > 0;
   const currentSubtotal = calculateSubtotal();
-  const matchingTrucoOffer = trucoCouponOffers.find(
-    (offer) => currentSubtotal >= offer.min && currentSubtotal <= offer.max
-  );
 
   const renderTrucoCouponPrompt = () => (
-    <div className="mt-3 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 sm:p-4">
-      {matchingTrucoOffer ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900">
-              You can save ₹{matchingTrucoOffer.discount.toLocaleString("en-IN")}!
-            </p>
-            <p className="mt-0.5 text-xs text-gray-600">
-              Use <span className="font-bold tracking-wide text-[#0f3cc9]">{matchingTrucoOffer.code}</span>
-              {" "}on eligible cart values of ₹{matchingTrucoOffer.min.toLocaleString("en-IN")}–₹{matchingTrucoOffer.max.toLocaleString("en-IN")}.
-            </p>
-          </div>
-          <button
-            type="button"
-            disabled={!couponFeatureEnabled || isValidatingCoupon}
-            onClick={() => {
-              setCouponCode(matchingTrucoOffer.code);
-              validateCoupon(matchingTrucoOffer.code);
-            }}
-            className="w-full shrink-0 rounded-lg bg-[#2453D3] px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-          >
-            {isValidatingCoupon && couponCode === matchingTrucoOffer.code ? "Applying..." : "Apply offer"}
-          </button>
-        </div>
-      ) : (
-        <p className="text-sm text-gray-700">
-          {currentSubtotal < trucoCouponOffers[0].min
-            ? `Add ₹${(trucoCouponOffers[0].min - currentSubtotal).toLocaleString("en-IN")} more to unlock a coupon.`
-            : "These coupons are available on cart values up to ₹1,00,000."}
+    currentSubtotal >= 5000 && (
+      <div className="mt-3 flex flex-col gap-3 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <p className="text-sm text-gray-800">
+          Your cart qualifies for Truco app offers worth ₹300–₹1,000. Download the app to get your coupon code.
         </p>
-      )}
-      <button
-        type="button"
-        onClick={() => setShowTrucoCoupons(true)}
-        className="mt-2 text-xs font-semibold text-[#0f3cc9] underline underline-offset-2 hover:text-blue-800"
-      >
-        View all 3 coupons
-      </button>
-    </div>
+        <a
+          href="https://truco.avaniko.com/api/api/download.html?tid=019acf86-5371-447f-a6f7-eeca624972ad&source=web&medium=web&campaign=truco"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full shrink-0 rounded-lg bg-[#2453D3] px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-blue-700 sm:w-auto"
+        >
+          Download Truco App
+        </a>
+      </div>
+    )
   );
 
   if (loading) {
@@ -1605,91 +1571,6 @@ return (
       message={errorMessage}
       onClose={() => setShowErrorModal(false)}
     />
-
-    {showTrucoCoupons && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <button
-          type="button"
-          aria-label="Close coupon offers"
-          className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]"
-          onClick={() => setShowTrucoCoupons(false)}
-        />
-        <section
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="truco-coupons-title"
-          className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Cart offers</p>
-              <h2 id="truco-coupons-title" className="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
-                Save more with a coupon
-              </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Choose an offer that matches your current cart subtotal of ₹{currentSubtotal.toLocaleString("en-IN")}.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowTrucoCoupons(false)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xl text-gray-600 transition hover:bg-gray-200"
-              aria-label="Close coupon offers"
-            >
-              &times;
-            </button>
-          </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {trucoCouponOffers.map((offer) => {
-              const isEligible = offer.code === matchingTrucoOffer?.code;
-              const rangeEnd = offer.max.toLocaleString("en-IN");
-              const rangeStart = offer.min.toLocaleString("en-IN");
-              const rangeLabel = `₹${rangeStart}–₹${rangeEnd}`;
-
-              return (
-                <article
-                  key={offer.code}
-                  className={`flex flex-col rounded-xl border p-4 ${
-                    isEligible
-                      ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200"
-                      : "border-gray-200 bg-white"
-                  }`}
-                >
-                  {isEligible && (
-                    <span className="mb-2 w-fit rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-bold text-blue-800">
-                      Available for your cart
-                    </span>
-                  )}
-                  <p className="text-2xl font-extrabold text-gray-900">₹{offer.discount.toLocaleString("en-IN")} off</p>
-                  <p className="mt-1 text-xs text-gray-600">Cart subtotal {rangeLabel}</p>
-                  <div className="mt-4 flex items-center justify-between gap-2 rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2">
-                    <span className="font-mono text-sm font-bold tracking-wider text-[#0f3cc9]">{offer.code}</span>
-                    <span className="text-xs font-semibold text-gray-500">Coupon</span>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={!isEligible || !couponFeatureEnabled || isValidatingCoupon}
-                    onClick={() => {
-                      setShowTrucoCoupons(false);
-                      setCouponCode(offer.code);
-                      validateCoupon(offer.code);
-                    }}
-                    className="mt-4 w-full rounded-lg bg-[#2453D3] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
-                  >
-                    {isEligible ? "Apply coupon" : "Not eligible yet"}
-                  </button>
-                </article>
-              );
-            })}
-          </div>
-          {!couponFeatureEnabled && (
-            <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-              Coupons are currently disabled.
-            </p>
-          )}
-        </section>
-      </div>
-    )}
 
     <div className="w-full max-w-full sm:max-w-[680px] md:max-w-[860px] lg:max-w-[1180px] xl:max-w-[1360px] 2xl:max-w-[1480px] mx-auto px-4 md:px-6 lg:px-8">
       {/* Header */}
@@ -2175,7 +2056,7 @@ return (
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg text-sm"
                 />
                 <button
-                  onClick={validateCoupon}
+                  onClick={() => validateCoupon()}
                   disabled={isValidatingCoupon || !couponFeatureEnabled}
                   className="px-4 py-2 bg-blue-600 text-white text-sm rounded-r-lg"
                 >
@@ -2343,7 +2224,7 @@ return (
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg text-sm"
                 />
                 <button
-                  onClick={validateCoupon}
+                  onClick={() => validateCoupon()}
                   disabled={isValidatingCoupon || !couponFeatureEnabled}
                   className="px-4 py-2 bg-blue-600 text-white text-sm rounded-r-lg"
                 >

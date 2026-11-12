@@ -1002,15 +1002,15 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         }
 
         // // SAP sync — send order data to SAP
-        try {
-          await fetch('/api/send-order-detail-to-sap', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_number: orderData.order.order_number }),
-          });
-        } catch (e) {
-          console.error('SAP sync failed:', e);
-        }
+        // try {
+        //   await fetch('/api/send-order-detail-to-sap', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ order_number: orderData.order.order_number }),
+        //   });
+        // } catch (e) {
+        //   console.error('SAP sync failed:', e);
+        // }
 
         try {
           const name = `${addressData.firstName} ${addressData.lastName}`;
@@ -1024,13 +1024,13 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           });
 
           const adminEmails = [
-            "arunkarthik@bharathelectronics.in",
-            "ecom@bharathelectronics.in",
-            "itadmin@bharathelectronics.in",
-            "telemarketing@bharathelectronics.in",
-            "sekarcorp@bharathelectronics.in",
-            "abu@bharathelectronics.in",
-            "customercare@bharathelectronics.in",
+            // "arunkarthik@bharathelectronics.in",
+            // "ecom@bharathelectronics.in",
+            // "itadmin@bharathelectronics.in",
+            // "telemarketing@bharathelectronics.in",
+            // "sekarcorp@bharathelectronics.in",
+            // "abu@bharathelectronics.in",
+            // "customercare@bharathelectronics.in",
           ];
 
           const emailRes = await fetch("/api/send-order-email", {
@@ -1620,10 +1620,24 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
   </div>
 )}
 
+{appliedCoupon?.offer_code && Number(orderSummary.discount) > 0 && (
+  <div className="flex justify-between gap-4 text-sm text-green-700">
+    <span>
+      {/^BEAO\d+$/i.test(appliedCoupon.offer_code) ? "Truco coupon" : "Coupon"} ({appliedCoupon.offer_code})
+    </span>
+    <span className="shrink-0 font-medium">
+      −₹{Number(orderSummary.discount).toLocaleString('en-IN')}
+    </span>
+  </div>
+)}
+
 {/* Subtotal */}
 <div className="flex justify-between text-sm text-gray-700 font-medium border-t border-gray-100 pt-2">
   <span>Subtotal</span>
-  <span>₹{orderSummary.subtotal.toLocaleString('en-IN')}</span>
+  <span>₹{Math.max(
+    0,
+    orderSummary.subtotal - (appliedCoupon?.offer_code ? Number(orderSummary.discount) || 0 : 0)
+  ).toLocaleString('en-IN')}</span>
 </div>
                 <div className="flex justify-between text-sm text-gray-700">
                   <span>Delivery charge</span>

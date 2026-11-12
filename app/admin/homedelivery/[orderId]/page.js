@@ -8,6 +8,7 @@ import { IoWalletSharp } from "react-icons/io5";
 import { IoMdMail } from "react-icons/io";
 import { TbTruckDelivery } from "react-icons/tb";
 import { MdOutlineLocalShipping, MdDeliveryDining, MdContacts } from "react-icons/md";
+import { getOrderBenefits } from "@/app/admin/components/order/OrderBenefits";
 
 const OrderDetails = () => {
   const params = useParams();
@@ -279,7 +280,6 @@ const OrderDetails = () => {
   </div>
 </div>
 
-
       {/* Order Info */}
       <div className="bg-white p-4 shadow rounded">
         <h3 className="font-semibold text-gray-600 border-b pb-2">Order #{order.order_number}</h3>
@@ -350,6 +350,17 @@ const OrderDetails = () => {
     </tr>
   )
 )}
+
+{getOrderBenefits(order).map((benefit) => (
+  <tr key={benefit.label} className="border-t bg-blue-50/60">
+    <td colSpan="4" className="p-2 text-right text-gray-700">
+      {benefit.label}:
+    </td>
+    <td className="p-2 text-right font-medium text-gray-900">
+      {benefit.value}
+    </td>
+  </tr>
+))}
 
   <tr className="font-semibold">
     <td colSpan="4" className="p-2 text-right">Sub-Total:</td>
