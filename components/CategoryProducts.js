@@ -379,6 +379,7 @@ const getBannerRedirectUrls = (urls) => {
             alt={categoryProduct.category_name || "Category Banner"}
             width={1200}
             height={400}
+            unoptimized
             className="w-full h-auto rounded-lg shadow-md transition"
           />
         </Link>
@@ -444,6 +445,7 @@ const getBannerRedirectUrls = (urls) => {
       <Image src={img} alt={categoryProduct?.category_name || "Category Banner"}
       width={1200}
       height={400}
+      unoptimized
       className="w-full h-auto rounded-lg"
       />
       </Link>

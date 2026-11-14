@@ -5,7 +5,7 @@ import { saveHomeSettingImage } from "@/lib/saveHomeSettingImage";
 
 async function saveCategoryProductImage(file) {
   if (!file || typeof file.arrayBuffer !== "function" || !file.size) return null;
-  return saveHomeSettingImage(file, { folder: "categoryproduct" });
+  return saveHomeSettingImage(file);
 }
 
 export async function POST(req) {
