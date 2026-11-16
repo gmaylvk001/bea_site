@@ -20,6 +20,7 @@ export default function PendingOrders() {
   const [error, setError] = useState("");
   const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
   const [viewOrderDetails, setViewOrderDetails] = useState(null);
+  const [paymentUpdatingId, setPaymentUpdatingId] = useState(null);
   
   const itemsPerPage = 20;
   const [dateFilter, setDateFilter] = useState({
@@ -138,8 +139,14 @@ export default function PendingOrders() {
 
       const data = await response.json();
       if (data.success) {
+        const cancellationWarning = [
+          data.loyaltyRefund?.success === false ? data.loyaltyRefund.message : "",
+          data.trucoPromotionReversalRequiresSupport
+            ? "Truco promotion reversals require contacting Truco support."
+            : "",
+        ].filter(Boolean).join(" ");
         setShowModal(false);
-        setAlertMessage(`Order status updated to ${status}`);
+        setAlertMessage(`Order status updated to ${status}${cancellationWarning ? `. Please note: ${cancellationWarning}` : ""}`);
         setCancellationReason("");
         fetchOrders();
         setTimeout(() => setAlertMessage(null), 3000);
@@ -152,6 +159,43 @@ export default function PendingOrders() {
     }
   };
 
+  const handleConfirmCodPayment = async (order) => {
+    const confirmed = window.confirm(
+      `Confirm that cash was received for order ${order.order_number}?`
+    );
+    if (!confirmed) return;
+
+    setPaymentUpdatingId(order._id);
+    setAlertMessage(null);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/orders/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          order_id: order._id,
+          order_status: order.order_status,
+          payment_status: "paid",
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || data.error || "Failed to confirm COD payment");
+      }
+
+      setAlertMessage(`COD payment confirmed for ${order.order_number}.`);
+      await fetchOrders();
+    } catch (confirmError) {
+      console.error("COD payment confirmation failed:", confirmError);
+      setAlertMessage(`Error: ${confirmError.message}`);
+    } finally {
+      setPaymentUpdatingId(null);
+    }
+  };
+
   const handleViewOrder = (order) => {
     setViewOrderDetails(order);
     setShowOrderDetailsModal(true);
@@ -161,7 +205,7 @@ export default function PendingOrders() {
     <div className="container mx-auto p-4">
       {/* Alert Message */}
       {alertMessage && (
-        <div className="bg-green-500 text-white px-4 py-2 rounded-md mb-4">
+        <div className={`${alertMessage.startsWith("Error:") ? "bg-red-600" : alertMessage.includes("Please note:") ? "bg-amber-500" : "bg-green-500"} text-white px-4 py-2 rounded-md mb-4`}>
           {alertMessage}
         </div>
       )}
@@ -239,6 +283,7 @@ export default function PendingOrders() {
                 <th className="p-2">Mobile</th>
                 <th className="p-2">Amount</th>
                 <th className="p-2">Status</th>
+                <th className="p-2">Payment</th>
                 <th className="p-2">Date</th>
                 <th className="p-2">Actions</th>
               </tr>
@@ -262,9 +307,31 @@ export default function PendingOrders() {
                       </span>
                     </td>
                     <td className="px-4 py-2">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        order.payment_status === "paid"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}>
+                        {order.payment_status || "unpaid"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-2 flex space-x-2 justify-center">
+                      {order.payment_method?.toLowerCase() === "cash on delivery" &&
+                        order.payment_status !== "paid" &&
+                        order.order_status !== "cancelled" && (
+                          <button
+                            type="button"
+                            onClick={() => handleConfirmCodPayment(order)}
+                            disabled={paymentUpdatingId === order._id}
+                            className="bg-emerald-600 text-white px-3 py-1 rounded text-xs hover:bg-emerald-700 disabled:opacity-50"
+                            title="Use only after cash has been collected"
+                          >
+                            {paymentUpdatingId === order._id ? "Confirming..." : "Mark COD paid"}
+                          </button>
+                        )}
                       <button
                         className="w-7 h-7 bg-blue-100 text-blue-600 rounded-full inline-flex items-center justify-center hover:bg-blue-200 transition-colors"
                         onClick={() => handleViewOrder(order)}

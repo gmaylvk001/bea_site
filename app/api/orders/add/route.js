@@ -22,19 +22,23 @@ export async function POST(req) {
       customer_comments, // IMPORTANT
       payment_method,
       payment_type,
+      payment_id,
       order_status,
       delivery_type,
-      payment_id,
       order_number,
       order_details,
-      payment_status,
       user_adddeliveryid,
       email_address,
       loyalty_points_redeemed,
       loyalty_discount,
       loyalty_redemption_token,
+      loyalty_redemption_expires_at,
+      delivery_charge,
       promotion_code_applied,
-       promotion_discount_applied,
+      promotion_is_truco,
+      promotion_discount_applied,
+      promotion_transaction_amount,
+      promotion_cart_items,
       pickup_store,
       store_id,
       gst_number,
@@ -45,6 +49,84 @@ export async function POST(req) {
     // Validate required fields
     if (!user_id || !email_address || !order_phonenumber || !order_item?.length || !order_amount) {
       return Response.json({ success: false, message: "Missing required fields" }, { status: 400 });
+    }
+    const finalPayableAmount = Number(order_amount);
+    if (!Number.isFinite(finalPayableAmount) || finalPayableAmount <= 0) {
+      return Response.json({ success: false, message: "A valid final payable amount is required" }, { status: 400 });
+    }
+
+    const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
+    if (
+      promotion_is_truco === true &&
+      promotion_code_applied &&
+      !["online", "emi"].includes(normalizedPaymentMethod)
+    ) {
+      return Response.json(
+        { success: false, message: "Truco coupons are available for online and EMI orders only" },
+        { status: 400 }
+      );
+    }
+
+    const hasLoyaltyRedemptionDetails =
+      Boolean(loyalty_redemption_token) ||
+      Number(loyalty_points_redeemed) > 0 ||
+      Number(loyalty_discount) > 0;
+    if (
+      !["online", "emi"].includes(normalizedPaymentMethod) &&
+      hasLoyaltyRedemptionDetails
+    ) {
+      return Response.json(
+        { success: false, message: "Loyalty points are available for online and EMI orders only" },
+        { status: 400 }
+      );
+    }
+
+    const parsedDeliveryCharge = delivery_charge == null ? NaN : Number(delivery_charge);
+    const invoiceExtrasAreValid = order_item.every((item) => {
+      const warranty = item.warranty == null ? 0 : Number(item.warranty);
+      const extendedWarranty = item.extendedWarranty == null ? 0 : Number(item.extendedWarranty);
+      return Number.isFinite(warranty) && warranty >= 0 &&
+        Number.isFinite(extendedWarranty) && extendedWarranty >= 0;
+    });
+    const invoiceLineItemsAreComplete = order_item.every((item) => {
+      const quantity = Number(item.quantity);
+      const unitPrice = Number(item.actual_price);
+      return Boolean(String(item.item_code || "").trim()) &&
+        Boolean(String(item.name || "").trim()) &&
+        Number.isFinite(quantity) && quantity > 0 &&
+        Number.isFinite(unitPrice) && unitPrice > 0;
+    });
+    const invoiceGrossAmount = invoiceLineItemsAreComplete &&
+      invoiceExtrasAreValid &&
+      Number.isFinite(parsedDeliveryCharge) &&
+      parsedDeliveryCharge >= 0
+      ? order_item.reduce((total, item) =>
+        total +
+        Number(item.actual_price) * Number(item.quantity) +
+        (Number(item.warranty) || 0) +
+        (Number(item.extendedWarranty) || 0), 0) + parsedDeliveryCharge
+      : null;
+    if (
+      ["online", "emi"].includes(normalizedPaymentMethod) &&
+      (!Number.isFinite(invoiceGrossAmount) || invoiceGrossAmount <= 0)
+    ) {
+      return Response.json(
+        { success: false, message: "Order items and delivery charge must contain complete invoice data before online payment" },
+        { status: 400 }
+      );
+    }
+
+    const loyaltyTokenExpiry = loyalty_redemption_expires_at
+      ? new Date(loyalty_redemption_expires_at)
+      : null;
+    if (
+      loyalty_redemption_token &&
+      (!loyaltyTokenExpiry || !Number.isFinite(loyaltyTokenExpiry.getTime()))
+    ) {
+      return Response.json(
+        { success: false, message: "A valid loyalty redemption token expiry is required" },
+        { status: 400 }
+      );
     }
 
     // Validate that no combo products in the order are expired
@@ -80,18 +162,35 @@ export async function POST(req) {
       payment_method,
       payment_type,
       delivery_type,
-      payment_id,
       order_number,
       order_details,
       user_adddeliveryid,
       email_address,
       order_status: order_status || "pending",
-      payment_status: payment_status || "unpaid",
+      payment_status: ["online", "emi"].includes(normalizedPaymentMethod)
+        ? "payment_initialized"
+        : "pending",
+      payment_confirmation_source: null,
+      payment_verified_at: null,
+      razorpay_order_id: null,
+      payment_gateway_method: null,
+      invoice_gross_amount: invoiceGrossAmount,
+      invoice_net_amount: finalPayableAmount,
+      payment_id: ["online", "emi"].includes(normalizedPaymentMethod)
+        ? null
+        : payment_id || null,
       loyalty_points_redeemed: loyalty_points_redeemed || 0,
-          loyalty_discount: loyalty_discount || 0,
+      loyalty_discount: loyalty_discount || 0,
       loyalty_redemption_token: loyalty_redemption_token || null,
+      loyalty_redemption_expires_at: loyalty_redemption_token ? loyaltyTokenExpiry : null,
+      delivery_charge: Number.isFinite(Number(delivery_charge)) && Number(delivery_charge) >= 0
+        ? Number(delivery_charge)
+        : null,
       promotion_code_applied: promotion_code_applied || null,
-     promotion_discount_applied: promotion_discount_applied || 0,
+      promotion_is_truco: promotion_is_truco === true,
+      promotion_discount_applied: promotion_discount_applied || 0,
+      promotion_transaction_amount: promotion_transaction_amount || 0,
+      promotion_cart_items: Array.isArray(promotion_cart_items) ? promotion_cart_items : [],
       pickup_store: pickup_store || null,
       store_id: store_id || null,
       gst_number: gst_number || null,
@@ -108,9 +207,10 @@ export async function POST(req) {
     let isNew = false;
 
     if (existingOrder) {
-      // Update existing order fields
-      Object.assign(existingOrder, orderFields);
-      savedOrder = await existingOrder.save();
+      if (String(existingOrder.user_id) !== String(user_id)) {
+        return Response.json({ success: false, message: "Order does not belong to this customer" }, { status: 403 });
+      }
+      savedOrder = existingOrder;
     } else {
       // Create new order
       const newOrder = new EcomOrderInfo(orderFields);

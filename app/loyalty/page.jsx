@@ -7,7 +7,7 @@ const faqs = [
   { q: "What is BEA Loyalty Programme?", a: "BEA Loyalty is a cardless loyalty programme that rewards you with points on every purchase. Use your mobile number as your membership ID — no card needed!" },
   { q: "How do I join BEA Loyalty?", a: "You are automatically enrolled when you make your first purchase at BEA. No separate registration required — just shop and you're in!" },
   { q: "How do I earn points?", a: "You earn loyalty points automatically on every completed purchase. Points are calculated based on your order value and credited to your account after payment." },
-  { q: "What is the value of 1 point?", a: "1 Point = ₹1. Every point you earn has a direct cash equivalent that can be redeemed on your next purchase." },
+  { q: "What is the value of 1 point?", a: "Point value is calculated using the conversion rate provided by Truco and shown with your balance." },
   { q: "Where can I redeem my points?", a: "You can redeem your loyalty points directly at checkout — both in-store and online. Simply tap 'Use All Points' to apply your balance as a discount." },
   { q: "Do my points expire?", a: "Points validity depends on your account activity. Keep shopping to keep your points active!" },
   { q: "Do I need an app or card?", a: "No card and no mandatory app! Your mobile number is your membership ID. However, you can optionally download the BEA TRUCO app for a richer experience." },
@@ -23,7 +23,7 @@ const extras = [
 
 const whyJoin = [
   { img: "/loyalty/image1.png", title: "No Cards Needed", desc: "Your mobile number is your membership ID. Simple, secure and always with you." },
-  { img: "/loyalty/image2.png", title: "Earn Every Purchase", desc: "Earn reward points on every purchase. 1 Point = ₹1. Always." },
+  { img: "/loyalty/image2.png", title: "Earn Every Purchase", desc: "Earn reward points on eligible purchases. Point value follows the rate provided by Truco." },
   { img: "/loyalty/image3.png", title: "Exclusive Offers", desc: "Get access to special vouchers, birthday treats, and members-only deals." },
   { img: "/loyalty/image4.png", title: "Instant Redemption", desc: "Use your points directly during billing. No extra steps, just real savings." },
 ];
@@ -31,6 +31,9 @@ const whyJoin = [
 export default function LoyaltyPage() {
   const router = useRouter();
   const [points, setPoints] = useState(null);
+  const [pointsValue, setPointsValue] = useState(null);
+  const [pointsPerCurrencyUnit, setPointsPerCurrencyUnit] = useState(null);
+  const [loyaltyCustomerExists, setLoyaltyCustomerExists] = useState(null);
   const [loading, setLoading] = useState(true);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -54,10 +57,33 @@ export default function LoyaltyPage() {
         setCustomerPhone(authData.phone || decoded.phone || "");
         const loyaltyRes = await fetch(`/api/award-points?phone=${authData.phone || ""}`);
         const loyaltyData = await loyaltyRes.json();
-        setPoints(loyaltyData.success ? loyaltyData.points : 0);
+        const customerExists = loyaltyData.success
+          ? loyaltyData.customerExists === true
+          : null;
+        setLoyaltyCustomerExists(customerExists);
+        setPoints(
+          customerExists === true
+            ? Number(loyaltyData.points) || 0
+            : customerExists === false
+              ? 0
+              : null
+        );
+        setPointsValue(
+          customerExists && loyaltyData.value != null && Number.isFinite(Number(loyaltyData.value))
+            ? Number(loyaltyData.value)
+            : null
+        );
+        setPointsPerCurrencyUnit(
+          customerExists && Number(loyaltyData.pointsPerCurrencyUnit) > 0
+            ? Number(loyaltyData.pointsPerCurrencyUnit)
+            : null
+        );
       } catch (err) {
         console.error("Loyalty fetch error:", err);
-        setPoints(0);
+        setLoyaltyCustomerExists(null);
+        setPoints(null);
+        setPointsValue(null);
+        setPointsPerCurrencyUnit(null);
       } finally {
         setLoading(false);
       }
@@ -120,7 +146,7 @@ export default function LoyaltyPage() {
               </svg>
             </button>
             <div className="flex flex-wrap gap-5 mt-8">
-              {[{ icon: "🚫", label: "No Registration Fee" }, { icon: "💳", label: "No Physical Card" }, { icon: "🥇", label: "1 Point = ₹1 Value" }].map((b, i) => (
+              {[{ icon: "🚫", label: "No Registration Fee" }, { icon: "💳", label: "No Physical Card" }, { icon: "🥇", label: "Truco-based point value" }].map((b, i) => (
                 <div key={i} className="flex items-center gap-2 text-white/80 text-xs">
                   <span>{b.icon}</span><span>{b.label}</span>
                 </div>
@@ -157,15 +183,26 @@ export default function LoyaltyPage() {
                 {checkResult && (
                   <div className={`rounded-xl p-3 text-sm font-medium ${checkResult.success ? "bg-green-900/40 border border-green-400/30 text-green-300" : "bg-red-900/40 border border-red-400/30 text-red-300"}`}>
                     {checkResult.success ? (
-                      <><p className="font-bold text-green-200">Account Located!</p><p className="text-xs mt-0.5 text-green-300/80">You have <strong>{checkResult.points?.toLocaleString()} points</strong> = <strong>₹{checkResult.points?.toLocaleString()}</strong>.</p></>
-                    ) : "No account found for this mobile number."}
+                      checkResult.customerExists === true
+                        ? <><p className="font-bold text-green-200">Account Located!</p><p className="text-xs mt-0.5 text-green-300/80">You have <strong>{Number(checkResult.points || 0).toLocaleString()} points</strong> worth <strong>{checkResult.value != null && Number.isFinite(Number(checkResult.value)) ? `₹${Number(checkResult.value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "value unavailable"}</strong>{Number(checkResult.pointsPerCurrencyUnit) > 0 ? ` (${Number(checkResult.pointsPerCurrencyUnit).toLocaleString()} points per ₹1)` : ''}.</p></>
+                        : checkResult.customerExists === false
+                          ? <p className="font-bold text-green-200">No loyalty account was found for this mobile number.</p>
+                          : <p className="font-bold text-green-200">Loyalty account status is unavailable.</p>
+                    ) : "Unable to check this mobile number right now."}
                   </div>
                 )}
 
                 {!loading && isLoggedIn && points !== null && (
                   <div className="bg-[#FBBF24]/10 border border-[#FBBF24]/30 rounded-xl p-4">
                     <p className="text-[#FBBF24] text-[10px] font-bold uppercase tracking-widest mb-1">Your Points</p>
-                    <p className="text-white font-black text-2xl">{points.toLocaleString()} <span className="text-sm font-normal text-white/50">= ₹{points.toLocaleString()}</span></p>
+                    <p className="text-white font-black text-2xl">
+                      {points.toLocaleString()}
+                      <span className="text-sm font-normal text-white/50">
+                        {pointsValue == null
+                          ? " — value unavailable"
+                          : ` = ₹${pointsValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      </span>
+                    </p>
                     <button onClick={() => router.push("/checkout")} className="mt-3 w-full bg-[#1D4ED8] text-white text-sm font-bold py-2.5 rounded-lg hover:bg-[#1a44c4] transition">
                       Use at Checkout →
                     </button>
@@ -281,6 +318,13 @@ export default function LoyaltyPage() {
               <h3 className="text-[22px] font-black text-white mb-5 tracking-tight">
                 Welcome back, <span className="text-[#FBBF24]">{customerName}!</span>
               </h3>
+              {loyaltyCustomerExists !== true && (
+                <p className="text-sm text-[#FBBF24] mb-4">
+                  {loyaltyCustomerExists === false
+                    ? "No Truco loyalty account was found for your mobile number."
+                    : "Loyalty account status is currently unavailable."}
+                </p>
+              )}
              <div className="flex flex-col sm:flex-row items-stretch gap-4">
                    <div className="flex flex-col xs:flex-row gap-3 flex-1">
                      {/* Available Points */}
@@ -301,8 +345,14 @@ export default function LoyaltyPage() {
                   <div className="flex-1 rounded-[12px] px-[18px] py-4 flex items-center justify-between" style={{ background: "#0D2150" }}>
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748B] mb-1">Savings Value</p>
-                      <p className="text-[28px] font-black text-[#FBBF24] leading-none">₹{points.toLocaleString()}</p>
-                      <p className="text-[10px] text-[#64748B] mt-1">1 Point = ₹1</p>
+                      <p className="text-[28px] font-black text-[#FBBF24] leading-none">
+                        {pointsValue == null
+                          ? "Value unavailable"
+                          : `₹${pointsValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      </p>
+                      <p className="text-[10px] text-[#64748B] mt-1">
+                        {pointsPerCurrencyUnit ? `${pointsPerCurrencyUnit.toLocaleString()} points = ₹1` : "Value provided by Truco"}
+                      </p>
                     </div>
                     <div className="w-[46px] h-[46px] rounded-[10px] bg-white/5 flex items-center justify-center flex-shrink-0">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -354,7 +404,13 @@ export default function LoyaltyPage() {
               </div>
               {checkResult && (
                 <div className={`mt-3 mx-auto max-w-sm rounded-[10px] px-4 py-3 text-sm font-medium ${checkResult.success ? "bg-green-900/40 border border-green-400/20 text-green-300" : "bg-red-900/40 border border-red-400/20 text-red-300"}`}>
-                  {checkResult.success ? (<><strong className="text-green-200">Account located!</strong><span className="text-green-300/80 ml-1">You have <strong>{checkResult.points?.toLocaleString()} points</strong> worth <strong>₹{checkResult.points?.toLocaleString()}</strong>.</span></>) : "No account found for this mobile number."}
+                  {checkResult.success
+                    ? checkResult.customerExists === true
+                      ? <><strong className="text-green-200">Account located!</strong><span className="text-green-300/80 ml-1">You have <strong>{Number(checkResult.points || 0).toLocaleString()} points</strong> worth <strong>{checkResult.value != null && Number.isFinite(Number(checkResult.value)) ? `₹${Number(checkResult.value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "value unavailable"}</strong>{Number(checkResult.pointsPerCurrencyUnit) > 0 ? ` (${Number(checkResult.pointsPerCurrencyUnit).toLocaleString()} points per ₹1)` : ''}.</span></>
+                      : checkResult.customerExists === false
+                        ? "No loyalty account was found for this mobile number."
+                        : "Loyalty account status is unavailable."
+                    : "Unable to check this mobile number right now."}
                 </div>
               )}
             </div>

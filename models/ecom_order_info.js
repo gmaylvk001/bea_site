@@ -25,6 +25,7 @@ const OrderSchema = new mongoose.Schema(
       id: { type: Number },
       name: { type: String },
       price: { type: Number },
+      actual_price: { type: Number },
       item_code: { type: String },
       model:{ type: String },
       coupondiscount:{ type: Number},
@@ -79,6 +80,16 @@ const OrderSchema = new mongoose.Schema(
   //delivery_type:{ type: String},
   payment_id:{ type: String},
   order_number:{ type: String, required: true},
+  razorpay_order_id: { type: String, default: null },
+  payment_gateway_method: { type: String, default: null },
+  payment_confirmation_source: {
+    type: String,
+    enum: ["razorpay", "cod_admin", "admin_manual"],
+    default: null,
+  },
+  payment_verified_at: { type: Date, default: null },
+  invoice_gross_amount: { type: Number, default: null },
+  invoice_net_amount: { type: Number, default: null },
   user_adddeliveryid:{ type: String},
    delivery_date: { type: Date },
   order_status: {
@@ -100,12 +111,41 @@ const OrderSchema = new mongoose.Schema(
 
   loyalty_points_awarded: { type: Number, default: 0 },
   truco_transaction_id: { type: String, default: null },
+  loyalty_current_balance: { type: Number, default: null },
+  loyalty_award_status: { type: String, enum: ["pending", "succeeded", "failed"], default: undefined },
+  loyalty_award_error: { type: String, default: null },
   loyalty_points_redeemed: { type: Number, default: 0 },
 loyalty_discount: { type: Number, default: 0 },
 loyalty_redemption_token: { type: String, default: null },
+loyalty_redemption_expires_at: { type: Date, default: null },
+loyalty_redemption_processed_at: { type: Date, default: null },
+loyalty_redemption_status: {
+  type: String,
+  enum: ["pending", "succeeded", "failed", "cancelled", "cancel_pending"],
+  default: undefined,
+},
+loyalty_redemption_error: { type: String, default: null },
+loyalty_refund_status: { type: String, enum: ["pending", "succeeded", "failed"], default: undefined },
+loyalty_refund_error: { type: String, default: null },
+delivery_charge: { type: Number, default: null },
 points_per_currency_unit: { type: Number, default: null },
 promotion_code_applied: { type: String, default: null },
+promotion_is_truco: { type: Boolean, default: false },
 promotion_discount_applied: { type: Number, default: 0 },
+promotion_transaction_amount: { type: Number, default: 0 },
+promotion_cart_items: [{
+  sku: { type: String, default: "" },
+  brand: { type: String, default: "" },
+  category: { type: String, default: "" },
+  price: { type: Number, default: 0 },
+  quantity: { type: Number, default: 0 },
+}],
+promotion_redemption_status: {
+  type: String,
+  enum: ["pending", "succeeded", "failed", "cancelled"],
+  default: undefined,
+},
+promotion_redemption_error: { type: String, default: null },
 gst_number: { type: String, default: null },
   gst_business_name: { type: String, default: null },
   gst_name: { type: String, default: null },
@@ -123,5 +163,3 @@ if (mongoose.models.ecom_order_info) {
 }
 
 export default mongoose.model("ecom_order_info", OrderSchema);
-
-

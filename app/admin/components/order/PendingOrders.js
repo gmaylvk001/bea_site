@@ -132,8 +132,14 @@ export default function PendingOrders() {
 
       const data = await response.json();
       if (data.success) {
+        const cancellationWarning = [
+          data.loyaltyRefund?.success === false ? data.loyaltyRefund.message : "",
+          data.trucoPromotionReversalRequiresSupport
+            ? "Truco promotion reversals require contacting Truco support."
+            : "",
+        ].filter(Boolean).join(" ");
         setShowModal(false);
-        setAlertMessage(`Order status updated to ${status}`);
+        setAlertMessage(`Order status updated to ${status}${cancellationWarning ? `. Please note: ${cancellationWarning}` : ""}`);
         setCancellationReason("");
         fetchOrders();
         setTimeout(() => setAlertMessage(null), 3000);
@@ -154,7 +160,7 @@ export default function PendingOrders() {
     <div className="container mx-auto p-4">
       {/* Alert Message */}
       {alertMessage && (
-        <div className="bg-green-500 text-white px-4 py-2 rounded-md mb-4">
+        <div className={`${alertMessage.includes("Please note:") ? "bg-amber-500" : "bg-green-500"} text-white px-4 py-2 rounded-md mb-4`}>
           {alertMessage}
         </div>
       )}

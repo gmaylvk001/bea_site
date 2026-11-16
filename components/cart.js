@@ -1015,7 +1015,6 @@ const validateCoupon = async (couponToApply) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code }),
     });
- 
     const statusData = await statusRes.json();
  
     if (!statusData.found || !statusData.isValid || statusData.isExpired) {
@@ -1048,14 +1047,12 @@ const validateCoupon = async (couponToApply) => {
           price: item.price > 0 ? item.price : item.actual_price,
           quantity: item.quantity,
         })) || [],
-        paymentMethod: "CARD",
         channel: "ONLINE",
         storeId: "Online Store",
       }),
     });
  
     const validateData = await validateRes.json();
- 
     if (!validateData.valid) {
     
       const errorMessages = {

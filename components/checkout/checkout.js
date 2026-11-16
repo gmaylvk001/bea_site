@@ -25,6 +25,7 @@ const RAZORPAY_EMI_TEST_CARD = '5241 8100 0000 0000';
 
 const BEA_CONTACT_PHONE = '9842344323';
 const BEA_CONTACT_EMAIL = 'customercare@bharathelectronics.in';
+const TRUCO_LOYALTY_RESERVATION_KEY = 'trucoLoyaltyReservation';
 
 const getItemImage = (item) => {
   if (item?.fullImage) return item.fullImage;
@@ -364,6 +365,7 @@ export default function CheckoutPage() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [useSavedAddress, setUseSavedAddress] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('online');
+  const [showTrucoCouponPaymentModal, setShowTrucoCouponPaymentModal] = useState(false);
   const [error, setError] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [cartItems, setCartItems] = useState([]);
@@ -371,9 +373,13 @@ export default function CheckoutPage() {
   const [orderSummary, setOrderSummary] = useState({ discount: 0, subtotal: 0, total: 0 });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userPhone, setUserPhone] = useState('');
+  const [isTrucoCouponApplied, setIsTrucoCouponApplied] = useState(false);
   const [loyaltyBalance, setLoyaltyBalance] = useState(0);
+  const [loyaltyBalanceValue, setLoyaltyBalanceValue] = useState(0);
+  const [loyaltyPointsPerCurrencyUnit, setLoyaltyPointsPerCurrencyUnit] = useState(null);
   const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
   const [loyaltyToken, setLoyaltyToken] = useState('');
+  const [loyaltyTokenExpiresAt, setLoyaltyTokenExpiresAt] = useState(null);
   const [pointsApplied, setPointsApplied] = useState(false);
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
   const [showPointsInput, setShowPointsInput] = useState(false);
@@ -387,6 +393,39 @@ export default function CheckoutPage() {
   const hasFiredPurchaseRef = useRef(false);
   const [isFreeDeliveryLocation, setIsFreeDeliveryLocation] = useState(null);
   const [pincodeChecking, setPincodeChecking] = useState(false);
+
+  useEffect(() => {
+    const cleanupUnusedLoyaltyReservation = () => {
+      try {
+        const reservation = JSON.parse(sessionStorage.getItem(TRUCO_LOYALTY_RESERVATION_KEY) || 'null');
+        if (!reservation?.token || reservation.paymentStarted) return;
+        const payload = JSON.stringify({ token: reservation.token, orderNumber: reservation.orderNumber });
+        const beaconAvailable = typeof navigator.sendBeacon === 'function';
+        const queued = beaconAvailable && navigator.sendBeacon(
+          '/api/validate-points?action=cancel',
+          new Blob([payload], { type: 'application/json' }),
+        );
+        if (queued) sessionStorage.removeItem(TRUCO_LOYALTY_RESERVATION_KEY);
+        else {
+          fetch('/api/validate-points?action=cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true,
+          }).then((response) => {
+            if (response.ok) sessionStorage.removeItem(TRUCO_LOYALTY_RESERVATION_KEY);
+          }).catch((cleanupError) => {
+            console.error('Unable to complete abandoned loyalty token cleanup:', cleanupError);
+          });
+        }
+      } catch (cleanupError) {
+        console.error('Unable to queue abandoned loyalty token cleanup:', cleanupError);
+      }
+    };
+
+    window.addEventListener('pagehide', cleanupUnusedLoyaltyReservation);
+    return () => window.removeEventListener('pagehide', cleanupUnusedLoyaltyReservation);
+  }, []);
 
   const extraCities = ["Ariyalur","Chennai","Coimbatore","Cuddalore","Dharmapuri","Dindigul","Erode","Kanchipuram","Kanyakumari","Karur","Krishnagiri","Madurai","Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram","Salem","Sivaganga","Thanjavur","Theni","Thoothukudi","Tirunelveli","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore","Viluppuram","Virudhunagar","Singanallur","Sivananthapuram","Vadavalli","Annur","Mettupalayam","Thennur","Ariyamangalam","Komarapalayam","Kattur"];
 
@@ -465,7 +504,8 @@ export default function CheckoutPage() {
       setCartItems(p.cart.items);
       setOrderSummary({ discount: 0, subtotal: p.total || 0, total: p.total || 0 });
        setAppliedCoupon(p.coupon || null); 
-      localStorage.setItem('checkoutData', JSON.stringify({ cart: p.cart,  coupon: appliedCoupon, discount: 0, subtotal: p.total || 0, total: p.total || 0 }));
+      setIsTrucoCouponApplied(p.trucoCouponApplied === true);
+      localStorage.setItem('checkoutData', JSON.stringify({ cart: p.cart,  coupon: p.coupon || null, discount: 0, subtotal: p.total || 0, total: p.total || 0, trucoCouponApplied: p.trucoCouponApplied === true }));
       localStorage.removeItem('buyNowData');
       skipCartFetch = true;
     } else if (checkoutData) {
@@ -474,6 +514,7 @@ export default function CheckoutPage() {
       setCartItems(p.cart.items);
       setOrderSummary({ discount: p.discount || 0, subtotal: p.subtotal || 0, total: p.total || 0 });
       setAppliedCoupon(p.coupon || null); 
+      setIsTrucoCouponApplied(p.trucoCouponApplied === true);
       skipCartFetch = true;
     }
     fetchData(skipCartFetch);
@@ -549,7 +590,15 @@ export default function CheckoutPage() {
           setUserPhone(authData.phone);
           const loyaltyRes = await fetch(`/api/award-points?phone=${authData.phone}`);
           const loyaltyData = await loyaltyRes.json();
-          if (loyaltyData.success) setLoyaltyBalance(loyaltyData.points);
+          if (loyaltyData.success) {
+            setLoyaltyBalance(Number(loyaltyData.points) || 0);
+            setLoyaltyBalanceValue(Number(loyaltyData.value) || 0);
+            setLoyaltyPointsPerCurrencyUnit(
+              Number(loyaltyData.pointsPerCurrencyUnit) > 0
+                ? Number(loyaltyData.pointsPerCurrencyUnit)
+                : null
+            );
+          }
         }
       } catch (e) { console.error('Loyalty fetch failed:', e); }
       setLoading(false);
@@ -579,14 +628,76 @@ export default function CheckoutPage() {
   };
 
   const handlePaymentChange = (method) => {
+    if (method === 'Cash on Delivery' && isTrucoCouponApplied) {
+      setPaymentMethod('online');
+      setShowTrucoCouponPaymentModal(true);
+      return;
+    }
+
     setPaymentMethod(method);
     if (method !== 'online' && method !== 'emi' && pointsApplied) handleRemovePoints();
   };
 
+  const saveLoyaltyReservation = (reservation) => {
+    try {
+      sessionStorage.setItem(TRUCO_LOYALTY_RESERVATION_KEY, JSON.stringify(reservation));
+    } catch (storageError) {
+      console.error('Unable to persist the loyalty reservation for cleanup:', storageError);
+    }
+  };
+
+  const loyaltyPointsPerRupee = Number(loyaltyPointsPerCurrencyUnit) > 0
+    ? Number(loyaltyPointsPerCurrencyUnit)
+    : loyaltyBalanceValue > 0
+      ? loyaltyBalance / loyaltyBalanceValue
+      : 0;
+
+  const cancelLoyaltyToken = async (token, orderNumber) => {
+    let reservation = null;
+    try {
+      reservation = JSON.parse(sessionStorage.getItem(TRUCO_LOYALTY_RESERVATION_KEY) || 'null');
+    } catch (storageError) {
+      console.error('Unable to read the loyalty reservation from session storage:', storageError);
+    }
+    if (reservation?.token === token && reservation.paymentStarted && !orderNumber) {
+      throw new Error('The loyalty token is reserved while payment is in progress');
+    }
+
+    const response = await fetch('/api/validate-points?action=cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token,
+        ...((orderNumber || reservation?.orderNumber)
+          ? { orderNumber: orderNumber || reservation.orderNumber }
+          : {}),
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok || data.success !== true) {
+      throw new Error(data.message || data.errorMessage || 'Truco token cancellation was not confirmed');
+    }
+    try {
+      sessionStorage.removeItem(TRUCO_LOYALTY_RESERVATION_KEY);
+    } catch (storageError) {
+      console.error('Unable to clear the loyalty reservation from session storage:', storageError);
+    }
+  };
+
   const handleUseAllPoints = async () => {
+    if (paymentMethod !== 'online' && paymentMethod !== 'emi') {
+      toast.error('Loyalty points can only be used with online or EMI payments.');
+      return;
+    }
     if (!userPhone || loyaltyBalance <= 0) { toast.error('No loyalty points available!'); return; }
-    const maxByBill = Math.floor(orderSummary.total * 0.05);
+    if (pointsApplied) { toast.error('Loyalty points are already applied.'); return; }
+    if (loyaltyPointsPerRupee <= 0) {
+      toast.error('The loyalty points conversion rate is unavailable. Please try again later.');
+      return;
+    }
+    const maxByBill = Math.floor(orderSummary.total * 0.05 * loyaltyPointsPerRupee);
     const max = Math.min(loyaltyBalance, maxByBill);
+    if (max <= 0) { toast.error('No loyalty points can be used for this order.'); return; }
     setMaxUsablePoints(max);
     setCustomPoints(max);
     setShowPointsInput(true);
@@ -594,51 +705,72 @@ export default function CheckoutPage() {
     try {
       const res = await fetch('/api/validate-points?action=validate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: loyaltyBalance, billTotal: orderSummary.total }),
+        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: max, billTotal: orderSummary.total, paymentMethod }),
       });
       const data = await res.json();
-      if (data.isValid) {
+      if (res.ok && data.isValid && data.token && Number(data.redemptionAmount) > 0) {
         const discount = Math.min(data.redemptionAmount, orderSummary.total);
+        saveLoyaltyReservation({ token: data.token, expiresAt: data.expiresAt, orderNumber: null, paymentStarted: false });
         setLoyaltyToken(data.token); setLoyaltyDiscount(discount); setPointsApplied(true);
+        setLoyaltyTokenExpiresAt(data.expiresAt);
         setOrderSummary(prev => ({ ...prev, total: Math.max(0, prev.total - discount) }));
         toast.success(`₹${discount} discount applied!`);
       } else {
-        if (data.token) await fetch('/api/validate-points?action=cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: data.token }) });
+        if (data.token) await cancelLoyaltyToken(data.token);
         toast.error(data.errorMessage || 'Points redemption failed!');
       }
     } catch (e) { toast.error('Failed to apply points!'); } finally { setLoyaltyLoading(false); }
   };
 
   const handleApplyPoints = async () => {
+    if (paymentMethod !== 'online' && paymentMethod !== 'emi') {
+      toast.error('Loyalty points can only be used with online or EMI payments.');
+      return;
+    }
     if (customPoints <= 0 || customPoints > maxUsablePoints) { toast.error(`Enter points between 1 and ${maxUsablePoints}`); return; }
+    if (pointsApplied) { toast.error('Loyalty points are already applied.'); return; }
     setLoyaltyLoading(true);
     try {
       const res = await fetch('/api/validate-points?action=validate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: customPoints, billTotal: orderSummary.total }),
+        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: customPoints, billTotal: orderSummary.total, paymentMethod }),
       });
       const data = await res.json();
-      if (data.isValid) {
+      if (res.ok && data.isValid && data.token && Number(data.redemptionAmount) > 0) {
         const discount = Math.min(data.redemptionAmount, orderSummary.total);
+        saveLoyaltyReservation({ token: data.token, expiresAt: data.expiresAt, orderNumber: null, paymentStarted: false });
         setLoyaltyToken(data.token); setLoyaltyDiscount(discount); setPointsApplied(true);
+        setLoyaltyTokenExpiresAt(data.expiresAt);
         setShowPointsInput(false);
         setOrderSummary(prev => ({ ...prev, total: Math.max(0, prev.total - discount) }));
         toast.success(`₹${discount} discount applied!`);
       } else {
-        if (data.token) await fetch('/api/validate-points?action=cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: data.token }) });
+        if (data.token) await cancelLoyaltyToken(data.token);
         toast.error(data.errorMessage || 'Points redemption failed!');
       }
     } catch (e) { toast.error('Failed to apply points!'); } finally { setLoyaltyLoading(false); }
   };
 
   const handleRemovePoints = async () => {
+    try {
+      const reservation = JSON.parse(sessionStorage.getItem(TRUCO_LOYALTY_RESERVATION_KEY) || 'null');
+      if (reservation?.token === loyaltyToken && reservation.paymentStarted) {
+        toast.error('Points cannot be removed while payment is in progress.');
+        return;
+      }
+    } catch (storageError) {
+      console.error('Unable to check loyalty payment state before cancellation:', storageError);
+    }
     if (loyaltyToken) {
       try {
-        await fetch('/api/validate-points?action=cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: loyaltyToken }) });
-      } catch (e) { console.error('Token cancel failed:', e); }
+        await cancelLoyaltyToken(loyaltyToken);
+      } catch (e) {
+        console.error('Token cancellation failed:', e);
+        toast.error('Could not release the reserved loyalty points. The reservation will expire automatically.');
+      }
     }
     setOrderSummary(prev => ({ ...prev, total: prev.total + loyaltyDiscount }));
-    setLoyaltyDiscount(0); setLoyaltyToken(''); setPointsApplied(false);
+    setLoyaltyDiscount(0); setLoyaltyToken(''); setLoyaltyTokenExpiresAt(null); setPointsApplied(false);
   };
 
   const handleBlur = (e) => setTouched(prev => ({ ...prev, [e.target.name]: true }));
@@ -663,15 +795,17 @@ export default function CheckoutPage() {
 
   const initializeRazorpay = async () => await loadRazorpay();
 
-  const createRazorpayOrder = async (amount) => {
+  const createRazorpayOrder = async (orderNumber) => {
     const res = await fetch('/api/create-razorpay-order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: amount * 100 }),
+      body: JSON.stringify({ orderNumber }),
     });
-    return await res.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Unable to initialize payment');
+    return data;
   };
 
-  const handleOnlinePayment = async (totalAmount, isEmi = false) => {
+  const handleOnlinePayment = async (totalAmount, isEmi = false, orderNumber) => {
     if (isEmi && totalAmount < 3000) {
       toast.error('EMI is available for orders of ₹3,000 and above.');
       setIsSubmitting(false);
@@ -680,7 +814,7 @@ export default function CheckoutPage() {
 
     const razorpayLoaded = await initializeRazorpay();
     if (!razorpayLoaded) { toast.error('Razorpay SDK failed to load'); setIsSubmitting(false); return; }
-    const orderResponse = await createRazorpayOrder(totalAmount);
+    const orderResponse = await createRazorpayOrder(orderNumber);
     const { order } = orderResponse;
     return new Promise((resolve, reject) => {
       const options = {
@@ -695,6 +829,7 @@ export default function CheckoutPage() {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
+                orderNumber,
               }),
             });
             const verificationData = await verificationRes.json();
@@ -704,8 +839,15 @@ export default function CheckoutPage() {
                 status: 'paid',
                 mode: isEmi || verificationData.isEmiPayment ? 'EMI' : 'online',
               });
-            } else reject(new Error('Payment verification failed'));
-          } catch (err) { reject(err); }
+            } else {
+              const verificationError = new Error('Payment verification could not be confirmed');
+              verificationError.paymentOutcomeUncertain = true;
+              reject(verificationError);
+            }
+          } catch (err) {
+            err.paymentOutcomeUncertain = true;
+            reject(err);
+          }
         },
         prefill: { name: `${formData.firstName} ${formData.lastName}`, email: formData.email, contact: formData.phonenumber },
         theme: { color: '#1a56db' },
@@ -790,6 +932,14 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
     e?.preventDefault();
    
     if (isSubmitting) return;
+    if (pointsApplied && paymentMethod !== 'online' && paymentMethod !== 'emi') {
+      toast.error('Loyalty points can only be used with online or EMI payments.');
+      return;
+    }
+    if (isTrucoCouponApplied && !['online', 'emi'].includes(paymentMethod)) {
+      toast.error('This Truco coupon is available for online or EMI payment only. Remove it in your cart to use another payment method.');
+      return;
+    }
     setError('');
     console.log("Applied coupon at order time:", appliedCoupon); 
     try {
@@ -843,6 +993,56 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
       const totalAmount = finalTotal;
       let savedAddressId = null;
 
+      if (isTrucoCouponApplied && appliedCoupon?.offer_code) {
+        const trucoPaymentMethod = paymentMethod === 'Cash on Delivery'
+          ? 'COD'
+          : paymentMethod === 'emi'
+            ? 'EMI'
+            : null;
+        try {
+          const validationRes = await fetch('/api/truco-promo-code?action=validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code: appliedCoupon.offer_code,
+              phoneNumber: userPhone || formData.phonenumber,
+              cartTotal: orderSummary.subtotal,
+              cartItems: cartItems.map(item => ({
+                sku: item.item_code || String(item.productId || item.id || ''),
+                brand: item.brand || '',
+                category: item.category || '',
+                price: item.price > 0 ? item.price : item.actual_price,
+                quantity: item.quantity,
+              })),
+              ...(trucoPaymentMethod ? { paymentMethod: trucoPaymentMethod } : {}),
+              channel: 'ONLINE',
+              storeId: 'Online Store',
+            }),
+          });
+          const validationData = await validationRes.json();
+          if (!validationRes.ok || validationData.valid !== true) {
+            toast.error(validationData.errorMessage || `This Truco coupon is not valid for ${trucoPaymentMethod || 'online'} payment.`);
+            setIsSubmitting(false);
+            return;
+          }
+
+          const validatedDiscount = Number(validationData.benefitPreview?.discountAmount);
+          if (
+            Number.isFinite(validatedDiscount) &&
+            Math.abs(validatedDiscount - Number(orderSummary.discount || 0)) > 0.01
+          ) {
+            toast.error('The coupon discount for the selected payment method differs from the displayed discount. Please review the coupon before placing the order.');
+            setIsSubmitting(false);
+            return;
+          }
+        } catch (validationError) {
+          console.error('Truco coupon payment-method validation failed:', validationError);
+          toast.error('Unable to validate the Truco coupon for the selected payment method. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       if (!useSavedAddress || selectedAddress === null) {
         const formDataToSend = new FormData();
         formDataToSend.append('userId', userId);
@@ -883,6 +1083,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
 
       let order_number = 'ORD' + Date.now();
       let paymentId = '', paymentStatus = '', paymentMode = '';
+      const trucoIntegrationErrors = [];
 
       if (paymentMethod === 'Cash on Delivery') {
         paymentId = 'COD_' + Date.now(); paymentStatus = 'pending'; paymentMode = 'Cash on Delivery';
@@ -899,11 +1100,22 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
     order_phonenumber: addressData.phonenumber, email_address: addressData.email,
     order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, store_id: formData.deliveryType === 'store' ? formData.selectedStore : null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
     order_amount: totalAmount, order_deliveryaddress: deliveryAddress,
+      delivery_charge: deliveryCharge,
       loyalty_points_redeemed: pointsApplied ? customPoints : 0,
        loyalty_discount: loyaltyDiscount || 0,
        loyalty_redemption_token: loyaltyToken || '',
+       loyalty_redemption_expires_at: loyaltyTokenExpiresAt,
       promotion_code_applied: appliedCoupon?.offer_code || null,
+      promotion_is_truco: isTrucoCouponApplied,
       promotion_discount_applied: appliedCoupon ? (orderSummary.discount || 0) : 0,
+      promotion_transaction_amount: isTrucoCouponApplied ? orderSummary.subtotal : 0,
+      promotion_cart_items: isTrucoCouponApplied ? cartItems.map(item => ({
+        sku: item.item_code || String(item.productId || item.id || ''),
+        brand: item.brand || '',
+        category: item.category || '',
+        price: item.price > 0 ? item.price : item.actual_price,
+        quantity: item.quantity,
+      })) : [],
     
     customer_comments: comments, payment_method: paymentMethod, payment_type: paymentMode,
     order_status: 'pending',
@@ -919,27 +1131,61 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
   }),
 });
           const orderData = await orderRes.json();
-          order_number = orderData?.order?.order_number;
-          let result = await handleOnlinePayment(totalAmount, paymentMethod === 'emi');
+          if (!orderRes.ok || !orderData?.success) {
+            throw new Error(orderData?.message || 'Failed to initialize the order');
+          }
+          order_number = orderData?.order?.order_number || order_number;
+          if (loyaltyToken) {
+            saveLoyaltyReservation({
+              token: loyaltyToken,
+              expiresAt: loyaltyTokenExpiresAt,
+              orderNumber: order_number,
+              paymentStarted: true,
+            });
+          }
+          let result = await handleOnlinePayment(totalAmount, paymentMethod === 'emi', order_number);
           paymentId = result.paymentId; paymentStatus = result.status; paymentMode = result.mode;
-        } catch (error) { toast.error(`Payment failed: ${error.message}`); setIsSubmitting(false); return; }
-      }
-
-      if (loyaltyToken && pointsApplied) {
-        try {
-          await fetch('/api/validate-points?action=redeem', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: loyaltyToken, orderNumber: order_number }),
-          });
-        } catch (e) { console.error('Points redeem failed:', e); }
+          if (paymentStatus === 'paid' && loyaltyToken) {
+            saveLoyaltyReservation({ token: loyaltyToken, expiresAt: loyaltyTokenExpiresAt, orderNumber: order_number, paymentStarted: true, paymentConfirmed: true });
+          }
+        } catch (error) {
+          if (loyaltyToken && error.paymentOutcomeUncertain) {
+            saveLoyaltyReservation({
+              token: loyaltyToken,
+              expiresAt: loyaltyTokenExpiresAt,
+              orderNumber: order_number,
+              paymentStarted: true,
+            });
+          } else if (loyaltyToken) {
+            try {
+              await cancelLoyaltyToken(loyaltyToken, order_number);
+            } catch (cancelError) {
+              console.error('Unable to cancel loyalty token after payment failure:', cancelError);
+              toast.error('The payment did not complete and the points reservation could not be released. Contact support if it remains reserved.');
+            }
+          }
+          toast.error(error.paymentOutcomeUncertain
+            ? 'Payment status could not be confirmed. Do not retry payment; contact support to verify the order.'
+            : `Payment failed: ${error.message}`);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       const paymentRes = await fetch('/api/payment', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, payment_mode: paymentMode, status: paymentStatus, modevalue: totalAmount, payment_id: paymentId, payment_Date: new Date() }),
+        body: JSON.stringify({
+          user_id: userId,
+          order_number,
+          payment_mode: paymentMode,
+          status: paymentStatus,
+          modevalue: totalAmount,
+          payment_id: paymentId,
+          payment_Date: new Date(),
+        }),
       });
       if (!paymentRes.ok) throw new Error('Payment processing failed');
-      const paymentData = (await paymentRes.json()).paymentData;
+      await paymentRes.json();
 
       const orderRes = await fetch('/api/orders/add', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -950,11 +1196,22 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           order_phonenumber: addressData.phonenumber, email_address: addressData.email,
           order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, store_id: formData.deliveryType === 'store' ? formData.selectedStore : null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
           order_amount: totalAmount, order_deliveryaddress: deliveryAddress,
+          delivery_charge: deliveryCharge,
               loyalty_points_redeemed: pointsApplied ? customPoints : 0,
           loyalty_discount: loyaltyDiscount || 0,
            loyalty_redemption_token: loyaltyToken || '',
+           loyalty_redemption_expires_at: loyaltyTokenExpiresAt,
          promotion_code_applied: appliedCoupon?.offer_code || null,
+          promotion_is_truco: isTrucoCouponApplied,
           promotion_discount_applied: appliedCoupon ? (orderSummary.discount || 0) : 0,
+          promotion_transaction_amount: isTrucoCouponApplied ? orderSummary.subtotal : 0,
+          promotion_cart_items: isTrucoCouponApplied ? cartItems.map(item => ({
+            sku: item.item_code || String(item.productId || item.id || ''),
+            brand: item.brand || '',
+            category: item.category || '',
+            price: item.price > 0 ? item.price : item.actual_price,
+            quantity: item.quantity,
+          })) : [],
 
           customer_comments: comments, payment_method: paymentMethod, payment_type: paymentMode,
           order_status: 'pending',
@@ -964,12 +1221,111 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           gst_number: gstNumber,
           gst_business_name: gstBusinessName,
           gst_name: gstBusinessName,
-          payment_id: paymentData.payment_id, payment_status: paymentData.status,
           order_number: order_number || 'ORD' + Date.now(),
           order_details: cartItems.map(item => ({ item_code: `ITEM${item.item_code}`, product_id: item.id, product_name: item.name, product_price: item.price, model: 'N/A', user_id: userId, coupondiscount: 0, created_at: new Date(), updated_at: new Date(), quantity: item.quantity, store_id: formData.deliveryType === 'store' ? formData.selectedStore : 'STORE01', orderNumber: 'ORD' + Date.now() })),
         }),
       });
-      if (!orderRes.ok) throw new Error('Order creation failed');
+      const orderResult = await orderRes.json();
+      if (!orderRes.ok || !orderResult?.success || !orderResult?.order) {
+        throw new Error(orderResult?.message || 'Order creation failed');
+      }
+      order_number = orderResult.order.order_number || order_number;
+
+      if (paymentStatus === 'paid' && loyaltyToken && pointsApplied) {
+        try {
+          const redeemRes = await fetch('/api/validate-points?action=redeem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token: loyaltyToken,
+              orderNumber: order_number,
+              billTotal: orderSummary.total,
+            }),
+          });
+          const redeemData = await redeemRes.json();
+          sessionStorage.removeItem(TRUCO_LOYALTY_RESERVATION_KEY);
+          if (!redeemRes.ok || redeemData.success !== true) {
+            console.error('Truco loyalty redemption failed:', redeemData);
+            trucoIntegrationErrors.push(redeemData.tokenExpired
+              ? 'Loyalty validation expired; re-apply points on a future checkout'
+              : 'Loyalty point redemption failed; contact support before retrying');
+          }
+        } catch (redeemError) {
+          sessionStorage.removeItem(TRUCO_LOYALTY_RESERVATION_KEY);
+          console.error('Truco loyalty redemption failed:', redeemError);
+          trucoIntegrationErrors.push('Loyalty point redemption result is uncertain; contact support before retrying');
+        }
+      }
+
+      if (paymentStatus === 'paid' && isTrucoCouponApplied && appliedCoupon?.offer_code) {
+        try {
+          const redeemRes = await fetch('/api/truco-promo-code?action=redeem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code: appliedCoupon.offer_code,
+              phoneNumber: userPhone || addressData.phonenumber,
+              transactionAmount: orderSummary.subtotal,
+              invoiceNumber: order_number,
+              storeId: 'Online Store',
+              channel: 'ONLINE',
+              cartItems: cartItems.map(item => ({
+                sku: item.item_code || String(item.productId || item.id || ''),
+                brand: item.brand || '',
+                category: item.category || '',
+                price: item.price > 0 ? item.price : item.actual_price,
+                quantity: item.quantity,
+              })),
+              hasOtherOffersApplied: false,
+            }),
+          });
+          const redeemData = await redeemRes.json();
+          if (!redeemRes.ok || redeemData.success !== true) {
+            console.error('Truco coupon redemption failed:', redeemData);
+            trucoIntegrationErrors.push(redeemData.status === 'pending'
+              ? 'Truco coupon redemption result is uncertain; do not retry'
+              : 'Truco coupon redemption failed');
+          }
+        } catch (redeemError) {
+          console.error('Truco coupon redemption failed:', redeemError);
+          trucoIntegrationErrors.push('Truco coupon redemption result is uncertain; do not retry');
+        }
+      }
+
+      if (paymentStatus === 'paid' && (paymentMethod === 'online' || paymentMethod === 'emi')) {
+        try {
+          const loyaltyRes = await fetch('/api/award-points', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderNumber: order_number,
+            }),
+          });
+          const loyaltyData = await loyaltyRes.json();
+          if (!loyaltyRes.ok || loyaltyData.success !== true) {
+            console.error('Truco loyalty points award failed:', loyaltyData);
+            trucoIntegrationErrors.push('Purchase loyalty points could not be awarded');
+          } else {
+            if (loyaltyData.current_balance != null && Number.isFinite(Number(loyaltyData.current_balance))) {
+              const currentBalance = Number(loyaltyData.current_balance);
+              setLoyaltyBalance(currentBalance);
+              if (Number(loyaltyPointsPerCurrencyUnit) > 0) {
+                setLoyaltyBalanceValue(currentBalance / Number(loyaltyPointsPerCurrencyUnit));
+              }
+            }
+            if (loyaltyData.points_awarded > 0) {
+              toast.success(`You earned ${loyaltyData.points_awarded} loyalty points!`, { autoClose: 5000 });
+              window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
+            }
+            loyaltyData.rewards?.forEach((reward) => {
+              if (reward.code) toast.info(`You received a loyalty reward: ${reward.code}`);
+            });
+          }
+        } catch (e) {
+          console.error('Truco loyalty points award failed:', e);
+          trucoIntegrationErrors.push('Purchase loyalty points could not be awarded');
+        }
+      }
 
       const cartDelete = await fetch('/api/cart', {
         method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -980,37 +1336,22 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
 
       if (cartDelete.status === 200) {
         localStorage.removeItem('checkoutData'); localStorage.removeItem('appliedCoupon');
-        const orderData = await orderRes.json();
+        const orderData = orderResult;
         if (!hasFiredPurchaseRef.current) {
           hasFiredPurchaseRef.current = true;
           ga4Purchase({ orderId: orderData.order.order_number, value: orderSummary.total, items: cartItems });
         }
 
-        // Earn loyalty points (online only) — not COD / Pay at Store / EMI
-        if (paymentMode === 'online') {
-          try {
-            const loyaltyRes = await fetch('/api/award-points', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ phoneNumber: userPhone, orderNumber: order_number, orderAmount: totalAmount, firstName: addressData.firstName, lastName: addressData.lastName, email: addressData.email, cartItems, loyaltyPointsRedeemedAmount: loyaltyDiscount || 0, loyaltyPointsRedeemedCode: loyaltyToken || '', paymentMode, promotionCode: appliedCoupon?.offer_code || '', promotionDiscount: appliedCoupon ? (orderSummary.discount || 0) : 0, }),
-            });
-            const loyaltyData = await loyaltyRes.json();
-            if (loyaltyData.success && loyaltyData.points_awarded > 0) {
-              toast.success(`You earned ${loyaltyData.points_awarded} loyalty points!`, { autoClose: 5000 });
-              window.dispatchEvent(new CustomEvent('loyaltyPointsUpdated'));
-            }
-          } catch (e) { console.error('Loyalty award failed:', e); }
-        }
-
         // SAP sync — send order data to SAP
-        try {
-          await fetch('/api/send-order-detail-to-sap', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ order_number: orderData.order.order_number }),
-          });
-        } catch (e) {
-          console.error('SAP sync failed:', e);
-        }
+        // try {
+        //   await fetch('/api/send-order-detail-to-sap', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ order_number: orderData.order.order_number }),
+        //   });
+        // } catch (e) {
+        //   console.error('SAP sync failed:', e);
+        // }
 
         try {
           const name = `${addressData.firstName} ${addressData.lastName}`;
@@ -1024,13 +1365,13 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           });
 
           const adminEmails = [
-            "arunkarthik@bharathelectronics.in",
-            "ecom@bharathelectronics.in",
-            "itadmin@bharathelectronics.in",
-            "telemarketing@bharathelectronics.in",
-            "sekarcorp@bharathelectronics.in",
-            "abu@bharathelectronics.in",
-            "customercare@bharathelectronics.in",
+            // "arunkarthik@bharathelectronics.in",
+            // "ecom@bharathelectronics.in",
+            // "itadmin@bharathelectronics.in",
+            // "telemarketing@bharathelectronics.in",
+            // "sekarcorp@bharathelectronics.in",
+            // "abu@bharathelectronics.in",
+            // "customercare@bharathelectronics.in",
           ];
 
           const emailRes = await fetch("/api/send-order-email", {
@@ -1065,7 +1406,14 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           console.error("Email sending failed:", e);
         }
 
-        toast.success('Order placed successfully!');
+        if (trucoIntegrationErrors.length > 0) {
+          toast.error(
+            `Order placed, but ${[...new Set(trucoIntegrationErrors)].join(' and ').toLowerCase()}. Please contact support and provide order ${order_number}.`,
+            { autoClose: 15000 }
+          );
+        } else {
+          toast.success('Order placed successfully!');
+        }
         updateCartCount(0);
         router.push('/orders');
       }
@@ -1663,7 +2011,10 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                           </svg>
                           Loyalty points
                         </p>
-                        <p className="text-[10px] text-gray-500">{loyaltyBalance} pts ≈ ₹{loyaltyBalance.toFixed(2)}</p>
+                        <p className="text-[10px] text-gray-500">
+                          {loyaltyBalance} pts
+                          {loyaltyBalanceValue > 0 ? ` ≈ ₹${loyaltyBalanceValue.toFixed(2)}` : ''}
+                        </p>
                       </div>
                       {orderSummary.total >= 10000 ? (
                         <>
@@ -1674,8 +2025,8 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                             </button>
                           )}
                           {pointsApplied && (
-                            <button onClick={handleRemovePoints}
-                              className="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-600 transition">
+                            <button onClick={handleRemovePoints} disabled={isSubmitting || loyaltyLoading}
+                              className="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition">
                               Remove
                             </button>
                           )}
@@ -1686,7 +2037,10 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                     </div>
                     {orderSummary.total >= 10000 && showPointsInput && !pointsApplied && (
                       <div className="mt-3 bg-white rounded-lg p-3 border border-indigo-200">
-                        <p className="text-[10px] text-gray-500 mb-2">Max <span className="font-semibold text-indigo-700">{maxUsablePoints} pts</span> (₹{maxUsablePoints})</p>
+                        <p className="text-[10px] text-gray-500 mb-2">
+                          Max <span className="font-semibold text-indigo-700">{maxUsablePoints} pts</span>
+                          {loyaltyPointsPerRupee > 0 ? ` (≈ ₹${(maxUsablePoints / loyaltyPointsPerRupee).toFixed(2)})` : ''}
+                        </p>
                         <div className="flex gap-2">
                           <input type="number" min={1} max={maxUsablePoints} value={customPoints}
                             onChange={(e) => setCustomPoints(Math.min(Number(e.target.value), maxUsablePoints))}
@@ -1703,7 +2057,11 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
                         <input type="range" min={1} max={maxUsablePoints} value={customPoints} step={1}
                           onChange={(e) => setCustomPoints(Number(e.target.value))}
                           className="w-full mt-2 accent-indigo-600" />
-                        <p className="text-[10px] text-gray-400 mt-1">Discount: ₹{customPoints} off</p>
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          Estimated discount: {loyaltyPointsPerRupee > 0
+                            ? `≈ ₹${(customPoints / loyaltyPointsPerRupee).toFixed(2)}`
+                            : `${customPoints} pts`}
+                        </p>
                       </div>
                     )}
                     {pointsApplied && (
@@ -1992,6 +2350,31 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           onClose={() => setShowAuthModal(false)}
           onSuccess={() => { setShowAuthModal(false); window.location.reload(); }}
         />
+      )}
+
+      {showTrucoCouponPaymentModal && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="truco-coupon-payment-title"
+            className="w-full max-w-md rounded-xl bg-white p-6 text-center shadow-xl"
+          >
+            <h2 id="truco-coupon-payment-title" className="text-lg font-semibold text-gray-900">
+              Online payment required
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              This Truco coupon is available for online or EMI payment only. To pay by Cash on Delivery, remove the coupon in your cart.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowTrucoCouponPaymentModal(false)}
+              className="mt-5 rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              OK
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Full-screen processing overlay */}
