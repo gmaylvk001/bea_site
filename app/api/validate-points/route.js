@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import EcomOrderInfo from "@/models/ecom_order_info";
 
-// Validate Points — POST /api/validate-points?action=validate
-// Redeem Points — POST /api/validate-points?action=redeem
+// Validate points before checkout; processing runs after server-side payment verification.
 
 export async function POST(req) {
   const { searchParams } = new URL(req.url);
@@ -43,33 +42,43 @@ export async function POST(req) {
         );
       }
 
-      if (!mobileNumber || !Number.isFinite(Number(pointsToRedeem)) || Number(pointsToRedeem) <= 0) {
+      if (
+        !mobileNumber ||
+        !Number.isFinite(Number(pointsToRedeem)) ||
+        Number(pointsToRedeem) <= 0 ||
+        !Number.isFinite(Number(billTotal)) ||
+        Number(billTotal) <= 0
+      ) {
         return NextResponse.json(
-          { isValid: false, errorMessage: "mobileNumber and positive pointsToRedeem are required" },
+          { isValid: false, errorMessage: "mobileNumber, positive pointsToRedeem, and positive billTotal are required" },
           { status: 400 }
         );
       }
 
+      const validationPayload = {
+          mobileNumber,
+          pointsToRedeem: Number(pointsToRedeem),
+          billTotal: Number(billTotal),
+          notes: "Web checkout",
+        };
       const validationResponse = await fetch(`${baseUrl}/pos/redemption/validate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': apiKey,
         },
-        body: JSON.stringify({
-          mobileNumber,
-          pointsToRedeem: Number(pointsToRedeem),
-          ...(Number.isFinite(Number(billTotal)) && Number(billTotal) > 0
-            ? { billTotal: Number(billTotal) }
-            : {}),
-          notes: "Web checkout",
-        }),
+        body: JSON.stringify(validationPayload),
       });
       const validationData = await validationResponse.json();
       if (validationResponse.ok && validationData.isValid === true) {
         const expiryTime = new Date(validationData.expiresAt).getTime();
         if (!validationData.token || !Number.isFinite(expiryTime) || expiryTime <= Date.now()) {
           if (validationData.token) {
+            const cancelPayload = {
+              token: validationData.token,
+              reason: "Invalid or expired validation response",
+              cancelledBy: "checkout-service",
+            };
             try {
               const cancelResponse = await fetch(`${baseUrl}/pos/redemption/cancel`, {
                 method: 'POST',
@@ -77,11 +86,7 @@ export async function POST(req) {
                   'Content-Type': 'application/json',
                   'X-Api-Key': apiKey,
                 },
-                body: JSON.stringify({
-                  token: validationData.token,
-                  reason: "Invalid or expired validation response",
-                  cancelledBy: "checkout-service",
-                }),
+                body: JSON.stringify(cancelPayload),
               });
               if (!cancelResponse.ok) {
                 console.error("Unable to cancel a Truco token with an invalid expiry response:", cancelResponse.status);
@@ -110,171 +115,9 @@ export async function POST(req) {
     }
 
     if (action === 'redeem') {
-      const { token, orderNumber, billTotal } = body;
-      if (!token || !orderNumber) {
-        return NextResponse.json(
-          { success: false, errorMessage: "token and orderNumber are required" },
-          { status: 400 }
-        );
-      }
-
-      await dbConnect();
-      const order = await EcomOrderInfo.findOne({ order_number: orderNumber });
-      if (!order || order.loyalty_redemption_token !== token) {
-        return NextResponse.json(
-          { success: false, message: "Paid order and matching loyalty token were not found" },
-          { status: 404 }
-        );
-      }
-      if (
-        order.payment_status !== "paid" ||
-        order.payment_confirmation_source !== "razorpay" ||
-        !order.payment_verified_at ||
-        !["online", "emi"].includes(order.payment_method?.trim().toLowerCase())
-      ) {
-        return NextResponse.json(
-          { success: false, message: "Loyalty points can only be processed for paid online or EMI orders" },
-          { status: 409 }
-        );
-      }
-      if (order.loyalty_redemption_status === "succeeded") {
-        return NextResponse.json({ success: true, alreadyProcessed: true });
-      }
-      if (order.loyalty_redemption_status) {
-        return NextResponse.json(
-          {
-            success: false,
-            status: order.loyalty_redemption_status,
-            message: order.loyalty_redemption_status === "pending"
-              ? "Loyalty redemption is already processing or has an uncertain result. Do not retry."
-              : "This loyalty token has already been processed, cancelled, or failed. Revalidate points before trying again.",
-          },
-          { status: 409 }
-        );
-      }
-
-      const expiryTime = order.loyalty_redemption_expires_at
-        ? new Date(order.loyalty_redemption_expires_at).getTime()
-        : NaN;
-      if (!Number.isFinite(expiryTime) || expiryTime <= Date.now()) {
-        const expiryMessage = Number.isFinite(expiryTime)
-          ? "The loyalty validation token has expired. Re-apply points before placing another order."
-          : "The loyalty validation token expiry is missing. Re-apply points before placing another order.";
-        await EcomOrderInfo.findOneAndUpdate(
-          {
-            _id: order._id,
-            payment_status: "paid",
-            loyalty_redemption_token: token,
-            $or: [
-              { loyalty_redemption_status: { $exists: false } },
-              { loyalty_redemption_status: null },
-            ],
-          },
-          {
-            $set: {
-              loyalty_redemption_status: "failed",
-              loyalty_redemption_error: expiryMessage,
-            },
-          }
-        );
-        return NextResponse.json(
-          { success: false, status: "failed", tokenExpired: true, message: expiryMessage },
-          { status: 400 }
-        );
-      }
-
-      const claim = await EcomOrderInfo.findOneAndUpdate(
-        {
-          _id: order._id,
-          payment_status: "paid",
-          loyalty_redemption_token: token,
-          $or: [
-            { loyalty_redemption_status: { $exists: false } },
-            { loyalty_redemption_status: null },
-          ],
-        },
-        { $set: { loyalty_redemption_status: "pending", loyalty_redemption_error: null } },
-        { new: true }
-      );
-      if (!claim) {
-        return NextResponse.json(
-          { success: false, status: "pending", message: "Loyalty redemption is already being processed. Do not retry." },
-          { status: 409 }
-        );
-      }
-
-      let response;
-      let data;
-      let uncertain = false;
-      let alreadyProcessed = false;
-      let errorMessage = "";
-      try {
-        response = await fetch(`${baseUrl}/pos/redemption/process`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Api-Key': apiKey,
-          },
-          body: JSON.stringify({
-            token,
-            posTransactionReference: orderNumber,
-            processedBy: "checkout-service",
-            storeLocation: "ecom-web",
-            ...(Number.isFinite(Number(billTotal)) && Number(billTotal) > 0
-              ? { billTotal: Number(billTotal) }
-              : {}),
-          }),
-        });
-        try {
-          data = await response.json();
-        } catch (parseError) {
-          uncertain = response.ok || response.status >= 500;
-          errorMessage = `Truco returned an unreadable redemption response (HTTP ${response.status}): ${parseError.message}`;
-        }
-        if (data) {
-          alreadyProcessed = data.success === false &&
-            /already processed/i.test(data.errorMessage || data.message || "");
-          data = alreadyProcessed ? { ...data, success: true, alreadyProcessed: true } : data;
-          errorMessage = data.errorMessage || data.message || `Truco redemption failed (HTTP ${response.status})`;
-          uncertain = data.success !== true && response.status >= 500;
-        }
-      } catch (processError) {
-        uncertain = true;
-        errorMessage = processError.message;
-        console.error("Truco loyalty redemption result is uncertain:", processError);
-      }
-
-      const succeeded = data?.success === true && (response?.ok === true || alreadyProcessed);
-      const expired = /expir|token.*invalid/i.test(
-        `${data?.errorCode || ""} ${errorMessage}`
-      );
-      const status = succeeded ? "succeeded" : uncertain ? "pending" : "failed";
-      const processedAt = succeeded
-        ? (data?.processedAt && Number.isFinite(new Date(data.processedAt).getTime())
-          ? new Date(data.processedAt)
-          : alreadyProcessed ? null : new Date())
-        : null;
-      const redemptionUpdate = {
-        loyalty_redemption_status: status,
-        loyalty_redemption_error: succeeded ? null : errorMessage,
-      };
-      if (processedAt) redemptionUpdate.loyalty_redemption_processed_at = processedAt;
-      await EcomOrderInfo.findByIdAndUpdate(order._id, {
-        $set: redemptionUpdate,
-      });
-
       return NextResponse.json(
-        {
-          ...(data || {}),
-          success: succeeded,
-          status,
-          ...(succeeded && alreadyProcessed ? { alreadyProcessed: true } : {}),
-          ...(expired ? { tokenExpired: true, message: "The loyalty validation token expired. Re-apply points before placing another order." } : {}),
-          ...(!succeeded && !expired ? { message: uncertain
-            ? "The redemption result is uncertain. Do not retry; contact support to verify the order."
-            : errorMessage || "Loyalty redemption failed. Re-apply points before placing another order." } : {}),
-        },
-        { status: succeeded ? 200 : uncertain ? 502 : 400 }
+        { success: false, message: "Loyalty points are processed automatically after server-side payment verification." },
+        { status: 409 }
       );
     }
 
@@ -342,17 +185,18 @@ export async function POST(req) {
       }
 
       try {
+        const cancelPayload = {
+          token,
+          reason: "Customer removed points or checkout was abandoned",
+          cancelledBy: "checkout-service",
+        };
         const cancelResponse = await fetch(`${baseUrl}/pos/redemption/cancel`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-Api-Key': apiKey,
           },
-          body: JSON.stringify({
-            token,
-            reason: "Customer removed points or checkout was abandoned",
-            cancelledBy: "checkout-service",
-          }),
+          body: JSON.stringify(cancelPayload),
         });
         const cancelData = await cancelResponse.json();
         const alreadyExpired = /token.*expir|expir.*token/i.test(
@@ -423,7 +267,7 @@ export async function POST(req) {
     }
 
     return NextResponse.json(
-      { success: false, message: "Invalid action. Use: validate | redeem | cancel | refund" },
+      { success: false, message: "Invalid action. Use: validate | cancel | refund" },
       { status: 400 }
     );
 

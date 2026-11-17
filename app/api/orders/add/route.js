@@ -3,8 +3,53 @@ import EcomOrderInfo from "@/models/ecom_order_info";
 import Product from "@/models/product";
 import ComboProduct from "@/models/ComboProduct";
 import mongoose from 'mongoose';
+import Brand from "@/models/ecom_brand_info";
+import Category from "@/models/ecom_category_info";
 import Coupon from '@/models/ecom_offer_info';
 import Usedcoupon from '@/models/ecom_coupon_track_info';
+
+async function buildTrucoPromotionCartItems(orderItems) {
+  return Promise.all(orderItems.map(async (item) => {
+    let product = null;
+    if (item.productId && mongoose.isValidObjectId(item.productId)) {
+      product = await Product.findById(item.productId)
+        .select("brand category sub_category sub_category_new_name")
+        .lean();
+    }
+    if (!product && item.item_code) {
+      product = await Product.findOne({ item_code: item.item_code })
+        .select("brand category sub_category sub_category_new_name")
+        .lean();
+    }
+
+    const rawBrand = product?.brand;
+    const brandId = rawBrand && typeof rawBrand === "object"
+      ? rawBrand._id || rawBrand.id
+      : rawBrand;
+    const brandDocument = brandId && mongoose.isValidObjectId(brandId)
+      ? await Brand.findById(brandId).select("brand_name").lean()
+      : null;
+
+    const rawCategory = product?.sub_category || product?.category;
+    const categoryId = rawCategory && typeof rawCategory === "object"
+      ? rawCategory._id || rawCategory.id
+      : rawCategory;
+    const categoryDocument = categoryId && mongoose.isValidObjectId(categoryId)
+      ? await Category.findById(categoryId).select("category_name").lean()
+      : null;
+
+    return {
+      sku: item.item_code || String(item.productId || ""),
+      brand: brandDocument?.brand_name ||
+        (typeof rawBrand === "string" && !mongoose.isValidObjectId(rawBrand) ? rawBrand : item.brand || ""),
+      category: categoryDocument?.category_name ||
+        product?.sub_category_new_name ||
+        (typeof rawCategory === "string" && !mongoose.isValidObjectId(rawCategory) ? rawCategory : item.category || ""),
+      price: Number(item.price) > 0 ? Number(item.price) : Number(item.actual_price) || 0,
+      quantity: Number(item.quantity) || 0,
+    };
+  }));
+}
 
 export async function POST(req) {
   await dbConnect();
@@ -31,6 +76,7 @@ export async function POST(req) {
       email_address,
       loyalty_points_redeemed,
       loyalty_discount,
+      loyalty_bill_total,
       loyalty_redemption_token,
       loyalty_redemption_expires_at,
       delivery_charge,
@@ -56,9 +102,15 @@ export async function POST(req) {
     }
 
     const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
+    const hasTrucoCoupon = promotion_is_truco === true;
+    if (hasTrucoCoupon && !String(promotion_code_applied || "").trim()) {
+      return Response.json(
+        { success: false, message: "A coupon code is required for this Truco promotion." },
+        { status: 400 }
+      );
+    }
     if (
-      promotion_is_truco === true &&
-      promotion_code_applied &&
+      hasTrucoCoupon &&
       !["online", "emi"].includes(normalizedPaymentMethod)
     ) {
       return Response.json(
@@ -71,6 +123,23 @@ export async function POST(req) {
       Boolean(loyalty_redemption_token) ||
       Number(loyalty_points_redeemed) > 0 ||
       Number(loyalty_discount) > 0;
+    if (hasLoyaltyRedemptionDetails) {
+      const validatedBillTotal = Number(loyalty_bill_total);
+      const redeemedPoints = Number(loyalty_points_redeemed);
+      const appliedLoyaltyDiscount = Number(loyalty_discount);
+      if (
+        !loyalty_redemption_token ||
+        !Number.isFinite(redeemedPoints) || redeemedPoints <= 0 ||
+        !Number.isFinite(appliedLoyaltyDiscount) || appliedLoyaltyDiscount <= 0 ||
+        !Number.isFinite(validatedBillTotal) || validatedBillTotal <= 0 ||
+        Math.abs(validatedBillTotal - (finalPayableAmount + appliedLoyaltyDiscount)) > 0.01
+      ) {
+        return Response.json(
+          { success: false, message: "A valid loyalty token and consistent validated bill total are required" },
+          { status: 400 }
+        );
+      }
+    }
     if (
       !["online", "emi"].includes(normalizedPaymentMethod) &&
       hasLoyaltyRedemptionDetails
@@ -149,6 +218,10 @@ export async function POST(req) {
       }
     }
 
+    const resolvedPromotionCartItems = hasTrucoCoupon
+      ? await buildTrucoPromotionCartItems(order_item)
+      : [];
+
     const resolvedGstBusinessName = gst_business_name || gst_name || null;
 
     const orderFields = {
@@ -181,16 +254,19 @@ export async function POST(req) {
         : payment_id || null,
       loyalty_points_redeemed: loyalty_points_redeemed || 0,
       loyalty_discount: loyalty_discount || 0,
+      loyalty_bill_total: loyalty_redemption_token && Number.isFinite(Number(loyalty_bill_total)) && Number(loyalty_bill_total) > 0
+        ? Number(loyalty_bill_total)
+        : null,
       loyalty_redemption_token: loyalty_redemption_token || null,
       loyalty_redemption_expires_at: loyalty_redemption_token ? loyaltyTokenExpiry : null,
       delivery_charge: Number.isFinite(Number(delivery_charge)) && Number(delivery_charge) >= 0
         ? Number(delivery_charge)
         : null,
-      promotion_code_applied: promotion_code_applied || null,
-      promotion_is_truco: promotion_is_truco === true,
-      promotion_discount_applied: promotion_discount_applied || 0,
-      promotion_transaction_amount: promotion_transaction_amount || 0,
-      promotion_cart_items: Array.isArray(promotion_cart_items) ? promotion_cart_items : [],
+      promotion_code_applied: hasTrucoCoupon ? String(promotion_code_applied).trim() : null,
+      promotion_is_truco: hasTrucoCoupon,
+      promotion_discount_applied: hasTrucoCoupon ? Number(promotion_discount_applied) || 0 : 0,
+      promotion_transaction_amount: hasTrucoCoupon ? Number(promotion_transaction_amount) || 0 : 0,
+      promotion_cart_items: resolvedPromotionCartItems,
       pickup_store: pickup_store || null,
       store_id: store_id || null,
       gst_number: gst_number || null,

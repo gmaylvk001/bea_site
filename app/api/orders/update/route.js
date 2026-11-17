@@ -212,7 +212,7 @@ export async function POST(req) {
       message: `Order marked as ${order_status}`,
       order: updatedOrder,
       ...(loyaltyRefund ? { loyaltyRefund } : {}),
-      ...(order_status === "cancelled" && /^BEAO\d+$/i.test(order.promotion_code_applied || "")
+      ...(order_status === "cancelled" && order.promotion_is_truco === true
         ? { trucoPromotionReversalRequiresSupport: true }
         : {}),
     });

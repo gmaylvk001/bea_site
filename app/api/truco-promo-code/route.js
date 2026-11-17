@@ -32,7 +32,8 @@ export async function POST(req) {
         paymentMethod, 
         storeId,      
         channel,      
-        city           
+        city,
+        hasOtherOffersApplied,
       } = body;
 
       
@@ -43,23 +44,24 @@ export async function POST(req) {
         );
       }
 
+      const validationPayload = {
+        code,
+        phoneNumber,
+        transactionAmount: cartTotal || 0,
+        storeId: storeId || "Online Store",
+        channel: channel || "ONLINE",
+        ...(paymentMethod ? { paymentMethod } : {}),
+        city: city || "",
+        cartItems: cartItems || [],
+        hasOtherOffersApplied: hasOtherOffersApplied === true,
+      };
       const res = await fetch(`${TRUCO_BASE_URL}/Promotion/validate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Api-Key": TRUCO_API_KEY,     
         },
-        body: JSON.stringify({
-          code,
-          phoneNumber,
-          transactionAmount: cartTotal || 0,
-          storeId: storeId || "Online Store",
-          channel: channel || "ONLINE",
-          ...(paymentMethod ? { paymentMethod } : {}),
-          city: city || "",
-          cartItems: cartItems || [],
-          hasOtherOffersApplied: false
-        }),
+        body: JSON.stringify(validationPayload),
       });
 
       const data = await res.json();

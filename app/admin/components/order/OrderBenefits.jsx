@@ -19,14 +19,14 @@ export function getOrderBenefits(order) {
   const promotionCode = typeof order.promotion_code_applied === "string"
     ? order.promotion_code_applied.trim()
     : "";
-  const isKnownTrucoCode = /^BEAO\d+$/i.test(promotionCode);
+  const isTrucoPromotion = order.promotion_is_truco === true;
   const itemCoupons = (Array.isArray(order.order_item) ? order.order_item : [])
     .flatMap((item) => Array.isArray(item?.coupondetails) ? item.coupondetails : [])
     .concat(Array.isArray(order.coupondetails) ? order.coupondetails : [])
     .map(getCouponCode)
     .filter(Boolean);
   const adminCouponCodes = [...new Set(itemCoupons)]
-    .filter((code) => !isKnownTrucoCode || code.toLowerCase() !== promotionCode.toLowerCase());
+    .filter((code) => !isTrucoPromotion || code.toLowerCase() !== promotionCode.toLowerCase());
   const benefits = [];
 
   if (adminCouponCodes.length > 0) {
@@ -49,9 +49,10 @@ export function getOrderBenefits(order) {
     }
   }
 
-  if (promotionCode && (isKnownTrucoCode || !itemCoupons.some(
-    (code) => code.toLowerCase() === promotionCode.toLowerCase()
-  ))) {
+  if (
+    promotionCode &&
+    isTrucoPromotion
+  ) {
     benefits.push({
       label: "Truco coupon code",
       value: promotionCode,
@@ -63,9 +64,10 @@ export function getOrderBenefits(order) {
         value: promotionDiscount,
       });
     }
-  } else if (promotionCode && adminCouponCodes.some(
-    (code) => code.toLowerCase() === promotionCode.toLowerCase()
-  )) {
+  } else if (
+    promotionCode &&
+    !itemCoupons.some((code) => code.toLowerCase() === promotionCode.toLowerCase())
+  ) {
     const promotionDiscount = formatRupees(order.promotion_discount_applied);
     if (promotionDiscount && !benefits.some((benefit) => benefit.label === "Coupon discount")) {
       benefits.push({

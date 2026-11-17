@@ -240,8 +240,6 @@ export async function POST(req) {
         { status: 502 }
       );
     }
-    console.log("Truco response:", trucoData);
-
     if (trucoData.success) {
       const updateResult = await EcomOrderInfo.findOneAndUpdate(
         { _id: order._id, loyalty_award_status: "pending" },
@@ -319,8 +317,10 @@ export async function GET(req) {
   }
 
   try {
+    const endpoint = "/external/customer/check";
+    const query = new URLSearchParams({ phoneNumber: phone });
     const res = await fetch(
-      `${process.env.TRUCO_BASE_URL}/external/customer/check?${new URLSearchParams({ phoneNumber: phone })}`,
+      `${process.env.TRUCO_BASE_URL}${endpoint}?${query}`,
       {
         headers: {
           'X-Api-Key': process.env.TRUCO_API_KEY,
@@ -328,7 +328,6 @@ export async function GET(req) {
         }
       }
     );
-
     const data = await res.json();
     if (!res.ok) {
       return NextResponse.json(

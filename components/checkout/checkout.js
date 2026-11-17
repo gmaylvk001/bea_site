@@ -378,6 +378,7 @@ export default function CheckoutPage() {
   const [loyaltyBalanceValue, setLoyaltyBalanceValue] = useState(0);
   const [loyaltyPointsPerCurrencyUnit, setLoyaltyPointsPerCurrencyUnit] = useState(null);
   const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+  const [loyaltyBillTotal, setLoyaltyBillTotal] = useState(0);
   const [loyaltyToken, setLoyaltyToken] = useState('');
   const [loyaltyTokenExpiresAt, setLoyaltyTokenExpiresAt] = useState(null);
   const [pointsApplied, setPointsApplied] = useState(false);
@@ -705,13 +706,14 @@ export default function CheckoutPage() {
     try {
       const res = await fetch('/api/validate-points?action=validate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: max, billTotal: orderSummary.total, paymentMethod }),
+        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: max, billTotal: finalTotal, paymentMethod }),
       });
       const data = await res.json();
       if (res.ok && data.isValid && data.token && Number(data.redemptionAmount) > 0) {
         const discount = Math.min(data.redemptionAmount, orderSummary.total);
         saveLoyaltyReservation({ token: data.token, expiresAt: data.expiresAt, orderNumber: null, paymentStarted: false });
         setLoyaltyToken(data.token); setLoyaltyDiscount(discount); setPointsApplied(true);
+        setLoyaltyBillTotal(finalTotal);
         setLoyaltyTokenExpiresAt(data.expiresAt);
         setOrderSummary(prev => ({ ...prev, total: Math.max(0, prev.total - discount) }));
         toast.success(`₹${discount} discount applied!`);
@@ -733,13 +735,14 @@ export default function CheckoutPage() {
     try {
       const res = await fetch('/api/validate-points?action=validate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: customPoints, billTotal: orderSummary.total, paymentMethod }),
+        body: JSON.stringify({ mobileNumber: userPhone, pointsToRedeem: customPoints, billTotal: finalTotal, paymentMethod }),
       });
       const data = await res.json();
       if (res.ok && data.isValid && data.token && Number(data.redemptionAmount) > 0) {
         const discount = Math.min(data.redemptionAmount, orderSummary.total);
         saveLoyaltyReservation({ token: data.token, expiresAt: data.expiresAt, orderNumber: null, paymentStarted: false });
         setLoyaltyToken(data.token); setLoyaltyDiscount(discount); setPointsApplied(true);
+        setLoyaltyBillTotal(finalTotal);
         setLoyaltyTokenExpiresAt(data.expiresAt);
         setShowPointsInput(false);
         setOrderSummary(prev => ({ ...prev, total: Math.max(0, prev.total - discount) }));
@@ -770,7 +773,7 @@ export default function CheckoutPage() {
       }
     }
     setOrderSummary(prev => ({ ...prev, total: prev.total + loyaltyDiscount }));
-    setLoyaltyDiscount(0); setLoyaltyToken(''); setLoyaltyTokenExpiresAt(null); setPointsApplied(false);
+    setLoyaltyDiscount(0); setLoyaltyBillTotal(0); setLoyaltyToken(''); setLoyaltyTokenExpiresAt(null); setPointsApplied(false);
   };
 
   const handleBlur = (e) => setTouched(prev => ({ ...prev, [e.target.name]: true }));
@@ -838,6 +841,8 @@ export default function CheckoutPage() {
                 paymentId: response.razorpay_payment_id,
                 status: 'paid',
                 mode: isEmi || verificationData.isEmiPayment ? 'EMI' : 'online',
+                promotionRedemption: verificationData.promotionRedemption || null,
+                loyaltyRedemption: verificationData.loyaltyRedemption || null,
               });
             } else {
               const verificationError = new Error('Payment verification could not be confirmed');
@@ -989,6 +994,14 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         });
       }
 
+      if (
+        pointsApplied &&
+        Math.abs(loyaltyBillTotal - (finalTotal + loyaltyDiscount)) > 0.01
+      ) {
+        toast.error('The order total changed after points were validated. Remove and re-apply loyalty points before placing the order.');
+        return;
+      }
+
       setIsSubmitting(true);
       const totalAmount = finalTotal;
       let savedAddressId = null;
@@ -1007,6 +1020,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
               code: appliedCoupon.offer_code,
               phoneNumber: userPhone || formData.phonenumber,
               cartTotal: orderSummary.subtotal,
+              hasOtherOffersApplied: pointsApplied || Number(loyaltyDiscount) > 0,
               cartItems: cartItems.map(item => ({
                 sku: item.item_code || String(item.productId || item.id || ''),
                 brand: item.brand || '',
@@ -1081,8 +1095,18 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         ? stores.find(s => s._id === formData.selectedStore)?.organisation_name
         : undefined;
 
+      const orderItems = cartItems.map(item => ({
+        ...item,
+        warrantyData: item.warrantyData || null,
+        store_id: formData.deliveryType === 'store' ? formData.selectedStore : null,
+        coupondetails: (isTrucoCouponApplied ? [] : Array.isArray(item.coupondetails) ? item.coupondetails : [])
+          .map(coupon => coupon?.offer_code || String(coupon)),
+      }));
+
       let order_number = 'ORD' + Date.now();
       let paymentId = '', paymentStatus = '', paymentMode = '';
+      let promotionRedemptionResult = null;
+      let loyaltyRedemptionResult = null;
       const trucoIntegrationErrors = [];
 
       if (paymentMethod === 'Cash on Delivery') {
@@ -1098,16 +1122,17 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
     user_adddeliveryid: useSavedAddress && selectedAddress !== null ? useraddress[selectedAddress]._id : savedAddressId || useraddress[0]?._id,
     order_username: `${addressData.firstName} ${addressData.lastName}`,
     order_phonenumber: addressData.phonenumber, email_address: addressData.email,
-    order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, store_id: formData.deliveryType === 'store' ? formData.selectedStore : null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
+    order_item: orderItems,
     order_amount: totalAmount, order_deliveryaddress: deliveryAddress,
       delivery_charge: deliveryCharge,
       loyalty_points_redeemed: pointsApplied ? customPoints : 0,
        loyalty_discount: loyaltyDiscount || 0,
+       loyalty_bill_total: pointsApplied ? loyaltyBillTotal : null,
        loyalty_redemption_token: loyaltyToken || '',
        loyalty_redemption_expires_at: loyaltyTokenExpiresAt,
-      promotion_code_applied: appliedCoupon?.offer_code || null,
+      promotion_code_applied: isTrucoCouponApplied ? appliedCoupon?.offer_code || null : null,
       promotion_is_truco: isTrucoCouponApplied,
-      promotion_discount_applied: appliedCoupon ? (orderSummary.discount || 0) : 0,
+      promotion_discount_applied: isTrucoCouponApplied ? (orderSummary.discount || 0) : 0,
       promotion_transaction_amount: isTrucoCouponApplied ? orderSummary.subtotal : 0,
       promotion_cart_items: isTrucoCouponApplied ? cartItems.map(item => ({
         sku: item.item_code || String(item.productId || item.id || ''),
@@ -1145,8 +1170,10 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           }
           let result = await handleOnlinePayment(totalAmount, paymentMethod === 'emi', order_number);
           paymentId = result.paymentId; paymentStatus = result.status; paymentMode = result.mode;
+          promotionRedemptionResult = result.promotionRedemption;
+          loyaltyRedemptionResult = result.loyaltyRedemption;
           if (paymentStatus === 'paid' && loyaltyToken) {
-            saveLoyaltyReservation({ token: loyaltyToken, expiresAt: loyaltyTokenExpiresAt, orderNumber: order_number, paymentStarted: true, paymentConfirmed: true });
+            sessionStorage.removeItem(TRUCO_LOYALTY_RESERVATION_KEY);
           }
         } catch (error) {
           if (loyaltyToken && error.paymentOutcomeUncertain) {
@@ -1194,16 +1221,17 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
           user_adddeliveryid: useSavedAddress && selectedAddress !== null ? useraddress[selectedAddress]._id : savedAddressId || useraddress[0]?._id,
           order_username: `${addressData.firstName} ${addressData.lastName}`,
           order_phonenumber: addressData.phonenumber, email_address: addressData.email,
-          order_item: cartItems.map(item => ({ ...item, warrantyData: item.warrantyData || null, store_id: formData.deliveryType === 'store' ? formData.selectedStore : null, coupondetails: Array.isArray(item.coupondetails) && item.coupondetails.length > 0 ? item.coupondetails.map(c => c.offer_code || String(c)) : [] })),
+          order_item: orderItems,
           order_amount: totalAmount, order_deliveryaddress: deliveryAddress,
           delivery_charge: deliveryCharge,
               loyalty_points_redeemed: pointsApplied ? customPoints : 0,
           loyalty_discount: loyaltyDiscount || 0,
+          loyalty_bill_total: pointsApplied ? loyaltyBillTotal : null,
            loyalty_redemption_token: loyaltyToken || '',
            loyalty_redemption_expires_at: loyaltyTokenExpiresAt,
-         promotion_code_applied: appliedCoupon?.offer_code || null,
+         promotion_code_applied: isTrucoCouponApplied ? appliedCoupon?.offer_code || null : null,
           promotion_is_truco: isTrucoCouponApplied,
-          promotion_discount_applied: appliedCoupon ? (orderSummary.discount || 0) : 0,
+          promotion_discount_applied: isTrucoCouponApplied ? (orderSummary.discount || 0) : 0,
           promotion_transaction_amount: isTrucoCouponApplied ? orderSummary.subtotal : 0,
           promotion_cart_items: isTrucoCouponApplied ? cartItems.map(item => ({
             sku: item.item_code || String(item.productId || item.id || ''),
@@ -1231,64 +1259,17 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
       }
       order_number = orderResult.order.order_number || order_number;
 
-      if (paymentStatus === 'paid' && loyaltyToken && pointsApplied) {
-        try {
-          const redeemRes = await fetch('/api/validate-points?action=redeem', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              token: loyaltyToken,
-              orderNumber: order_number,
-              billTotal: orderSummary.total,
-            }),
-          });
-          const redeemData = await redeemRes.json();
-          sessionStorage.removeItem(TRUCO_LOYALTY_RESERVATION_KEY);
-          if (!redeemRes.ok || redeemData.success !== true) {
-            console.error('Truco loyalty redemption failed:', redeemData);
-            trucoIntegrationErrors.push(redeemData.tokenExpired
-              ? 'Loyalty validation expired; re-apply points on a future checkout'
-              : 'Loyalty point redemption failed; contact support before retrying');
-          }
-        } catch (redeemError) {
-          sessionStorage.removeItem(TRUCO_LOYALTY_RESERVATION_KEY);
-          console.error('Truco loyalty redemption failed:', redeemError);
-          trucoIntegrationErrors.push('Loyalty point redemption result is uncertain; contact support before retrying');
-        }
+      if (paymentStatus === 'paid' && loyaltyToken && pointsApplied && !loyaltyRedemptionResult?.success) {
+        trucoIntegrationErrors.push(loyaltyRedemptionResult?.status === 'pending'
+          ? 'Loyalty redemption result is uncertain; do not retry'
+          : 'Loyalty point redemption failed; contact support before retrying');
       }
 
       if (paymentStatus === 'paid' && isTrucoCouponApplied && appliedCoupon?.offer_code) {
-        try {
-          const redeemRes = await fetch('/api/truco-promo-code?action=redeem', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              code: appliedCoupon.offer_code,
-              phoneNumber: userPhone || addressData.phonenumber,
-              transactionAmount: orderSummary.subtotal,
-              invoiceNumber: order_number,
-              storeId: 'Online Store',
-              channel: 'ONLINE',
-              cartItems: cartItems.map(item => ({
-                sku: item.item_code || String(item.productId || item.id || ''),
-                brand: item.brand || '',
-                category: item.category || '',
-                price: item.price > 0 ? item.price : item.actual_price,
-                quantity: item.quantity,
-              })),
-              hasOtherOffersApplied: false,
-            }),
-          });
-          const redeemData = await redeemRes.json();
-          if (!redeemRes.ok || redeemData.success !== true) {
-            console.error('Truco coupon redemption failed:', redeemData);
-            trucoIntegrationErrors.push(redeemData.status === 'pending'
-              ? 'Truco coupon redemption result is uncertain; do not retry'
-              : 'Truco coupon redemption failed');
-          }
-        } catch (redeemError) {
-          console.error('Truco coupon redemption failed:', redeemError);
-          trucoIntegrationErrors.push('Truco coupon redemption result is uncertain; do not retry');
+        if (!promotionRedemptionResult?.success) {
+          trucoIntegrationErrors.push(promotionRedemptionResult?.status === 'pending'
+            ? 'Truco coupon redemption result is uncertain; do not retry'
+            : 'Truco coupon redemption failed');
         }
       }
 
@@ -1971,7 +1952,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
 {appliedCoupon?.offer_code && Number(orderSummary.discount) > 0 && (
   <div className="flex justify-between gap-4 text-sm text-green-700">
     <span>
-      {/^BEAO\d+$/i.test(appliedCoupon.offer_code) ? "Truco coupon" : "Coupon"} ({appliedCoupon.offer_code})
+      {isTrucoCouponApplied ? "Truco coupon" : "Coupon"} ({appliedCoupon.offer_code})
     </span>
     <span className="shrink-0 font-medium">
       −₹{Number(orderSummary.discount).toLocaleString('en-IN')}

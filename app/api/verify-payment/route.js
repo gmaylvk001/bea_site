@@ -3,11 +3,43 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import dbConnect from "@/lib/db";
 import EcomOrderInfo from "@/models/ecom_order_info";
+import { redeemTrucoPromotionForOrder } from "@/lib/redeemTrucoPromotionForOrder";
+import { processTrucoLoyaltyForOrder } from "@/lib/processTrucoLoyaltyForOrder";
 
 const razorpay = new Razorpay({
   key_id: process.env.NEXT_PUBLIC_RAZORPAY_TEST_KEY,
   key_secret: process.env.RAZORPAY_SECRET
 });
+
+async function redeemPromotionForVerifiedOrder(order) {
+  if (!order?.promotion_is_truco || !order.promotion_code_applied) return null;
+
+  try {
+    return await redeemTrucoPromotionForOrder(order);
+  } catch (error) {
+    console.error("Truco promotion processing failed after verified payment:", error.name || "Error");
+    return {
+      success: false,
+      status: "pending",
+      message: "Payment is verified, but coupon redemption could not be confirmed. Do not retry; contact support.",
+    };
+  }
+}
+
+async function processLoyaltyForVerifiedOrder(order) {
+  if (!order?.loyalty_redemption_token) return null;
+
+  try {
+    return await processTrucoLoyaltyForOrder(order);
+  } catch (error) {
+    console.error("Truco loyalty processing failed after verified payment:", error.name || "Error");
+    return {
+      success: false,
+      status: "pending",
+      message: "Payment is verified, but loyalty redemption could not be confirmed. Do not retry; contact support.",
+    };
+  }
+}
 
 export async function POST(req) {
   try {
@@ -65,6 +97,8 @@ export async function POST(req) {
 
     if (order.payment_status === "paid") {
       if (order.payment_id === razorpay_payment_id && order.payment_confirmation_source === "razorpay") {
+        const promotionRedemption = await redeemPromotionForVerifiedOrder(order);
+        const loyaltyRedemption = await processLoyaltyForVerifiedOrder(order);
         return NextResponse.json({
           success: true,
           alreadyVerified: true,
@@ -72,6 +106,8 @@ export async function POST(req) {
           orderId: razorpay_order_id,
           method: order.payment_gateway_method,
           isEmiPayment: order.payment_method?.trim().toLowerCase() === "emi",
+          ...(promotionRedemption ? { promotionRedemption } : {}),
+          ...(loyaltyRedemption ? { loyaltyRedemption } : {}),
         });
       }
       return NextResponse.json({ error: "A different payment is already recorded for this order" }, { status: 409 });
@@ -133,6 +169,9 @@ export async function POST(req) {
       return NextResponse.json({ error: "Order payment state changed during verification" }, { status: 409 });
     }
 
+    const promotionRedemption = await redeemPromotionForVerifiedOrder(paidOrder);
+    const loyaltyRedemption = await processLoyaltyForVerifiedOrder(paidOrder);
+
     return NextResponse.json(
       { 
         success: true,
@@ -140,6 +179,8 @@ export async function POST(req) {
         orderId: razorpay_order_id,
         method: gatewayMethod,
         isEmiPayment,
+        ...(promotionRedemption ? { promotionRedemption } : {}),
+        ...(loyaltyRedemption ? { loyaltyRedemption } : {}),
       }, 
       { status: 200 }
     );

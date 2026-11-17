@@ -1125,7 +1125,11 @@ const validateCoupon = async (couponToApply) => {
   const removeCoupon = () => {
     const newCart = {
       ...cartData,
-      items: cartData.items.map((item) => ({ ...item, discount: 0 })),
+      items: cartData.items.map((item) => ({
+        ...item,
+        discount: 0,
+        coupondetails: [],
+      })),
     };
     setCartData(newCart);
     saveCartState(newCart);

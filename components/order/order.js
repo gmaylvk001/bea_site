@@ -12,6 +12,19 @@ import { HiShoppingBag } from "react-icons/hi2";
 import { FaHeart } from "react-icons/fa6";
 import { AuthModal } from '@/components/AuthModal';
 
+const getPaymentLabel = (order) => {
+  const paymentMethod = String(order.payment_method || order.payment_type || '').trim().toLowerCase();
+  const paymentStatus = String(order.payment_status || '').trim().toLowerCase();
+
+  if (paymentMethod === 'emi') return 'EMI';
+  if (paymentStatus === 'paid') return 'Paid';
+  if (['cash on delivery', 'cod'].includes(paymentMethod)) return 'Cash on delivery';
+  if (paymentMethod === 'online') return 'Online payment';
+  if (paymentMethod === 'pay_at_store') return 'Pay at store';
+
+  return String(order.payment_method || order.payment_type || 'Payment status unavailable').trim();
+};
+
 export default function Order() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -331,12 +344,12 @@ export default function Order() {
                             </div>
                             <div className="text-gray-600 flex items-center gap-1 sm:gap-2">
                               <span>Payment:</span>
-                              {order.payment_type === 'online' ? (
+                              {getPaymentLabel(order) === 'Paid' ? (
                                 <span className="inline-flex items-center px-2 py-0.5 sm:py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                                   <FiCheckCircle className="mr-1 text-xs" /> Paid
                                 </span>
                               ) : (
-                                <span className="text-gray-700 capitalize">{order.payment_type || 'Not specified'}</span>
+                                <span className="text-gray-700">{getPaymentLabel(order)}</span>
                               )}
                             </div>
                           </div>
