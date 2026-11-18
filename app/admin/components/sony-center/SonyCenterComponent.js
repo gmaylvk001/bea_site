@@ -26,11 +26,6 @@ export default function SonyCenterComponent() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
 
-  // API Documentation Box toggle
-  const [showApiInfo, setShowApiInfo] = useState(false);
-  const [copiedKey, setCopiedKey] = useState(false);
-
-  const API_KEY_DISPLAY = "bea_sony_center_key_7f8c92a1e4b6d0c5a39e8b1d";
 
   useEffect(() => {
     fetchLeads();
@@ -129,11 +124,6 @@ export default function SonyCenterComponent() {
     }
   };
 
-  const copyApiKey = () => {
-    navigator.clipboard.writeText(API_KEY_DISPLAY);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
-  };
 
   // Client-side search filtering
   const filteredLeads = leads.filter((lead) => {
@@ -214,13 +204,6 @@ export default function SonyCenterComponent() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setShowApiInfo(!showApiInfo)}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg shadow-sm transition"
-          >
-            <Icon icon="mdi:api" className="text-lg text-blue-600" />
-            <span>{showApiInfo ? "Hide API Info" : "API Integration Guide"}</span>
-          </button>
-          <button
             onClick={fetchLeads}
             disabled={loading}
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition"
@@ -231,73 +214,6 @@ export default function SonyCenterComponent() {
           </button>
         </div>
       </div>
-
-      {/* API Key & Integration Banner (Collapsible) */}
-      {showApiInfo && (
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-xl shadow-lg mb-6 border border-blue-700/50">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/30 text-blue-200 border border-blue-400/30">
-                  External Domain Integration
-                </span>
-                <span className="text-xs text-blue-300">CORS Enabled • REST API</span>
-              </div>
-              <h3 className="text-lg font-bold text-white mt-1">
-                How other domain submits data to Sony Center
-              </h3>
-            </div>
-            <button
-              onClick={() => setShowApiInfo(false)}
-              className="text-gray-400 hover:text-white"
-            >
-              <Icon icon="mdi:close" className="text-xl" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="bg-black/30 p-4 rounded-lg border border-white/10">
-              <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold block mb-1">
-                1. Endpoint URL (Method: POST)
-              </span>
-              <code className="text-xs text-yellow-300 bg-black/50 px-2 py-1 rounded block overflow-x-auto break-all font-mono">
-                {typeof window !== "undefined" ? window.location.origin : ""}/api/sony-center/lead
-              </code>
-
-              <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold block mt-3 mb-1">
-                2. API Key Header
-              </span>
-              <div className="flex items-center gap-2 bg-black/50 px-2 py-1 rounded">
-                <code className="text-xs text-green-300 font-mono flex-1 overflow-x-auto break-all">
-                  x-api-key: {API_KEY_DISPLAY}
-                </code>
-                <button
-                  onClick={copyApiKey}
-                  className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-0.5 rounded transition flex items-center gap-1"
-                >
-                  <Icon icon={copiedKey ? "mdi:check" : "mdi:content-copy"} />
-                  {copiedKey ? "Copied" : "Copy"}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-black/30 p-4 rounded-lg border border-white/10">
-              <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold block mb-1">
-                3. Required JSON Body (5 fields)
-              </span>
-              <pre className="text-xs text-emerald-300 bg-black/50 p-2 rounded overflow-x-auto font-mono">
-{`{
-  "name": "Customer Name",
-  "phone": "9876543210",
-  "email": "customer@gmail.com",
-  "location": "Tiruppur / City",
-  "message": "Interested in Sony Bravia 65 OLED"
-}`}
-              </pre>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Alert Notification */}
       {alertMessage && (
