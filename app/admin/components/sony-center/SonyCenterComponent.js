@@ -1,0 +1,826 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { Icon } from "@iconify/react";
+import DateRangePicker from "@/components/DateRangePicker";
+import * as XLSX from "xlsx";
+
+export default function SonyCenterComponent() {
+  const [leads, setLeads] = useState([]);
+  const [counts, setCounts] = useState({ total: 0, new: 0, contacted: 0, converted: 0 });
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState({ startDate: null, endDate: null });
+  const [currentPage, setCurrentPage] = useState(1);
+  const leadsPerPage = 15;
+
+  // Alerts
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState("");
+
+  // Modals & Active items
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
+
+  // API Documentation Box toggle
+  const [showApiInfo, setShowApiInfo] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+
+  const API_KEY_DISPLAY = "bea_sony_center_key_7f8c92a1e4b6d0c5a39e8b1d";
+
+  useEffect(() => {
+    fetchLeads();
+  }, [statusFilter, dateFilter]);
+
+  const showAlert = (message, type = "success") => {
+    setAlertMessage(message);
+    setAlertType(type);
+    setTimeout(() => {
+      setAlertMessage("");
+      setAlertType("");
+    }, 4000);
+  };
+
+  const fetchLeads = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (statusFilter && statusFilter !== "All") params.append("status", statusFilter);
+      if (dateFilter.startDate) params.append("startDate", dateFilter.startDate);
+      if (dateFilter.endDate) params.append("endDate", dateFilter.endDate);
+
+      const res = await fetch(`/api/sony-center/admin?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLeads(data.data || []);
+        if (data.counts) setCounts(data.counts);
+      } else {
+        showAlert(data.message || "Failed to fetch leads", "error");
+      }
+    } catch (err) {
+      console.error("Error loading Sony Center leads:", err);
+      showAlert("Error loading leads", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/sony-center/admin`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setLeads((prev) =>
+          prev.map((lead) => (lead._id === id ? { ...lead, status: newStatus } : lead))
+        );
+        if (selectedLead && selectedLead._id === id) {
+          setSelectedLead((prev) => ({ ...prev, status: newStatus }));
+        }
+        showAlert(`Status updated to "${newStatus}"`, "success");
+        fetchLeads(); // refresh counts
+      } else {
+        showAlert(result.message || "Failed to update status", "error");
+      }
+    } catch (err) {
+      console.error("Error updating status:", err);
+      showAlert("Error updating status", "error");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!leadToDelete) return;
+    try {
+      const res = await fetch(`/api/sony-center/admin`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: leadToDelete }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setLeads((prev) => prev.filter((lead) => lead._id !== leadToDelete));
+        showAlert("Lead deleted successfully", "success");
+        if (selectedLead && selectedLead._id === leadToDelete) {
+          setShowDetailModal(false);
+          setSelectedLead(null);
+        }
+        fetchLeads();
+      } else {
+        showAlert(result.message || "Failed to delete lead", "error");
+      }
+    } catch (err) {
+      console.error("Error deleting lead:", err);
+      showAlert("Error deleting lead", "error");
+    } finally {
+      setShowDeleteModal(false);
+      setLeadToDelete(null);
+    }
+  };
+
+  const copyApiKey = () => {
+    navigator.clipboard.writeText(API_KEY_DISPLAY);
+    setCopiedKey(true);
+    setTimeout(() => setCopiedKey(false), 2000);
+  };
+
+  // Client-side search filtering
+  const filteredLeads = leads.filter((lead) => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase();
+    return (
+      (lead.name && lead.name.toLowerCase().includes(q)) ||
+      (lead.phone && lead.phone.toLowerCase().includes(q)) ||
+      (lead.email && lead.email.toLowerCase().includes(q)) ||
+      (lead.location && lead.location.toLowerCase().includes(q)) ||
+      (lead.message && lead.message.toLowerCase().includes(q))
+    );
+  });
+
+  // Pagination
+  const indexOfLast = currentPage * leadsPerPage;
+  const indexOfFirst = indexOfLast - leadsPerPage;
+  const currentLeads = filteredLeads.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
+
+  const exportToExcel = () => {
+    const dataForExport = filteredLeads.map((item, index) => ({
+      "S.No": index + 1,
+      Date: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "",
+      Time: item.createdAt ? new Date(item.createdAt).toLocaleTimeString() : "",
+      Name: item.name || "",
+      "Phone Number": item.phone || "",
+      Email: item.email || "",
+      Location: item.location || "",
+      Message: item.message || "",
+      Status: (item.status || "new").toUpperCase(),
+      Source: item.source || "External Domain",
+      "IP Address": item.ipAddress || "-",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataForExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sony Center Leads");
+    XLSX.writeFile(
+      workbook,
+      `Sony_Center_Leads_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
+  };
+
+  const getStatusBadge = (status) => {
+    const s = (status || "new").toLowerCase();
+    switch (s) {
+      case "new":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "contacted":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "converted":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "closed":
+        return "bg-gray-100 text-gray-700 border-gray-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  return (
+    <div className="container mx-auto py-6">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-red-600 text-white rounded-lg shadow-sm">
+              <Icon icon="mdi:storefront-outline" className="text-2xl" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Sony Center Leads</h1>
+              <p className="text-sm text-gray-500">
+                Inquiries and form submissions received from Sony Center campaigns & external domain
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowApiInfo(!showApiInfo)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg shadow-sm transition"
+          >
+            <Icon icon="mdi:api" className="text-lg text-blue-600" />
+            <span>{showApiInfo ? "Hide API Info" : "API Integration Guide"}</span>
+          </button>
+          <button
+            onClick={fetchLeads}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition"
+            title="Refresh Leads"
+          >
+            <Icon icon="mdi:refresh" className={`text-lg ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      {/* API Key & Integration Banner (Collapsible) */}
+      {showApiInfo && (
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-xl shadow-lg mb-6 border border-blue-700/50">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/30 text-blue-200 border border-blue-400/30">
+                  External Domain Integration
+                </span>
+                <span className="text-xs text-blue-300">CORS Enabled • REST API</span>
+              </div>
+              <h3 className="text-lg font-bold text-white mt-1">
+                How other domain submits data to Sony Center
+              </h3>
+            </div>
+            <button
+              onClick={() => setShowApiInfo(false)}
+              className="text-gray-400 hover:text-white"
+            >
+              <Icon icon="mdi:close" className="text-xl" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="bg-black/30 p-4 rounded-lg border border-white/10">
+              <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold block mb-1">
+                1. Endpoint URL (Method: POST)
+              </span>
+              <code className="text-xs text-yellow-300 bg-black/50 px-2 py-1 rounded block overflow-x-auto break-all font-mono">
+                {typeof window !== "undefined" ? window.location.origin : ""}/api/sony-center/lead
+              </code>
+
+              <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold block mt-3 mb-1">
+                2. API Key Header
+              </span>
+              <div className="flex items-center gap-2 bg-black/50 px-2 py-1 rounded">
+                <code className="text-xs text-green-300 font-mono flex-1 overflow-x-auto break-all">
+                  x-api-key: {API_KEY_DISPLAY}
+                </code>
+                <button
+                  onClick={copyApiKey}
+                  className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-0.5 rounded transition flex items-center gap-1"
+                >
+                  <Icon icon={copiedKey ? "mdi:check" : "mdi:content-copy"} />
+                  {copiedKey ? "Copied" : "Copy"}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-black/30 p-4 rounded-lg border border-white/10">
+              <span className="text-xs uppercase tracking-wider text-blue-300 font-semibold block mb-1">
+                3. Required JSON Body (5 fields)
+              </span>
+              <pre className="text-xs text-emerald-300 bg-black/50 p-2 rounded overflow-x-auto font-mono">
+{`{
+  "name": "Customer Name",
+  "phone": "9876543210",
+  "email": "customer@gmail.com",
+  "location": "Tiruppur / City",
+  "message": "Interested in Sony Bravia 65 OLED"
+}`}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alert Notification */}
+      {alertMessage && (
+        <div
+          className={`mb-6 p-4 rounded-lg flex items-center justify-between text-white shadow-md ${
+            alertType === "success" ? "bg-green-600" : "bg-red-600"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Icon
+              icon={alertType === "success" ? "mdi:check-circle" : "mdi:alert-circle"}
+              className="text-xl"
+            />
+            <span>{alertMessage}</span>
+          </div>
+          <button onClick={() => setAlertMessage("")} className="hover:opacity-80">
+            <Icon icon="mdi:close" className="text-lg" />
+          </button>
+        </div>
+      )}
+
+      {/* Summary Stat Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="p-3 bg-red-50 text-red-600 rounded-lg">
+            <Icon icon="mdi:account-group" className="text-2xl" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Total Leads</p>
+            <h3 className="text-2xl font-bold text-gray-800">{counts.total}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+            <Icon icon="mdi:bell-ring-outline" className="text-2xl" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium">New Leads</p>
+            <h3 className="text-2xl font-bold text-blue-600">{counts.new}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
+            <Icon icon="mdi:phone-in-talk-outline" className="text-2xl" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Contacted</p>
+            <h3 className="text-2xl font-bold text-amber-600">{counts.contacted}</h3>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="p-3 bg-green-50 text-green-600 rounded-lg">
+            <Icon icon="mdi:check-decagram-outline" className="text-2xl" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium">Converted</p>
+            <h3 className="text-2xl font-bold text-green-600">{counts.converted}</h3>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Box */}
+      <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-5 mb-6">
+        {/* Filters and Search Bar */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-5">
+          {/* Search */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
+              Search Leads
+            </label>
+            <div className="relative">
+              <Icon
+                icon="mdi:magnify"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"
+              />
+              <input
+                type="text"
+                placeholder="Name, phone, email, city..."
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
+              Status Filter
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            >
+              <option value="All">All Statuses ({leads.length})</option>
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="converted">Converted</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+
+          {/* Date Filter */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
+              Date Range
+            </label>
+            <DateRangePicker
+              onDateChange={({ startDate, endDate }) => {
+                setDateFilter({ startDate, endDate });
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+
+          {/* Export to Excel */}
+          <div className="flex gap-2">
+            <button
+              onClick={exportToExcel}
+              disabled={filteredLeads.length === 0}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 shadow-sm transition"
+            >
+              <Icon icon="mdi:microsoft-excel" className="text-lg" />
+              <span>Export ({filteredLeads.length})</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Leads Table */}
+        {loading ? (
+          <div className="py-16 text-center text-gray-500">
+            <Icon icon="mdi:loading" className="text-3xl animate-spin mx-auto text-red-500 mb-2" />
+            <p className="text-sm">Loading Sony Center leads...</p>
+          </div>
+        ) : filteredLeads.length === 0 ? (
+          <div className="py-16 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+            <Icon icon="mdi:storefront-remove-outline" className="text-4xl text-gray-400 mx-auto mb-2" />
+            <h4 className="text-base font-semibold text-gray-700">No leads found</h4>
+            <p className="text-xs text-gray-500 mt-1">
+              {searchTerm || statusFilter !== "All"
+                ? "Try adjusting your search query or filters"
+                : "Form leads submitted from the external domain will appear here"}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 text-xs font-bold text-gray-600 uppercase tracking-wider border-b border-gray-200">
+                    <th className="py-3 px-4">Date & Time</th>
+                    <th className="py-3 px-4">Customer Name</th>
+                    <th className="py-3 px-4">Phone Number</th>
+                    <th className="py-3 px-4">Email</th>
+                    <th className="py-3 px-4">Location</th>
+                    <th className="py-3 px-4">Message</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm">
+                  {currentLeads.map((lead) => {
+                    const leadDate = lead.createdAt ? new Date(lead.createdAt) : null;
+                    return (
+                      <tr key={lead._id} className="hover:bg-gray-50 transition">
+                        {/* Date */}
+                        <td className="py-3 px-4 whitespace-nowrap text-xs text-gray-500">
+                          {leadDate ? (
+                            <>
+                              <div className="font-medium text-gray-700">
+                                {leadDate.toLocaleDateString()}
+                              </div>
+                              <div className="text-[11px] text-gray-400">
+                                {leadDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              </div>
+                            </>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+
+                        {/* Name */}
+                        <td className="py-3 px-4 font-semibold text-gray-900 whitespace-nowrap">
+                          {lead.name}
+                        </td>
+
+                        {/* Phone */}
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <a
+                              href={`tel:${lead.phone}`}
+                              className="text-blue-600 hover:text-blue-800 font-mono text-xs hover:underline flex items-center gap-1"
+                              title="Click to call"
+                            >
+                              <Icon icon="mdi:phone" className="text-gray-400" />
+                              {lead.phone}
+                            </a>
+                            <a
+                              href={`https://wa.me/91${lead.phone.replace(/\D/g, "").slice(-10)}?text=${encodeURIComponent(
+                                `Hello ${lead.name}, thank you for contacting Sony Center Bharath Electronics.`
+                              )}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-green-600 hover:text-green-700 p-1 hover:bg-green-50 rounded"
+                              title="Chat on WhatsApp"
+                            >
+                              <Icon icon="mdi:whatsapp" className="text-base" />
+                            </a>
+                          </div>
+                        </td>
+
+                        {/* Email */}
+                        <td className="py-3 px-4 text-xs text-gray-600 whitespace-nowrap">
+                          <a
+                            href={`mailto:${lead.email}`}
+                            className="hover:text-blue-600 hover:underline flex items-center gap-1"
+                          >
+                            <Icon icon="mdi:email-outline" className="text-gray-400" />
+                            {lead.email}
+                          </a>
+                        </td>
+
+                        {/* Location */}
+                        <td className="py-3 px-4 whitespace-nowrap text-xs text-gray-700">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                            <Icon icon="mdi:map-marker-outline" className="text-red-500" />
+                            {lead.location}
+                          </span>
+                        </td>
+
+                        {/* Message Preview */}
+                        <td className="py-3 px-4 max-w-xs text-xs text-gray-600">
+                          <div
+                            className="truncate cursor-pointer hover:text-blue-600"
+                            title={lead.message}
+                            onClick={() => {
+                              setSelectedLead(lead);
+                              setShowDetailModal(true);
+                            }}
+                          >
+                            {lead.message}
+                          </div>
+                        </td>
+
+                        {/* Status Dropdown */}
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <select
+                            value={lead.status || "new"}
+                            disabled={updatingId === lead._id}
+                            onChange={(e) => handleStatusChange(lead._id, e.target.value)}
+                            className={`text-xs font-semibold px-2.5 py-1 rounded-full border cursor-pointer capitalize focus:outline-none focus:ring-1 ${getStatusBadge(
+                              lead.status
+                            )}`}
+                          >
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="converted">Converted</option>
+                            <option value="closed">Closed</option>
+                          </select>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setSelectedLead(lead);
+                                setShowDetailModal(true);
+                              }}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                              title="View Full Lead Details"
+                            >
+                              <Icon icon="mdi:eye-outline" className="text-lg" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setLeadToDelete(lead._id);
+                                setShowDeleteModal(true);
+                              }}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
+                              title="Delete Lead"
+                            >
+                              <Icon icon="mdi:delete-outline" className="text-lg" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-5 pt-4 border-t border-gray-100 gap-3">
+              <p className="text-xs text-gray-500">
+                Showing <span className="font-semibold">{indexOfFirst + 1}</span> to{" "}
+                <span className="font-semibold">
+                  {Math.min(indexOfLast, filteredLeads.length)}
+                </span>{" "}
+                of <span className="font-semibold">{filteredLeads.length}</span> entries
+              </p>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-xs border rounded-lg bg-white disabled:opacity-40 hover:bg-gray-50 transition"
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                    .map((page, idx, arr) => (
+                      <React.Fragment key={page}>
+                        {idx > 0 && arr[idx - 1] !== page - 1 && (
+                          <span className="px-1 text-gray-400 text-xs">...</span>
+                        )}
+                        <button
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-7 h-7 text-xs font-medium rounded-lg transition ${
+                            currentPage === page
+                              ? "bg-red-600 text-white"
+                              : "border bg-white text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      </React.Fragment>
+                    ))}
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 text-xs border rounded-lg bg-white disabled:opacity-40 hover:bg-gray-50 transition"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Lead Details Modal */}
+      {showDetailModal && selectedLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-fadeIn">
+            <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white px-6 py-4 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Icon icon="mdi:storefront" className="text-xl" />
+                <h3 className="font-bold text-lg">Sony Center Lead Details</h3>
+              </div>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="text-white/80 hover:text-white"
+              >
+                <Icon icon="mdi:close" className="text-2xl" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4 pb-4 border-b">
+                <div>
+                  <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold block">
+                    Customer Name
+                  </span>
+                  <p className="text-base font-bold text-gray-900 mt-0.5">{selectedLead.name}</p>
+                </div>
+                <div>
+                  <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold block">
+                    Status
+                  </span>
+                  <select
+                    value={selectedLead.status || "new"}
+                    onChange={(e) => handleStatusChange(selectedLead._id, e.target.value)}
+                    className={`mt-1 text-xs font-semibold px-2.5 py-1 rounded-full border capitalize ${getStatusBadge(
+                      selectedLead.status
+                    )}`}
+                  >
+                    <option value="new">New</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="converted">Converted</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pb-4 border-b">
+                <div>
+                  <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold block">
+                    Phone Number
+                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <a
+                      href={`tel:${selectedLead.phone}`}
+                      className="text-sm font-semibold text-blue-600 hover:underline"
+                    >
+                      {selectedLead.phone}
+                    </a>
+                    <a
+                      href={`https://wa.me/91${selectedLead.phone.replace(/\D/g, "").slice(-10)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-green-600 text-lg hover:scale-110 transition"
+                      title="WhatsApp"
+                    >
+                      <Icon icon="mdi:whatsapp" />
+                    </a>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold block">
+                    Email Address
+                  </span>
+                  <a
+                    href={`mailto:${selectedLead.email}`}
+                    className="text-sm text-gray-800 hover:text-blue-600 hover:underline mt-1 block"
+                  >
+                    {selectedLead.email}
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pb-4 border-b">
+                <div>
+                  <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold block">
+                    Location / City
+                  </span>
+                  <p className="text-sm font-medium text-gray-800 mt-1">{selectedLead.location}</p>
+                </div>
+                <div>
+                  <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold block">
+                    Submitted At
+                  </span>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {selectedLead.createdAt
+                      ? new Date(selectedLead.createdAt).toLocaleString()
+                      : "-"}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold block mb-1">
+                  Message / Requirement
+                </span>
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                  {selectedLead.message}
+                </div>
+              </div>
+
+              {selectedLead.source && (
+                <div className="text-[11px] text-gray-400 pt-2 flex justify-between">
+                  <span>Source: {selectedLead.source}</span>
+                  {selectedLead.ipAddress && <span>IP: {selectedLead.ipAddress}</span>}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-gray-50 px-6 py-3 flex justify-end gap-3 border-t">
+              <button
+                onClick={() => {
+                  setLeadToDelete(selectedLead._id);
+                  setShowDeleteModal(true);
+                }}
+                className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
+              >
+                Delete Lead
+              </button>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="px-5 py-2 text-sm bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-lg transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+              <Icon icon="mdi:trash-can-outline" className="text-2xl" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Delete Lead?</h3>
+            <p className="text-xs text-gray-500 mb-5">
+              This action cannot be undone. Are you sure you want to permanently remove this lead?
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setLeadToDelete(null);
+                }}
+                className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-5 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium shadow-sm"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
