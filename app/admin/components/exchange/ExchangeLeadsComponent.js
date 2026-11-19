@@ -405,16 +405,16 @@ export default function ExchangeLeadsComponent() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[1100px]">
                 <thead>
                   <tr className="bg-gray-100 text-xs font-bold text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                    <th className="py-3 px-4">Date & Time</th>
-                    <th className="py-3 px-4">Customer</th>
-                    <th className="py-3 px-4">Location</th>
-                    <th className="py-3 px-4">Old Appliance Details</th>
-                    <th className="py-3 px-4">Target New Product</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-center">Actions</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Date & Time</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Customer</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Location</th>
+                    <th className="py-3 px-4 min-w-[280px] w-[320px]">Old Appliance Details</th>
+                    <th className="py-3 px-4 min-w-[260px] w-[300px]">Target New Product</th>
+                    <th className="py-3 px-4 whitespace-nowrap">Status</th>
+                    <th className="py-3 px-4 text-center whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
@@ -479,36 +479,36 @@ export default function ExchangeLeadsComponent() {
                           </span>
                         </td>
 
-                        {/* Old Appliance Details */}
-                        <td className="py-3 px-4 text-xs">
-                          <div className="font-medium text-gray-800">
+                        {/* Old Appliance Details - Expanded width */}
+                        <td className="py-3 px-4 text-xs min-w-[280px] w-[320px]">
+                          <div className="font-semibold text-gray-900 text-sm break-words leading-snug">
                             {lead.old_brand_model || "Not specified"}
                           </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[11px] text-gray-500">
+                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                            <span className="text-[11px] text-gray-600 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded font-medium">
                               Age: {lead.appliance_age || "-"}
                             </span>
-                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${conditionInfo.color}`}>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border ${conditionInfo.color}`}>
                               <span>{conditionInfo.icon}</span>
                               <span>{conditionInfo.label}</span>
                             </span>
                           </div>
                         </td>
 
-                        {/* Target New Product */}
-                        <td className="py-3 px-4 text-xs max-w-xs">
-                          <div className="flex items-center gap-2">
+                        {/* Target New Product - Expanded width */}
+                        <td className="py-3 px-4 text-xs min-w-[260px] w-[300px]">
+                          <div className="flex items-start gap-2.5">
                             <img
                               src={prodImage}
                               alt={lead.product_name}
-                              className="w-10 h-10 object-contain rounded border bg-white shrink-0 p-0.5"
+                              className="w-11 h-11 object-contain rounded border bg-white shrink-0 p-0.5 mt-0.5"
                             />
-                            <div className="min-w-0">
-                              <p className="font-medium text-gray-900 truncate" title={lead.product_name}>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-gray-900 line-clamp-2 leading-snug" title={lead.product_name}>
                                 {lead.product_name}
                               </p>
                               {lead.product_price > 0 && (
-                                <p className="text-[11px] font-semibold text-red-600">
+                                <p className="text-[11px] font-bold text-red-600 mt-0.5">
                                   ₹{Number(lead.product_price).toLocaleString("en-IN")}
                                 </p>
                               )}
