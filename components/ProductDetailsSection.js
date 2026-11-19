@@ -12,9 +12,12 @@ const poppins = Poppins({ subsets: ["latin"], weight: ["400","500","600"] });
 import { formatDistanceToNow, format } from "date-fns";
 import { useHeaderdetails } from '@/context/HeaderContext';
 import { ToastContainer, toast } from 'react-toastify';
+import ExchangeModal from '@/components/ExchangeModal';
 
 
 function ExchangeSection({ product }) {
+  const [isExchangeModalOpen, setIsExchangeModalOpen] = useState(false);
+
   const productImage = product?.images?.[0]?.startsWith("http")
     ? product.images[0]
     : product?.images?.[0]
@@ -22,41 +25,53 @@ function ExchangeSection({ product }) {
     : "/no-image.jpg";
 
   return (
-    <div className="border border-gray-200 rounded-sm p-5 bg-white h-full exchange-card-1440">
-      <div className="flex flex-col justify-between h-full gap-4 exchange-inner-1440">
-        {/* TOP — Title & text */}
-        <div className="flex flex-col gap-2 exchange-left-1440">
-          <h3 className="text-base font-bold text-blue-700">
-            Exchange Your Old Appliance
-          </h3>
-          <p className="text-sm text-gray-500 leading-relaxed">
-            Upgrade to a new product and get the best value for your old one.
-          </p>
-        </div>
+    <>
+      <div className="border border-gray-200 rounded-sm p-5 bg-white h-full exchange-card-1440">
+        <div className="flex flex-col justify-between h-full gap-4 exchange-inner-1440">
+          {/* TOP — Title & text */}
+          <div className="flex flex-col gap-2 exchange-left-1440">
+            <h3 className="text-base font-bold text-blue-700">
+              Exchange Your Old Appliance
+            </h3>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Upgrade to a new product and get the best value for your old one.
+            </p>
+          </div>
 
-        {/* MIDDLE — Two images + arrow */}
-        <div className="flex items-center justify-center gap-3 py-2 exchange-images-1440">
-          <img
-            src={productImage}
-            alt="old product"
-            className="w-20 sm:w-24 h-24 sm:h-28 object-contain opacity-40 exchange-img-1440"
-          />
-          <span className="text-gray-400 text-xl font-bold exchange-arrow-1440">→</span>
-          <img
-            src={productImage}
-            alt="new product"
-            className="w-20 sm:w-24 h-24 sm:h-28 object-contain exchange-img-1440"
-          />
-        </div>
+          {/* MIDDLE — Two images + arrow */}
+          <div className="flex items-center justify-center gap-3 py-2 exchange-images-1440">
+            <img
+              src={productImage}
+              alt="old product"
+              className="w-20 sm:w-24 h-24 sm:h-28 object-contain opacity-40 exchange-img-1440"
+            />
+            <span className="text-gray-400 text-xl font-bold exchange-arrow-1440">→</span>
+            <img
+              src={productImage}
+              alt="new product"
+              className="w-20 sm:w-24 h-24 sm:h-28 object-contain exchange-img-1440"
+            />
+          </div>
 
-        {/* BOTTOM — Action Button */}
-        <div className="mt-auto pt-2 flex justify-center exchange-btn-wrapper-1440">
-          <button className="w-fit border border-blue-600 text-blue-600 text-sm font-semibold px-4 py-2 rounded hover:bg-blue-50 transition exchange-btn-1440">
-            Check Exchange Value
-          </button>
+          {/* BOTTOM — Action Button */}
+          <div className="mt-auto pt-2 flex justify-center exchange-btn-wrapper-1440">
+            <button
+              type="button"
+              onClick={() => setIsExchangeModalOpen(true)}
+              className="w-fit border border-blue-600 text-blue-600 hover:text-white text-sm font-semibold px-4 py-2 rounded hover:bg-blue-600 transition shadow-sm active:scale-95 exchange-btn-1440 cursor-pointer"
+            >
+              Check Exchange Value
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      <ExchangeModal
+        isOpen={isExchangeModalOpen}
+        onClose={() => setIsExchangeModalOpen(false)}
+        product={product}
+      />
+    </>
   );
 }
 
