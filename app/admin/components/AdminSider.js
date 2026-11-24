@@ -67,6 +67,7 @@ export default function AdminSider({ collapsed }) {
     { icon: 'mdi:phone-outline', label: 'Contact Us', link: 'contact' },
     { icon: 'mdi:swap-horizontal-bold', label: 'Exchange Leads', link: 'exchange-leads' },
     { icon: 'mdi:storefront-outline', label: 'Sony Center', link: 'sony-center' },
+    { icon: 'mdi:video-outline', label: 'Live Video Demo', link: 'live-demo' },
     { icon: 'mdi:bullhorn-outline', label: 'Offers Lead', link: 'offers-lead' },
     { icon: 'mdi:cog-play-outline', label: 'Smart Lead Config', link: 'smart-lead-config' },
     { icon: "mdi:briefcase-account-outline", label: "Feedback", link: "feedback_page" },

@@ -1,75 +1,71 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FaPhoneAlt, FaEnvelope } from "react-icons/fa";
+import Link from "next/link";
 
-export default function ContactForm() {
+export default function PromoVideoComponent() {
   const [form, setForm] = useState({
     name: "",
     email_address: "",
     mobile_number: "",
     city: "",
     product: "",
+    interest: "",
     _hp: "",
   });
   const [formLoadTime] = useState(() => Date.now());
-
-  const [openMission, setOpenMission] = useState(true);   // default OPEN
-const [openSuccess, setOpenSuccess] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [responseMsg, setResponseMsg] = useState("");
-
+  const [statusType, setStatusType] = useState(""); // "success" | "error"
   const [touched, setTouched] = useState({});
- 
-  const handleBlur = (e) => {
-    setTouched({ ...touched, [e.target.name]: true });
-  };
- 
 
-  /* const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }; */
+  const handleBlur = (e) => {
+    setTouched((prev) => ({ ...prev, [e.target.name]: true }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "mobile_number") {
       const digits = value.replace(/\D/g, "").slice(0, 10);
-      setForm({ ...form, [name]: digits });
-      setTouched(prev => ({ ...prev, mobile_number: true }));
+      setForm((prev) => ({ ...prev, [name]: digits }));
+      setTouched((prev) => ({ ...prev, mobile_number: true }));
       if (!digits) {
-        setErrors(prev => ({ ...prev, mobile_number: "" }));
+        setErrors((prev) => ({ ...prev, mobile_number: "Mobile number is required" }));
       } else if (!/^[6-9]\d{9}$/.test(digits)) {
-        setErrors(prev => ({ ...prev, mobile_number: "Invalid Mobile Number" }));
+        setErrors((prev) => ({ ...prev, mobile_number: "Enter a valid 10-digit mobile number" }));
       } else {
-        setErrors(prev => { const { mobile_number: _, ...rest } = prev; return rest; });
+        setErrors((prev) => {
+          const { mobile_number: _, ...rest } = prev;
+          return rest;
+        });
       }
     } else {
-      setForm({ ...form, [name]: value });
+      setForm((prev) => ({ ...prev, [name]: value }));
+      if (errors[name]) {
+        setErrors((prev) => {
+          const { [name]: _, ...rest } = prev;
+          return rest;
+        });
+      }
     }
   };
 
   const validate = () => {
     const newErrors = {};
- 
-    if (!form.name.trim()) newErrors.name = "Name is required";
-    
-    if (!form.email_address.trim()) {
-      newErrors.email_address = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(form.email_address)) {
-      newErrors.email_address = "Email is invalid";
-    }
- 
+
+    if (!form.name.trim()) newErrors.name = "Full name is required";
+
     if (!form.mobile_number.trim()) {
-      newErrors.mobile_number = "";
-    } else if (!/^\d{10,15}$/.test(form.mobile_number)) {
-      newErrors.mobile_number = "Invalid Mobile Number";
+      newErrors.mobile_number = "Mobile number is required";
+    } else if (!/^[6-9]\d{9}$/.test(form.mobile_number.trim())) {
+      newErrors.mobile_number = "Enter a valid 10-digit mobile number";
     }
- 
+
     if (!form.city.trim()) newErrors.city = "City is required";
-    if (!form.product.trim()) newErrors.product = "product is required";
- 
+    if (!form.product.trim()) newErrors.product = "Please select a product category";
+
     return newErrors;
   };
 
@@ -82,6 +78,8 @@ const [openSuccess, setOpenSuccess] = useState(false);
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      setStatusType("error");
+      setResponseMsg("Please complete all required fields with valid details.");
       return;
     }
 
@@ -90,223 +88,849 @@ const [openSuccess, setOpenSuccess] = useState(false);
 
     // Timing check — bots submit too fast
     if (Date.now() - formLoadTime < 3000) {
+      setStatusType("error");
       setResponseMsg("Please take a moment before submitting.");
       return;
     }
 
     setLoading(true);
     setResponseMsg("");
+    setStatusType("");
+
+    const productPayload = form.interest?.trim()
+      ? `${form.product} (${form.interest.trim()})`
+      : form.product;
+    const emailPayload = form.email_address?.trim()
+      ? form.email_address.trim()
+      : `${form.mobile_number.trim()}@enquiry.bharathelectronics.in`;
 
     try {
       const res = await fetch("/api/promo-video/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          name: form.name.trim(),
+          mobile_number: form.mobile_number.trim(),
+          email_address: emailPayload,
+          city: form.city.trim(),
+          product: productPayload,
+          _hp: form._hp,
+        }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-          const Promovideo = data.data;
+        const Promovideo = data.data;
+
+        // Trigger email notification
+        try {
           const adminemailFormData = new FormData();
           adminemailFormData.append("campaign_id", "0790ce5c-7017-4006-b3b7-9861ef84c8b8");
           adminemailFormData.append(
             "params",
-            JSON.stringify([Promovideo.name,Promovideo.mobile_number,Promovideo.email_address,Promovideo.city,Promovideo.product])
+            JSON.stringify([
+              Promovideo.name,
+              Promovideo.mobile_number,
+              Promovideo.email_address,
+              Promovideo.city,
+              Promovideo.product,
+            ])
           );
-  
-          const emailadmin = ["arunkarthik@bharathelectronics.in","ecom@bharathelectronics.in","Customercare@bharathelectronics.in"];
-          emailadmin.forEach(async (emailadmin) => {
-            adminemailFormData.set("email", emailadmin);
-          let adminresponse = await fetch("https://bea.eygr.in/api/email/send-msg", {
-            method: "POST",
-            headers: {
-              Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L",
-            },
-            body: adminemailFormData, // Use the renamed variable
+
+          const emailadmin = [
+            "arunkarthik@bharathelectronics.in",
+            "ecom@bharathelectronics.in",
+            "Customercare@bharathelectronics.in",
+          ];
+          emailadmin.forEach(async (email) => {
+            try {
+              adminemailFormData.set("email", email);
+              await fetch("https://bea.eygr.in/api/email/send-msg", {
+                method: "POST",
+                headers: {
+                  Authorization: "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L",
+                },
+                body: adminemailFormData,
+              });
+            } catch (err) {
+              console.error("Email send failed:", err);
+            }
           });
-  
-          let adminData = await adminresponse.json();
-          });
-          setResponseMsg("Message sent successfully!");
-          setForm({ name: "", email_address: "", mobile_number: "", city: "", product: "", _hp: "" });
-          setErrors({});
-          setTouched({});
+        } catch (e) {
+          console.error("Email notification dispatch error:", e);
+        }
 
-          // Clear message after 2 seconds
-          setTimeout(() => {
-            setResponseMsg("");
-          }, 2000);
-
-
-        
-
+        setStatusType("success");
+        setResponseMsg("Thank you! Your enquiry has been submitted. Our team will contact you shortly.");
+        setForm({
+          name: "",
+          email_address: "",
+          mobile_number: "",
+          city: "",
+          product: "",
+          interest: "",
+          _hp: "",
+        });
+        setErrors({});
+        setTouched({});
       } else {
-        setResponseMsg(data.message || "Something went wrong");
+        setStatusType("error");
+        setResponseMsg(data.message || "Something went wrong. Please try again.");
       }
     } catch (error) {
-      setResponseMsg("Server error");
+      console.error("Submission error:", error);
+      setStatusType("error");
+      setResponseMsg("Server error. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  const inputClass = "w-full border rounded-md px-3 py-2 focus:outline-none";
+  const scrollToTop = (e) => {
+    e.preventDefault();
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   return (
-    <>
-        <section className="w-full bg-white">
-            <img src="/uploads/promo-video-default.jpg" alt="Promo Banner" className="w-full h-auto"/>
-        </section>
+    <div className="bea-promo-page" id="top">
+      {/* TOP CAMPAIGN BANNER */}
+      <section className="campaign-banner">
+        <img
+          src="/uploads/Banner_test.webp"
+          alt="Campaign Banner"
+          onError={(e) => {
+            e.currentTarget.src = "/uploads/promo-video-default.jpg";
+          }}
+        />
+      </section>
 
-        <div className="max-w-7xl mx-auto px-6 py-8">
-            <div className="max-w-5xl mx-auto mb-5">
-                {/* Write Us Form (Now on Right) */}
-                <div className="p-5 border border-2 rounded">
-                    <h2 className="text-3xl font-bold mb-3 text-center text-customBlue"> Special Offers </h2>
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    {/* Name */}
-                    <div>
-                        <label className="block font-medium mb-1">Name<span className="text-red-600">*</span></label>
-                        <input type="text" name="name" value={form.name} onChange={handleChange} onBlur={handleBlur} className={`${inputClass} ${errors.name && (touched.name || submitted) ? "border-red-500" : "border-gray-300"}`}/>
-                    </div>
-                    {/* Phone */}
-                    <div>
-                        <label className="block font-medium mb-1">Phone <span className="text-red-600">*</span></label>
-                        <input type="text" name="mobile_number" value={form.mobile_number} onChange={handleChange} onBlur={handleBlur} maxLength={10}
-                        // className={`${inputClass} ${errors.mobile_number && (touched.mobile_number || submitted) ? "border-red-500" : "border-gray-300"}`}
-                        className={`${inputClass} ${'mobile_number' in errors && touched.mobile_number ? "border-red-500" : "border-gray-300"}`}
-                        />
-                        {errors.mobile_number && touched.mobile_number && (
-                  <p className="text-red-500 text-sm mt-1">{errors.mobile_number}</p>
+      {/* HERO SECTION */}
+      <section className="hero">
+        <div className="container hero-grid">
+          {/* LEFT CONTENT */}
+          <div className="hero-left">
+            <div className="eyebrow">Exclusive in-store & online enquiries</div>
+            <h1>
+              Find the right appliance.
+              <br />
+              <em>Get great offers.</em>
+            </h1>
+            <p className="hero-copy">
+              Looking for a TV, refrigerator, washing machine, AC or more? Share what you're interested in and let our team help you explore available offers.
+            </p>
+            <div className="benefits">
+              <div className="benefit">
+                <span className="tick">✓</span> Top brands, one place
+              </div>
+              <div className="benefit">
+                <span className="tick">✓</span> Personalised assistance
+              </div>
+              <div className="benefit">
+                <span className="tick">✓</span> Easy enquiry process
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT FORM CARD */}
+          <div className="offer-card" id="lead-form">
+            <h2>Get special offers</h2>
+            <p className="form-desc">Fill in your details, our team will contact you.</p>
+
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="fields">
+                {/* Full Name */}
+                <div className="field">
+                  <label htmlFor="name">
+                    Full name <span className="required">*</span>
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Enter your name"
+                    maxLength={80}
+                    value={form.name}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={errors.name && touched.name ? "has-error" : ""}
+                    required
+                  />
+                  {errors.name && touched.name && (
+                    <span className="field-error">{errors.name}</span>
+                  )}
+                </div>
+
+                {/* Mobile Number */}
+                <div className="field">
+                  <label htmlFor="phone">
+                    Mobile number <span className="required">*</span>
+                  </label>
+                  <input
+                    id="phone"
+                    name="mobile_number"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    maxLength={10}
+                    placeholder="10-digit number"
+                    value={form.mobile_number}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={errors.mobile_number && touched.mobile_number ? "has-error" : ""}
+                    required
+                  />
+                  {errors.mobile_number && touched.mobile_number && (
+                    <span className="field-error">{errors.mobile_number}</span>
+                  )}
+                </div>
+
+                {/* City */}
+                <div className="field">
+                  <label htmlFor="city">
+                    City <span className="required">*</span>
+                  </label>
+                  <input
+                    id="city"
+                    name="city"
+                    type="text"
+                    autoComplete="address-level2"
+                    placeholder="Your city"
+                    maxLength={80}
+                    value={form.city}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={errors.city && touched.city ? "has-error" : ""}
+                    required
+                  />
+                  {errors.city && touched.city && (
+                    <span className="field-error">{errors.city}</span>
+                  )}
+                </div>
+
+                {/* Product Category */}
+                <div className="field">
+                  <label htmlFor="category">
+                    Product category <span className="required">*</span>
+                  </label>
+                  <select
+                    id="category"
+                    name="product"
+                    value={form.product}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={errors.product && touched.product ? "has-error" : ""}
+                    required
+                  >
+                    <option value="" disabled>
+                      Select category
+                    </option>
+                    <option value="Televisions">Televisions</option>
+                    <option value="Refrigerators">Refrigerators</option>
+                    <option value="Washing Machines">Washing Machines</option>
+                    <option value="Air Conditioners">Air Conditioners</option>
+                    <option value="Dishwashers">Dishwashers</option>
+                    <option value="Small Appliances">Small Appliances</option>
+                    <option value="Mobiles & Accessories">Mobiles & Accessories</option>
+                    <option value="Laptops & Computers">Laptops & Computers</option>
+                    <option value="Audio">Audio</option>
+                    <option value="Cameras">Cameras</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  {errors.product && touched.product && (
+                    <span className="field-error">{errors.product}</span>
+                  )}
+                </div>
+
+                {/* Preferred brand / model (optional) */}
+                <div className="field full">
+                  <label htmlFor="interest">
+                    Preferred brand / model <span style={{ color: "#8594a7", fontWeight: 500 }}>(optional)</span>
+                  </label>
+                  <input
+                    id="interest"
+                    name="interest"
+                    type="text"
+                    maxLength={120}
+                    placeholder="e.g. Samsung 55-inch TV or LG washing machine"
+                    value={form.interest}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              {/* Honeypot field (hidden) */}
+              <div style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden" }} aria-hidden="true">
+                <input
+                  type="text"
+                  name="_hp"
+                  value={form._hp}
+                  onChange={handleChange}
+                  tabIndex="-1"
+                  autoComplete="off"
+                />
+              </div>
+
+              {/* Submit button */}
+              <button type="submit" disabled={loading} className="submit">
+                {loading ? "Submitting..." : (
+                  <>
+                    Submit <span>→</span>
+                  </>
                 )}
-                    </div>
-                    
-                    {/* Email */}
-                    <div>
-                        <label className="block font-medium mb-1">Email Address<span className="text-red-600">*</span></label>
-                        <input type="email" name="email_address" value={form.email_address} onChange={handleChange} onBlur={handleBlur} className={`${inputClass} ${errors.email_address && (touched.email_address || submitted) ? "border-red-500" : "border-gray-300"}`}/>
-                    </div>
-                    {/* City */}
-                    <div>
-                        <label className="block font-medium mb-1">City <span className="text-red-600">*</span></label>
-                        <input type="text" name="city" value={form.city} onChange={handleChange} onBlur={handleBlur} className={`${inputClass} ${errors.city && (touched.city || submitted) ? "border-red-500" : "border-gray-300"}`}/>
-                    </div>
-                    {/* product - Full Width */}
-                    <div className="md:col-span-2">
-                        <label className="block font-medium mb-1">Select Products<span className="text-red-600">*</span></label>
-                        <select name="product" value={form.product} onChange={handleChange} onBlur={handleBlur}  className={`${inputClass} ${errors.product && (touched.product || submitted) ? "border-red-500" : "border-gray-300"}`}>
-                            <option value="">-- Select Category --</option>
-                            <option value="Television">Television</option>
-                            <option value="Refrigerators">Refrigerators</option>
-                            <option value="Washing Machine">Washing Machine</option>
-                            <option value="Air Conditioners">Air Conditioners</option>
-                            <option value="Small Appliances">Small Appliances</option>
-                            <option value="Dish Washers">Dish Washers</option>
-                            <option value="Mobiles">Mobiles</option>
-                            <option value="Others">Others</option>
-                        </select>
-                    </div>
+              </button>
 
-                    {/* Honeypot — hidden from humans, bots will fill this */}
-                    <div style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden" }} aria-hidden="true">
-                      <input type="text" name="_hp" value={form._hp} onChange={handleChange} tabIndex="-1" autoComplete="off" />
-                    </div>
-
-                    {/* Submit Button - Full Width */}
-                    <div className="md:col-span-2 text-center">
-                        <button
-                        type="submit"
-                        disabled={loading}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-md"
-                        >
-                        {loading ? "Submitting..." : "Submit"}
-                        </button>
-
-                        {responseMsg && (
-                        <p className="text-green-600 font-medium mt-2">{responseMsg}</p>
-                        )}
-                    </div>
-                    </form>
+              {/* Status Notice */}
+              {responseMsg && (
+                <div
+                  className={`notice ${statusType}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {responseMsg}
                 </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-5">
-                {/* Promo Video Brand Image (Moved to Left) */}
-                <div className="p-2">
-                    <div className="space-y-4">
-                    <img src="/uploads/promo-video-bands-images.png" alt="Republic Day Sale Banner" className="w-full h-auto"/>
-                    </div>
-                </div>
-            {/* DETAILS (Right Side) */}
-                <div>
-                    {/* OUR KEY TO SUCCESS */}
-                    <div className={`border border-gray-300 ${openMission ? "bg-customBlue" : "bg-gray-100"}`}>
-                        <div className="flex justify-between items-center px-6 py-4 cursor-pointer" onClick={() => setOpenMission(!openMission)}>
-                            <h2 className={`font-bold text-lg ${openMission ? "text-[#f58b31]" : "text-blue-700"}`}>OUR KEY TO SUCCESS</h2>
-                            <div className={`w-7 h-7 flex items-center justify-center text-white rounded-full text-lg font-bold ${openMission ? "bg-[#f58b31]" : "bg-blue-700"}`}>
-                                {openMission ? "−" : "+"}
-                            </div>
-                        </div>
+              )}
 
-                        <div className={`overflow-hidden transition-all duration-300 ${openMission ? "max-h-40 px-6 pb-4" : "max-h-0 px-6 pb-0"} text-white`}>
-                            Quality Products, Customer Service, After Sales Service, Right Pricing, Customer Friendly Employees, Right Showrooms With Good Infrastructure Have Been The Key For Our Success. Attractive finance schemes with EMI options available.
-                        </div>
-                    </div>
-
-                    {/* OUR MISSION */}
-                    <div className={`border border-gray-300 ${openSuccess ? "bg-customBlue" : "bg-gray-100"}`}>
-                        <div className="flex justify-between items-center px-6 py-4 cursor-pointer" onClick={() => setOpenSuccess(!openSuccess)}>
-                            <h2 className={`font-bold text-lg ${openSuccess ? "text-[#f58b31]" : "text-blue-700"}`}>OUR MISSION</h2>
-                            <div className={`w-7 h-7 flex items-center justify-center text-white rounded-full text-lg font-bold ${openSuccess ? "bg-orange-600" : "bg-blue-700"}`}>
-                                {openSuccess ? "−" : "+"}
-                            </div>
-                        </div>
-
-                        <div className={`overflow-hidden transition-all duration-300 ${openSuccess ? "max-h-60 px-6 pb-4" : "max-h-0 px-6 pb-0"} text-white`}>
-                            Our mission is to expand our branches all over Tamilnadu in short duration. To reach the customers easily, And also be a market leader all over TamilNadu.
-                        </div>
-                    </div>
-                </div>
-            </div>
+              <p className="after-submit">Your details stay private · Enquiry only</p>
+            </form>
+          </div>
         </div>
-<section className="w-full bg-gray-200 py-6">
-  <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
+      </section>
 
-    {/* LEFT MESSAGE BOX */}
-    <div className="bg-white shadow-md rounded-md p-4 text-sm text-gray-700 max-w-xs">
-      <p className="font-semibold">Thank you for reaching us!</p>
-      <p className="mt-1">
-        For Immediate Response, Call <br />
+      {/* HOW IT WORKS SECTION */}
+      <section className="steps-section" id="how-it-works">
+        <div className="container">
+          <div className="section-header">
+            <span className="kicker">Simple process</span>
+            <h2>How it works</h2>
+            <p>Three quick steps to start exploring your next purchase.</p>
+          </div>
+          <div className="steps">
+            <article className="step">
+              <span className="step-num">01</span>
+              <h3>Share your requirement</h3>
+              <p>Tell us which product category, brand or model you are looking for.</p>
+            </article>
+            <article className="step">
+              <span className="step-num">02</span>
+              <h3>Our team contacts you</h3>
+              <p>A BEA representative can discuss your requirements and available options.</p>
+            </article>
+            <article className="step">
+              <span className="step-num">03</span>
+              <h3>Explore suitable offers</h3>
+              <p>Compare available products, payment options and offers before you decide.</p>
+            </article>
+          </div>
+        </div>
+      </section>
 
-        {/* CLICK TO CALL */}
-        <a
-          href="tel:9842344323"
-          className="font-bold text-blue-700 hover:underline"
-        >
-          9842344323
-        </a>
-      </p>
-    </div>
+      {/* BOTTOM CTA */}
+      <section className="bottom-cta">
+        <div className="container">
+          <div className="cta-shell">
+            <div>
+              <h2>Contact Us For More Details</h2>
+              <p>Have questions? Our team is here to help you.</p>
+            </div>
+            <Link href="/contact" className="cta-button">
+              Click Here!
+            </Link>
+          </div>
+        </div>
+      </section>
 
-
-    {/* CENTER TEXT + BUTTON BELOW */}
-    <div className="text-center flex-1">
-      <h2 className="text-lg md:text-xl font-semibold text-gray-800">
-        Contact Us For More Details
-      </h2>
-
-      {/* BUTTON BELOW TEXT */}
-      <a
-        href="/contact"   // change route if needed
-        className="inline-block mt-3 bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2 rounded-md shadow-md transition"
-      >
-        Click Here!
+      {/* SCROLL TO TOP FLOATING BUTTON */}
+      <a href="#top" className="float-top" aria-label="Back to top" onClick={scrollToTop}>
+        ↑
       </a>
+
+      {/* COMPONENT STYLES */}
+      <style jsx>{`
+        .bea-promo-page {
+          --blue: #1853c8;
+          --deep: #09285c;
+          --ink: #132a4c;
+          --muted: #67778e;
+          --orange: #ff853c;
+          --sky: #eef5ff;
+          --line: #dfe7f2;
+          --white: #fff;
+          --radius: 18px;
+          --shadow: 0 16px 50px rgba(16, 49, 101, 0.1);
+          font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+          color: var(--ink);
+          background: #fff;
+          line-height: 1.55;
+          position: relative;
+        }
+
+        .container {
+          max-width: 1192px;
+          padding: 0 26px;
+          margin: 0 auto;
+        }
+
+        .campaign-banner {
+          width: 100%;
+          line-height: 0;
+          background: #f2f6fd;
+          overflow: hidden;
+        }
+
+        .campaign-banner img {
+          width: 100%;
+          height: auto;
+          display: block;
+        }
+
+        .hero {
+          background: linear-gradient(115deg, #eef5ff 0%, #f5f9ff 54%, #fff9f3 100%);
+          padding: 66px 0 71px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .hero:before {
+          content: "";
+          position: absolute;
+          top: -200px;
+          right: -120px;
+          width: 650px;
+          height: 650px;
+          border-radius: 50%;
+          border: 90px solid rgba(45, 110, 211, 0.035);
+          pointer-events: none;
+        }
+
+        .hero-grid {
+          position: relative;
+          display: grid;
+          grid-template-columns: 1fr 475px;
+          align-items: center;
+          gap: 70px;
+        }
+
+        .eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 9px;
+          background: #fff;
+          border: 1px solid #dbe7f7;
+          border-radius: 100px;
+          color: var(--blue);
+          padding: 7px 13px;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.035em;
+          text-transform: uppercase;
+        }
+
+        .eyebrow:before {
+          content: "";
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: var(--orange);
+        }
+
+        h1 {
+          font-size: clamp(36px, 4.3vw, 59px);
+          letter-spacing: -0.052em;
+          line-height: 1.1;
+          margin: 23px 0 21px;
+          color: var(--deep);
+          font-weight: 850;
+        }
+
+        h1 em {
+          color: var(--blue);
+          font-style: normal;
+        }
+
+        .hero-copy {
+          font-size: 17px;
+          line-height: 1.78;
+          color: #586d88;
+          max-width: 490px;
+          margin: 0;
+        }
+
+        .benefits {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 13px 22px;
+          margin-top: 28px;
+        }
+
+        .benefit {
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          color: #254365;
+          font-weight: 650;
+        }
+
+        .tick {
+          width: 19px;
+          height: 19px;
+          background: #ddf4e8;
+          color: #13824c;
+          border-radius: 50%;
+          display: grid;
+          place-items: center;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .offer-card {
+          background: #fff;
+          border: 1px solid #e3ebf5;
+          border-radius: 22px;
+          box-shadow: var(--shadow);
+          padding: 30px 31px 27px;
+          position: relative;
+        }
+
+        .offer-card h2 {
+          font-size: 26px;
+          color: var(--deep);
+          letter-spacing: -0.035em;
+          line-height: 1.2;
+          margin: 0 0 6px;
+          font-weight: 800;
+        }
+
+        .form-desc {
+          color: var(--muted);
+          font-size: 13px;
+          margin: 0 0 24px;
+        }
+
+        .fields {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          column-gap: 15px;
+          row-gap: 17px;
+          margin-bottom: 24px;
+        }
+
+        .field.full {
+          grid-column: 1 / -1;
+        }
+
+        .field label {
+          font-size: 12px;
+          font-weight: 750;
+          color: #263d5c;
+          display: block;
+          margin-bottom: 7px;
+        }
+
+        .required {
+          color: #e76d3d;
+        }
+
+        .field input,
+        .field select {
+          width: 100%;
+          border: 1px solid #dbe3ee;
+          border-radius: 9px;
+          background: white;
+          color: #172d49;
+          outline: none;
+          padding: 12px 13px;
+          font-size: 13px;
+          min-height: 45px;
+          transition: box-shadow 0.2s, border-color 0.2s;
+          box-sizing: border-box;
+        }
+
+        .field input::placeholder {
+          color: #a0adbd;
+        }
+
+        .field input:focus,
+        .field select:focus {
+          border-color: #316ede;
+          box-shadow: 0 0 0 3px #dfeaff;
+        }
+
+        .field input.has-error,
+        .field select.has-error {
+          border-color: #ef4444;
+          background-color: #fffaf9;
+        }
+
+        .field-error {
+          color: #ef4444;
+          font-size: 11px;
+          margin-top: 4px;
+          display: block;
+        }
+
+        .submit {
+          width: 100%;
+          border: 0;
+          background: var(--blue);
+          color: #fff;
+          font-size: 14px;
+          font-weight: 750;
+          border-radius: 10px;
+          padding: 13px 18px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: 0.2s;
+          box-shadow: 0 8px 20px rgba(24, 83, 200, 0.25);
+          cursor: pointer;
+        }
+
+        .submit:hover {
+          background: #1344a8;
+        }
+
+        .submit:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        .after-submit {
+          font-size: 11px;
+          color: #8a9bb1;
+          text-align: center;
+          margin: 13px 0 0;
+        }
+
+        .notice {
+          font-size: 13px;
+          font-weight: 600;
+          text-align: center;
+          padding: 10px 14px;
+          border-radius: 9px;
+          margin-top: 14px;
+        }
+
+        .notice.success {
+          background: #ddf4e8;
+          color: #13824c;
+          border: 1px solid #bcead1;
+        }
+
+        .notice.error {
+          background: #fde8e8;
+          color: #c81e1e;
+          border: 1px solid #f8b4b4;
+        }
+
+        .steps-section {
+          background: #f7faff;
+          border-top: 1px solid #ecf0f7;
+          border-bottom: 1px solid #ecf0f7;
+          padding: 64px 0 72px;
+        }
+
+        .section-header {
+          text-align: center;
+          max-width: 620px;
+          margin: 0 auto 44px;
+        }
+
+        .kicker {
+          font-size: 11px;
+          font-weight: 850;
+          color: var(--blue);
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .section-header h2 {
+          font-size: clamp(28px, 3.5vw, 38px);
+          letter-spacing: -0.035em;
+          color: var(--deep);
+          margin: 12px 0 10px;
+          font-weight: 850;
+        }
+
+        .section-header p {
+          color: #73849b;
+          font-size: 15px;
+          margin: 0;
+        }
+
+        .steps {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 28px;
+        }
+
+        .step {
+          background: #fff;
+          border: 1px solid #e5ebf5;
+          border-radius: 20px;
+          padding: 32px 28px;
+          min-height: 190px;
+          box-shadow: 0 4px 20px rgba(16, 49, 101, 0.02);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .step:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 25px rgba(16, 49, 101, 0.06);
+        }
+
+        .step-num {
+          display: inline-grid;
+          place-items: center;
+          background: #eaf2ff;
+          color: var(--blue);
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          font-weight: 800;
+          font-size: 13px;
+        }
+
+        .step h3 {
+          color: var(--deep);
+          font-size: 17px;
+          margin: 18px 0 9px;
+          font-weight: 750;
+        }
+
+        .step p {
+          color: #718097;
+          font-size: 14px;
+          margin: 0;
+          line-height: 1.65;
+        }
+
+        .bottom-cta {
+          padding: 50px 0 65px;
+        }
+
+        .cta-shell {
+          background: var(--deep);
+          color: #fff;
+          border-radius: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 24px;
+          padding: 34px 44px;
+        }
+
+        .cta-shell h2 {
+          font-size: 25px;
+          letter-spacing: -0.03em;
+          margin: 0 0 6px;
+          font-weight: 750;
+        }
+
+        .cta-shell p {
+          font-size: 14px;
+          color: #bfd0ec;
+          margin: 0;
+        }
+
+        .cta-button {
+          background: #fff;
+          color: var(--deep);
+          font-size: 14px;
+          font-weight: 850;
+          padding: 14px 26px;
+          border-radius: 12px;
+          white-space: nowrap;
+          display: inline-block;
+          text-decoration: none;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .cta-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+        }
+
+        .float-top {
+          position: fixed;
+          bottom: 23px;
+          right: 22px;
+          background: #fff;
+          border: 1px solid #dbe5f3;
+          color: #1b58ba;
+          box-shadow: 0 6px 20px #102a4a16;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          display: grid;
+          place-items: center;
+          font-size: 21px;
+          z-index: 50;
+          text-decoration: none;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+
+        .float-top:hover {
+          background: #f0f6ff;
+          border-color: #bcd4f5;
+        }
+
+        @media (max-width: 950px) {
+          .hero-grid {
+            grid-template-columns: 1fr 440px;
+            gap: 27px;
+          }
+        }
+
+        @media (max-width: 760px) {
+          .container {
+            padding: 0 19px;
+          }
+          .hero {
+            padding: 38px 0 42px;
+          }
+          .hero-grid {
+            grid-template-columns: 1fr;
+            gap: 30px;
+          }
+          h1 {
+            font-size: 40px;
+            max-width: 520px;
+          }
+          .hero-copy {
+            font-size: 15px;
+          }
+          .offer-card {
+            padding: 25px 21px;
+          }
+          .steps {
+            grid-template-columns: 1fr;
+            gap: 13px;
+          }
+          .section-header h2 {
+            font-size: 27px;
+          }
+          .cta-shell {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .fields {
+            grid-template-columns: 1fr;
+          }
+          .field.full {
+            grid-column: auto;
+          }
+        }
+      `}</style>
     </div>
-
-  </div>
-</section>
-
-    </>
   );
 }

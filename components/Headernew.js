@@ -255,6 +255,28 @@ const DEFAULT_MOBILE_SUBCATEGORIES = [
   { _id: 'appliances', category_name: 'Appliances', category_slug: 'small-appliances', parentSlug: 'appliances' },
 ];
 
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const loadCache = (key) => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || !obj.ts || !obj.data) return null;
+    return obj;
+  } catch (e) {
+    return null;
+  }
+};
+
+const saveCache = (key, data) => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+  } catch (e) {}
+};
+
 const Header = ({ initialCategories = [] }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -475,7 +497,7 @@ const Header = ({ initialCategories = [] }) => {
       const arr = extractCategoryArray(initialCategories);
       return ensureWordsNotEmpty(arr.map((cat) => cat.category_name));
     }
-    return [];
+    return ensureWordsNotEmpty([]);
   });
   const [categorieslist, setCategorieslist] = useState(() => {
     if (initialCategories && initialCategories.length > 0) {
@@ -503,120 +525,57 @@ const Header = ({ initialCategories = [] }) => {
     }
   };
 
-  // --- Add cache helpers after your state declarations (place near other consts) ---
-  const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-  const loadCache = (key) => {
-    // returns null if not found or parse error
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      const obj = JSON.parse(raw);
-      if (!obj || !obj.ts || !obj.data) return null;
-      return obj;
-    } catch (e) {
-      console.warn('Cache parse error for', key, e);
-      return null;
-    }
-  };
-  const saveCache = (key, data) => {
-    try {
-      localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
-    } catch (e) {
-      // ignore storage errors (quota)
-      console.warn('Cache save failed for', key, e);
-    }
-  };
-
-
-  useEffect(() => {
-    const key = 'categories_raw_cache';
-    let mounted = true;
-
-    const useCachedOrFetch = async () => {
-      // try cache first
-      try {
-        const cached = loadCache(key);
-        if (cached && (Date.now() - cached.ts) < CACHE_TTL_MS) {
-          if (!mounted) return;
-          const data = cached.data;
-          // CHANGED: extract array safely + fallback
-          const arr = extractCategoryArray(data);
-          setCategorieslist(arr);
-          setWords(ensureWordsNotEmpty(arr.map((cat) => cat.category_name)));
-          return;
-        }
-      } catch (err) {
-        console.warn('Error reading categories cache', err);
-      }
-
-      // fallback to fetch and then cache
-      try {
-        const response = await fetch("/api/categories/get");
-        const raw = await response.json();
-        if (!mounted) return;
-        // CHANGED: extract array safely + fallback
-        const arr = extractCategoryArray(raw);
-        setCategorieslist(arr);
-        setWords(ensureWordsNotEmpty(arr.map((cat) => cat.category_name)));
-        saveCache(key, raw);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        // Fallback words if fetch fails
-        if (mounted) setWords(ensureWordsNotEmpty([]));
-      }
-    };
-    useCachedOrFetch();
-    return () => { mounted = false; };
-  }, []);
-
+  // --- Single unified categories loader with 24-hr cache ---
   useEffect(() => {
     const rawKey = 'categories_raw_cache';
     const nestedKey = 'categories_nested_cache';
     let mounted = true;
 
-    const buildNestedAndCache = (rawData) => {
-      const nestedCategories = buildNestedCategories(rawData);
-      // cache nested structure
-      saveCache(nestedKey, nestedCategories);
-  return nestedCategories;
-    };
+    // Immediately hydrate from local cache on client mount (0ms, zero network delay, no hydration mismatch)
+    const nestedCached = loadCache(nestedKey);
+    const isNestedFresh = nestedCached && (Date.now() - nestedCached.ts) < CACHE_TTL_MS && Array.isArray(nestedCached.data) && nestedCached.data.length > 0;
+
+    const rawCached = loadCache(rawKey);
+    const isRawFresh = rawCached && (Date.now() - rawCached.ts) < CACHE_TTL_MS && rawCached.data;
+
+    if (isNestedFresh) {
+      setCategories(nestedCached.data);
+    }
+    if (isRawFresh) {
+      const arr = extractCategoryArray(rawCached.data);
+      setCategorieslist(arr);
+      setWords(ensureWordsNotEmpty(arr.map((cat) => cat.category_name)));
+    }
+
+    // If both caches are fresh, exit without any network call
+    if (isNestedFresh && isRawFresh) {
+      return () => { mounted = false; };
+    }
 
     const setupCategories = async () => {
       try {
-        // Try nested cache first
-        const nestedCached = loadCache(nestedKey);
-        if (nestedCached && (Date.now() - nestedCached.ts) < CACHE_TTL_MS) {
-          if (!mounted) return;
-          setCategories(nestedCached.data);
-        } else {
-          // Get raw data from cache or fetch
-          let raw = null;
-          const rawCached = loadCache(rawKey);
-          if (rawCached && (Date.now() - rawCached.ts) < CACHE_TTL_MS) {
-            raw = rawCached.data;
-          } else {
-            const res = await fetch("/api/categories/get");
-            raw = await res.json();
-            saveCache(rawKey, raw);
+        const res = await fetch("/api/categories/get");
+        const raw = await res.json();
+        if (!mounted) return;
+
+        saveCache(rawKey, raw);
+        const arr = extractCategoryArray(raw);
+        setCategorieslist(arr);
+        setWords(ensureWordsNotEmpty(arr.map((cat) => cat.category_name)));
+
+        const nested = buildNestedCategories(raw);
+        nested.sort(sortByPositionOrAlpha);
+        nested.forEach((parent) => {
+          if (Array.isArray(parent.subcategories)) {
+            parent.subcategories.sort(sortByPositionOrAlpha);
           }
+        });
 
-          if (!mounted) return;
-          const nested = buildNestedAndCache(raw);
-          nested.sort(sortByPositionOrAlpha);
-      nested.forEach((parent) => {
-        if (Array.isArray(parent.subcategories)) {
-          parent.subcategories.sort(sortByPositionOrAlpha);
-        }
-      });
-
-      setCategories(nested);
-        }
+        setCategories(nested);
+        saveCache(nestedKey, nested);
       } catch (err) {
         console.error("Failed to fetch or build categories:", err);
-        // fallback: ensure auth check still runs
       }
-      // always check auth status after categories settled
-      try { checkAuthStatus(); } catch (e) { /* ignore */ }
     };
 
     setupCategories();
@@ -1226,44 +1185,11 @@ const Header = ({ initialCategories = [] }) => {
   }, []);
   const hideTimeout = useRef(null);
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("/api/categories/get");
-        const data = await response.json();
-
-        // Keep only active categories
-        const activeCategories = data.filter(cat => cat.status === "Active");
-
-        const categoryMap = {};
-        activeCategories.forEach((cat) => {
-          cat.subcategories = [];
-          categoryMap[cat._id] = cat;
-        });
-
-        const nestedCategories = [];
-        activeCategories.forEach((cat) => {
-          if (cat.parentid === "none") {
-            nestedCategories.push(cat);
-          } else if (categoryMap[cat.parentid]) {
-            categoryMap[cat.parentid].subcategories.push(cat);
-          }
-        });
-
-        nestedCategories.sort(sortByPositionOrAlpha);
-        nestedCategories.forEach((parent) => {
-          if (Array.isArray(parent.subcategories)) {
-            parent.subcategories.sort(sortByPositionOrAlpha);
-          }
-        });
-
-        setCategories(nestedCategories);
-      } catch (err) {
-        console.error("Failed to fetch categories", err);
-      }
-    };
-
-    fetchCategories();
-    checkAuthStatus();
+    try {
+      checkAuthStatus();
+    } catch (e) {
+      /* ignore */
+    }
   }, []);
   const flattenTree = (cat, rootCategory, level = 0) => {
     let result = [];
@@ -2087,6 +2013,7 @@ const Header = ({ initialCategories = [] }) => {
                   className="h-full text-[11px] bg-white border-r border-gray-300 outline-none flex-shrink-0 min-w-[96px] max-w-[104px] pl-1.5 pr-0.5 text-gray-800"
                   aria-label="Search category"
                   id="mobile-search-category"
+                  suppressHydrationWarning
                 >
                   <option value="All Category">All Category</option>
                   {categories.map((cat) => (
@@ -2229,6 +2156,7 @@ const Header = ({ initialCategories = [] }) => {
                     className="search-select"
                     id="desktop-search-category"
                     aria-label="Search category"
+                    suppressHydrationWarning
                   >
                     <option value="All Category">All Category</option>
                     {categories.map((cat) => (
@@ -2461,7 +2389,7 @@ const Header = ({ initialCategories = [] }) => {
           )}
           {/* Auth Modal and Forgot Password Modal moved to document.body portal below to prevent iOS sticky-header clipping */}
         </div>
-        <div ref={catNavBarRef} className="hidden sm:flex relative p-2 mt-0 px-1 bg-[#2453D3] min-h-[64px] border-gray-200 shadow items-center">
+        <div ref={catNavBarRef} suppressHydrationWarning className="hidden sm:flex relative p-2 mt-0 px-1 bg-[#2453D3] min-h-[64px] border-gray-200 shadow items-center">
           <div className="w-full  relative">
             <div className="relative">
               <div className="flex justify-center overflow-x-auto scrollbar-hide">

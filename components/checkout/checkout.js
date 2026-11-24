@@ -1329,7 +1329,6 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         }
 
         // SAP sync — send order data to SAP
-
         try {
           await fetch('/api/send-order-detail-to-sap', {
             method: 'POST',
