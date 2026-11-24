@@ -1309,6 +1309,10 @@ const calculateSubtotal = () => {
 
         price: item.price,
 
+        actual_price: item.actual_price != null ? item.actual_price : (item.price || 0),
+
+        item_code: item.item_code || String(item.productId || ''),
+
         quantity: item.quantity,
 
         warranty: item.warranty || 0,

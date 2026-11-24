@@ -150,18 +150,56 @@ export async function POST(req) {
       );
     }
 
-    const parsedDeliveryCharge = delivery_charge == null ? NaN : Number(delivery_charge);
+    // Ensure line items have required invoice fields populated (item_code, actual_price, name)
+    for (const item of order_item) {
+      if (!item.productId && (item.product || item._id || item.id)) {
+        item.productId = item.product || item._id || item.id;
+      }
+      if (item.actual_price == null || item.actual_price === "" || Number.isNaN(Number(item.actual_price))) {
+        item.actual_price = item.price != null && !Number.isNaN(Number(item.price)) ? Number(item.price) : 0;
+      }
+      if (item.price == null || item.price === "" || Number.isNaN(Number(item.price))) {
+        item.price = item.actual_price != null && !Number.isNaN(Number(item.actual_price)) ? Number(item.actual_price) : 0;
+      }
+      const prodId = item.productId || item.product || item._id || item.id;
+      if (!String(item.item_code || "").trim() && prodId) {
+        try {
+          const prod = await Product.findById(prodId).select("item_code price special_price name").lean();
+          if (prod) {
+            item.item_code = prod.item_code || String(prodId);
+            const fallbackPrice = prod.price || prod.special_price || 0;
+            if (!item.actual_price && fallbackPrice) item.actual_price = Number(fallbackPrice);
+            if (!item.price && fallbackPrice) item.price = Number(fallbackPrice);
+            if (!item.name) item.name = prod.name;
+          } else {
+            item.item_code = String(prodId);
+          }
+        } catch {
+          item.item_code = String(prodId);
+        }
+      }
+      if (!String(item.item_code || "").trim()) {
+        item.item_code = String(item.productId || item.product || item.id || item._id || "ITEM");
+      }
+      if (!String(item.name || "").trim()) {
+        item.name = item.product_name || "Product";
+      }
+    }
+
+    const parsedDeliveryCharge = delivery_charge == null || Number.isNaN(Number(delivery_charge)) ? 0 : Number(delivery_charge);
     const invoiceExtrasAreValid = order_item.every((item) => {
-      const warranty = item.warranty == null ? 0 : Number(item.warranty);
-      const extendedWarranty = item.extendedWarranty == null ? 0 : Number(item.extendedWarranty);
+      const warranty = item.warranty == null || Number.isNaN(Number(item.warranty)) ? 0 : Number(item.warranty);
+      const extendedWarranty = item.extendedWarranty == null || Number.isNaN(Number(item.extendedWarranty)) ? 0 : Number(item.extendedWarranty);
       return Number.isFinite(warranty) && warranty >= 0 &&
         Number.isFinite(extendedWarranty) && extendedWarranty >= 0;
     });
     const invoiceLineItemsAreComplete = order_item.every((item) => {
       const quantity = Number(item.quantity);
-      const unitPrice = Number(item.actual_price);
-      return Boolean(String(item.item_code || "").trim()) &&
-        Boolean(String(item.name || "").trim()) &&
+      const unitPrice = Number(item.actual_price != null && item.actual_price !== "" && !Number.isNaN(Number(item.actual_price)) ? item.actual_price : item.price);
+      const hasCode = Boolean(String(item.item_code || item.productId || item.product || item.id || item._id || "").trim());
+      const hasName = Boolean(String(item.name || item.product_name || "").trim());
+      return hasCode &&
+        hasName &&
         Number.isFinite(quantity) && quantity > 0 &&
         Number.isFinite(unitPrice) && unitPrice > 0;
     });
@@ -171,7 +209,7 @@ export async function POST(req) {
       parsedDeliveryCharge >= 0
       ? order_item.reduce((total, item) =>
         total +
-        Number(item.actual_price) * Number(item.quantity) +
+        Number(item.actual_price != null && item.actual_price !== "" && !Number.isNaN(Number(item.actual_price)) ? item.actual_price : item.price) * Number(item.quantity) +
         (Number(item.warranty) || 0) +
         (Number(item.extendedWarranty) || 0), 0) + parsedDeliveryCharge
       : null;

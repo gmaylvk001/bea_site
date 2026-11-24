@@ -1097,6 +1097,11 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
 
       const orderItems = cartItems.map(item => ({
         ...item,
+        productId: item.productId || item.product || item.id || item._id,
+        name: item.name || item.product_name || 'Product',
+        price: Number(item.price || item.actual_price || 0),
+        actual_price: Number(item.actual_price || item.price || 0),
+        item_code: String(item.item_code || item.productId || item.product || item.id || item._id || '').trim(),
         warrantyData: item.warrantyData || null,
         store_id: formData.deliveryType === 'store' ? formData.selectedStore : null,
         coupondetails: (isTrucoCouponApplied ? [] : Array.isArray(item.coupondetails) ? item.coupondetails : [])
@@ -1324,6 +1329,7 @@ const sellingPrice = mrpTotal - itemDiscountTotal;
         }
 
         // SAP sync — send order data to SAP
+
         try {
           await fetch('/api/send-order-detail-to-sap', {
             method: 'POST',
