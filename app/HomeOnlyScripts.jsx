@@ -110,17 +110,40 @@ export default function HomeOnlyScripts() {
     // -------------------------
     // Main SPA logic
     // -------------------------
+    let hasLoadedWidgets = false;
+    const initWidgets = () => {
+      if (hasLoadedWidgets || typebotCancelled) return;
+      hasLoadedWidgets = true;
+      loadTypebot();
+      loadTawk();
+      cleanupListeners();
+    };
+
+    const cleanupListeners = () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("scroll", initWidgets);
+        window.removeEventListener("touchstart", initWidgets);
+        window.removeEventListener("mousemove", initWidgets);
+      }
+    };
+
     if (pathname?.startsWith("/admin")) {
       hideTypebot();
       hideTawk();
     } else {
-      loadTypebot();
-      loadTawk();
+      // Defer Typebot and Tawk.to so they do not block initial LCP or TBT
+      if (typeof window !== "undefined") {
+        window.addEventListener("scroll", initWidgets, { passive: true, once: true });
+        window.addEventListener("touchstart", initWidgets, { passive: true, once: true });
+        window.addEventListener("mousemove", initWidgets, { passive: true, once: true });
+      }
+      typebotTimer = setTimeout(initWidgets, 3500);
     }
 
     return () => {
       typebotCancelled = true;
       clearTimeout(typebotTimer);
+      cleanupListeners();
       // Do not remove Typebot / WhatsApp — only hide Tawk when leaving non-admin cleanup is not needed
       // Typebot stays; WhatsApp is separate in layout (WhatsAppFloat)
     };

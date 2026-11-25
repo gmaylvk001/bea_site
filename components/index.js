@@ -509,6 +509,7 @@ export default function HomeComponent({
       dots: true,
       dotsClass: "slick-dots",
       pauseOnHover: true,
+      lazyLoad: "ondemand",
       responsive: [
         {
           breakpoint: 1025,
@@ -1225,13 +1226,13 @@ export default function HomeComponent({
                 variants={containerVariants}
                 className="home-section-full relative overflow-visible pt-0 m-0 mb-0 z-10"
               >
-                <div className="relative overflow-hidden">
+                <div className="relative overflow-hidden" suppressHydrationWarning>
                   {isBannerLoading ? (
                     <div className="p-6 flex justify-center items-center w-full aspect-[2000/667]">
                       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
                     </div>
                   ) : topBannerItems.length > 0 ? (
-                    topBannerItems.length > 1 ? (
+                    topBannerItems.length > 1 && hasMounted ? (
                       <div className="relative group">
                         <Slider
                           ref={topBannerSliderRef}

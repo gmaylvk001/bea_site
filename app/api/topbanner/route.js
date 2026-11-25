@@ -103,17 +103,15 @@ export async function POST(req) {
       }
     }
 
-    // 👇 find max order (1-based)
-    const lastBanner = await TopBanner.findOne().sort({ order: -1 });
-    const newOrder =
-      lastBanner && typeof lastBanner.order === "number" ? lastBanner.order + 1 : 1;
+    // Shift all existing banners order by 1 so the newly added banner displays first at order 1
+    await TopBanner.updateMany({}, { $inc: { order: 1 } });
 
     const newBanner = new TopBanner({
       banner_image: filePath,
       mobile_banner_image: mobileFilePath,
       redirect_url,
       status,
-      order: newOrder,
+      order: 1,
     });
 
     await newBanner.save();
