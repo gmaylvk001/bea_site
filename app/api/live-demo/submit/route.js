@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db";
 import LiveDemoLead from "@/models/LiveDemoLead";
 
 const ADMIN_EMAILS = [
+
   "arunkarthik@bharathelectronics.in",
   "ecom@bharathelectronics.in",
   "itadmin@bharathelectronics.in",
@@ -10,6 +11,7 @@ const ADMIN_EMAILS = [
   "sekarcorp@bharathelectronics.in",
   "abu@bharathelectronics.in",
   "customercare@bharathelectronics.in",
+
 ];
 
 const EMAIL_AUTH = "Bearer 2|DC7TldSOIhrILsnzAf0gzgBizJcpYz23GHHs0Y2L";
